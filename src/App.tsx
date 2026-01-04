@@ -15,6 +15,13 @@ import ResetPassword from "./pages/ResetPassword";
 import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
 import FreelancerDashboard from "./pages/FreelancerDashboard";
+import Projects from "./pages/Projects";
+import ProjectNew from "./pages/ProjectNew";
+import ProjectDetail from "./pages/ProjectDetail";
+import CompanyProposals from "./pages/CompanyProposals";
+import FindProjects from "./pages/FindProjects";
+import ProjectView from "./pages/ProjectView";
+import MyProposals from "./pages/MyProposals";
 
 const queryClient = new QueryClient();
 
@@ -50,9 +57,10 @@ const App = () => (
               }
             >
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/projects" element={<Dashboard />} />
-              <Route path="/projects/new" element={<Dashboard />} />
-              <Route path="/proposals" element={<Dashboard />} />
+              <Route path="/projects" element={<Projects />} />
+              <Route path="/projects/new" element={<ProjectNew />} />
+              <Route path="/projects/:id" element={<ProjectDetail />} />
+              <Route path="/proposals" element={<CompanyProposals />} />
               <Route path="/talent-pool" element={<Dashboard />} />
               <Route path="/finances" element={<Dashboard />} />
             </Route>
@@ -66,8 +74,9 @@ const App = () => (
               }
             >
               <Route path="/freelancer-dashboard" element={<FreelancerDashboard />} />
-              <Route path="/find-projects" element={<FreelancerDashboard />} />
-              <Route path="/my-proposals" element={<FreelancerDashboard />} />
+              <Route path="/find-projects" element={<FindProjects />} />
+              <Route path="/project/:id" element={<ProjectView />} />
+              <Route path="/my-proposals" element={<MyProposals />} />
               <Route path="/earnings" element={<FreelancerDashboard />} />
               <Route path="/certifications" element={<FreelancerDashboard />} />
             </Route>
