@@ -14,9 +14,11 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   User, Lock, Bell, CreditCard, Building, Briefcase, 
-  Loader2, Save, Upload
+  Loader2, Save, Upload, Folder, Award
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import PortfolioManager from "@/components/settings/PortfolioManager";
+import CertificationsManager from "@/components/settings/CertificationsManager";
 
 interface Profile {
   email: string;
@@ -200,11 +202,23 @@ export default function Settings() {
       </div>
 
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
+        <TabsList className={`grid w-full ${!isCompany ? 'grid-cols-6' : 'grid-cols-4'} lg:w-auto lg:inline-grid`}>
           <TabsTrigger value="profile" className="gap-2">
             <User className="h-4 w-4" />
             <span className="hidden sm:inline">{t("settings.profile")}</span>
           </TabsTrigger>
+          {!isCompany && (
+            <>
+              <TabsTrigger value="portfolio" className="gap-2">
+                <Folder className="h-4 w-4" />
+                <span className="hidden sm:inline">{t("settings.portfolio")}</span>
+              </TabsTrigger>
+              <TabsTrigger value="certifications" className="gap-2">
+                <Award className="h-4 w-4" />
+                <span className="hidden sm:inline">{t("settings.certifications")}</span>
+              </TabsTrigger>
+            </>
+          )}
           <TabsTrigger value="security" className="gap-2">
             <Lock className="h-4 w-4" />
             <span className="hidden sm:inline">{t("settings.security")}</span>
@@ -426,6 +440,20 @@ export default function Settings() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Portfolio Tab (Freelancers only) */}
+        {!isCompany && (
+          <TabsContent value="portfolio" className="space-y-6">
+            <PortfolioManager />
+          </TabsContent>
+        )}
+
+        {/* Certifications Tab (Freelancers only) */}
+        {!isCompany && (
+          <TabsContent value="certifications" className="space-y-6">
+            <CertificationsManager />
+          </TabsContent>
+        )}
 
         {/* Security Tab */}
         <TabsContent value="security" className="space-y-6">
