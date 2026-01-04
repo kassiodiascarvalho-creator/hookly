@@ -22,6 +22,7 @@ import CompanyProposals from "./pages/CompanyProposals";
 import FindProjects from "./pages/FindProjects";
 import ProjectView from "./pages/ProjectView";
 import MyProposals from "./pages/MyProposals";
+import Messages from "./pages/Messages";
 
 const queryClient = new QueryClient();
 
@@ -89,7 +90,7 @@ const App = () => (
                 </ProtectedRoute>
               }
             >
-              <Route path="/messages" element={<Dashboard />} />
+              <Route path="/messages" element={<Messages />} />
               <Route path="/settings" element={<Dashboard />} />
             </Route>
             

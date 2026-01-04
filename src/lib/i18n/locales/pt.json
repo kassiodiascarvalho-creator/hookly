@@ -538,6 +538,23 @@
       }
     }
   },
+  "messages": {
+    "title": "Mensagens",
+    "subtitle": "Comunique-se com seus clientes e freelancers",
+    "selectConversation": "Selecione uma conversa para começar a trocar mensagens",
+    "noConversations": "Nenhuma conversa ainda",
+    "noConversationsDesc": "Inicie uma conversa aceitando uma proposta ou contatando um freelancer",
+    "noMessages": "Nenhuma mensagem ainda",
+    "startConversation": "Envie uma mensagem para iniciar a conversa",
+    "typeMessage": "Digite uma mensagem...",
+    "today": "Hoje",
+    "yesterday": "Ontem"
+  },
+  "notifications": {
+    "title": "Notificações",
+    "markAllRead": "Marcar tudo como lido",
+    "noNotifications": "Nenhuma notificação ainda"
+  },
   "common": {
     "loading": "Carregando...",
     "save": "Salvar",
