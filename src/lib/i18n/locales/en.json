@@ -6,7 +6,17 @@
     "pricing": "Pricing",
     "login": "Log in",
     "signup": "Get Started",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "projects": "Projects",
+    "proposals": "Proposals",
+    "talentPool": "Talent Pool",
+    "messages": "Messages",
+    "finances": "Finances",
+    "settings": "Settings",
+    "findProjects": "Find Projects",
+    "myProposals": "My Proposals",
+    "earnings": "Earnings",
+    "certifications": "Certifications"
   },
   "hero": {
     "badge": "Top Rated",
@@ -227,34 +237,30 @@
     "copyright": "© 2024 HOOKLY. All rights reserved."
   },
   "auth": {
-    "login": {
-      "title": "Welcome back",
-      "subtitle": "Sign in to your account to continue",
-      "email": "Email",
-      "password": "Password",
-      "submit": "Sign In",
-      "forgotPassword": "Forgot password?",
-      "noAccount": "Don't have an account?",
-      "signUp": "Sign up"
-    },
-    "signup": {
-      "title": "Create your account",
-      "subtitle": "Join thousands of professionals on HOOKLY",
-      "email": "Email",
-      "password": "Password",
-      "confirmPassword": "Confirm Password",
-      "submit": "Create Account",
-      "hasAccount": "Already have an account?",
-      "signIn": "Sign in",
-      "terms": "By signing up, you agree to our Terms of Service and Privacy Policy"
-    },
-    "resetPassword": {
-      "title": "Reset your password",
-      "subtitle": "Enter your email and we'll send you a reset link",
-      "email": "Email",
-      "submit": "Send Reset Link",
-      "backToLogin": "Back to login"
-    },
+    "login": "Log In",
+    "signup": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "forgotPassword": "Forgot password?",
+    "welcomeBack": "Welcome Back",
+    "loginSubtitle": "Sign in to your account to continue",
+    "createAccount": "Create Account",
+    "signupSubtitle": "Join thousands of professionals on HOOKLY",
+    "termsNotice": "By signing up, you agree to our Terms of Service and Privacy Policy",
+    "loginSuccess": "Logged in successfully!",
+    "signupSuccess": "Account created! Check your email to confirm.",
+    "invalidCredentials": "Invalid email or password",
+    "emailAlreadyRegistered": "An account with this email already exists",
+    "passwordMismatch": "Passwords do not match",
+    "resetPassword": "Reset Password",
+    "resetPasswordSubtitle": "Enter your email and we'll send you a reset link",
+    "sendResetLink": "Send Reset Link",
+    "backToLogin": "Back to Login",
+    "checkYourEmail": "Check Your Email",
+    "resetEmailSent": "We've sent a password reset link to {{email}}",
+    "mustBeLoggedIn": "You must be logged in",
+    "logout": "Log Out",
     "errors": {
       "invalidCredentials": "Invalid email or password",
       "emailExists": "An account with this email already exists",
@@ -266,160 +272,50 @@
   },
   "onboarding": {
     "title": "Welcome to HOOKLY!",
-    "subtitle": "Tell us how you'll be using the platform",
-    "company": {
-      "title": "I'm a Company",
-      "description": "I want to hire talented freelancers for my projects"
-    },
-    "freelancer": {
-      "title": "I'm a Freelancer",
-      "description": "I want to find projects and work with great clients"
-    }
+    "subtitle": "Tell us how you'll be using the platform so we can personalize your experience",
+    "companyTitle": "I'm a Company",
+    "companyDescription": "I want to hire talented freelancers for my projects",
+    "companyFeature1": "Post unlimited projects",
+    "companyFeature2": "Access verified talent pool",
+    "companyFeature3": "Secure escrow payments",
+    "freelancerTitle": "I'm a Freelancer",
+    "freelancerDescription": "I want to find projects and work with great clients",
+    "freelancerFeature1": "Browse high-quality projects",
+    "freelancerFeature2": "Get paid securely",
+    "freelancerFeature3": "Build your reputation",
+    "getStarted": "Get Started",
+    "companyCreated": "Company profile created!",
+    "freelancerCreated": "Freelancer profile created!"
   },
   "dashboard": {
-    "company": {
-      "title": "Company Dashboard",
-      "welcome": "Welcome back",
-      "stats": {
-        "activeProjects": "Active Projects",
-        "totalSpent": "Total Spent",
-        "hiredTalents": "Hired Talents",
-        "pendingProposals": "Pending Proposals"
-      },
-      "quickActions": {
-        "title": "Quick Actions",
-        "newProject": "Post New Project",
-        "findTalent": "Find Talent",
-        "viewMessages": "View Messages"
-      }
-    },
-    "freelancer": {
-      "title": "Freelancer Dashboard",
-      "welcome": "Welcome back",
-      "stats": {
-        "activeProjects": "Active Projects",
-        "totalEarned": "Total Earned",
-        "proposalsSent": "Proposals Sent",
-        "profileViews": "Profile Views"
-      },
-      "quickActions": {
-        "title": "Quick Actions",
-        "findProjects": "Find Projects",
-        "myProposals": "My Proposals",
-        "viewMessages": "View Messages"
-      }
-    }
+    "welcome": "Welcome Back!",
+    "companySubtitle": "Manage your projects and find the best talent",
+    "activeProjects": "Active Projects",
+    "proposals": "Proposals Received",
+    "messages": "Unread Messages",
+    "totalSpent": "Total Spent",
+    "quickActions": "Quick Actions",
+    "postProject": "Post New Project",
+    "browseTalent": "Browse Talent",
+    "viewMessages": "View Messages",
+    "recentActivity": "Recent Activity",
+    "noActivity": "No recent activity yet",
+    "createFirstProject": "Create your first project"
   },
-  "sidebar": {
-    "company": {
-      "dashboard": "Dashboard",
-      "projects": "Projects",
-      "proposals": "Proposals",
-      "talentPool": "Talent Pool",
-      "messages": "Messages",
-      "finances": "Finances",
-      "settings": "Settings"
-    },
-    "freelancer": {
-      "dashboard": "Dashboard",
-      "findProjects": "Find Projects",
-      "myProposals": "My Proposals",
-      "messages": "Messages",
-      "earnings": "Earnings",
-      "finances": "Finances",
-      "certifications": "Certifications",
-      "settings": "Settings"
-    },
-    "admin": {
-      "dashboard": "Admin Dashboard",
-      "users": "Users",
-      "companies": "Companies",
-      "freelancers": "Freelancers",
-      "projects": "Projects",
-      "payments": "Payments",
-      "leads": "Leads",
-      "viewSite": "View Site"
-    }
-  },
-  "projects": {
-    "title": "Projects",
-    "new": "New Project",
-    "filters": {
-      "all": "All",
-      "draft": "Draft",
-      "open": "Open",
-      "inProgress": "In Progress",
-      "completed": "Completed"
-    },
-    "create": {
-      "title": "Create New Project",
-      "step1": "Basic Info",
-      "step2": "Budget & KPIs",
-      "step3": "Preview",
-      "projectTitle": "Project Title",
-      "description": "Description",
-      "category": "Category",
-      "budgetMin": "Minimum Budget",
-      "budgetMax": "Maximum Budget",
-      "kpis": "Key Performance Indicators",
-      "addKpi": "Add KPI",
-      "saveDraft": "Save as Draft",
-      "publish": "Publish Project",
-      "next": "Next",
-      "back": "Back"
-    }
-  },
-  "proposals": {
-    "title": "Proposals",
-    "sent": "Sent",
-    "received": "Received",
-    "status": {
-      "sent": "Sent",
-      "accepted": "Accepted",
-      "rejected": "Rejected"
-    },
-    "actions": {
-      "accept": "Accept",
-      "reject": "Reject",
-      "viewProject": "View Project"
-    }
-  },
-  "messages": {
-    "title": "Messages",
-    "noConversations": "No conversations yet",
-    "typeMessage": "Type a message...",
-    "send": "Send"
-  },
-  "settings": {
-    "title": "Settings",
-    "profile": "Profile",
-    "security": "Security",
-    "notifications": "Notifications",
-    "language": "Language",
-    "save": "Save Changes",
-    "changePassword": "Change Password",
-    "currentPassword": "Current Password",
-    "newPassword": "New Password",
-    "confirmNewPassword": "Confirm New Password"
-  },
-  "admin": {
-    "title": "Admin Panel",
-    "stats": {
-      "totalUsers": "Total Users",
-      "activeProjects": "Active Projects",
-      "totalRevenue": "Total Revenue",
-      "pendingPayments": "Pending Payments"
-    },
-    "users": {
-      "title": "Users Management",
-      "verified": "Verified",
-      "unverified": "Unverified",
-      "actions": {
-        "verify": "Verify User",
-        "suspend": "Suspend",
-        "viewProfile": "View Profile"
-      }
-    }
+  "freelancerDashboard": {
+    "welcome": "Welcome Back!",
+    "subtitle": "Find projects and grow your freelance career",
+    "activeProjects": "Active Projects",
+    "pendingProposals": "Pending Proposals",
+    "messages": "Unread Messages",
+    "totalEarnings": "Total Earnings",
+    "quickActions": "Quick Actions",
+    "findProjects": "Find Projects",
+    "myProposals": "My Proposals",
+    "viewMessages": "View Messages",
+    "recommendedProjects": "Recommended Projects",
+    "noProjects": "No projects available right now",
+    "browseProjects": "Browse all projects"
   },
   "common": {
     "loading": "Loading...",
@@ -428,11 +324,12 @@
     "delete": "Delete",
     "edit": "Edit",
     "view": "View",
+    "viewAll": "View All",
     "search": "Search",
     "filter": "Filter",
     "noResults": "No results found",
     "success": "Success!",
-    "error": "Error",
+    "error": "An error occurred",
     "confirm": "Confirm",
     "back": "Back",
     "next": "Next",
