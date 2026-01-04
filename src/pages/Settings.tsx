@@ -230,7 +230,7 @@ export default function Settings() {
               <CardDescription>{t("settings.profileDesc")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Avatar/Logo */}
+              {/* Avatar/Logo with FileUpload */}
               <div className="flex items-center gap-4">
                 <Avatar className="h-20 w-20">
                   <AvatarImage src={isCompany ? companyProfile?.logo_url || undefined : freelancerProfile?.avatar_url || undefined} />
@@ -241,10 +241,51 @@ export default function Settings() {
                     }
                   </AvatarFallback>
                 </Avatar>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Upload className="h-4 w-4" />
-                  {t("settings.uploadPhoto")}
-                </Button>
+                <div>
+                  <input
+                    type="file"
+                    id="avatar-upload"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file || !user) return;
+                      
+                      const bucket = isCompany ? "logos" : "avatars";
+                      const fileExt = file.name.split(".").pop();
+                      const filePath = `${user.id}/${Date.now()}.${fileExt}`;
+                      
+                      const { error } = await supabase.storage
+                        .from(bucket)
+                        .upload(filePath, file, { upsert: true });
+                      
+                      if (error) {
+                        toast.error(t("common.error"));
+                        return;
+                      }
+                      
+                      const { data: { publicUrl } } = supabase.storage
+                        .from(bucket)
+                        .getPublicUrl(filePath);
+                      
+                      if (isCompany && companyProfile) {
+                        setCompanyProfile({ ...companyProfile, logo_url: publicUrl });
+                      } else if (freelancerProfile) {
+                        setFreelancerProfile({ ...freelancerProfile, avatar_url: publicUrl });
+                      }
+                      toast.success(t("uploads.success"));
+                    }}
+                  />
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="gap-2"
+                    onClick={() => document.getElementById("avatar-upload")?.click()}
+                  >
+                    <Upload className="h-4 w-4" />
+                    {t("settings.uploadPhoto")}
+                  </Button>
+                </div>
               </div>
 
               <Separator />
