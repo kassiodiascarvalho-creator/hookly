@@ -62,7 +62,9 @@
     "publish": "Publicar Projeto",
     "savedAsDraft": "Projeto salvo como rascunho",
     "published": "Projeto publicado com sucesso!",
-    "notFound": "Projeto não encontrado"
+    "notFound": "Projeto não encontrado",
+    "markComplete": "Marcar como Concluído",
+    "completed": "Projeto marcado como concluído!"
   },
   "proposals": {
     "received": "Propostas Recebidas",
@@ -783,7 +785,8 @@
     "markAllRead": "Marcar todas como lidas",
     "noNotifications": "Nenhuma notificação ainda",
     "projectInvite": "Você foi convidado a enviar uma proposta para: {{projectTitle}}",
-    "newReview": "Você recebeu uma nova avaliação!"
+    "newReview": "Você recebeu uma nova avaliação!",
+    "projectCompleted": "O projeto \"{{projectTitle}}\" foi marcado como concluído!"
   },
   "common": {
     "loading": "Carregando...",

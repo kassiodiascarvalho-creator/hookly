@@ -11,8 +11,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { 
   ArrowLeft, Briefcase, Clock, CheckCircle, FileText, Loader2, 
-  DollarSign, MessageSquare, Star, Calendar, MapPin, Check, X
+  DollarSign, MessageSquare, Star, Calendar, MapPin, Check, X, Flag
 } from "lucide-react";
+import { ReviewForm } from "@/components/reviews/ReviewForm";
 import { format } from "date-fns";
 import MilestonePayment from "@/components/payments/MilestonePayment";
 
@@ -72,6 +73,7 @@ export default function ProjectDetail() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [showReviewForm, setShowReviewForm] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -249,6 +251,35 @@ export default function ProjectDetail() {
     setActionLoading(null);
   };
 
+  const handleCompleteProject = async () => {
+    if (!project || !acceptedProposal) return;
+    setActionLoading("complete");
+
+    const { error } = await supabase
+      .from("projects")
+      .update({ status: "completed" })
+      .eq("id", project.id);
+
+    if (error) {
+      toast.error(error.message);
+      setActionLoading(null);
+      return;
+    }
+
+    // Notify freelancer about project completion
+    await supabase.from("notifications").insert({
+      user_id: acceptedProposal.freelancer_user_id,
+      type: "project_completed",
+      message: t("notifications.projectCompleted", { projectTitle: project.title }),
+      link: `/my-proposals`,
+    });
+
+    toast.success(t("projects.completed"));
+    setProject({ ...project, status: "completed" });
+    setShowReviewForm(true);
+    setActionLoading(null);
+  };
+
   const formatBudget = (min: number | null, max: number | null) => {
     if (!min && !max) return t("projects.budgetNegotiable");
     if (min && max) return `$${min.toLocaleString()} - $${max.toLocaleString()}`;
@@ -314,14 +345,31 @@ export default function ProjectDetail() {
                   </CardDescription>
                 </div>
                 
-                {isOwner && project.status === "draft" && (
-                  <Button onClick={handlePublish} disabled={actionLoading === "publish"}>
-                    {actionLoading === "publish" ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : null}
-                    {t("projects.publish")}
-                  </Button>
-                )}
+                <div className="flex gap-2">
+                  {isOwner && project.status === "draft" && (
+                    <Button onClick={handlePublish} disabled={actionLoading === "publish"}>
+                      {actionLoading === "publish" ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : null}
+                      {t("projects.publish")}
+                    </Button>
+                  )}
+                  
+                  {isOwner && project.status === "in_progress" && acceptedProposal && (
+                    <Button 
+                      onClick={handleCompleteProject} 
+                      disabled={actionLoading === "complete"}
+                      className="gap-2"
+                    >
+                      {actionLoading === "complete" ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Flag className="h-4 w-4" />
+                      )}
+                      {t("projects.markComplete")}
+                    </Button>
+                  )}
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -486,8 +534,8 @@ export default function ProjectDetail() {
             </Card>
           )}
 
-          {/* Payment Section - Show for in_progress projects */}
-          {project.status === "in_progress" && acceptedProposal && (
+          {/* Payment Section - Show for in_progress or completed projects */}
+          {(project.status === "in_progress" || project.status === "completed") && acceptedProposal && (
             <MilestonePayment
               projectId={project.id}
               projectTitle={project.title}
@@ -500,6 +548,17 @@ export default function ProjectDetail() {
           )}
         </div>
       </div>
+
+      {/* Review Form Dialog */}
+      {acceptedProposal && (
+        <ReviewForm
+          projectId={project.id}
+          freelancerUserId={acceptedProposal.freelancer_user_id}
+          open={showReviewForm}
+          onOpenChange={setShowReviewForm}
+          onReviewSubmitted={() => setShowReviewForm(false)}
+        />
+      )}
     </div>
   );
 }
