@@ -23,6 +23,8 @@ import FindProjects from "./pages/FindProjects";
 import ProjectView from "./pages/ProjectView";
 import MyProposals from "./pages/MyProposals";
 import Messages from "./pages/Messages";
+import Settings from "./pages/Settings";
+import TalentPool from "./pages/TalentPool";
 
 const queryClient = new QueryClient();
 
@@ -62,8 +64,9 @@ const App = () => (
               <Route path="/projects/new" element={<ProjectNew />} />
               <Route path="/projects/:id" element={<ProjectDetail />} />
               <Route path="/proposals" element={<CompanyProposals />} />
-              <Route path="/talent-pool" element={<Dashboard />} />
+              <Route path="/talent-pool" element={<TalentPool />} />
               <Route path="/finances" element={<Dashboard />} />
+              <Route path="/settings" element={<Settings />} />
             </Route>
             
             {/* Freelancer Dashboard Routes */}
@@ -80,6 +83,7 @@ const App = () => (
               <Route path="/my-proposals" element={<MyProposals />} />
               <Route path="/earnings" element={<FreelancerDashboard />} />
               <Route path="/certifications" element={<FreelancerDashboard />} />
+              <Route path="/settings" element={<Settings />} />
             </Route>
             
             {/* Shared Routes (both user types) */}
@@ -91,7 +95,6 @@ const App = () => (
               }
             >
               <Route path="/messages" element={<Messages />} />
-              <Route path="/settings" element={<Dashboard />} />
             </Route>
             
             {/* Catch-all */}
