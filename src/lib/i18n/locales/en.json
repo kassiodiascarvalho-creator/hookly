@@ -435,6 +435,23 @@
     "noProjects": "No projects available right now",
     "browseProjects": "Browse all projects"
   },
+  "messages": {
+    "title": "Messages",
+    "subtitle": "Communicate with your clients and freelancers",
+    "selectConversation": "Select a conversation to start messaging",
+    "noConversations": "No conversations yet",
+    "noConversationsDesc": "Start a conversation by accepting a proposal or contacting a freelancer",
+    "noMessages": "No messages yet",
+    "startConversation": "Send a message to start the conversation",
+    "typeMessage": "Type a message...",
+    "today": "Today",
+    "yesterday": "Yesterday"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark all read",
+    "noNotifications": "No notifications yet"
+  },
   "common": {
     "loading": "Loading...",
     "save": "Save",

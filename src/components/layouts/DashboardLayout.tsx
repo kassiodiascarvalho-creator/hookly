@@ -34,9 +34,9 @@ import {
   FileText,
   Award,
   ChevronLeft,
-  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 const languages = [
   { code: "en", label: "English" },
@@ -277,9 +277,7 @@ export function DashboardLayout() {
           <div className="flex-1" />
 
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-            </Button>
+            <NotificationBell />
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
