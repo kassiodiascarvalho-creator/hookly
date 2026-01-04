@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,6 +14,7 @@ import {
   DollarSign, MessageSquare, Star, Calendar, MapPin, Check, X
 } from "lucide-react";
 import { format } from "date-fns";
+import MilestonePayment from "@/components/payments/MilestonePayment";
 
 interface Project {
   id: string;
@@ -45,6 +46,13 @@ interface Proposal {
   } | null;
 }
 
+interface Payment {
+  id: string;
+  amount: number;
+  status: "pending" | "paid" | "released" | "failed";
+  stripe_payment_intent_id: string | null;
+}
+
 const statusConfig = {
   draft: { label: "Draft", color: "bg-muted text-muted-foreground", icon: FileText },
   open: { label: "Open", color: "bg-green-100 text-green-800", icon: Briefcase },
@@ -55,11 +63,13 @@ const statusConfig = {
 export default function ProjectDetail() {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   
   const [project, setProject] = useState<Project | null>(null);
   const [proposals, setProposals] = useState<Proposal[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
@@ -67,8 +77,20 @@ export default function ProjectDetail() {
     if (id) {
       fetchProject();
       fetchProposals();
+      fetchPayments();
     }
   }, [id]);
+
+  // Handle payment success/cancel from Stripe redirect
+  useEffect(() => {
+    const paymentStatus = searchParams.get("payment");
+    if (paymentStatus === "success") {
+      toast.success(t("payments.success"));
+      fetchPayments();
+    } else if (paymentStatus === "cancelled") {
+      toast.info(t("payments.cancelled"));
+    }
+  }, [searchParams]);
 
   const fetchProject = async () => {
     const { data, error } = await supabase
@@ -106,6 +128,17 @@ export default function ProjectDetail() {
       );
       setProposals(proposalsWithFreelancers);
     }
+  };
+
+  const fetchPayments = async () => {
+    if (!id) return;
+    
+    const { data } = await supabase
+      .from("payments")
+      .select("id, amount, status, stripe_payment_intent_id")
+      .eq("project_id", id);
+    
+    if (data) setPayments(data);
   };
 
   const handlePublish = async () => {
@@ -246,6 +279,10 @@ export default function ProjectDetail() {
   const StatusIcon = config.icon;
   const isOwner = user?.id === project.company_user_id;
   const kpis = Array.isArray(project.kpis) ? project.kpis : [];
+  const acceptedProposal = proposals.find(p => p.status === "accepted");
+  const acceptedProposalMilestones = acceptedProposal?.milestones 
+    ? (acceptedProposal.milestones as { title: string; amount: number; description?: string }[])
+    : [];
 
   return (
     <div className="space-y-6">
@@ -447,6 +484,19 @@ export default function ProjectDetail() {
                 )}
               </CardContent>
             </Card>
+          )}
+
+          {/* Payment Section - Show for in_progress projects */}
+          {project.status === "in_progress" && acceptedProposal && (
+            <MilestonePayment
+              projectId={project.id}
+              projectTitle={project.title}
+              milestones={acceptedProposalMilestones}
+              freelancerUserId={acceptedProposal.freelancer_user_id}
+              isCompany={isOwner}
+              payments={payments}
+              onPaymentComplete={fetchPayments}
+            />
           )}
         </div>
       </div>
