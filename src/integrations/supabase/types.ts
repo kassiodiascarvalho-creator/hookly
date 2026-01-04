@@ -398,6 +398,42 @@ export type Database = {
         }
         Relationships: []
       }
+      portfolio_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          freelancer_user_id: string
+          id: string
+          image_url: string | null
+          project_url: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          freelancer_user_id: string
+          id?: string
+          image_url?: string | null
+          project_url?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          freelancer_user_id?: string
+          id?: string
+          image_url?: string | null
+          project_url?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

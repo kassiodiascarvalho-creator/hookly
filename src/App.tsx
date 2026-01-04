@@ -25,6 +25,8 @@ import MyProposals from "./pages/MyProposals";
 import Messages from "./pages/Messages";
 import Settings from "./pages/Settings";
 import TalentPool from "./pages/TalentPool";
+import FreelancerProfile from "./pages/FreelancerProfile";
+import Earnings from "./pages/Earnings";
 
 const queryClient = new QueryClient();
 
@@ -65,6 +67,7 @@ const App = () => (
               <Route path="/projects/:id" element={<ProjectDetail />} />
               <Route path="/proposals" element={<CompanyProposals />} />
               <Route path="/talent-pool" element={<TalentPool />} />
+              <Route path="/freelancers/:userId" element={<FreelancerProfile />} />
               <Route path="/finances" element={<Dashboard />} />
               <Route path="/settings" element={<Settings />} />
             </Route>
@@ -81,7 +84,7 @@ const App = () => (
               <Route path="/find-projects" element={<FindProjects />} />
               <Route path="/project/:id" element={<ProjectView />} />
               <Route path="/my-proposals" element={<MyProposals />} />
-              <Route path="/earnings" element={<FreelancerDashboard />} />
+              <Route path="/earnings" element={<Earnings />} />
               <Route path="/certifications" element={<FreelancerDashboard />} />
               <Route path="/settings" element={<Settings />} />
             </Route>
