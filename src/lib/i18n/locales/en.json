@@ -62,7 +62,9 @@
     "publish": "Publish Project",
     "savedAsDraft": "Project saved as draft",
     "published": "Project published successfully!",
-    "notFound": "Project not found"
+    "notFound": "Project not found",
+    "markComplete": "Mark as Complete",
+    "completed": "Project marked as completed!"
   },
   "proposals": {
     "received": "Proposals Received",
@@ -680,7 +682,8 @@
     "markAllRead": "Mark all read",
     "noNotifications": "No notifications yet",
     "projectInvite": "You've been invited to submit a proposal for: {{projectTitle}}",
-    "newReview": "You received a new review!"
+    "newReview": "You received a new review!",
+    "projectCompleted": "Project \"{{projectTitle}}\" has been marked as completed!"
   },
   "common": {
     "loading": "Loading...",
