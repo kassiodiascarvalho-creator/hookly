@@ -124,6 +124,7 @@ const App = () => (
               <Route path="/earnings" element={<Earnings />} />
               <Route path="/invites" element={<FreelancerInvites />} />
               <Route path="/certifications" element={<FreelancerDashboard />} />
+              <Route path="/freelancers/:userId" element={<FreelancerProfile />} />
               <Route path="/settings" element={<Settings />} />
             </Route>
             
