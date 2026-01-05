@@ -16,7 +16,8 @@
     "findProjects": "Encontrar Projetos",
     "myProposals": "Minhas Propostas",
     "earnings": "Ganhos",
-    "certifications": "Certificações"
+    "certifications": "Certificações",
+    "invites": "Convites"
   },
   "projects": {
     "title": "Projetos",
@@ -939,5 +940,209 @@
     "pending": "Pendente",
     "failed": "Falhou",
     "releasedToFreelancer": "Liberado ao Freelancer"
+  },
+  "currency": {
+    "select": "Selecionar moeda",
+    "showAll": "Ver todas moedas"
+  },
+  "invites": {
+    "title": "Convites de Projetos",
+    "subtitle": "Gerenciar convites recebidos de empresas",
+    "pending": "Convites Pendentes",
+    "history": "Histórico",
+    "new": "Novo",
+    "accept": "Aceitar",
+    "decline": "Recusar",
+    "accepted": "Convite aceito com sucesso!",
+    "declined": "Convite recusado",
+    "statusAccepted": "Aceito",
+    "statusDeclined": "Recusado",
+    "noInvites": "Nenhum convite ainda",
+    "noInvitesDesc": "Empresas poderão convidar você para projetos quando encontrarem seu perfil",
+    "browseProjects": "Explorar Projetos",
+    "notifications": {
+      "accepted": "Seu convite para o projeto {{project}} foi aceito!"
+    }
+  },
+  "talentPool": {
+    "title": "Pool de Talentos",
+    "subtitle": "Encontre freelancers verificados para seus projetos",
+    "searchPlaceholder": "Buscar por nome, habilidade ou título...",
+    "filters": "Filtros",
+    "filtersDesc": "Refine sua busca",
+    "hourlyRate": "Valor por Hora",
+    "location": "Localização",
+    "locationPlaceholder": "Digite uma localização...",
+    "verifiedOnly": "Apenas Verificados",
+    "skills": "Habilidades",
+    "clearFilters": "Limpar Filtros",
+    "freelancersFound": "freelancers encontrados",
+    "noResults": "Nenhum resultado encontrado",
+    "noResultsDesc": "Tente ajustar seus filtros",
+    "unnamed": "Sem nome",
+    "viewProfile": "Ver Perfil",
+    "contact": "Contatar",
+    "noProjectsToInvite": "Você precisa ter projetos abertos para convidar freelancers",
+    "inviteAlreadySent": "Você já enviou um convite para este projeto",
+    "inviteSent": "Convite enviado com sucesso!",
+    "inviteTitle": "Convidar para Projeto",
+    "inviteDescription": "Convide {{name}} para colaborar em um de seus projetos",
+    "selectProject": "Selecionar Projeto",
+    "selectProjectPlaceholder": "Escolha um projeto...",
+    "inviteMessageLabel": "Mensagem (opcional)",
+    "inviteMessagePlaceholder": "Adicione uma mensagem personalizada...",
+    "sendInvite": "Enviar Convite",
+    "inviteNotification": "Você recebeu um convite para o projeto: {{project}}"
+  },
+  "forCompanies": {
+    "badge": "Para Empresas",
+    "title": "Contrate Talentos Verificados com Confiança",
+    "subtitle": "HOOKLY conecta sua empresa aos melhores freelancers do mercado. Pague por resultados, não por horas.",
+    "cta": "Criar Conta Grátis",
+    "ctaSecondary": "Ver Talentos",
+    "benefitsTitle": "Por que escolher HOOKLY",
+    "benefits": {
+      "verified": {
+        "title": "Talentos Verificados",
+        "description": "Todos os freelancers passam por rigoroso processo de verificação"
+      },
+      "escrow": {
+        "title": "Pagamento Seguro",
+        "description": "Fundos protegidos em escrow até aprovação do trabalho"
+      },
+      "talent": {
+        "title": "Pool Global",
+        "description": "Acesso a profissionais de mais de 150 países"
+      },
+      "fast": {
+        "title": "Match Rápido",
+        "description": "Encontre o profissional ideal em menos de 24 horas"
+      }
+    },
+    "howItWorks": "Como Funciona",
+    "steps": {
+      "post": {
+        "title": "Publique seu Projeto",
+        "description": "Descreva o que precisa e defina seu orçamento"
+      },
+      "receive": {
+        "title": "Receba Propostas",
+        "description": "Freelancers verificados enviarão propostas"
+      },
+      "hire": {
+        "title": "Contrate e Acompanhe",
+        "description": "Escolha o melhor e acompanhe o progresso"
+      },
+      "pay": {
+        "title": "Pague por Resultados",
+        "description": "Libere o pagamento quando aprovar o trabalho"
+      }
+    },
+    "ctaTitle": "Pronto para Começar?",
+    "ctaSubtitle": "Junte-se a milhares de empresas que já encontraram seus talentos ideais",
+    "ctaButton": "Cadastre-se Grátis"
+  },
+  "forFreelancers": {
+    "badge": "Para Freelancers",
+    "title": "Construa sua Carreira com Clientes de Qualidade",
+    "subtitle": "Conecte-se com empresas sérias que valorizam seu trabalho e pague apenas pela qualidade entregue.",
+    "cta": "Criar Perfil Grátis",
+    "benefitsTitle": "Vantagens HOOKLY",
+    "benefits": {
+      "payment": {
+        "title": "Pagamento Garantido",
+        "description": "Receba sempre pelo trabalho aprovado"
+      },
+      "escrow": {
+        "title": "Escrow Protegido",
+        "description": "Fundos garantidos antes de iniciar o trabalho"
+      },
+      "clients": {
+        "title": "Clientes Verificados",
+        "description": "Trabalhe apenas com empresas sérias e confiáveis"
+      },
+      "growth": {
+        "title": "Cresça sua Carreira",
+        "description": "Construa seu portfólio e reputação na plataforma"
+      }
+    },
+    "howItWorks": "Como Funciona",
+    "steps": {
+      "profile": {
+        "title": "Crie seu Perfil",
+        "description": "Destaque suas habilidades e experiência"
+      },
+      "browse": {
+        "title": "Encontre Projetos",
+        "description": "Navegue por oportunidades que combinam com você"
+      },
+      "propose": {
+        "title": "Envie Propostas",
+        "description": "Apresente sua solução com milestones claros"
+      },
+      "earn": {
+        "title": "Trabalhe e Ganhe",
+        "description": "Entregue resultados e receba seu pagamento"
+      }
+    },
+    "ctaTitle": "Comece sua Jornada Hoje",
+    "ctaSubtitle": "Milhares de projetos esperando por profissionais como você",
+    "ctaButton": "Criar Perfil Grátis"
+  },
+  "pricingPage": {
+    "title": "Planos Flexíveis para Cada Necessidade",
+    "subtitle": "Comece grátis, faça upgrade quando precisar de mais recursos",
+    "faqTitle": "Perguntas Frequentes sobre Preços",
+    "faqSubtitle": "Tire suas dúvidas sobre nossos planos",
+    "faq": {
+      "fees": {
+        "question": "Quais são as taxas da plataforma?",
+        "answer": "HOOKLY cobra 10% sobre transações concluídas. Não há taxas ocultas ou mensalidades obrigatórias."
+      },
+      "payment": {
+        "question": "Como funciona o pagamento?",
+        "answer": "O pagamento fica em escrow até você aprovar o trabalho. Assim que aprovado, liberamos para o freelancer."
+      }
+    },
+    "ctaTitle": "Pronto para Começar?",
+    "ctaSubtitle": "Crie sua conta grátis e explore a plataforma",
+    "ctaButton": "Começar Agora"
+  },
+  "howItWorksPage": {
+    "title": "Como Funciona o HOOKLY",
+    "subtitle": "Um processo simples e transparente para conectar talentos e empresas",
+    "step": "Passo",
+    "steps": {
+      "post": {
+        "title": "Publique seu Projeto",
+        "description": "Descreva detalhadamente o que você precisa, defina o orçamento e os KPIs esperados. É grátis e leva apenas alguns minutos."
+      },
+      "match": {
+        "title": "Receba Propostas Qualificadas",
+        "description": "Freelancers verificados analisam seu projeto e enviam propostas com milestones e valores. Você pode comparar e negociar."
+      },
+      "work": {
+        "title": "Acompanhe o Progresso",
+        "description": "Comunique-se diretamente com o freelancer, acompanhe entregas por milestone e mantenha controle total do projeto."
+      },
+      "pay": {
+        "title": "Pague por Resultados",
+        "description": "Aprove cada entrega e libere o pagamento. O escrow garante segurança para ambas as partes."
+      }
+    },
+    "security": {
+      "title": "Sua Segurança é Nossa Prioridade",
+      "description": "Todos os pagamentos são protegidos por escrow. Você só paga quando aprovar o trabalho. Freelancers são verificados e avaliados."
+    },
+    "ctaTitle": "Pronto para Começar?",
+    "ctaSubtitle": "Junte-se a milhares de empresas e freelancers de sucesso",
+    "ctaButton": "Criar Conta Grátis"
+  },
+  "projects": {
+    "currency": "Moeda"
+  },
+  "settings": {
+    "preferredPayoutCurrency": "Moeda de Recebimento Preferida",
+    "preferredPayoutCurrencyDesc": "Esta é sua preferência para exibição e recebimento manual de pagamentos"
   }
 }

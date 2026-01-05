@@ -95,10 +95,10 @@ const Index = () => {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
-            <Link to="/login">
+            <Link to="/auth">
               <Button variant="ghost" size="sm">{t("nav.login")}</Button>
             </Link>
-            <Link to="/signup">
+            <Link to="/auth">
               <Button size="sm">{t("nav.signup")}</Button>
             </Link>
           </div>
@@ -127,7 +127,7 @@ const Index = () => {
                 {t("hero.subtitle")}
               </p>
               <div className="flex flex-wrap gap-4">
-                <Link to="/signup">
+                <Link to="/auth">
                   <Button size="lg" className="gap-2">
                     {t("hero.cta")}
                     <ChevronRight className="h-4 w-4" />
@@ -295,7 +295,9 @@ const Index = () => {
                   </li>
                 ))}
               </ul>
-              <Button variant="outline" className="w-full">{t("pricing.starter.cta")}</Button>
+              <Link to="/auth">
+                <Button variant="outline" className="w-full">{t("pricing.starter.cta")}</Button>
+              </Link>
             </div>
             {/* Business */}
             <div className="bg-secondary text-secondary-foreground rounded-2xl p-8 relative">
@@ -313,7 +315,9 @@ const Index = () => {
                   </li>
                 ))}
               </ul>
-              <Button className="w-full">{t("pricing.business.cta")}</Button>
+              <Link to="/auth">
+                <Button className="w-full">{t("pricing.business.cta")}</Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -343,12 +347,14 @@ const Index = () => {
           <h2 className="font-display text-3xl lg:text-4xl font-bold mb-4">{t("cta.title")}</h2>
           <p className="text-secondary-foreground/80 mb-8 max-w-2xl mx-auto">{t("cta.subtitle")}</p>
           <div className="flex flex-wrap justify-center gap-4">
-            <Link to="/signup">
+            <Link to="/auth">
               <Button size="lg">{t("cta.primary")}</Button>
             </Link>
-            <Button size="lg" variant="outline" className="bg-transparent border-secondary-foreground/30 text-secondary-foreground hover:bg-secondary-foreground/10">
-              {t("cta.secondary")}
-            </Button>
+            <Link to="/auth">
+              <Button size="lg" variant="outline" className="bg-transparent border-secondary-foreground/30 text-secondary-foreground hover:bg-secondary-foreground/10">
+                {t("cta.secondary")}
+              </Button>
+            </Link>
           </div>
         </div>
       </section>

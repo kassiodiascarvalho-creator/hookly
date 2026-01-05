@@ -140,6 +140,7 @@ export type Database = {
           id: string
           languages: string[] | null
           location: string | null
+          preferred_payout_currency: string | null
           skills: string[] | null
           title: string | null
           updated_at: string
@@ -155,6 +156,7 @@ export type Database = {
           id?: string
           languages?: string[] | null
           location?: string | null
+          preferred_payout_currency?: string | null
           skills?: string[] | null
           title?: string | null
           updated_at?: string
@@ -170,6 +172,7 @@ export type Database = {
           id?: string
           languages?: string[] | null
           location?: string | null
+          preferred_payout_currency?: string | null
           skills?: string[] | null
           title?: string | null
           updated_at?: string
@@ -517,6 +520,47 @@ export type Database = {
         }
         Relationships: []
       }
+      project_invites: {
+        Row: {
+          company_user_id: string
+          created_at: string
+          freelancer_user_id: string
+          id: string
+          message: string | null
+          project_id: string
+          responded_at: string | null
+          status: string
+        }
+        Insert: {
+          company_user_id: string
+          created_at?: string
+          freelancer_user_id: string
+          id?: string
+          message?: string | null
+          project_id: string
+          responded_at?: string | null
+          status?: string
+        }
+        Update: {
+          company_user_id?: string
+          created_at?: string
+          freelancer_user_id?: string
+          id?: string
+          message?: string | null
+          project_id?: string
+          responded_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_invites_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           budget_max: number | null
@@ -524,6 +568,7 @@ export type Database = {
           category: string | null
           company_user_id: string
           created_at: string
+          currency: string
           description: string | null
           id: string
           kpis: Json | null
@@ -537,6 +582,7 @@ export type Database = {
           category?: string | null
           company_user_id: string
           created_at?: string
+          currency?: string
           description?: string | null
           id?: string
           kpis?: Json | null
@@ -550,6 +596,7 @@ export type Database = {
           category?: string | null
           company_user_id?: string
           created_at?: string
+          currency?: string
           description?: string | null
           id?: string
           kpis?: Json | null

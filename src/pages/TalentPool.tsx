@@ -9,9 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Slider } from "@/components/ui/slider";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Search, MapPin, DollarSign, Star, CheckCircle, Filter,
-  Loader2, MessageSquare, X
+  Loader2, MessageSquare, X, Send, UserPlus
 } from "lucide-react";
 import {
   Sheet,
@@ -21,8 +22,24 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
 
 interface Freelancer {
   id: string;
@@ -45,6 +62,12 @@ const SKILL_CATEGORIES = [
   "SEO", "Content Writing", "Video Editing", "Marketing"
 ];
 
+interface Project {
+  id: string;
+  title: string;
+  status: string;
+}
+
 export default function TalentPool() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -54,6 +77,14 @@ export default function TalentPool() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   
+  // Invite modal state
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [selectedFreelancer, setSelectedFreelancer] = useState<Freelancer | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState("");
+  const [inviteMessage, setInviteMessage] = useState("");
+  const [sendingInvite, setSendingInvite] = useState(false);
+  
   // Filters
   const [rateRange, setRateRange] = useState([0, 200]);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
@@ -62,7 +93,10 @@ export default function TalentPool() {
 
   useEffect(() => {
     fetchFreelancers();
-  }, []);
+    if (user) {
+      fetchProjects();
+    }
+  }, [user]);
 
   const fetchFreelancers = async () => {
     const { data, error } = await supabase
@@ -74,6 +108,20 @@ export default function TalentPool() {
       setFreelancers(data);
     }
     setLoading(false);
+  };
+
+  const fetchProjects = async () => {
+    if (!user) return;
+    
+    const { data } = await supabase
+      .from("projects")
+      .select("id, title, status")
+      .eq("company_user_id", user.id)
+      .in("status", ["open", "in_progress"]);
+    
+    if (data) {
+      setProjects(data);
+    }
   };
 
   const filteredFreelancers = freelancers.filter((freelancer) => {
@@ -140,6 +188,67 @@ export default function TalentPool() {
         navigate(`/messages?conversation=${newConv.id}`);
       }
     }
+  };
+
+  const openInviteModal = (freelancer: Freelancer) => {
+    if (projects.length === 0) {
+      toast.error(t("talentPool.noProjectsToInvite"));
+      return;
+    }
+    setSelectedFreelancer(freelancer);
+    setSelectedProjectId("");
+    setInviteMessage("");
+    setInviteModalOpen(true);
+  };
+
+  const handleSendInvite = async () => {
+    if (!user || !selectedFreelancer || !selectedProjectId) return;
+    
+    setSendingInvite(true);
+    
+    // Check for existing pending invite
+    const { data: existing } = await supabase
+      .from("project_invites")
+      .select("id")
+      .eq("project_id", selectedProjectId)
+      .eq("freelancer_user_id", selectedFreelancer.user_id)
+      .eq("status", "pending")
+      .maybeSingle();
+    
+    if (existing) {
+      toast.error(t("talentPool.inviteAlreadySent"));
+      setSendingInvite(false);
+      return;
+    }
+    
+    // Create invite
+    const { error } = await supabase
+      .from("project_invites")
+      .insert({
+        project_id: selectedProjectId,
+        company_user_id: user.id,
+        freelancer_user_id: selectedFreelancer.user_id,
+        message: inviteMessage || null,
+      });
+    
+    if (error) {
+      console.error("Invite error:", error);
+      toast.error(t("common.error"));
+    } else {
+      // Send notification to freelancer
+      const project = projects.find(p => p.id === selectedProjectId);
+      await supabase.from("notifications").insert({
+        user_id: selectedFreelancer.user_id,
+        type: "project_invite",
+        message: t("talentPool.inviteNotification", { project: project?.title }),
+        link: "/invites",
+      });
+      
+      toast.success(t("talentPool.inviteSent"));
+      setInviteModalOpen(false);
+    }
+    
+    setSendingInvite(false);
   };
 
   const toggleSkill = (skill: string) => {
@@ -372,11 +481,18 @@ export default function TalentPool() {
                   </Button>
                   <Button 
                     size="sm" 
-                    className="flex-1 gap-1"
+                    variant="outline"
+                    className="gap-1"
+                    onClick={() => openInviteModal(freelancer)}
+                  >
+                    <UserPlus className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    className="gap-1"
                     onClick={() => handleStartConversation(freelancer.user_id)}
                   >
                     <MessageSquare className="h-4 w-4" />
-                    {t("talentPool.contact")}
                   </Button>
                 </div>
               </CardContent>
@@ -384,6 +500,64 @@ export default function TalentPool() {
           ))}
         </div>
       )}
+
+      {/* Invite Modal */}
+      <Dialog open={inviteModalOpen} onOpenChange={setInviteModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("talentPool.inviteTitle")}</DialogTitle>
+            <DialogDescription>
+              {t("talentPool.inviteDescription", { name: selectedFreelancer?.full_name || t("talentPool.unnamed") })}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>{t("talentPool.selectProject")}</Label>
+              <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t("talentPool.selectProjectPlaceholder")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {projects.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>{t("talentPool.inviteMessageLabel")}</Label>
+              <Textarea
+                value={inviteMessage}
+                onChange={(e) => setInviteMessage(e.target.value)}
+                placeholder={t("talentPool.inviteMessagePlaceholder")}
+                rows={3}
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setInviteModalOpen(false)}>
+              {t("common.cancel")}
+            </Button>
+            <Button 
+              onClick={handleSendInvite} 
+              disabled={!selectedProjectId || sendingInvite}
+              className="gap-2"
+            >
+              {sendingInvite ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+              {t("talentPool.sendInvite")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
