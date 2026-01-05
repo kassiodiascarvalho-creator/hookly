@@ -264,6 +264,41 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_logs: {
+        Row: {
+          action: string
+          admin_user_id: string | null
+          created_at: string
+          details: Json | null
+          id: string
+          payment_id: string
+        }
+        Insert: {
+          action: string
+          admin_user_id?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          payment_id: string
+        }
+        Update: {
+          action?: string
+          admin_user_id?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          payment_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_logs_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_method_tokens: {
         Row: {
           brand: string | null
@@ -300,9 +335,13 @@ export type Database = {
           company_user_id: string | null
           created_at: string
           currency: string
+          escrow_status: string | null
           freelancer_user_id: string | null
           id: string
+          paid_at: string | null
           project_id: string | null
+          released_at: string | null
+          released_by_admin_id: string | null
           status: Database["public"]["Enums"]["payment_status"]
           stripe_checkout_session_id: string | null
           stripe_payment_intent_id: string | null
@@ -313,9 +352,13 @@ export type Database = {
           company_user_id?: string | null
           created_at?: string
           currency?: string
+          escrow_status?: string | null
           freelancer_user_id?: string | null
           id?: string
+          paid_at?: string | null
           project_id?: string | null
+          released_at?: string | null
+          released_by_admin_id?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
@@ -326,9 +369,13 @@ export type Database = {
           company_user_id?: string | null
           created_at?: string
           currency?: string
+          escrow_status?: string | null
           freelancer_user_id?: string | null
           id?: string
+          paid_at?: string | null
           project_id?: string | null
+          released_at?: string | null
+          released_by_admin_id?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null

@@ -35,10 +35,23 @@ serve(async (req) => {
 
     let event: Stripe.Event;
 
+    // Validate webhook signature
     if (webhookSecret && sig) {
-      event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
+      try {
+        event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
+        logStep("Webhook signature verified");
+      } catch (err: unknown) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        logStep("Webhook signature verification failed", { error: errorMsg });
+        return new Response(JSON.stringify({ error: "Invalid signature" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+        });
+      }
     } else {
+      // For testing without webhook secret (not recommended in production)
       event = JSON.parse(body);
+      logStep("WARNING: Processing without signature verification");
     }
 
     logStep("Event type", { type: event.type });
@@ -46,32 +59,68 @@ serve(async (req) => {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-        logStep("Checkout session completed", { sessionId: session.id });
+        logStep("Checkout session completed", { 
+          sessionId: session.id,
+          paymentIntent: session.payment_intent,
+          amount: session.amount_total
+        });
 
         const metadata = session.metadata || {};
         const projectId = metadata.project_id;
         const milestoneId = metadata.milestone_id;
         const freelancerUserId = metadata.freelancer_user_id;
+        const companyUserId = session.client_reference_id || metadata.company_user_id;
+
+        logStep("Extracted metadata", { projectId, milestoneId, freelancerUserId, companyUserId });
 
         if (projectId && session.payment_intent) {
-          // Create payment record
-          const { error: insertError } = await supabaseClient
+          // Check if payment already exists
+          const { data: existingPayment } = await supabaseClient
+            .from("payments")
+            .select("id")
+            .eq("stripe_payment_intent_id", session.payment_intent as string)
+            .maybeSingle();
+
+          if (existingPayment) {
+            logStep("Payment already exists, skipping", { paymentId: existingPayment.id });
+            break;
+          }
+
+          // Create payment record with status 'paid' and escrow_status 'held'
+          const { data: payment, error: insertError } = await supabaseClient
             .from("payments")
             .insert({
               project_id: projectId,
-              company_user_id: session.client_reference_id || metadata.company_user_id,
+              company_user_id: companyUserId,
               freelancer_user_id: freelancerUserId,
               amount: (session.amount_total || 0) / 100,
               currency: session.currency?.toUpperCase() || "USD",
-              status: "pending", // Funds held in escrow
+              status: "paid",
+              escrow_status: "held",
               stripe_payment_intent_id: session.payment_intent as string,
               stripe_checkout_session_id: session.id,
-            });
+              paid_at: new Date().toISOString(),
+            })
+            .select()
+            .single();
 
           if (insertError) {
             logStep("Error creating payment record", { error: insertError });
           } else {
-            logStep("Payment record created");
+            logStep("Payment record created", { paymentId: payment.id });
+
+            // Log the payment creation
+            await supabaseClient.from("payment_logs").insert({
+              payment_id: payment.id,
+              action: "payment_created",
+              details: {
+                stripe_session_id: session.id,
+                stripe_payment_intent_id: session.payment_intent,
+                amount: (session.amount_total || 0) / 100,
+                currency: session.currency?.toUpperCase() || "USD",
+                source: "stripe_webhook"
+              }
+            });
 
             // Notify freelancer about payment held in escrow
             if (freelancerUserId) {
@@ -81,34 +130,42 @@ serve(async (req) => {
                 message: `A payment of $${(session.amount_total || 0) / 100} has been placed in escrow for your work!`,
                 link: "/earnings",
               });
+              logStep("Freelancer notified", { freelancerUserId });
+            }
+
+            // Notify company about successful payment
+            if (companyUserId) {
+              await supabaseClient.from("notifications").insert({
+                user_id: companyUserId,
+                type: "payment_success",
+                message: `Your payment of $${(session.amount_total || 0) / 100} has been processed and is held in escrow.`,
+                link: "/finances",
+              });
+              logStep("Company notified", { companyUserId });
             }
           }
+        } else {
+          logStep("Missing project_id or payment_intent, skipping");
         }
-        break;
-      }
-
-      case "payment_intent.amount_capturable_updated": {
-        const paymentIntent = event.data.object as Stripe.PaymentIntent;
-        logStep("Payment ready for capture", { paymentIntentId: paymentIntent.id });
-        
-        // Update payment status to indicate funds are ready
-        await supabaseClient
-          .from("payments")
-          .update({ status: "paid" })
-          .eq("stripe_payment_intent_id", paymentIntent.id);
         break;
       }
 
       case "payment_intent.succeeded": {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
-        logStep("Payment succeeded", { paymentIntentId: paymentIntent.id });
+        logStep("Payment intent succeeded", { paymentIntentId: paymentIntent.id });
         
-        // If this was a captured payment, update to released
-        if (paymentIntent.capture_method === "manual") {
-          await supabaseClient
-            .from("payments")
-            .update({ status: "released" })
-            .eq("stripe_payment_intent_id", paymentIntent.id);
+        // Update payment if it exists
+        const { error } = await supabaseClient
+          .from("payments")
+          .update({ 
+            status: "paid",
+            paid_at: new Date().toISOString()
+          })
+          .eq("stripe_payment_intent_id", paymentIntent.id)
+          .eq("status", "pending");
+
+        if (!error) {
+          logStep("Payment status updated to paid");
         }
         break;
       }
@@ -117,10 +174,44 @@ serve(async (req) => {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
         logStep("Payment failed", { paymentIntentId: paymentIntent.id });
         
-        await supabaseClient
+        const { error } = await supabaseClient
           .from("payments")
           .update({ status: "failed" })
           .eq("stripe_payment_intent_id", paymentIntent.id);
+
+        if (!error) {
+          // Get payment to notify users
+          const { data: payment } = await supabaseClient
+            .from("payments")
+            .select("company_user_id, freelancer_user_id")
+            .eq("stripe_payment_intent_id", paymentIntent.id)
+            .maybeSingle();
+
+          if (payment?.company_user_id) {
+            await supabaseClient.from("notifications").insert({
+              user_id: payment.company_user_id,
+              type: "payment_failed",
+              message: "Your payment failed. Please try again.",
+              link: "/finances",
+            });
+          }
+        }
+        break;
+      }
+
+      case "charge.refunded": {
+        const charge = event.data.object as Stripe.Charge;
+        logStep("Charge refunded", { chargeId: charge.id, paymentIntent: charge.payment_intent });
+        
+        if (charge.payment_intent) {
+          await supabaseClient
+            .from("payments")
+            .update({ 
+              status: "failed",
+              escrow_status: "refunded"
+            })
+            .eq("stripe_payment_intent_id", charge.payment_intent as string);
+        }
         break;
       }
     }

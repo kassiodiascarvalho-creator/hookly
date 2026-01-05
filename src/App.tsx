@@ -28,6 +28,7 @@ import Settings from "./pages/Settings";
 import TalentPool from "./pages/TalentPool";
 import FreelancerProfile from "./pages/FreelancerProfile";
 import Earnings from "./pages/Earnings";
+import CompanyFinances from "./pages/CompanyFinances";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -95,7 +96,7 @@ const App = () => (
               <Route path="/proposals" element={<CompanyProposals />} />
               <Route path="/talent-pool" element={<TalentPool />} />
               <Route path="/freelancers/:userId" element={<FreelancerProfile />} />
-              <Route path="/finances" element={<Dashboard />} />
+              <Route path="/finances" element={<CompanyFinances />} />
               <Route path="/settings" element={<Settings />} />
             </Route>
             
