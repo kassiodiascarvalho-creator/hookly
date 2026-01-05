@@ -34,16 +34,16 @@ export function ProtectedRoute({
           .from("profiles")
           .select("user_type, role")
           .eq("user_id", user.id)
-          .single();
+          .maybeSingle();
 
         setUserType(profile?.user_type || null);
         
         // Check if admin using the has_role function
-        if (requireAdmin) {
-          const { data: hasAdminRole } = await supabase
-            .rpc("has_role", { _user_id: user.id, _role: "admin" });
-          setIsAdmin(hasAdminRole || profile?.role === "admin");
-        }
+        const { data: hasAdminRole } = await supabase
+          .rpc("has_role", { _user_id: user.id, _role: "admin" });
+        
+        // User is admin if they have the admin role in user_roles table OR role column is admin
+        setIsAdmin(hasAdminRole === true || profile?.role === "admin");
       } catch (error) {
         console.error("Error checking access:", error);
       } finally {
@@ -74,12 +74,12 @@ export function ProtectedRoute({
     return <Navigate to="/" replace />;
   }
 
-  // No user type yet - redirect to onboarding (unless already there)
+  // No user type yet - redirect to onboarding (unless already there or admin route)
   if (!userType && location.pathname !== "/onboarding" && !requireAdmin) {
     return <Navigate to="/onboarding" replace />;
   }
 
-  // Check allowed user types
+  // Check allowed user types (skip for admin routes)
   if (allowedUserTypes && userType && !allowedUserTypes.includes(userType as "company" | "freelancer")) {
     // Redirect to appropriate dashboard
     if (userType === "company") {
