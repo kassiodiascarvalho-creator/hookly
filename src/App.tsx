@@ -29,6 +29,11 @@ import TalentPool from "./pages/TalentPool";
 import FreelancerProfile from "./pages/FreelancerProfile";
 import Earnings from "./pages/Earnings";
 import CompanyFinances from "./pages/CompanyFinances";
+import FreelancerInvites from "./pages/FreelancerInvites";
+import ForCompanies from "./pages/ForCompanies";
+import ForFreelancers from "./pages/ForFreelancers";
+import Pricing from "./pages/Pricing";
+import HowItWorks from "./pages/HowItWorks";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -53,6 +58,10 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/empresas" element={<ForCompanies />} />
+            <Route path="/freelancers" element={<ForFreelancers />} />
+            <Route path="/precos" element={<Pricing />} />
+            <Route path="/como-funciona" element={<HowItWorks />} />
             
             {/* Onboarding */}
             <Route
@@ -113,6 +122,7 @@ const App = () => (
               <Route path="/project/:id" element={<ProjectView />} />
               <Route path="/my-proposals" element={<MyProposals />} />
               <Route path="/earnings" element={<Earnings />} />
+              <Route path="/invites" element={<FreelancerInvites />} />
               <Route path="/certifications" element={<FreelancerDashboard />} />
               <Route path="/settings" element={<Settings />} />
             </Route>

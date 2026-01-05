@@ -19,6 +19,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import PortfolioManager from "@/components/settings/PortfolioManager";
 import CertificationsManager from "@/components/settings/CertificationsManager";
+import { CurrencySelect } from "@/components/CurrencySelect";
 
 interface Profile {
   email: string;
@@ -47,6 +48,7 @@ interface FreelancerProfile {
   skills: string[] | null;
   languages: string[] | null;
   avatar_url: string | null;
+  preferred_payout_currency: string | null;
 }
 
 export default function Settings() {
@@ -406,6 +408,15 @@ export default function Settings() {
                       })}
                       placeholder={t("settings.skillsPlaceholder")}
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t("settings.preferredPayoutCurrency")}</Label>
+                    <CurrencySelect
+                      value={freelancerProfile.preferred_payout_currency || "USD"}
+                      onValueChange={(v) => setFreelancerProfile({ ...freelancerProfile, preferred_payout_currency: v })}
+                      className="w-48"
+                    />
+                    <p className="text-xs text-muted-foreground">{t("settings.preferredPayoutCurrencyDesc")}</p>
                   </div>
                 </div>
               ) : null}

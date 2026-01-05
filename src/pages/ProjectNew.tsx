@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, Loader2, Check, X, Plus } from "lucide-react";
 import { z } from "zod";
+import { CurrencySelect } from "@/components/CurrencySelect";
+import { getCurrencySymbol } from "@/lib/formatMoney";
 
 const projectSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters").max(100),
@@ -19,6 +21,7 @@ const projectSchema = z.object({
   category: z.string().min(1, "Please select a category"),
   budget_min: z.number().min(0).optional(),
   budget_max: z.number().min(0).optional(),
+  currency: z.string().min(1, "Please select a currency"),
 });
 
 const categories = [
@@ -55,6 +58,7 @@ export default function ProjectNew() {
     category: "",
     budget_min: "",
     budget_max: "",
+    currency: "USD",
   });
   
   const [kpis, setKpis] = useState<KPI[]>([]);
@@ -135,6 +139,7 @@ export default function ProjectNew() {
       category: formData.category,
       budget_min: formData.budget_min ? parseFloat(formData.budget_min) : null,
       budget_max: formData.budget_max ? parseFloat(formData.budget_max) : null,
+      currency: formData.currency,
       kpis: kpis.map(({ name, target }) => ({ name, target })),
       status: asDraft ? "draft" as const : "open" as const,
       company_user_id: user.id,
@@ -255,32 +260,45 @@ export default function ProjectNew() {
             <CardDescription>{t("projects.budgetKpisDesc")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <Label>{t("projects.currency")} *</Label>
+              <CurrencySelect
+                value={formData.currency}
+                onValueChange={(v) => handleChange("currency", v)}
+                className="w-48"
+              />
+            </div>
+            
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="budget_min">{t("projects.budgetMin")}</Label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                    {getCurrencySymbol(formData.currency)}
+                  </span>
                   <Input
                     id="budget_min"
                     type="number"
                     value={formData.budget_min}
                     onChange={(e) => handleChange("budget_min", e.target.value)}
                     placeholder="0"
-                    className="pl-7"
+                    className="pl-10"
                   />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="budget_max">{t("projects.budgetMax")}</Label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                    {getCurrencySymbol(formData.currency)}
+                  </span>
                   <Input
                     id="budget_max"
                     type="number"
                     value={formData.budget_max}
                     onChange={(e) => handleChange("budget_max", e.target.value)}
                     placeholder="0"
-                    className="pl-7"
+                    className="pl-10"
                   />
                 </div>
               </div>
@@ -366,7 +384,7 @@ export default function ProjectNew() {
                 <p className="text-sm text-muted-foreground">{t("projects.budget")}</p>
                 <p>
                   {formData.budget_min || formData.budget_max
-                    ? `$${formData.budget_min || "0"} - $${formData.budget_max || "∞"}`
+                    ? `${getCurrencySymbol(formData.currency)}${formData.budget_min || "0"} - ${getCurrencySymbol(formData.currency)}${formData.budget_max || "∞"} (${formData.currency})`
                     : t("projects.budgetNegotiable")}
                 </p>
               </div>

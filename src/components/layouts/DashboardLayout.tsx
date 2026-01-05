@@ -34,6 +34,7 @@ import {
   FileText,
   Award,
   ChevronLeft,
+  UserPlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
@@ -126,6 +127,7 @@ export function DashboardLayout() {
   const freelancerNavItems = [
     { icon: LayoutDashboard, label: t("nav.dashboard"), path: "/freelancer-dashboard" },
     { icon: Search, label: t("nav.findProjects"), path: "/find-projects" },
+    { icon: UserPlus, label: t("nav.invites"), path: "/invites" },
     { icon: FileText, label: t("nav.myProposals"), path: "/my-proposals" },
     { icon: MessageSquare, label: t("nav.messages"), path: "/messages" },
     { icon: DollarSign, label: t("nav.earnings"), path: "/earnings" },

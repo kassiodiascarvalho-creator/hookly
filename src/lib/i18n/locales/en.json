@@ -16,7 +16,8 @@
     "findProjects": "Find Projects",
     "myProposals": "My Proposals",
     "earnings": "Earnings",
-    "certifications": "Certifications"
+    "certifications": "Certifications",
+    "invites": "Invites"
   },
   "projects": {
     "title": "Projects",
@@ -836,5 +837,209 @@
     "pending": "Pending",
     "failed": "Failed",
     "releasedToFreelancer": "Released to Freelancer"
+  },
+  "currency": {
+    "select": "Select currency",
+    "showAll": "Show all currencies"
+  },
+  "invites": {
+    "title": "Project Invites",
+    "subtitle": "Manage invitations received from companies",
+    "pending": "Pending Invites",
+    "history": "History",
+    "new": "New",
+    "accept": "Accept",
+    "decline": "Decline",
+    "accepted": "Invite accepted successfully!",
+    "declined": "Invite declined",
+    "statusAccepted": "Accepted",
+    "statusDeclined": "Declined",
+    "noInvites": "No invites yet",
+    "noInvitesDesc": "Companies can invite you to projects when they find your profile",
+    "browseProjects": "Browse Projects",
+    "notifications": {
+      "accepted": "Your invite for project {{project}} was accepted!"
+    }
+  },
+  "talentPool": {
+    "title": "Talent Pool",
+    "subtitle": "Find verified freelancers for your projects",
+    "searchPlaceholder": "Search by name, skill, or title...",
+    "filters": "Filters",
+    "filtersDesc": "Refine your search",
+    "hourlyRate": "Hourly Rate",
+    "location": "Location",
+    "locationPlaceholder": "Enter a location...",
+    "verifiedOnly": "Verified Only",
+    "skills": "Skills",
+    "clearFilters": "Clear Filters",
+    "freelancersFound": "freelancers found",
+    "noResults": "No results found",
+    "noResultsDesc": "Try adjusting your filters",
+    "unnamed": "Unnamed",
+    "viewProfile": "View Profile",
+    "contact": "Contact",
+    "noProjectsToInvite": "You need open projects to invite freelancers",
+    "inviteAlreadySent": "You already sent an invite for this project",
+    "inviteSent": "Invite sent successfully!",
+    "inviteTitle": "Invite to Project",
+    "inviteDescription": "Invite {{name}} to collaborate on one of your projects",
+    "selectProject": "Select Project",
+    "selectProjectPlaceholder": "Choose a project...",
+    "inviteMessageLabel": "Message (optional)",
+    "inviteMessagePlaceholder": "Add a personalized message...",
+    "sendInvite": "Send Invite",
+    "inviteNotification": "You received an invite for project: {{project}}"
+  },
+  "forCompanies": {
+    "badge": "For Companies",
+    "title": "Hire Verified Talent with Confidence",
+    "subtitle": "HOOKLY connects your business with top freelancers. Pay for results, not hours.",
+    "cta": "Create Free Account",
+    "ctaSecondary": "Browse Talent",
+    "benefitsTitle": "Why Choose HOOKLY",
+    "benefits": {
+      "verified": {
+        "title": "Verified Talent",
+        "description": "All freelancers go through a rigorous verification process"
+      },
+      "escrow": {
+        "title": "Secure Payment",
+        "description": "Funds protected in escrow until work is approved"
+      },
+      "talent": {
+        "title": "Global Pool",
+        "description": "Access professionals from over 150 countries"
+      },
+      "fast": {
+        "title": "Fast Matching",
+        "description": "Find the ideal professional in less than 24 hours"
+      }
+    },
+    "howItWorks": "How It Works",
+    "steps": {
+      "post": {
+        "title": "Post Your Project",
+        "description": "Describe what you need and set your budget"
+      },
+      "receive": {
+        "title": "Receive Proposals",
+        "description": "Verified freelancers will send proposals"
+      },
+      "hire": {
+        "title": "Hire and Track",
+        "description": "Choose the best and track progress"
+      },
+      "pay": {
+        "title": "Pay for Results",
+        "description": "Release payment when you approve the work"
+      }
+    },
+    "ctaTitle": "Ready to Get Started?",
+    "ctaSubtitle": "Join thousands of companies that found their ideal talent",
+    "ctaButton": "Sign Up Free"
+  },
+  "forFreelancers": {
+    "badge": "For Freelancers",
+    "title": "Build Your Career with Quality Clients",
+    "subtitle": "Connect with serious companies that value your work and pay for quality delivered.",
+    "cta": "Create Free Profile",
+    "benefitsTitle": "HOOKLY Advantages",
+    "benefits": {
+      "payment": {
+        "title": "Guaranteed Payment",
+        "description": "Always get paid for approved work"
+      },
+      "escrow": {
+        "title": "Protected Escrow",
+        "description": "Funds guaranteed before starting work"
+      },
+      "clients": {
+        "title": "Verified Clients",
+        "description": "Work only with serious and reliable companies"
+      },
+      "growth": {
+        "title": "Grow Your Career",
+        "description": "Build your portfolio and reputation on the platform"
+      }
+    },
+    "howItWorks": "How It Works",
+    "steps": {
+      "profile": {
+        "title": "Create Your Profile",
+        "description": "Highlight your skills and experience"
+      },
+      "browse": {
+        "title": "Find Projects",
+        "description": "Browse opportunities that match your profile"
+      },
+      "propose": {
+        "title": "Send Proposals",
+        "description": "Present your solution with clear milestones"
+      },
+      "earn": {
+        "title": "Work and Earn",
+        "description": "Deliver results and receive your payment"
+      }
+    },
+    "ctaTitle": "Start Your Journey Today",
+    "ctaSubtitle": "Thousands of projects waiting for professionals like you",
+    "ctaButton": "Create Free Profile"
+  },
+  "pricingPage": {
+    "title": "Flexible Plans for Every Need",
+    "subtitle": "Start free, upgrade when you need more features",
+    "faqTitle": "Frequently Asked Questions about Pricing",
+    "faqSubtitle": "Get answers about our plans",
+    "faq": {
+      "fees": {
+        "question": "What are the platform fees?",
+        "answer": "HOOKLY charges 10% on completed transactions. There are no hidden fees or mandatory subscriptions."
+      },
+      "payment": {
+        "question": "How does payment work?",
+        "answer": "Payment is held in escrow until you approve the work. Once approved, we release it to the freelancer."
+      }
+    },
+    "ctaTitle": "Ready to Get Started?",
+    "ctaSubtitle": "Create your free account and explore the platform",
+    "ctaButton": "Start Now"
+  },
+  "howItWorksPage": {
+    "title": "How HOOKLY Works",
+    "subtitle": "A simple and transparent process to connect talent and businesses",
+    "step": "Step",
+    "steps": {
+      "post": {
+        "title": "Post Your Project",
+        "description": "Describe in detail what you need, set the budget and expected KPIs. It's free and takes just a few minutes."
+      },
+      "match": {
+        "title": "Receive Qualified Proposals",
+        "description": "Verified freelancers analyze your project and send proposals with milestones and values. You can compare and negotiate."
+      },
+      "work": {
+        "title": "Track Progress",
+        "description": "Communicate directly with the freelancer, track milestone deliveries and maintain full project control."
+      },
+      "pay": {
+        "title": "Pay for Results",
+        "description": "Approve each delivery and release payment. Escrow ensures security for both parties."
+      }
+    },
+    "security": {
+      "title": "Your Security is Our Priority",
+      "description": "All payments are escrow-protected. You only pay when you approve the work. Freelancers are verified and rated."
+    },
+    "ctaTitle": "Ready to Get Started?",
+    "ctaSubtitle": "Join thousands of successful companies and freelancers",
+    "ctaButton": "Create Free Account"
+  },
+  "projects": {
+    "currency": "Currency"
+  },
+  "settings": {
+    "preferredPayoutCurrency": "Preferred Payout Currency",
+    "preferredPayoutCurrencyDesc": "This is your preference for display and manual payment receipt"
   }
 }

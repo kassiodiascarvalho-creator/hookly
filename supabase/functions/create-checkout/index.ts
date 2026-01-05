@@ -32,8 +32,8 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { projectId, milestoneId, amount, description, freelancerUserId } = await req.json();
-    logStep("Request payload", { projectId, milestoneId, amount, description });
+    const { projectId, milestoneId, amount, description, freelancerUserId, currency } = await req.json();
+    logStep("Request payload", { projectId, milestoneId, amount, description, currency });
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { 
       apiVersion: "2025-08-27.basil" 
@@ -63,6 +63,13 @@ serve(async (req) => {
 
     const origin = req.headers.get("origin") || "https://lovable.dev";
     
+    // Validate and use currency (default to USD if not provided)
+    const paymentCurrency = currency || "USD";
+    const supportedCurrencies = ["usd", "brl", "eur", "gbp", "aud", "cad", "chf", "jpy", "cny", "inr", "mxn"];
+    if (!supportedCurrencies.includes(paymentCurrency.toLowerCase())) {
+      throw new Error(`Currency ${paymentCurrency} is not supported. Supported currencies: ${supportedCurrencies.join(", ").toUpperCase()}`);
+    }
+    
     // Create checkout session for milestone payment
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -70,7 +77,7 @@ serve(async (req) => {
       line_items: [
         {
           price_data: {
-            currency: "usd",
+            currency: paymentCurrency.toLowerCase(),
             product_data: {
               name: description || "Project Milestone Payment",
               metadata: {
