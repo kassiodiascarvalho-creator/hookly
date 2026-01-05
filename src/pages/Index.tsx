@@ -282,6 +282,61 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Categories Section */}
+      <section className="py-20 relative">
+        <div className="container mx-auto px-4">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
+              {t("categories.title")}
+            </h2>
+            <p className="text-muted-foreground text-lg">
+              {t("categories.subtitle")}
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-4 max-w-5xl mx-auto"
+          >
+            {categories.map((cat, i) => (
+              <Link
+                key={cat.key}
+                to={`/talent-pool?category=${cat.key}`}
+                className="surface-card-hover p-4 text-center group"
+              >
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-3 group-hover:bg-primary/20 transition-colors">
+                  <cat.icon className="h-6 w-6 text-primary" />
+                </div>
+                <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">
+                  {t(`categories.${cat.key}`)}
+                </span>
+              </Link>
+            ))}
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-center mt-8"
+          >
+            <Link to="/talent-pool">
+              <Button variant="outline" className="border-border hover:bg-accent gap-2">
+                {t("categories.viewAll")}
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+
       {/* How It Works */}
       <section className="py-20 relative">
         <div className="container mx-auto px-4">
@@ -405,6 +460,95 @@ const Index = () => {
               ))}
             </div>
           </motion.div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section className="py-20 relative">
+        <div className="container mx-auto px-4">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
+              {t("pricing.title")}
+            </h2>
+            <p className="text-muted-foreground text-lg">
+              {t("pricing.subtitle")}
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {/* Starter Plan */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="surface-card p-8"
+            >
+              <h3 className="font-display text-2xl font-bold mb-2">
+                {t("pricing.starter.name")}
+              </h3>
+              <p className="text-muted-foreground text-sm mb-6">
+                {t("pricing.starter.description")}
+              </p>
+              <div className="mb-6">
+                <span className="text-4xl font-bold text-primary">{t("pricing.starter.price")}</span>
+              </div>
+              <ul className="space-y-3 mb-8">
+                {(t("pricing.starter.features", { returnObjects: true }) as string[]).map((feature, i) => (
+                  <li key={i} className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <Check className="h-4 w-4 text-primary shrink-0" />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+              <Link to="/auth">
+                <Button variant="outline" className="w-full border-border hover:bg-accent">
+                  {t("pricing.starter.cta")}
+                </Button>
+              </Link>
+            </motion.div>
+
+            {/* Business Plan */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="surface-card p-8 relative border-primary/50"
+            >
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                <span className="px-4 py-1 rounded-full text-xs font-semibold bg-primary text-primary-foreground">
+                  {t("pricing.business.popular")}
+                </span>
+              </div>
+              <h3 className="font-display text-2xl font-bold mb-2">
+                {t("pricing.business.name")}
+              </h3>
+              <p className="text-muted-foreground text-sm mb-6">
+                {t("pricing.business.description")}
+              </p>
+              <div className="mb-6">
+                <span className="text-4xl font-bold text-primary">{t("pricing.business.price")}</span>
+              </div>
+              <ul className="space-y-3 mb-8">
+                {(t("pricing.business.features", { returnObjects: true }) as string[]).map((feature, i) => (
+                  <li key={i} className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <Check className="h-4 w-4 text-primary shrink-0" />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+              <Link to="/auth">
+                <Button className="w-full btn-gradient">
+                  {t("pricing.business.cta")}
+                </Button>
+              </Link>
+            </motion.div>
+          </div>
         </div>
       </section>
 
