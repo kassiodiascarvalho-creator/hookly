@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
+import { AdminLayout } from "@/components/layouts/AdminLayout";
 import "@/lib/i18n";
 
 import Index from "./pages/Index";
@@ -27,6 +28,15 @@ import Settings from "./pages/Settings";
 import TalentPool from "./pages/TalentPool";
 import FreelancerProfile from "./pages/FreelancerProfile";
 import Earnings from "./pages/Earnings";
+
+// Admin pages
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminFreelancers from "./pages/admin/AdminFreelancers";
+import AdminCompanies from "./pages/admin/AdminCompanies";
+import AdminProjects from "./pages/admin/AdminProjects";
+import AdminPayments from "./pages/admin/AdminPayments";
+import AdminLeads from "./pages/admin/AdminLeads";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +62,23 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            
+            {/* Admin Routes */}
+            <Route
+              element={
+                <ProtectedRoute requireAdmin>
+                  <AdminLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/users" element={<AdminUsers />} />
+              <Route path="/admin/freelancers" element={<AdminFreelancers />} />
+              <Route path="/admin/companies" element={<AdminCompanies />} />
+              <Route path="/admin/projects" element={<AdminProjects />} />
+              <Route path="/admin/payments" element={<AdminPayments />} />
+              <Route path="/admin/leads" element={<AdminLeads />} />
+            </Route>
             
             {/* Company Dashboard Routes */}
             <Route
