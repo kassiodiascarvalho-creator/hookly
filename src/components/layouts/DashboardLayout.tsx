@@ -157,9 +157,9 @@ export function DashboardLayout() {
             <Logo onClick={() => navigate("/")} className="cursor-pointer" />
           ) : (
             <img
-              src="https://i.imgur.com/0XQ4UGj.png"
+              src="https://i.imgur.com/HZ11EDZ.png"
               alt="HOOKLY"
-              className="h-8 w-8 cursor-pointer"
+              className="h-8 cursor-pointer"
               onClick={() => navigate("/")}
             />
           )}

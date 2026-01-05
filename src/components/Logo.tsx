@@ -8,15 +8,9 @@ interface LogoProps {
 
 export const Logo = ({ className = "", size = "md", onClick }: LogoProps) => {
   const sizeClasses = {
-    sm: "h-6 w-6",
-    md: "h-8 w-8",
-    lg: "h-10 w-10",
-  };
-
-  const textSizes = {
-    sm: "text-lg",
-    md: "text-xl",
-    lg: "text-2xl",
+    sm: "h-6",
+    md: "h-8",
+    lg: "h-10",
   };
 
   const Component = onClick ? "button" : "div";
@@ -24,16 +18,13 @@ export const Logo = ({ className = "", size = "md", onClick }: LogoProps) => {
   return (
     <Component
       onClick={onClick}
-      className={cn("flex items-center gap-2", className)}
+      className={cn("flex items-center", className)}
     >
       <img
-        src="https://i.imgur.com/0XQ4UGj.png"
+        src="https://i.imgur.com/HZ11EDZ.png"
         alt="HOOKLY"
-        className={cn("object-contain", sizeClasses[size])}
+        className={cn("object-contain w-auto", sizeClasses[size])}
       />
-      <span className={cn("font-display font-bold text-foreground", textSizes[size])}>
-        HOOKLY
-      </span>
     </Component>
   );
 };
