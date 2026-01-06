@@ -12,6 +12,13 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[RELEASE-PAYMENT] ${step}${detailsStr}`);
 };
 
+// Validation helpers
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isValidUUID(value: unknown): value is string {
+  return typeof value === 'string' && UUID_REGEX.test(value);
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -25,15 +32,37 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    const authHeader = req.headers.get("Authorization")!;
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      throw new Error("Missing authorization header");
+    }
+    
     const token = authHeader.replace("Bearer ", "");
     const { data } = await supabaseClient.auth.getUser(token);
     const user = data.user;
     if (!user) throw new Error("User not authenticated");
     logStep("User authenticated", { userId: user.id });
 
-    const { paymentId } = await req.json();
-    logStep("Request payload", { paymentId });
+    // Parse and validate request body
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      throw new Error("Invalid JSON body");
+    }
+
+    if (typeof body !== 'object' || body === null) {
+      throw new Error("Invalid request body");
+    }
+
+    const { paymentId } = body as Record<string, unknown>;
+
+    // Validate paymentId
+    if (!isValidUUID(paymentId)) {
+      throw new Error("Invalid or missing paymentId");
+    }
+
+    logStep("Request validated", { paymentId });
 
     // Get payment record
     const { data: payment, error: paymentError } = await supabaseClient
@@ -49,6 +78,11 @@ serve(async (req) => {
     // Verify user is the company owner
     if (payment.company_user_id !== user.id) {
       throw new Error("Only the company can release payment");
+    }
+
+    // Validate payment is in correct state for release
+    if (payment.status !== 'paid') {
+      throw new Error(`Cannot release payment with status '${payment.status}'. Payment must be in 'paid' status.`);
     }
 
     if (!payment.stripe_payment_intent_id) {
@@ -68,11 +102,15 @@ serve(async (req) => {
     // Update payment status
     const { error: updateError } = await supabaseClient
       .from("payments")
-      .update({ status: "released", updated_at: new Date().toISOString() })
+      .update({ 
+        status: "released", 
+        released_at: new Date().toISOString(),
+        updated_at: new Date().toISOString() 
+      })
       .eq("id", paymentId);
 
     if (updateError) {
-      logStep("Error updating payment status", { error: updateError });
+      logStep("Error updating payment status", { error: updateError.message });
     }
 
     // Notify freelancer
@@ -94,7 +132,7 @@ serve(async (req) => {
     logStep("ERROR", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
+      status: 400,
     });
   }
 });

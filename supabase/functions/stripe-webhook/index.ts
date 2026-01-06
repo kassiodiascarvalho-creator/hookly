@@ -12,6 +12,17 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
 };
 
+// Validation helpers
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isValidUUID(value: string | undefined | null): boolean {
+  return typeof value === 'string' && UUID_REGEX.test(value);
+}
+
+function isValidPositiveNumber(value: number): boolean {
+  return !isNaN(value) && isFinite(value) && value > 0 && value <= 10000000;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -35,23 +46,25 @@ serve(async (req) => {
 
     let event: Stripe.Event;
 
-    // Validate webhook signature
-    if (webhookSecret && sig) {
-      try {
-        event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
-        logStep("Webhook signature verified");
-      } catch (err: unknown) {
-        const errorMsg = err instanceof Error ? err.message : String(err);
-        logStep("Webhook signature verification failed", { error: errorMsg });
-        return new Response(JSON.stringify({ error: "Invalid signature" }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 400,
-        });
-      }
-    } else {
-      // For testing without webhook secret (not recommended in production)
-      event = JSON.parse(body);
-      logStep("WARNING: Processing without signature verification");
+    // Validate webhook signature (required)
+    if (!webhookSecret || !sig) {
+      logStep("Missing webhook secret or signature");
+      return new Response(JSON.stringify({ error: "Missing webhook configuration" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
+    }
+
+    try {
+      event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
+      logStep("Webhook signature verified");
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      logStep("Webhook signature verification failed", { error: errorMsg });
+      return new Response(JSON.stringify({ error: "Invalid signature" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
     }
 
     logStep("Event type", { type: event.type });
@@ -71,34 +84,52 @@ serve(async (req) => {
         if (metadata.type === "wallet_topup") {
           logStep("Processing wallet topup");
           const userId = metadata.user_id;
-          const amount = parseFloat(metadata.topup_amount_contracts || "0");
+          const amountStr = metadata.topup_amount_contracts || "0";
           const currency = metadata.currency || "USD";
-          const fiatAmount = parseFloat(metadata.fiat_amount || "0");
+          const fiatAmountStr = metadata.fiat_amount || "0";
 
-          if (userId && amount > 0) {
-            const { data, error } = await supabaseClient.rpc("credit_wallet", {
-              p_user_id: userId,
-              p_amount: amount,
-              p_session_id: session.id,
-              p_currency: currency,
-              p_fiat_amount: fiatAmount,
+          // Validate user_id
+          if (!isValidUUID(userId)) {
+            logStep("Invalid user_id in wallet topup metadata", { userId });
+            break;
+          }
+
+          // Parse and validate amounts
+          const amount = parseFloat(amountStr);
+          const fiatAmount = parseFloat(fiatAmountStr);
+
+          if (!isValidPositiveNumber(amount)) {
+            logStep("Invalid amount in wallet topup metadata", { amount: amountStr });
+            break;
+          }
+
+          if (!isValidPositiveNumber(fiatAmount)) {
+            logStep("Invalid fiat_amount in wallet topup metadata", { fiatAmount: fiatAmountStr });
+            break;
+          }
+
+          const { data, error } = await supabaseClient.rpc("credit_wallet", {
+            p_user_id: userId,
+            p_amount: amount,
+            p_session_id: session.id,
+            p_currency: currency,
+            p_fiat_amount: fiatAmount,
+          });
+
+          if (error) {
+            logStep("Error crediting wallet", { error: error.message });
+          } else if (data === false) {
+            logStep("Wallet transaction already processed (idempotent)");
+          } else {
+            logStep("Wallet credited successfully", { userId, amount });
+            
+            // Notify user
+            await supabaseClient.from("notifications").insert({
+              user_id: userId,
+              type: "wallet_topup",
+              message: `${amount} Contracts have been added to your wallet!`,
+              link: "/settings?tab=billing",
             });
-
-            if (error) {
-              logStep("Error crediting wallet", { error: error.message });
-            } else if (data === false) {
-              logStep("Wallet transaction already processed (idempotent)");
-            } else {
-              logStep("Wallet credited successfully", { userId, amount });
-              
-              // Notify user
-              await supabaseClient.from("notifications").insert({
-                user_id: userId,
-                type: "wallet_topup",
-                message: `${amount} Contracts have been added to your wallet!`,
-                link: "/settings?tab=billing",
-              });
-            }
           }
           break;
         }
@@ -109,9 +140,32 @@ serve(async (req) => {
         const freelancerUserId = metadata.freelancer_user_id;
         const companyUserId = session.client_reference_id || metadata.company_user_id;
 
+        // Validate UUIDs before proceeding
+        if (projectId && !isValidUUID(projectId)) {
+          logStep("Invalid project_id in metadata", { projectId });
+          break;
+        }
+
+        if (freelancerUserId && !isValidUUID(freelancerUserId)) {
+          logStep("Invalid freelancer_user_id in metadata", { freelancerUserId });
+          break;
+        }
+
+        if (companyUserId && !isValidUUID(companyUserId)) {
+          logStep("Invalid company_user_id in metadata", { companyUserId });
+          break;
+        }
+
         logStep("Extracted metadata", { projectId, milestoneId, freelancerUserId, companyUserId });
 
         if (projectId && session.payment_intent) {
+          // Validate amount from Stripe
+          const amount = (session.amount_total || 0) / 100;
+          if (!isValidPositiveNumber(amount)) {
+            logStep("Invalid amount from Stripe session", { amount: session.amount_total });
+            break;
+          }
+
           // Check if payment already exists
           const { data: existingPayment } = await supabaseClient
             .from("payments")
@@ -131,7 +185,7 @@ serve(async (req) => {
               project_id: projectId,
               company_user_id: companyUserId,
               freelancer_user_id: freelancerUserId,
-              amount: (session.amount_total || 0) / 100,
+              amount: amount,
               currency: session.currency?.toUpperCase() || "USD",
               status: "paid",
               escrow_status: "held",
@@ -143,7 +197,7 @@ serve(async (req) => {
             .single();
 
           if (insertError) {
-            logStep("Error creating payment record", { error: insertError });
+            logStep("Error creating payment record", { error: insertError.message });
           } else {
             logStep("Payment record created", { paymentId: payment.id });
 
@@ -154,7 +208,7 @@ serve(async (req) => {
               details: {
                 stripe_session_id: session.id,
                 stripe_payment_intent_id: session.payment_intent,
-                amount: (session.amount_total || 0) / 100,
+                amount: amount,
                 currency: session.currency?.toUpperCase() || "USD",
                 source: "stripe_webhook"
               }
@@ -165,7 +219,7 @@ serve(async (req) => {
               await supabaseClient.from("notifications").insert({
                 user_id: freelancerUserId,
                 type: "payment_received",
-                message: `A payment of $${(session.amount_total || 0) / 100} has been placed in escrow for your work!`,
+                message: `A payment of $${amount} has been placed in escrow for your work!`,
                 link: "/earnings",
               });
               logStep("Freelancer notified", { freelancerUserId });
@@ -176,7 +230,7 @@ serve(async (req) => {
               await supabaseClient.from("notifications").insert({
                 user_id: companyUserId,
                 type: "payment_success",
-                message: `Your payment of $${(session.amount_total || 0) / 100} has been processed and is held in escrow.`,
+                message: `Your payment of $${amount} has been processed and is held in escrow.`,
                 link: "/finances",
               });
               logStep("Company notified", { companyUserId });

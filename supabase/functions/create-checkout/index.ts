@@ -12,6 +12,30 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);
 };
 
+// Validation helpers
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isValidUUID(value: unknown): value is string {
+  return typeof value === 'string' && UUID_REGEX.test(value);
+}
+
+function isValidAmount(value: unknown): value is number {
+  return typeof value === 'number' && 
+         !isNaN(value) && 
+         isFinite(value) && 
+         value >= 0.01 && 
+         value <= 1000000;
+}
+
+function isValidCurrency(value: unknown): value is string {
+  const supportedCurrencies = ["usd", "brl", "eur", "gbp", "aud", "cad", "chf", "jpy", "cny", "inr", "mxn"];
+  return typeof value === 'string' && supportedCurrencies.includes(value.toLowerCase());
+}
+
+function isValidString(value: unknown, maxLength: number = 500): value is string {
+  return typeof value === 'string' && value.length <= maxLength;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -25,15 +49,59 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    const authHeader = req.headers.get("Authorization")!;
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      throw new Error("Missing authorization header");
+    }
+    
     const token = authHeader.replace("Bearer ", "");
     const { data } = await supabaseClient.auth.getUser(token);
     const user = data.user;
     if (!user?.email) throw new Error("User not authenticated or email not available");
-    logStep("User authenticated", { userId: user.id, email: user.email });
+    logStep("User authenticated", { userId: user.id });
 
-    const { projectId, milestoneId, amount, description, freelancerUserId, currency } = await req.json();
-    logStep("Request payload", { projectId, milestoneId, amount, description, currency });
+    // Parse and validate request body
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      throw new Error("Invalid JSON body");
+    }
+
+    if (typeof body !== 'object' || body === null) {
+      throw new Error("Invalid request body");
+    }
+
+    const { projectId, milestoneId, amount, description, freelancerUserId, currency } = body as Record<string, unknown>;
+
+    // Validate required fields
+    if (!isValidUUID(projectId)) {
+      throw new Error("Invalid or missing projectId");
+    }
+
+    if (milestoneId !== undefined && milestoneId !== null && !isValidString(milestoneId, 100)) {
+      throw new Error("Invalid milestoneId");
+    }
+
+    if (!isValidAmount(amount)) {
+      throw new Error("Amount must be a positive number between 0.01 and 1,000,000");
+    }
+
+    if (description !== undefined && description !== null && !isValidString(description, 500)) {
+      throw new Error("Description must be a string with max 500 characters");
+    }
+
+    if (freelancerUserId !== undefined && freelancerUserId !== null && !isValidUUID(freelancerUserId)) {
+      throw new Error("Invalid freelancerUserId");
+    }
+
+    // Validate currency - default to USD if not provided
+    const paymentCurrency = currency || "USD";
+    if (!isValidCurrency(paymentCurrency)) {
+      throw new Error("Unsupported currency. Supported: USD, BRL, EUR, GBP, AUD, CAD, CHF, JPY, CNY, INR, MXN");
+    }
+
+    logStep("Request validated", { projectId, amount, currency: paymentCurrency });
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { 
       apiVersion: "2025-08-27.basil" 
@@ -63,13 +131,6 @@ serve(async (req) => {
 
     const origin = req.headers.get("origin") || "https://lovable.dev";
     
-    // Validate and use currency (default to USD if not provided)
-    const paymentCurrency = currency || "USD";
-    const supportedCurrencies = ["usd", "brl", "eur", "gbp", "aud", "cad", "chf", "jpy", "cny", "inr", "mxn"];
-    if (!supportedCurrencies.includes(paymentCurrency.toLowerCase())) {
-      throw new Error(`Currency ${paymentCurrency} is not supported. Supported currencies: ${supportedCurrencies.join(", ").toUpperCase()}`);
-    }
-    
     // Create checkout session for milestone payment
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -77,15 +138,15 @@ serve(async (req) => {
       line_items: [
         {
           price_data: {
-            currency: paymentCurrency.toLowerCase(),
+            currency: (paymentCurrency as string).toLowerCase(),
             product_data: {
-              name: description || "Project Milestone Payment",
+              name: (description as string | undefined) || "Project Milestone Payment",
               metadata: {
-                project_id: projectId,
-                milestone_id: milestoneId,
+                project_id: projectId as string,
+                milestone_id: (milestoneId as string) || "",
               }
             },
-            unit_amount: Math.round(amount * 100), // Convert to cents
+            unit_amount: Math.round((amount as number) * 100), // Convert to cents
           },
           quantity: 1,
         },
@@ -94,22 +155,22 @@ serve(async (req) => {
       payment_intent_data: {
         capture_method: "manual", // This enables escrow-like behavior
         metadata: {
-          project_id: projectId,
-          milestone_id: milestoneId,
-          freelancer_user_id: freelancerUserId,
+          project_id: projectId as string,
+          milestone_id: (milestoneId as string) || "",
+          freelancer_user_id: (freelancerUserId as string) || "",
           company_user_id: user.id,
         }
       },
       success_url: `${origin}/projects/${projectId}?payment=success`,
       cancel_url: `${origin}/projects/${projectId}?payment=cancelled`,
       metadata: {
-        project_id: projectId,
-        milestone_id: milestoneId,
-        freelancer_user_id: freelancerUserId,
+        project_id: projectId as string,
+        milestone_id: (milestoneId as string) || "",
+        freelancer_user_id: (freelancerUserId as string) || "",
       }
     });
 
-    logStep("Checkout session created", { sessionId: session.id, url: session.url });
+    logStep("Checkout session created", { sessionId: session.id });
 
     return new Response(JSON.stringify({ url: session.url, sessionId: session.id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -120,7 +181,7 @@ serve(async (req) => {
     logStep("ERROR", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
+      status: 400,
     });
   }
 });

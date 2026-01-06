@@ -7,10 +7,24 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const logStep = (step: string, details?: any) => {
+const logStep = (step: string, details?: unknown) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[ADD-FUNDS] ${step}${detailsStr}`);
 };
+
+// Validation helpers
+function isValidAmount(value: unknown): value is number {
+  return typeof value === 'number' && 
+         !isNaN(value) && 
+         isFinite(value) && 
+         value >= 1 && 
+         value <= 100000;
+}
+
+function isValidCurrency(value: unknown): value is string {
+  const supportedCurrencies = ["usd", "brl", "eur", "gbp", "aud", "cad", "chf", "jpy", "cny", "inr", "mxn"];
+  return typeof value === 'string' && supportedCurrencies.includes(value.toLowerCase());
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -25,7 +39,11 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    const authHeader = req.headers.get("Authorization")!;
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      throw new Error("Missing authorization header");
+    }
+    
     const token = authHeader.replace("Bearer ", "");
     const { data } = await supabaseClient.auth.getUser(token);
     const user = data.user;
@@ -33,14 +51,34 @@ serve(async (req) => {
     if (!user?.email) {
       throw new Error("User not authenticated or email not available");
     }
-    logStep("User authenticated", { userId: user.id, email: user.email });
+    logStep("User authenticated", { userId: user.id });
 
-    const { amount, currency = "USD" } = await req.json();
-    
-    if (!amount || amount < 1) {
-      throw new Error("Invalid amount");
+    // Parse and validate request body
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      throw new Error("Invalid JSON body");
     }
-    logStep("Request parsed", { amount, currency });
+
+    if (typeof body !== 'object' || body === null) {
+      throw new Error("Invalid request body");
+    }
+
+    const { amount, currency } = body as Record<string, unknown>;
+
+    // Validate amount
+    if (!isValidAmount(amount)) {
+      throw new Error("Amount must be a positive number between 1 and 100,000");
+    }
+
+    // Validate currency - default to USD if not provided
+    const paymentCurrency = currency || "USD";
+    if (!isValidCurrency(paymentCurrency)) {
+      throw new Error("Unsupported currency. Supported: USD, BRL, EUR, GBP, AUD, CAD, CHF, JPY, CNY, INR, MXN");
+    }
+
+    logStep("Request validated", { amount, currency: paymentCurrency });
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
@@ -55,7 +93,7 @@ serve(async (req) => {
     }
 
     // Amount in cents/minor units
-    const amountInCents = Math.round(amount * 100);
+    const amountInCents = Math.round((amount as number) * 100);
 
     // Create checkout session with dynamic price
     const session = await stripe.checkout.sessions.create({
@@ -65,10 +103,10 @@ serve(async (req) => {
       line_items: [
         {
           price_data: {
-            currency: currency.toLowerCase(),
+            currency: (paymentCurrency as string).toLowerCase(),
             product_data: {
               name: `Add ${amount} Contracts`,
-              description: `Add ${currency} ${amount} to your wallet balance`,
+              description: `Add ${paymentCurrency} ${amount} to your wallet balance`,
             },
             unit_amount: amountInCents,
           },
@@ -80,14 +118,14 @@ serve(async (req) => {
       cancel_url: `${req.headers.get("origin")}/settings?tab=billing&canceled=true`,
       metadata: {
         user_id: user.id,
-        topup_amount_contracts: amount.toString(),
-        currency: currency,
-        fiat_amount: amount.toString(),
+        topup_amount_contracts: String(amount),
+        currency: paymentCurrency as string,
+        fiat_amount: String(amount),
         type: "wallet_topup",
       },
     });
 
-    logStep("Checkout session created", { sessionId: session.id, url: session.url });
+    logStep("Checkout session created", { sessionId: session.id });
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -98,7 +136,7 @@ serve(async (req) => {
     logStep("ERROR", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
+      status: 400,
     });
   }
 });

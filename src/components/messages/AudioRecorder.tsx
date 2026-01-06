@@ -53,7 +53,6 @@ export function AudioRecorder({ conversationId, onAudioSent, disabled }: AudioRe
       }, 1000);
 
     } catch (error) {
-      console.error('Error starting recording:', error);
       toast.error(t("messages.microphoneError"));
     }
   };
@@ -100,11 +99,10 @@ export function AudioRecorder({ conversationId, onAudioSent, disabled }: AudioRe
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('chat_uploads')
-        .getPublicUrl(fileName);
+      // Store the path instead of public URL - ChatWindow will generate signed URLs
+      const storagePath = fileName;
 
-      // Insert message with audio
+      // Insert message with storage path
       const { error: messageError } = await supabase
         .from('messages')
         .insert({
@@ -112,7 +110,7 @@ export function AudioRecorder({ conversationId, onAudioSent, disabled }: AudioRe
           sender_user_id: user.id,
           content: '',
           type: 'audio',
-          file_url: publicUrl,
+          file_url: storagePath,
           file_name: 'audio.webm',
           file_mime: 'audio/webm',
           audio_duration: recordingTime
@@ -124,7 +122,6 @@ export function AudioRecorder({ conversationId, onAudioSent, disabled }: AudioRe
       onAudioSent();
       
     } catch (error) {
-      console.error('Error uploading audio:', error);
       toast.error(t("messages.uploadError"));
     } finally {
       setUploading(false);
