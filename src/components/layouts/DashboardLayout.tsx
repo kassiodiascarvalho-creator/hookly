@@ -124,6 +124,7 @@ export function DashboardLayout() {
     { icon: FileText, label: t("nav.proposals"), path: "/proposals" },
     { icon: Users, label: t("nav.talentPool"), path: "/talent-pool" },
     { icon: MessageSquare, label: t("nav.messages"), path: "/messages" },
+    { icon: FileText, label: t("nav.contracts"), path: "/contracts" },
     { icon: DollarSign, label: t("nav.finances"), path: "/finances" },
     { icon: Settings, label: t("nav.settings"), path: "/settings" },
   ];
@@ -134,6 +135,7 @@ export function DashboardLayout() {
     { icon: UserPlus, label: t("nav.invites"), path: "/invites" },
     { icon: FileText, label: t("nav.myProposals"), path: "/my-proposals" },
     { icon: MessageSquare, label: t("nav.messages"), path: "/messages" },
+    { icon: FileText, label: t("nav.contracts"), path: "/contracts" },
     { icon: DollarSign, label: t("nav.earnings"), path: "/earnings" },
     { icon: Building2, label: t("nav.verifiedCompanies"), path: "/verified-companies" },
     { icon: Award, label: t("nav.certifications"), path: "/certifications" },

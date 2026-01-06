@@ -49,7 +49,7 @@ interface FreelancerProfile {
   bio: string | null;
   hourly_rate: number | null;
   location: string | null;
-  country: string | null;
+  country?: string | null;
   skills: string[] | null;
   languages: string[] | null;
   avatar_url: string | null;

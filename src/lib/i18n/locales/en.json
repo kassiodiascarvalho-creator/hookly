@@ -19,7 +19,8 @@
     "certifications": "Certifications",
     "invites": "Invites",
     "verifiedCompanies": "Verified Companies",
-    "adminPanel": "Admin Panel"
+    "adminPanel": "Admin Panel",
+    "contracts": "Contracts"
   },
   "projects": {
     "title": "Projects",
@@ -670,6 +671,25 @@
     "refund": "Refund",
     "fundsAddedSuccess": "Funds added successfully!",
     "paymentCanceled": "Payment was canceled"
+  },
+  "contracts": {
+    "title": "Contracts",
+    "subtitle": "View and manage your active contracts",
+    "all": "All",
+    "active": "Active",
+    "funded": "Funded",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "noContracts": "No contracts yet",
+    "noContractsDesc": "Contracts are created automatically when proposals are accepted.",
+    "statusDraft": "Draft",
+    "statusActive": "Active",
+    "statusFunded": "Funded",
+    "statusCompleted": "Completed",
+    "statusCancelled": "Cancelled",
+    "milestones": "Milestones",
+    "more": "more",
+    "viewProject": "View Project"
   },
   "companyProfile": {
     "notFound": "Company not found",
