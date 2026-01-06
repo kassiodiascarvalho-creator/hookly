@@ -106,7 +106,6 @@ const App = () => (
               <Route path="/talent-pool" element={<TalentPool />} />
               <Route path="/freelancers/:userId" element={<FreelancerProfile />} />
               <Route path="/finances" element={<CompanyFinances />} />
-              <Route path="/settings" element={<Settings />} />
             </Route>
             
             {/* Freelancer Dashboard Routes */}
@@ -125,7 +124,6 @@ const App = () => (
               <Route path="/invites" element={<FreelancerInvites />} />
               <Route path="/certifications" element={<FreelancerDashboard />} />
               <Route path="/freelancers/:userId" element={<FreelancerProfile />} />
-              <Route path="/settings" element={<Settings />} />
             </Route>
             
             {/* Shared Routes (both user types) */}
@@ -137,6 +135,7 @@ const App = () => (
               }
             >
               <Route path="/messages" element={<Messages />} />
+              <Route path="/settings" element={<Settings />} />
             </Route>
             
             {/* Catch-all */}
