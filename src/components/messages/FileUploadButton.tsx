@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Paperclip, Loader2, X, Image, FileText } from "lucide-react";
+import { Paperclip, Loader2, Image, FileText } from "lucide-react";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -74,13 +74,12 @@ export function FileUploadButton({ conversationId, onFileSent, disabled }: FileU
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('chat_uploads')
-        .getPublicUrl(fileName);
+      // Store the path instead of public URL - ChatWindow will generate signed URLs
+      const storagePath = fileName;
 
       const messageType = file.type.startsWith('image/') ? 'image' : 'file';
 
-      // Insert message with file
+      // Insert message with storage path
       const { error: messageError } = await supabase
         .from('messages')
         .insert({
@@ -88,7 +87,7 @@ export function FileUploadButton({ conversationId, onFileSent, disabled }: FileU
           sender_user_id: user.id,
           content: '',
           type: messageType,
-          file_url: publicUrl,
+          file_url: storagePath,
           file_name: file.name,
           file_mime: file.type,
           file_size: file.size
@@ -99,7 +98,6 @@ export function FileUploadButton({ conversationId, onFileSent, disabled }: FileU
       onFileSent();
 
     } catch (error) {
-      console.error('Error uploading file:', error);
       toast.error(t("messages.uploadError"));
     } finally {
       setUploading(false);

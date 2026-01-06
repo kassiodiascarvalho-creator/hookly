@@ -2,10 +2,21 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
-const logStep = (step: string, details?: any) => {
+const logStep = (step: string, details?: unknown) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[WALLET-WEBHOOK] ${step}${detailsStr}`);
 };
+
+// Validation helpers
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isValidUUID(value: string | undefined | null): boolean {
+  return typeof value === 'string' && UUID_REGEX.test(value);
+}
+
+function isValidPositiveNumber(value: number): boolean {
+  return !isNaN(value) && isFinite(value) && value > 0 && value <= 1000000;
+}
 
 serve(async (req) => {
   const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
@@ -45,13 +56,28 @@ serve(async (req) => {
     }
 
     const userId = session.metadata?.user_id;
-    const amount = parseFloat(session.metadata?.topup_amount_contracts || "0");
+    const amountStr = session.metadata?.topup_amount_contracts || "0";
     const currency = session.metadata?.currency || "USD";
-    const fiatAmount = parseFloat(session.metadata?.fiat_amount || "0");
+    const fiatAmountStr = session.metadata?.fiat_amount || "0";
 
-    if (!userId || amount <= 0) {
-      logStep("Invalid metadata", { userId, amount });
-      return new Response("Invalid metadata", { status: 400 });
+    // Validate userId
+    if (!isValidUUID(userId)) {
+      logStep("Invalid user_id in metadata", { userId });
+      return new Response("Invalid user_id in metadata", { status: 400 });
+    }
+
+    // Parse and validate amounts
+    const amount = parseFloat(amountStr);
+    const fiatAmount = parseFloat(fiatAmountStr);
+
+    if (!isValidPositiveNumber(amount)) {
+      logStep("Invalid amount in metadata", { amount: amountStr });
+      return new Response("Invalid amount in metadata", { status: 400 });
+    }
+
+    if (!isValidPositiveNumber(fiatAmount)) {
+      logStep("Invalid fiat_amount in metadata", { fiatAmount: fiatAmountStr });
+      return new Response("Invalid fiat_amount in metadata", { status: 400 });
     }
 
     logStep("Processing wallet topup", { userId, amount, currency, sessionId: session.id });

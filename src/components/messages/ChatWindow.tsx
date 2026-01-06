@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Send, FileText, Download } from "lucide-react";
-import { formatDistanceToNow, format, isToday, isYesterday } from "date-fns";
+import { format, isToday, isYesterday } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Conversation } from "@/pages/Messages";
 import { AudioRecorder } from "./AudioRecorder";
@@ -29,21 +29,110 @@ interface Message {
   audio_duration?: number | null;
 }
 
+interface MessageWithSignedUrl extends Message {
+  signedUrl?: string | null;
+}
+
 interface ChatWindowProps {
   conversation: Conversation;
   onBack: () => void;
   onMessagesRead: () => void;
 }
 
+// Helper to check if a URL is already a full URL or a storage path
+function isFullUrl(url: string): boolean {
+  return url.startsWith('http://') || url.startsWith('https://');
+}
+
+// Helper to extract storage path from a full URL
+function extractStoragePath(fullUrl: string): string | null {
+  try {
+    const url = new URL(fullUrl);
+    const pathMatch = url.pathname.match(/\/storage\/v1\/object\/(?:public|sign)\/chat_uploads\/(.+)/);
+    if (pathMatch && pathMatch[1]) {
+      return decodeURIComponent(pathMatch[1]);
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<MessageWithSignedUrl[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Generate signed URLs for messages with files
+  const generateSignedUrls = useCallback(async (msgs: Message[]): Promise<MessageWithSignedUrl[]> => {
+    const messagesWithUrls = await Promise.all(
+      msgs.map(async (msg) => {
+        if (!msg.file_url || msg.type === 'text') {
+          return msg;
+        }
+
+        // Determine the storage path
+        let storagePath = msg.file_url;
+        if (isFullUrl(msg.file_url)) {
+          const extracted = extractStoragePath(msg.file_url);
+          if (extracted) {
+            storagePath = extracted;
+          } else {
+            // If we can't extract path, return with original URL as fallback
+            return { ...msg, signedUrl: msg.file_url };
+          }
+        }
+
+        // Generate signed URL (1 hour expiration)
+        const { data, error } = await supabase.storage
+          .from('chat_uploads')
+          .createSignedUrl(storagePath, 3600);
+
+        if (error || !data?.signedUrl) {
+          return { ...msg, signedUrl: null };
+        }
+
+        return { ...msg, signedUrl: data.signedUrl };
+      })
+    );
+
+    return messagesWithUrls;
+  }, []);
+
+  const fetchMessages = useCallback(async () => {
+    setLoading(true);
+    
+    const { data, error } = await supabase
+      .from("messages")
+      .select("*")
+      .eq("conversation_id", conversation.id)
+      .order("created_at", { ascending: true });
+
+    if (!error && data) {
+      const messagesWithUrls = await generateSignedUrls(data);
+      setMessages(messagesWithUrls);
+    }
+    
+    setLoading(false);
+  }, [conversation.id, generateSignedUrls]);
+
+  const markMessagesAsRead = useCallback(async () => {
+    if (!user) return;
+
+    await supabase
+      .from("messages")
+      .update({ read_at: new Date().toISOString() })
+      .eq("conversation_id", conversation.id)
+      .neq("sender_user_id", user.id)
+      .is("read_at", null);
+
+    onMessagesRead();
+  }, [user, conversation.id, onMessagesRead]);
 
   useEffect(() => {
     fetchMessages();
@@ -60,9 +149,13 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
           table: 'messages',
           filter: `conversation_id=eq.${conversation.id}`,
         },
-        (payload) => {
+        async (payload) => {
           const newMsg = payload.new as Message;
-          setMessages((prev) => [...prev, newMsg]);
+          
+          // Generate signed URL for the new message if it has a file
+          const [msgWithUrl] = await generateSignedUrls([newMsg]);
+          
+          setMessages((prev) => [...prev, msgWithUrl]);
           
           // Mark as read if not from current user
           if (newMsg.sender_user_id !== user?.id) {
@@ -75,7 +168,7 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [conversation.id]);
+  }, [conversation.id, fetchMessages, generateSignedUrls, markMessagesAsRead, user?.id]);
 
   useEffect(() => {
     scrollToBottom();
@@ -83,35 +176,6 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  const fetchMessages = async () => {
-    setLoading(true);
-    
-    const { data, error } = await supabase
-      .from("messages")
-      .select("*")
-      .eq("conversation_id", conversation.id)
-      .order("created_at", { ascending: true });
-
-    if (!error && data) {
-      setMessages(data);
-    }
-    
-    setLoading(false);
-  };
-
-  const markMessagesAsRead = async () => {
-    if (!user) return;
-
-    await supabase
-      .from("messages")
-      .update({ read_at: new Date().toISOString() })
-      .eq("conversation_id", conversation.id)
-      .neq("sender_user_id", user.id)
-      .is("read_at", null);
-
-    onMessagesRead();
   };
 
   const sendMessage = async (e: React.FormEvent) => {
@@ -136,19 +200,8 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
     setSending(false);
   };
 
-  const formatMessageDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    if (isToday(date)) {
-      return format(date, "HH:mm");
-    } else if (isYesterday(date)) {
-      return t("messages.yesterday") + " " + format(date, "HH:mm");
-    } else {
-      return format(date, "dd/MM/yyyy HH:mm");
-    }
-  };
-
-  const groupMessagesByDate = (messages: Message[]) => {
-    const groups: { date: string; messages: Message[] }[] = [];
+  const groupMessagesByDate = (messages: MessageWithSignedUrl[]) => {
+    const groups: { date: string; messages: MessageWithSignedUrl[] }[] = [];
     
     messages.forEach((message) => {
       const date = new Date(message.created_at);
@@ -173,14 +226,15 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
     return groups;
   };
 
-  const renderMessageContent = (message: Message, isOwn: boolean) => {
+  const renderMessageContent = (message: MessageWithSignedUrl, isOwn: boolean) => {
     const type = message.type || 'text';
+    const fileUrl = message.signedUrl || message.file_url || '';
 
     switch (type) {
       case 'audio':
         return (
           <AudioPlayer 
-            src={message.file_url || ''} 
+            src={fileUrl} 
             duration={message.audio_duration || undefined}
             isOwn={isOwn}
           />
@@ -190,10 +244,10 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
         return (
           <div className="max-w-xs">
             <img 
-              src={message.file_url || ''} 
+              src={fileUrl} 
               alt={message.file_name || 'Image'}
               className="rounded-lg max-w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
-              onClick={() => window.open(message.file_url || '', '_blank')}
+              onClick={() => window.open(fileUrl, '_blank')}
             />
           </div>
         );
@@ -201,7 +255,7 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
       case 'file':
         return (
           <a 
-            href={message.file_url || ''} 
+            href={fileUrl} 
             target="_blank" 
             rel="noopener noreferrer"
             className={cn(
