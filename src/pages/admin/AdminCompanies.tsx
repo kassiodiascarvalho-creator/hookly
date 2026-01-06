@@ -64,25 +64,25 @@ export default function AdminCompanies() {
 
     try {
       const newStatus = !company.is_verified;
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("company_profiles")
         .update({ 
           is_verified: newStatus,
           verified_at: newStatus ? new Date().toISOString() : null,
           verified_by_admin_id: newStatus ? user.id : null,
         })
-        .eq("id", company.id);
+        .eq("id", company.id)
+        .select()
+        .single();
 
       if (error) throw error;
 
-      setCompanies((prev) =>
-        prev.map((c) => (c.id === company.id ? { 
-          ...c, 
-          is_verified: newStatus,
-          verified_at: newStatus ? new Date().toISOString() : null,
-          verified_by_admin_id: newStatus ? user.id : null,
-        } : c))
-      );
+      // Update with data from database to ensure persistence
+      if (data) {
+        setCompanies((prev) =>
+          prev.map((c) => (c.id === company.id ? data : c))
+        );
+      }
 
       toast.success(
         newStatus

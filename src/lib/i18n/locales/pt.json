@@ -722,7 +722,46 @@
       "paid": "Em Garantia",
       "released": "Liberado",
       "failed": "Falhou"
-    }
+    },
+    "clickForDetails": "Clique para detalhes",
+    "receivableDetails": "Detalhes A Receber",
+    "receivableDetailsDesc": "Detalhamento por empresa e projeto",
+    "projectCompleted": "Projeto Concluído",
+    "projectInProgress": "Em Andamento",
+    "unknownCompany": "Empresa Desconhecida"
+  },
+  "billing": {
+    "addFunds": "Adicionar Fundos",
+    "addFundsDescription": "Adicione crédito à sua carteira usando sua moeda preferida",
+    "quickSelect": "Seleção Rápida",
+    "amount": "Valor",
+    "currency": "Moeda",
+    "youWillReceive": "Você receberá",
+    "contracts": "Contratos",
+    "contract": "Contrato",
+    "exchangeRate": "Taxa de câmbio",
+    "proceedToPayment": "Continuar para Pagamento",
+    "invalidAmount": "Por favor insira um valor válido",
+    "walletBalance": "Saldo da Carteira",
+    "walletDescription": "Seu saldo de crédito interno para transações na plataforma",
+    "transactionHistory": "Histórico de Transações",
+    "topup": "Fundos Adicionados",
+    "debit": "Débito",
+    "credit": "Crédito",
+    "refund": "Reembolso",
+    "fundsAddedSuccess": "Fundos adicionados com sucesso!",
+    "paymentCanceled": "Pagamento foi cancelado"
+  },
+  "companyProfile": {
+    "notFound": "Empresa não encontrada",
+    "unnamed": "Empresa sem Nome",
+    "employees": "funcionários",
+    "website": "Website",
+    "projects": "Projetos",
+    "totalPaid": "Total Pago",
+    "freelancersHired": "Freelancers Contratados",
+    "avgRating": "Nota Média",
+    "about": "Sobre"
   },
   "uploads": {
     "selectFile": "Selecionar Arquivo",

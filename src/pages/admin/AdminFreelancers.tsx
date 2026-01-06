@@ -59,25 +59,25 @@ export default function AdminFreelancers() {
     
     try {
       const newStatus = !freelancer.verified;
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("freelancer_profiles")
         .update({ 
           verified: newStatus,
           verified_at: newStatus ? new Date().toISOString() : null,
           verified_by_admin_id: newStatus ? user.id : null,
         })
-        .eq("id", freelancer.id);
+        .eq("id", freelancer.id)
+        .select()
+        .single();
 
       if (error) throw error;
 
-      setFreelancers((prev) =>
-        prev.map((f) => (f.id === freelancer.id ? { 
-          ...f, 
-          verified: newStatus,
-          verified_at: newStatus ? new Date().toISOString() : null,
-          verified_by_admin_id: newStatus ? user.id : null,
-        } : f))
-      );
+      // Update with data from database to ensure persistence
+      if (data) {
+        setFreelancers((prev) =>
+          prev.map((f) => (f.id === freelancer.id ? data : f))
+        );
+      }
 
       toast.success(
         newStatus

@@ -28,26 +28,31 @@ export function FileUploadButton({ conversationId, onFileSent, disabled }: FileU
   const docInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'document') => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
     // Reset input
     e.target.value = '';
 
-    // Validate file size
-    if (file.size > MAX_FILE_SIZE) {
-      toast.error(t("messages.fileTooLarge"));
-      return;
-    }
+    // Upload each file
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      
+      // Validate file size
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error(t("messages.fileTooLarge"));
+        continue;
+      }
 
-    // Validate file type
-    const allowedTypes = type === 'image' ? ALLOWED_IMAGE_TYPES : ALLOWED_DOC_TYPES;
-    if (!allowedTypes.includes(file.type)) {
-      toast.error(t("messages.invalidFileType"));
-      return;
-    }
+      // Validate file type
+      const allowedTypes = type === 'image' ? ALLOWED_IMAGE_TYPES : ALLOWED_DOC_TYPES;
+      if (!allowedTypes.includes(file.type)) {
+        toast.error(t("messages.invalidFileType"));
+        continue;
+      }
 
-    await uploadFile(file);
+      await uploadFile(file);
+    }
   };
 
   const uploadFile = async (file: File) => {
@@ -115,6 +120,7 @@ export function FileUploadButton({ conversationId, onFileSent, disabled }: FileU
         ref={imageInputRef}
         type="file"
         accept="image/jpeg,image/png,image/gif,image/webp"
+        multiple
         onChange={(e) => handleFileSelect(e, 'image')}
         className="hidden"
       />
@@ -122,6 +128,7 @@ export function FileUploadButton({ conversationId, onFileSent, disabled }: FileU
         ref={docInputRef}
         type="file"
         accept=".pdf,.doc,.docx"
+        multiple
         onChange={(e) => handleFileSelect(e, 'document')}
         className="hidden"
       />
