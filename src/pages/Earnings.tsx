@@ -25,7 +25,9 @@ interface Payment {
   currency: string;
   status: "pending" | "paid" | "released" | "failed";
   created_at: string;
+  company_user_id?: string | null;
   project?: { title: string };
+  project_id?: string | null;
 }
 
 interface PayoutMethod {
@@ -43,6 +45,16 @@ interface PayoutMethod {
   is_default: boolean | null;
 }
 
+interface ReceivableDetail {
+  companyName: string;
+  companyUserId: string;
+  projectTitle: string;
+  amount: number;
+  currency: string;
+  status: string;
+  projectStatus?: string;
+}
+
 const PIX_KEY_TYPES = ["cpf", "cnpj", "email", "phone", "random"];
 
 export default function Earnings() {
@@ -53,6 +65,9 @@ export default function Earnings() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [payoutMethods, setPayoutMethods] = useState<PayoutMethod[]>([]);
   const [totals, setTotals] = useState({ available: 0, pending: 0, receivable: 0, total: 0 });
+  const [receivableDetails, setReceivableDetails] = useState<ReceivableDetail[]>([]);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [hasCompletedProjects, setHasCompletedProjects] = useState(false);
   
   // Payout method form
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -98,7 +113,8 @@ export default function Earnings() {
       // Released = paid out to freelancer (historically received)
       const paidOut = mapped.filter(p => p.status === "released" && (p as any).paid_out_at).reduce((sum, p) => sum + Number(p.amount), 0);
       // Receivable = released but not yet paid out (awaiting admin transfer)
-      const receivable = mapped.filter(p => p.status === "released" && !(p as any).paid_out_at).reduce((sum, p) => sum + Number(p.amount), 0);
+      const receivablePayments = mapped.filter(p => p.status === "released" && !(p as any).paid_out_at);
+      const receivable = receivablePayments.reduce((sum, p) => sum + Number(p.amount), 0);
       // In escrow = paid by company, held
       const pending = mapped.filter(p => p.status === "paid").reduce((sum, p) => sum + Number(p.amount), 0);
       setTotals({
@@ -107,6 +123,41 @@ export default function Earnings() {
         receivable: receivable,
         total: paidOut + receivable + pending
       });
+
+      // Fetch details for receivable payments (company names and project status)
+      if (receivablePayments.length > 0) {
+        const companyIds = [...new Set(receivablePayments.map(p => p.company_user_id).filter(Boolean))];
+        const projectIds = [...new Set(receivablePayments.map(p => p.project_id).filter(Boolean))];
+        
+        const { data: companies } = await supabase
+          .from("company_profiles")
+          .select("user_id, company_name")
+          .in("user_id", companyIds as string[]);
+        
+        const { data: projects } = await supabase
+          .from("projects")
+          .select("id, title, status")
+          .in("id", projectIds as string[]);
+        
+        const companyMap = new Map(companies?.map(c => [c.user_id, c.company_name]) || []);
+        const projectMap = new Map(projects?.map(p => [p.id, { title: p.title, status: p.status }]) || []);
+        
+        const details: ReceivableDetail[] = receivablePayments.map(p => {
+          const projectInfo = p.project_id ? projectMap.get(p.project_id) : null;
+          return {
+            companyName: p.company_user_id ? companyMap.get(p.company_user_id) || t("earnings.unknownCompany") : t("earnings.unknownCompany"),
+            companyUserId: p.company_user_id || "",
+            projectTitle: projectInfo?.title || p.project?.title || t("earnings.unknownProject"),
+            amount: Number(p.amount),
+            currency: p.currency,
+            status: p.status,
+            projectStatus: projectInfo?.status,
+          };
+        });
+        
+        setReceivableDetails(details);
+        setHasCompletedProjects(details.some(d => d.projectStatus === "completed"));
+      }
     }
 
     // Fetch payout methods
@@ -261,20 +312,81 @@ export default function Earnings() {
         </Card>
 
         {totals.receivable > 0 && (
-          <Card className="border-blue-500/50 bg-blue-500/5">
+          <Card 
+            className={`cursor-pointer transition-all hover:shadow-md ${
+              hasCompletedProjects 
+                ? "border-green-500/50 bg-green-500/5" 
+                : "border-yellow-500/50 bg-yellow-500/5"
+            }`}
+            onClick={() => setDetailModalOpen(true)}
+          >
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-blue-500/10">
-                  <ArrowDownToLine className="h-6 w-6 text-blue-500" />
+                <div className={`p-3 rounded-xl ${hasCompletedProjects ? "bg-green-500/10" : "bg-yellow-500/10"}`}>
+                  <ArrowDownToLine className={`h-6 w-6 ${hasCompletedProjects ? "text-green-500" : "text-yellow-500"}`} />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">{t("earnings.receivable")}</p>
-                  <p className="text-2xl font-bold text-blue-600">${totals.receivable.toFixed(2)}</p>
+                  <p className={`text-2xl font-bold ${hasCompletedProjects ? "text-green-600" : "text-yellow-600"}`}>
+                    ${totals.receivable.toFixed(2)}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {t("earnings.clickForDetails")}
+                  </p>
                 </div>
               </div>
             </CardContent>
           </Card>
         )}
+
+        {/* Receivable Details Modal */}
+        <Dialog open={detailModalOpen} onOpenChange={setDetailModalOpen}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <ArrowDownToLine className="h-5 w-5" />
+                {t("earnings.receivableDetails")}
+              </DialogTitle>
+              <DialogDescription>
+                {t("earnings.receivableDetailsDesc")}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3 max-h-[400px] overflow-y-auto">
+              {receivableDetails.map((detail, idx) => (
+                <div 
+                  key={idx} 
+                  className={`p-4 rounded-lg border ${
+                    detail.projectStatus === "completed" 
+                      ? "bg-green-500/5 border-green-500/30" 
+                      : "bg-yellow-500/5 border-yellow-500/30"
+                  }`}
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-medium">{detail.companyName}</p>
+                      <p className="text-sm text-muted-foreground">{detail.projectTitle}</p>
+                      <Badge 
+                        variant="outline" 
+                        className={`mt-2 ${
+                          detail.projectStatus === "completed" 
+                            ? "border-green-500 text-green-600" 
+                            : "border-yellow-500 text-yellow-600"
+                        }`}
+                      >
+                        {detail.projectStatus === "completed" 
+                          ? t("earnings.projectCompleted") 
+                          : t("earnings.projectInProgress")}
+                      </Badge>
+                    </div>
+                    <p className="font-bold text-lg">
+                      ${detail.amount.toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <Card>
           <CardContent className="pt-6">

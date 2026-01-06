@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -14,12 +15,13 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   User, Lock, Bell, CreditCard, Building, Briefcase, 
-  Loader2, Save, Upload, Folder, Award
+  Loader2, Save, Upload, Folder, Award, Wallet
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import PortfolioManager from "@/components/settings/PortfolioManager";
 import CertificationsManager from "@/components/settings/CertificationsManager";
 import { CurrencySelect } from "@/components/CurrencySelect";
+import { WalletCard } from "@/components/billing/WalletCard";
 
 interface Profile {
   email: string;
@@ -54,9 +56,21 @@ interface FreelancerProfile {
 export default function Settings() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const defaultTab = searchParams.get("tab") || "profile";
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  
+  // Check for success/cancel from Stripe
+  useEffect(() => {
+    if (searchParams.get("success") === "true") {
+      toast.success(t("billing.fundsAddedSuccess"));
+    }
+    if (searchParams.get("canceled") === "true") {
+      toast.info(t("billing.paymentCanceled"));
+    }
+  }, [searchParams, t]);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [companyProfile, setCompanyProfile] = useState<CompanyProfile | null>(null);
   const [freelancerProfile, setFreelancerProfile] = useState<FreelancerProfile | null>(null);
@@ -203,7 +217,7 @@ export default function Settings() {
         <p className="text-muted-foreground">{t("settings.subtitle")}</p>
       </div>
 
-      <Tabs defaultValue="profile" className="space-y-6">
+      <Tabs defaultValue={defaultTab} className="space-y-6">
         <TabsList className={`grid w-full ${!isCompany ? 'grid-cols-6' : 'grid-cols-4'} lg:w-auto lg:inline-grid`}>
           <TabsTrigger value="profile" className="gap-2">
             <User className="h-4 w-4" />
@@ -230,7 +244,7 @@ export default function Settings() {
             <span className="hidden sm:inline">{t("settings.notifications")}</span>
           </TabsTrigger>
           <TabsTrigger value="billing" className="gap-2">
-            <CreditCard className="h-4 w-4" />
+            <Wallet className="h-4 w-4" />
             <span className="hidden sm:inline">{t("settings.billing")}</span>
           </TabsTrigger>
         </TabsList>
@@ -559,22 +573,7 @@ export default function Settings() {
 
         {/* Billing Tab */}
         <TabsContent value="billing" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("settings.paymentMethods")}</CardTitle>
-              <CardDescription>{t("settings.paymentMethodsDesc")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <CreditCard className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                <p>{t("settings.noPaymentMethods")}</p>
-                <Button variant="outline" className="mt-4 gap-2">
-                  <CreditCard className="h-4 w-4" />
-                  {t("settings.addPaymentMethod")}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <WalletCard />
         </TabsContent>
       </Tabs>
     </div>
