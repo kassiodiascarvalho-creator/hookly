@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,8 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Search, Loader2, CheckCircle, XCircle } from "lucide-react";
+import { Search, Loader2, CheckCircle, XCircle, Eye } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface FreelancerProfile {
   id: string;
@@ -18,12 +20,16 @@ interface FreelancerProfile {
   hourly_rate: number | null;
   location: string | null;
   verified: boolean | null;
+  verified_at: string | null;
+  verified_by_admin_id: string | null;
   skills: string[] | null;
   created_at: string;
 }
 
 export default function AdminFreelancers() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [freelancers, setFreelancers] = useState<FreelancerProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -48,23 +54,35 @@ export default function AdminFreelancers() {
     }
   };
 
-  const toggleVerification = async (id: string, currentStatus: boolean | null) => {
+  const toggleVerification = async (freelancer: FreelancerProfile) => {
+    if (!user) return;
+    
     try {
+      const newStatus = !freelancer.verified;
       const { error } = await supabase
         .from("freelancer_profiles")
-        .update({ verified: !currentStatus })
-        .eq("id", id);
+        .update({ 
+          verified: newStatus,
+          verified_at: newStatus ? new Date().toISOString() : null,
+          verified_by_admin_id: newStatus ? user.id : null,
+        })
+        .eq("id", freelancer.id);
 
       if (error) throw error;
 
       setFreelancers((prev) =>
-        prev.map((f) => (f.id === id ? { ...f, verified: !currentStatus } : f))
+        prev.map((f) => (f.id === freelancer.id ? { 
+          ...f, 
+          verified: newStatus,
+          verified_at: newStatus ? new Date().toISOString() : null,
+          verified_by_admin_id: newStatus ? user.id : null,
+        } : f))
       );
 
       toast.success(
-        currentStatus
-          ? t("admin.freelancerUnverified")
-          : t("admin.freelancerVerified")
+        newStatus
+          ? t("admin.freelancerVerified")
+          : t("admin.freelancerUnverified")
       );
     } catch (error) {
       console.error("Error toggling verification:", error);
@@ -157,15 +175,15 @@ export default function AdminFreelancers() {
                       <div className="flex items-center gap-2">
                         <Switch
                           checked={freelancer.verified || false}
-                          onCheckedChange={() =>
-                            toggleVerification(freelancer.id, freelancer.verified)
-                          }
+                          onCheckedChange={() => toggleVerification(freelancer)}
                         />
-                        <span className="text-sm text-muted-foreground">
-                          {freelancer.verified
-                            ? t("admin.verified")
-                            : t("admin.unverified")}
-                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => navigate(`/admin/freelancers/${freelancer.user_id}`)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>

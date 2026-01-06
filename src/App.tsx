@@ -43,6 +43,11 @@ import AdminCompanies from "./pages/admin/AdminCompanies";
 import AdminProjects from "./pages/admin/AdminProjects";
 import AdminPayments from "./pages/admin/AdminPayments";
 import AdminLeads from "./pages/admin/AdminLeads";
+import AdminFreelancerDetail from "./pages/admin/AdminFreelancerDetail";
+import AdminCompanyDetail from "./pages/admin/AdminCompanyDetail";
+
+// Freelancer extra pages
+import VerifiedCompanies from "./pages/VerifiedCompanies";
 
 const queryClient = new QueryClient();
 
@@ -84,7 +89,9 @@ const App = () => (
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/users" element={<AdminUsers />} />
               <Route path="/admin/freelancers" element={<AdminFreelancers />} />
+              <Route path="/admin/freelancers/:userId" element={<AdminFreelancerDetail />} />
               <Route path="/admin/companies" element={<AdminCompanies />} />
+              <Route path="/admin/companies/:userId" element={<AdminCompanyDetail />} />
               <Route path="/admin/projects" element={<AdminProjects />} />
               <Route path="/admin/payments" element={<AdminPayments />} />
               <Route path="/admin/leads" element={<AdminLeads />} />
@@ -122,6 +129,7 @@ const App = () => (
               <Route path="/my-proposals" element={<MyProposals />} />
               <Route path="/earnings" element={<Earnings />} />
               <Route path="/invites" element={<FreelancerInvites />} />
+              <Route path="/verified-companies" element={<VerifiedCompanies />} />
               <Route path="/certifications" element={<FreelancerDashboard />} />
               <Route path="/freelancers/:userId" element={<FreelancerProfile />} />
             </Route>

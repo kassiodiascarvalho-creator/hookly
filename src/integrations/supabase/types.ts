@@ -59,11 +59,14 @@ export type Database = {
           created_at: string
           id: string
           industry: string | null
+          is_verified: boolean | null
           location: string | null
           logo_url: string | null
           phone: string | null
           updated_at: string
           user_id: string
+          verified_at: string | null
+          verified_by_admin_id: string | null
           website: string | null
         }
         Insert: {
@@ -74,11 +77,14 @@ export type Database = {
           created_at?: string
           id?: string
           industry?: string | null
+          is_verified?: boolean | null
           location?: string | null
           logo_url?: string | null
           phone?: string | null
           updated_at?: string
           user_id: string
+          verified_at?: string | null
+          verified_by_admin_id?: string | null
           website?: string | null
         }
         Update: {
@@ -89,11 +95,14 @@ export type Database = {
           created_at?: string
           id?: string
           industry?: string | null
+          is_verified?: boolean | null
           location?: string | null
           logo_url?: string | null
           phone?: string | null
           updated_at?: string
           user_id?: string
+          verified_at?: string | null
+          verified_by_admin_id?: string | null
           website?: string | null
         }
         Relationships: []
@@ -203,6 +212,8 @@ export type Database = {
           updated_at: string
           user_id: string
           verified: boolean | null
+          verified_at: string | null
+          verified_by_admin_id: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -220,6 +231,8 @@ export type Database = {
           updated_at?: string
           user_id: string
           verified?: boolean | null
+          verified_at?: string | null
+          verified_by_admin_id?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -237,6 +250,8 @@ export type Database = {
           updated_at?: string
           user_id?: string
           verified?: boolean | null
+          verified_at?: string | null
+          verified_by_admin_id?: string | null
         }
         Relationships: []
       }
@@ -246,45 +261,66 @@ export type Database = {
           email: string
           id: string
           source: string | null
+          user_type: string | null
         }
         Insert: {
           created_at?: string
           email: string
           id?: string
           source?: string | null
+          user_type?: string | null
         }
         Update: {
           created_at?: string
           email?: string
           id?: string
           source?: string | null
+          user_type?: string | null
         }
         Relationships: []
       }
       messages: {
         Row: {
+          audio_duration: number | null
           content: string
           conversation_id: string
           created_at: string
+          file_mime: string | null
+          file_name: string | null
+          file_size: number | null
+          file_url: string | null
           id: string
           read_at: string | null
           sender_user_id: string
+          type: string | null
         }
         Insert: {
+          audio_duration?: number | null
           content: string
           conversation_id: string
           created_at?: string
+          file_mime?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          file_url?: string | null
           id?: string
           read_at?: string | null
           sender_user_id: string
+          type?: string | null
         }
         Update: {
+          audio_duration?: number | null
           content?: string
           conversation_id?: string
           created_at?: string
+          file_mime?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          file_url?: string | null
           id?: string
           read_at?: string | null
           sender_user_id?: string
+          type?: string | null
         }
         Relationships: [
           {
@@ -401,6 +437,8 @@ export type Database = {
           freelancer_user_id: string | null
           id: string
           paid_at: string | null
+          paid_out_at: string | null
+          paid_out_by_admin_id: string | null
           project_id: string | null
           released_at: string | null
           released_by_admin_id: string | null
@@ -418,6 +456,8 @@ export type Database = {
           freelancer_user_id?: string | null
           id?: string
           paid_at?: string | null
+          paid_out_at?: string | null
+          paid_out_by_admin_id?: string | null
           project_id?: string | null
           released_at?: string | null
           released_by_admin_id?: string | null
@@ -435,6 +475,8 @@ export type Database = {
           freelancer_user_id?: string | null
           id?: string
           paid_at?: string | null
+          paid_out_at?: string | null
+          paid_out_by_admin_id?: string | null
           project_id?: string | null
           released_at?: string | null
           released_by_admin_id?: string | null

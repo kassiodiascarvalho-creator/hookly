@@ -7,10 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, Send, FileText, Download } from "lucide-react";
 import { formatDistanceToNow, format, isToday, isYesterday } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Conversation } from "@/pages/Messages";
+import { AudioRecorder } from "./AudioRecorder";
+import { FileUploadButton } from "./FileUploadButton";
+import { AudioPlayer } from "./AudioPlayer";
 
 interface Message {
   id: string;
@@ -18,6 +21,12 @@ interface Message {
   sender_user_id: string;
   created_at: string;
   read_at: string | null;
+  type?: string;
+  file_url?: string | null;
+  file_name?: string | null;
+  file_mime?: string | null;
+  file_size?: number | null;
+  audio_duration?: number | null;
 }
 
 interface ChatWindowProps {
@@ -117,6 +126,7 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
       conversation_id: conversation.id,
       sender_user_id: user.id,
       content: messageContent,
+      type: 'text',
     });
 
     if (error) {
@@ -161,6 +171,64 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
     });
 
     return groups;
+  };
+
+  const renderMessageContent = (message: Message, isOwn: boolean) => {
+    const type = message.type || 'text';
+
+    switch (type) {
+      case 'audio':
+        return (
+          <AudioPlayer 
+            src={message.file_url || ''} 
+            duration={message.audio_duration || undefined}
+            isOwn={isOwn}
+          />
+        );
+
+      case 'image':
+        return (
+          <div className="max-w-xs">
+            <img 
+              src={message.file_url || ''} 
+              alt={message.file_name || 'Image'}
+              className="rounded-lg max-w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
+              onClick={() => window.open(message.file_url || '', '_blank')}
+            />
+          </div>
+        );
+
+      case 'file':
+        return (
+          <a 
+            href={message.file_url || ''} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className={cn(
+              "flex items-center gap-2 p-2 rounded-lg hover:opacity-80 transition-opacity",
+              isOwn ? "bg-primary-foreground/20" : "bg-background/50"
+            )}
+          >
+            <FileText className="h-8 w-8 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{message.file_name}</p>
+              {message.file_size && (
+                <p className="text-xs opacity-70">
+                  {(message.file_size / 1024).toFixed(1)} KB
+                </p>
+              )}
+            </div>
+            <Download className="h-4 w-4 shrink-0" />
+          </a>
+        );
+
+      default:
+        return (
+          <p className="whitespace-pre-wrap break-words">
+            {message.content}
+          </p>
+        );
+    }
   };
 
   const messageGroups = groupMessagesByDate(messages);
@@ -238,9 +306,7 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
                               : "bg-muted text-foreground rounded-bl-md"
                           )}
                         >
-                          <p className="whitespace-pre-wrap break-words">
-                            {message.content}
-                          </p>
+                          {renderMessageContent(message, isOwn)}
                           <p
                             className={cn(
                               "text-xs mt-1",
@@ -266,6 +332,16 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
       {/* Input */}
       <form onSubmit={sendMessage} className="p-4 border-t border-border">
         <div className="flex items-center gap-2">
+          <FileUploadButton 
+            conversationId={conversation.id} 
+            onFileSent={fetchMessages}
+            disabled={sending}
+          />
+          <AudioRecorder 
+            conversationId={conversation.id} 
+            onAudioSent={fetchMessages}
+            disabled={sending}
+          />
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}

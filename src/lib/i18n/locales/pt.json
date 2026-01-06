@@ -17,7 +17,9 @@
     "myProposals": "Minhas Propostas",
     "earnings": "Ganhos",
     "certifications": "Certificações",
-    "invites": "Convites"
+    "invites": "Convites",
+    "verifiedCompanies": "Empresas Verificadas",
+    "adminPanel": "Painel Admin"
   },
   "projects": {
     "title": "Projetos",
@@ -677,6 +679,8 @@
     "title": "Ganhos",
     "subtitle": "Acompanhe seus pagamentos e gerencie métodos de saque",
     "available": "Saldo Disponível",
+    "received": "Recebido",
+    "receivable": "A Receber",
     "inEscrow": "Em Garantia",
     "totalEarnings": "Ganhos Totais",
     "paymentHistory": "Histórico de Pagamentos",

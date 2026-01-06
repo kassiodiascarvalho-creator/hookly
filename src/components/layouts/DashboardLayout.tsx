@@ -35,9 +35,12 @@ import {
   Award,
   ChevronLeft,
   UserPlus,
+  Shield,
+  Building2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 const languages = [
   { code: "en", label: "English" },
@@ -53,6 +56,7 @@ export function DashboardLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { isAdmin } = useIsAdmin();
   
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -131,11 +135,15 @@ export function DashboardLayout() {
     { icon: FileText, label: t("nav.myProposals"), path: "/my-proposals" },
     { icon: MessageSquare, label: t("nav.messages"), path: "/messages" },
     { icon: DollarSign, label: t("nav.earnings"), path: "/earnings" },
+    { icon: Building2, label: t("nav.verifiedCompanies"), path: "/verified-companies" },
     { icon: Award, label: t("nav.certifications"), path: "/certifications" },
     { icon: Settings, label: t("nav.settings"), path: "/settings" },
   ];
 
-  const navItems = userType === "company" ? companyNavItems : freelancerNavItems;
+  const adminNavItem = { icon: Shield, label: t("nav.adminPanel"), path: "/admin" };
+
+  const baseNavItems = userType === "company" ? companyNavItems : freelancerNavItems;
+  const navItems = isAdmin ? [...baseNavItems, adminNavItem] : baseNavItems;
 
   const displayName = userType === "company" 
     ? profile?.company_name || profile?.contact_name || user?.email

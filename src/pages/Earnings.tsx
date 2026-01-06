@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { 
   DollarSign, Loader2, Clock, CheckCircle, AlertCircle,
-  Wallet, Building, CreditCard, Plus, Trash2, Save
+  Wallet, Building, CreditCard, Plus, Trash2, Save, ArrowDownToLine
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -52,7 +52,7 @@ export default function Earnings() {
   const [loading, setLoading] = useState(true);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [payoutMethods, setPayoutMethods] = useState<PayoutMethod[]>([]);
-  const [totals, setTotals] = useState({ available: 0, pending: 0, total: 0 });
+  const [totals, setTotals] = useState({ available: 0, pending: 0, receivable: 0, total: 0 });
   
   // Payout method form
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -95,12 +95,17 @@ export default function Earnings() {
       setPayments(mapped);
 
       // Calculate totals
-      const released = mapped.filter(p => p.status === "released").reduce((sum, p) => sum + Number(p.amount), 0);
+      // Released = paid out to freelancer (historically received)
+      const paidOut = mapped.filter(p => p.status === "released" && (p as any).paid_out_at).reduce((sum, p) => sum + Number(p.amount), 0);
+      // Receivable = released but not yet paid out (awaiting admin transfer)
+      const receivable = mapped.filter(p => p.status === "released" && !(p as any).paid_out_at).reduce((sum, p) => sum + Number(p.amount), 0);
+      // In escrow = paid by company, held
       const pending = mapped.filter(p => p.status === "paid").reduce((sum, p) => sum + Number(p.amount), 0);
       setTotals({
-        available: released,
+        available: paidOut,
         pending: pending,
-        total: released + pending
+        receivable: receivable,
+        total: paidOut + receivable + pending
       });
     }
 
@@ -240,7 +245,7 @@ export default function Earnings() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
@@ -248,12 +253,28 @@ export default function Earnings() {
                 <Wallet className="h-6 w-6 text-green-500" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">{t("earnings.available")}</p>
+                <p className="text-sm text-muted-foreground">{t("earnings.received")}</p>
                 <p className="text-2xl font-bold">${totals.available.toFixed(2)}</p>
               </div>
             </div>
           </CardContent>
         </Card>
+
+        {totals.receivable > 0 && (
+          <Card className="border-blue-500/50 bg-blue-500/5">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-blue-500/10">
+                  <ArrowDownToLine className="h-6 w-6 text-blue-500" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">{t("earnings.receivable")}</p>
+                  <p className="text-2xl font-bold text-blue-600">${totals.receivable.toFixed(2)}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardContent className="pt-6">
