@@ -804,11 +804,88 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_transactions: {
+        Row: {
+          amount_contracts: number
+          created_at: string
+          currency: string
+          description: string | null
+          fiat_amount: number
+          id: string
+          status: string
+          stripe_checkout_session_id: string | null
+          stripe_payment_intent_id: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount_contracts: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          fiat_amount: number
+          id?: string
+          status?: string
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount_contracts?: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          fiat_amount?: number
+          id?: string
+          status?: string
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wallets: {
+        Row: {
+          balance_contracts: number
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance_contracts?: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance_contracts?: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      credit_wallet: {
+        Args: {
+          p_amount: number
+          p_currency?: string
+          p_fiat_amount?: number
+          p_session_id: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
+      ensure_user_wallet: { Args: { p_user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

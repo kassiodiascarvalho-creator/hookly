@@ -43,7 +43,7 @@ interface Review {
   project_id: string;
   company_user_id: string;
   project?: { title: string };
-  company?: { company_name: string | null };
+  company?: { company_name: string | null; user_id?: string };
 }
 
 interface PortfolioItem {
@@ -134,19 +134,19 @@ export default function FreelancerProfile() {
       .order("created_at", { ascending: false });
 
     if (reviewsData) {
-      // Fetch company names separately
+      // Fetch company names and user_ids separately
       const companyIds = [...new Set(reviewsData.map(r => r.company_user_id))];
       const { data: companiesData } = await supabase
         .from("company_profiles")
         .select("user_id, company_name")
         .in("user_id", companyIds);
 
-      const companyMap = new Map(companiesData?.map(c => [c.user_id, c.company_name]) || []);
+      const companyMap = new Map(companiesData?.map(c => [c.user_id, { company_name: c.company_name, user_id: c.user_id }]) || []);
 
       const mappedReviews = reviewsData.map(r => ({
         ...r,
         project: r.project as { title: string } | undefined,
-        company: { company_name: companyMap.get(r.company_user_id) || null }
+        company: companyMap.get(r.company_user_id) || { company_name: null, user_id: r.company_user_id }
       }));
       setReviews(mappedReviews);
       if (mappedReviews.length > 0) {
@@ -525,7 +525,16 @@ export default function FreelancerProfile() {
                   <CardContent className="pt-6">
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <p className="font-medium">{review.company?.company_name || t("freelancerProfile.anonymousCompany")}</p>
+                        {review.company?.user_id ? (
+                          <button
+                            onClick={() => navigate(`/companies/${review.company?.user_id}`)}
+                            className="font-medium text-primary hover:underline text-left"
+                          >
+                            {review.company?.company_name || t("freelancerProfile.anonymousCompany")}
+                          </button>
+                        ) : (
+                          <p className="font-medium">{review.company?.company_name || t("freelancerProfile.anonymousCompany")}</p>
+                        )}
                         <p className="text-sm text-muted-foreground">{review.project?.title}</p>
                       </div>
                       <div className="flex items-center gap-1">

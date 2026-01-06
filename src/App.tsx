@@ -46,8 +46,9 @@ import AdminLeads from "./pages/admin/AdminLeads";
 import AdminFreelancerDetail from "./pages/admin/AdminFreelancerDetail";
 import AdminCompanyDetail from "./pages/admin/AdminCompanyDetail";
 
-// Freelancer extra pages
+// Public pages
 import VerifiedCompanies from "./pages/VerifiedCompanies";
+import CompanyProfile from "./pages/CompanyProfile";
 
 const queryClient = new QueryClient();
 
@@ -144,6 +145,7 @@ const App = () => (
             >
               <Route path="/messages" element={<Messages />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/companies/:userId" element={<CompanyProfile />} />
             </Route>
             
             {/* Catch-all */}
