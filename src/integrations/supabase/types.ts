@@ -130,6 +130,62 @@ export type Database = {
           },
         ]
       }
+      freelancer_achievements: {
+        Row: {
+          achievement_key: string
+          created_at: string
+          description: string | null
+          display_order: number
+          freelancer_user_id: string
+          id: string
+          image_url: string | null
+          required_revenue: number
+          subtitle: string | null
+          title: string
+          unlocked: boolean
+          unlocked_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          achievement_key: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          freelancer_user_id: string
+          id?: string
+          image_url?: string | null
+          required_revenue?: number
+          subtitle?: string | null
+          title: string
+          unlocked?: boolean
+          unlocked_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          achievement_key?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          freelancer_user_id?: string
+          id?: string
+          image_url?: string | null
+          required_revenue?: number
+          subtitle?: string | null
+          title?: string
+          unlocked?: boolean
+          unlocked_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "freelancer_achievements_freelancer_user_id_fkey"
+            columns: ["freelancer_user_id"]
+            isOneToOne: false
+            referencedRelation: "freelancer_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       freelancer_profiles: {
         Row: {
           avatar_url: string | null
@@ -143,6 +199,7 @@ export type Database = {
           preferred_payout_currency: string | null
           skills: string[] | null
           title: string | null
+          total_revenue: number | null
           updated_at: string
           user_id: string
           verified: boolean | null
@@ -159,6 +216,7 @@ export type Database = {
           preferred_payout_currency?: string | null
           skills?: string[] | null
           title?: string | null
+          total_revenue?: number | null
           updated_at?: string
           user_id: string
           verified?: boolean | null
@@ -175,6 +233,7 @@ export type Database = {
           preferred_payout_currency?: string | null
           skills?: string[] | null
           title?: string | null
+          total_revenue?: number | null
           updated_at?: string
           user_id?: string
           verified?: boolean | null
@@ -715,7 +774,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      initialize_freelancer_achievements: {
+        Args: { p_freelancer_user_id: string }
+        Returns: undefined
+      }
       is_admin: { Args: never; Returns: boolean }
+      update_freelancer_revenue_and_achievements: {
+        Args: { p_freelancer_user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "user"

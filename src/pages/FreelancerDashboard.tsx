@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Search, FileText, MessageSquare, DollarSign, ArrowRight, Briefcase } from "lucide-react";
+import { AchievementsCard } from "@/components/achievements";
 
 export default function FreelancerDashboard() {
   const { t } = useTranslation();
@@ -46,6 +47,9 @@ export default function FreelancerDashboard() {
           </Card>
         ))}
       </div>
+
+      {/* Achievements Card - My Evolution */}
+      <AchievementsCard />
 
       {/* Quick Actions */}
       <Card className="border-border/50">

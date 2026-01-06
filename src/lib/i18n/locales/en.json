@@ -453,7 +453,24 @@
   "notifications": {
     "title": "Notifications",
     "markAllRead": "Mark all read",
-    "noNotifications": "No notifications yet"
+    "noNotifications": "No notifications yet",
+    "projectInvite": "You've been invited to the project: {{projectTitle}}"
+  },
+  "achievements": {
+    "myEvolution": "My Evolution",
+    "updatedDaily": "Updated daily",
+    "currentRevenue": "Current Revenue",
+    "youAreDoing": "You're doing great!",
+    "startYourJourney": "Start your journey",
+    "milestonesUnlocked": "milestones unlocked",
+    "next": "Next:",
+    "viewNextAchievements": "View Next Achievements",
+    "nextAchievements": "Next Achievements",
+    "modalDescription": "For each milestone, a reward to remember: you make it happen",
+    "unlocked": "Unlocked",
+    "locked": "Locked",
+    "unlockedAt": "Unlocked on",
+    "current": "Current"
   },
   "settings": {
     "title": "Settings",

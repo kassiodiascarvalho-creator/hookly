@@ -430,6 +430,22 @@
       }
     }
   },
+  "achievements": {
+    "myEvolution": "Minha Evolução",
+    "updatedDaily": "Atualizado diariamente",
+    "currentRevenue": "Faturamento Atual",
+    "youAreDoing": "Você está conseguindo!",
+    "startYourJourney": "Comece sua jornada",
+    "milestonesUnlocked": "marcos desbloqueados",
+    "next": "Próximo:",
+    "viewNextAchievements": "Ver Próximas Conquistas",
+    "nextAchievements": "Próximas Conquistas",
+    "modalDescription": "Para cada marco, um prêmio para lembrar: você faz acontecer",
+    "unlocked": "Desbloqueado",
+    "locked": "Bloqueado",
+    "unlockedAt": "Desbloqueado em",
+    "current": "Atual"
+  },
   "sidebar": {
     "company": {
       "dashboard": "Painel",
