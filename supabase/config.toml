@@ -20,3 +20,12 @@ verify_jwt = false
 
 [functions.wallet-webhook]
 verify_jwt = false
+
+[functions.create-unified-payment]
+verify_jwt = false
+
+[functions.mp-webhook]
+verify_jwt = false
+
+[functions.unified-webhook]
+verify_jwt = false

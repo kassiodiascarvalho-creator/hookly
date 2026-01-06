@@ -56,6 +56,7 @@ export type Database = {
           company_name: string | null
           company_size: string | null
           contact_name: string | null
+          country: string | null
           created_at: string
           id: string
           industry: string | null
@@ -74,6 +75,7 @@ export type Database = {
           company_name?: string | null
           company_size?: string | null
           contact_name?: string | null
+          country?: string | null
           created_at?: string
           id?: string
           industry?: string | null
@@ -92,6 +94,7 @@ export type Database = {
           company_name?: string | null
           company_size?: string | null
           contact_name?: string | null
+          country?: string | null
           created_at?: string
           id?: string
           industry?: string | null
@@ -106,6 +109,105 @@ export type Database = {
           website?: string | null
         }
         Relationships: []
+      }
+      company_wallets: {
+        Row: {
+          balance_cents: number
+          company_user_id: string
+          created_at: string
+          currency: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          balance_cents?: number
+          company_user_id: string
+          created_at?: string
+          currency?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          balance_cents?: number
+          company_user_id?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      contracts: {
+        Row: {
+          accepted_at: string | null
+          amount_cents: number
+          cancelled_at: string | null
+          company_user_id: string
+          completed_at: string | null
+          created_at: string
+          currency: string
+          description: string | null
+          freelancer_user_id: string
+          id: string
+          milestones: Json | null
+          project_id: string
+          proposal_id: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          amount_cents?: number
+          cancelled_at?: string | null
+          company_user_id: string
+          completed_at?: string | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          freelancer_user_id: string
+          id?: string
+          milestones?: Json | null
+          project_id: string
+          proposal_id: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          amount_cents?: number
+          cancelled_at?: string | null
+          company_user_id?: string
+          completed_at?: string | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          freelancer_user_id?: string
+          id?: string
+          milestones?: Json | null
+          project_id?: string
+          proposal_id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       conversations: {
         Row: {
@@ -206,6 +308,7 @@ export type Database = {
           languages: string[] | null
           location: string | null
           preferred_payout_currency: string | null
+          proposal_credits: number
           skills: string[] | null
           title: string | null
           total_revenue: number | null
@@ -225,6 +328,7 @@ export type Database = {
           languages?: string[] | null
           location?: string | null
           preferred_payout_currency?: string | null
+          proposal_credits?: number
           skills?: string[] | null
           title?: string | null
           total_revenue?: number | null
@@ -244,6 +348,7 @@ export type Database = {
           languages?: string[] | null
           location?: string | null
           preferred_payout_currency?: string | null
+          proposal_credits?: number
           skills?: string[] | null
           title?: string | null
           total_revenue?: number | null
@@ -278,6 +383,62 @@ export type Database = {
           user_type?: string | null
         }
         Relationships: []
+      }
+      ledger_entries: {
+        Row: {
+          amount_cents: number
+          balance_after_cents: number | null
+          created_at: string
+          credits_after: number | null
+          credits_amount: number | null
+          currency: string
+          direction: string
+          id: string
+          metadata: Json | null
+          payment_id: string | null
+          reason: string
+          user_id: string
+          user_type: string
+        }
+        Insert: {
+          amount_cents: number
+          balance_after_cents?: number | null
+          created_at?: string
+          credits_after?: number | null
+          credits_amount?: number | null
+          currency?: string
+          direction: string
+          id?: string
+          metadata?: Json | null
+          payment_id?: string | null
+          reason: string
+          user_id: string
+          user_type: string
+        }
+        Update: {
+          amount_cents?: number
+          balance_after_cents?: number | null
+          created_at?: string
+          credits_after?: number | null
+          credits_amount?: number | null
+          currency?: string
+          direction?: string
+          id?: string
+          metadata?: Json | null
+          payment_id?: string | null
+          reason?: string
+          user_id?: string
+          user_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ledger_entries_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "unified_payments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       messages: {
         Row: {
@@ -424,6 +585,45 @@ export type Database = {
           last4?: string | null
           stripe_payment_method_id?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      payment_providers: {
+        Row: {
+          config_encrypted: Json | null
+          created_at: string
+          id: string
+          is_enabled: boolean
+          is_sandbox: boolean
+          last_tested_at: string | null
+          provider: string
+          test_status: string | null
+          updated_at: string
+          webhook_url: string | null
+        }
+        Insert: {
+          config_encrypted?: Json | null
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          is_sandbox?: boolean
+          last_tested_at?: string | null
+          provider: string
+          test_status?: string | null
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Update: {
+          config_encrypted?: Json | null
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          is_sandbox?: boolean
+          last_tested_at?: string | null
+          provider?: string
+          test_status?: string | null
+          updated_at?: string
+          webhook_url?: string | null
         }
         Relationships: []
       }
@@ -786,6 +986,80 @@ export type Database = {
           },
         ]
       }
+      unified_payments: {
+        Row: {
+          amount_cents: number
+          contract_id: string | null
+          created_at: string
+          credits_amount: number | null
+          currency: string
+          external_reference: string | null
+          id: string
+          metadata: Json | null
+          paid_at: string | null
+          payment_type: string
+          provider: string
+          provider_checkout_id: string | null
+          provider_checkout_url: string | null
+          provider_payment_id: string | null
+          provider_preference_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          user_type: string
+        }
+        Insert: {
+          amount_cents: number
+          contract_id?: string | null
+          created_at?: string
+          credits_amount?: number | null
+          currency?: string
+          external_reference?: string | null
+          id?: string
+          metadata?: Json | null
+          paid_at?: string | null
+          payment_type: string
+          provider: string
+          provider_checkout_id?: string | null
+          provider_checkout_url?: string | null
+          provider_payment_id?: string | null
+          provider_preference_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          user_type: string
+        }
+        Update: {
+          amount_cents?: number
+          contract_id?: string | null
+          created_at?: string
+          credits_amount?: number | null
+          currency?: string
+          external_reference?: string | null
+          id?: string
+          metadata?: Json | null
+          paid_at?: string | null
+          payment_type?: string
+          provider?: string
+          provider_checkout_id?: string | null
+          provider_checkout_url?: string | null
+          provider_payment_id?: string | null
+          provider_preference_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          user_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unified_payments_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
@@ -875,6 +1149,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_freelancer_credits: {
+        Args: {
+          p_credits: number
+          p_freelancer_user_id: string
+          p_payment_id: string
+          p_reason?: string
+        }
+        Returns: boolean
+      }
+      consume_proposal_credit: {
+        Args: { p_freelancer_user_id: string }
+        Returns: boolean
+      }
+      credit_company_wallet: {
+        Args: {
+          p_amount_cents: number
+          p_company_user_id: string
+          p_payment_id: string
+          p_reason?: string
+        }
+        Returns: boolean
+      }
       credit_wallet: {
         Args: {
           p_amount: number
@@ -884,6 +1180,10 @@ export type Database = {
           p_user_id: string
         }
         Returns: boolean
+      }
+      ensure_company_wallet: {
+        Args: { p_company_user_id: string }
+        Returns: string
       }
       ensure_user_wallet: { Args: { p_user_id: string }; Returns: string }
       has_role: {
