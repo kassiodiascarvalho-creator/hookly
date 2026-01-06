@@ -35,6 +35,7 @@ interface CompanyProfile {
   contact_name: string | null;
   phone: string | null;
   location: string | null;
+  country: string | null;
   industry: string | null;
   company_size: string | null;
   website: string | null;
@@ -357,6 +358,40 @@ export default function Settings() {
                       value={companyProfile.industry || ""}
                       onChange={(e) => setCompanyProfile({ ...companyProfile, industry: e.target.value })}
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t("settings.country")}</Label>
+                    <Select
+                      value={companyProfile.country || ""}
+                      onValueChange={(value) => setCompanyProfile({ ...companyProfile, country: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={t("settings.selectCountry")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="BR">🇧🇷 Brasil</SelectItem>
+                        <SelectItem value="US">🇺🇸 United States</SelectItem>
+                        <SelectItem value="GB">🇬🇧 United Kingdom</SelectItem>
+                        <SelectItem value="DE">🇩🇪 Germany</SelectItem>
+                        <SelectItem value="FR">🇫🇷 France</SelectItem>
+                        <SelectItem value="ES">🇪🇸 Spain</SelectItem>
+                        <SelectItem value="PT">🇵🇹 Portugal</SelectItem>
+                        <SelectItem value="IT">🇮🇹 Italy</SelectItem>
+                        <SelectItem value="CA">🇨🇦 Canada</SelectItem>
+                        <SelectItem value="AU">🇦🇺 Australia</SelectItem>
+                        <SelectItem value="MX">🇲🇽 Mexico</SelectItem>
+                        <SelectItem value="AR">🇦🇷 Argentina</SelectItem>
+                        <SelectItem value="CL">🇨🇱 Chile</SelectItem>
+                        <SelectItem value="CO">🇨🇴 Colombia</SelectItem>
+                        <SelectItem value="JP">🇯🇵 Japan</SelectItem>
+                        <SelectItem value="CN">🇨🇳 China</SelectItem>
+                        <SelectItem value="IN">🇮🇳 India</SelectItem>
+                        <SelectItem value="NL">🇳🇱 Netherlands</SelectItem>
+                        <SelectItem value="CH">🇨🇭 Switzerland</SelectItem>
+                        <SelectItem value="SE">🇸🇪 Sweden</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">{t("settings.countryDesc")}</p>
                   </div>
                   <div className="space-y-2">
                     <Label>{t("settings.website")}</Label>
