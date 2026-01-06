@@ -42,6 +42,7 @@ import AdminFreelancers from "./pages/admin/AdminFreelancers";
 import AdminCompanies from "./pages/admin/AdminCompanies";
 import AdminProjects from "./pages/admin/AdminProjects";
 import AdminPayments from "./pages/admin/AdminPayments";
+import AdminPaymentProviders from "./pages/admin/AdminPaymentProviders";
 import AdminLeads from "./pages/admin/AdminLeads";
 import AdminFreelancerDetail from "./pages/admin/AdminFreelancerDetail";
 import AdminCompanyDetail from "./pages/admin/AdminCompanyDetail";
@@ -95,6 +96,7 @@ const App = () => (
               <Route path="/admin/companies/:userId" element={<AdminCompanyDetail />} />
               <Route path="/admin/projects" element={<AdminProjects />} />
               <Route path="/admin/payments" element={<AdminPayments />} />
+              <Route path="/admin/payment-providers" element={<AdminPaymentProviders />} />
               <Route path="/admin/leads" element={<AdminLeads />} />
             </Route>
             

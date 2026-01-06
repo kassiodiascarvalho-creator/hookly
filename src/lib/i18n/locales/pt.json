@@ -873,6 +873,7 @@
     "dashboard": "Painel Admin",
     "dashboardDescription": "Visão geral das estatísticas e gerenciamento da plataforma",
     "adminPanel": "Painel Admin",
+    "paymentProviders": "Provedores de Pagamento",
     "users": "Usuários",
     "usersDescription": "Gerenciar todos os usuários cadastrados",
     "allUsers": "Todos os Usuários",
