@@ -1,0 +1,173 @@
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import Stripe from "https://esm.sh/stripe@18.5.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+const logStep = (step: string, details?: unknown) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  console.log(`[UNIFIED-WEBHOOK] ${step}${detailsStr}`);
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  const supabaseAdmin = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+  );
+
+  const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
+    apiVersion: "2025-08-27.basil",
+  });
+
+  try {
+    logStep("Webhook received");
+
+    const signature = req.headers.get("stripe-signature");
+    if (!signature) {
+      throw new Error("No Stripe signature");
+    }
+
+    const body = await req.text();
+    const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
+    
+    if (!webhookSecret) {
+      throw new Error("Webhook secret not configured");
+    }
+
+    let event: Stripe.Event;
+    try {
+      event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
+    } catch (err) {
+      logStep("Webhook signature verification failed", { error: err });
+      return new Response(JSON.stringify({ error: "Invalid signature" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
+    }
+
+    logStep("Event received", { type: event.type, id: event.id });
+
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const metadata = session.metadata || {};
+
+      logStep("Checkout session completed", { sessionId: session.id, metadata });
+
+      // Check if this is a unified payment
+      if (metadata.type === "unified_payment" && metadata.payment_id) {
+        const paymentId = metadata.payment_id;
+        const paymentType = metadata.payment_type;
+        const creditsAmount = parseInt(metadata.credits_amount || "0", 10);
+
+        // Find the payment record
+        const { data: payment, error: findError } = await supabaseAdmin
+          .from('unified_payments')
+          .select('*')
+          .eq('id', paymentId)
+          .maybeSingle();
+
+        if (findError || !payment) {
+          logStep("Payment not found", { paymentId, error: findError });
+          return new Response(JSON.stringify({ error: "Payment not found" }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 404,
+          });
+        }
+
+        // Check idempotency
+        if (payment.status === 'paid') {
+          logStep("Payment already processed", { paymentId });
+          return new Response(JSON.stringify({ received: true, already_processed: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 200,
+          });
+        }
+
+        // Update payment status
+        await supabaseAdmin
+          .from('unified_payments')
+          .update({
+            status: 'paid',
+            provider_payment_id: session.payment_intent as string,
+            provider_checkout_id: session.id,
+            paid_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', paymentId);
+
+        logStep("Payment status updated to paid", { paymentId });
+
+        // Execute financial effects based on payment type
+        const userId = payment.user_id;
+        const amountCents = payment.amount_cents;
+
+        if (paymentType === 'freelancer_credits' && creditsAmount > 0) {
+          // Add credits to freelancer
+          const { data: result, error: rpcError } = await supabaseAdmin
+            .rpc('add_freelancer_credits', {
+              p_freelancer_user_id: userId,
+              p_credits: creditsAmount,
+              p_payment_id: paymentId,
+              p_reason: 'credits_purchase_stripe',
+            });
+
+          if (rpcError) {
+            logStep("Error adding freelancer credits", { error: rpcError });
+          } else {
+            logStep("Freelancer credits added", { userId, credits: creditsAmount, result });
+          }
+
+        } else if (paymentType === 'company_wallet') {
+          // Credit company wallet
+          const { data: result, error: rpcError } = await supabaseAdmin
+            .rpc('credit_company_wallet', {
+              p_company_user_id: userId,
+              p_amount_cents: amountCents,
+              p_payment_id: paymentId,
+              p_reason: 'wallet_topup_stripe',
+            });
+
+          if (rpcError) {
+            logStep("Error crediting company wallet", { error: rpcError });
+          } else {
+            logStep("Company wallet credited", { userId, amount: amountCents, result });
+          }
+        }
+
+        // Send notification
+        await supabaseAdmin
+          .from('notifications')
+          .insert({
+            user_id: userId,
+            type: 'payment_success',
+            message: paymentType === 'freelancer_credits' 
+              ? `Seus ${creditsAmount} créditos de proposta foram adicionados!`
+              : `Seus fundos foram adicionados à sua carteira!`,
+            link: '/settings?tab=billing',
+          });
+
+        logStep("Notification sent", { userId });
+      }
+    }
+
+    return new Response(JSON.stringify({ received: true }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
+    });
+
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logStep("ERROR", { message: errorMessage });
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500,
+    });
+  }
+});

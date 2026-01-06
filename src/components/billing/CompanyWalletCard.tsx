@@ -1,0 +1,214 @@
+import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Wallet, Loader2, History, TrendingUp } from "lucide-react";
+import { CompanyAddFundsDialog } from "./CompanyAddFundsDialog";
+import { format } from "date-fns";
+import { formatMoney } from "@/lib/formatMoney";
+
+interface CompanyWallet {
+  balance_cents: number;
+  currency: string;
+}
+
+interface LedgerEntry {
+  id: string;
+  direction: string;
+  amount_cents: number;
+  currency: string;
+  balance_after_cents: number | null;
+  reason: string;
+  created_at: string;
+}
+
+export function CompanyWalletCard() {
+  const { t } = useTranslation();
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [wallet, setWallet] = useState<CompanyWallet | null>(null);
+  const [ledgerEntries, setLedgerEntries] = useState<LedgerEntry[]>([]);
+
+  useEffect(() => {
+    if (user) {
+      fetchData();
+    }
+  }, [user]);
+
+  const fetchData = async () => {
+    if (!user) return;
+
+    // Fetch company wallet
+    const { data: walletData } = await supabase
+      .from("company_wallets")
+      .select("balance_cents, currency")
+      .eq("company_user_id", user.id)
+      .single();
+
+    if (walletData) {
+      setWallet(walletData);
+    }
+
+    // Fetch ledger entries
+    const { data: ledgerData } = await supabase
+      .from("ledger_entries")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("user_type", "company")
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    if (ledgerData) {
+      setLedgerEntries(ledgerData);
+    }
+
+    setLoading(false);
+  };
+
+  const getReasonLabel = (reason: string) => {
+    switch (reason) {
+      case "wallet_topup":
+      case "wallet_topup_stripe":
+      case "wallet_topup_mercadopago":
+        return "Recarga de fundos";
+      case "premium_feature":
+        return "Funcionalidade premium";
+      case "refund":
+        return "Reembolso";
+      default:
+        return reason;
+    }
+  };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="py-8 flex justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const balanceCents = wallet?.balance_cents || 0;
+  const currency = wallet?.currency || "USD";
+
+  return (
+    <div className="space-y-6">
+      {/* Balance Card */}
+      <Card className="relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/10 to-transparent rounded-bl-full" />
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Wallet className="h-5 w-5 text-primary" />
+              Carteira da Empresa
+            </CardTitle>
+            <CardDescription>
+              Saldo para funcionalidades premium e recursos avançados
+            </CardDescription>
+          </div>
+          <CompanyAddFundsDialog onSuccess={fetchData} />
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-baseline gap-2">
+            <span className="text-4xl font-bold">
+              {formatMoney(balanceCents / 100, currency)}
+            </span>
+          </div>
+          
+          {balanceCents === 0 && (
+            <div className="mt-4 p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
+              <div className="flex items-start gap-3">
+                <TrendingUp className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-blue-600">Adicione fundos</p>
+                  <p className="text-sm text-muted-foreground">
+                    Use sua carteira para acessar dados detalhados de freelancers, 
+                    relatórios avançados e muito mais!
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Features Info */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Funcionalidades Premium</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="p-3 rounded-lg border">
+              <p className="font-medium">📊 Histórico Avançado</p>
+              <p className="text-sm text-muted-foreground">
+                Veja histórico completo de projetos e avaliações
+              </p>
+            </div>
+            <div className="p-3 rounded-lg border">
+              <p className="font-medium">📈 Relatórios</p>
+              <p className="text-sm text-muted-foreground">
+                Acesse relatórios detalhados de contratações
+              </p>
+            </div>
+            <div className="p-3 rounded-lg border">
+              <p className="font-medium">⭐ Destaque de Vagas</p>
+              <p className="text-sm text-muted-foreground">
+                Coloque suas vagas em destaque
+              </p>
+            </div>
+            <div className="p-3 rounded-lg border">
+              <p className="font-medium">🔍 Busca Avançada</p>
+              <p className="text-sm text-muted-foreground">
+                Filtros avançados para encontrar talentos
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Transaction History */}
+      {ledgerEntries.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <History className="h-4 w-4" />
+              Histórico de Transações
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {ledgerEntries.map((entry) => (
+                <div
+                  key={entry.id}
+                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
+                >
+                  <div>
+                    <p className="font-medium">{getReasonLabel(entry.reason)}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {format(new Date(entry.created_at), "dd/MM/yyyy HH:mm")}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className={`font-semibold ${entry.direction === "credit" ? "text-green-600" : "text-destructive"}`}>
+                      {entry.direction === "credit" ? "+" : "-"}
+                      {formatMoney(entry.amount_cents / 100, entry.currency)}
+                    </p>
+                    {entry.balance_after_cents !== null && (
+                      <p className="text-xs text-muted-foreground">
+                        Saldo: {formatMoney(entry.balance_after_cents / 100, entry.currency)}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
