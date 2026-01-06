@@ -19,7 +19,8 @@
     "certifications": "Certificações",
     "invites": "Convites",
     "verifiedCompanies": "Empresas Verificadas",
-    "adminPanel": "Painel Admin"
+    "adminPanel": "Painel Admin",
+    "contracts": "Contratos"
   },
   "projects": {
     "title": "Projetos",
@@ -754,6 +755,25 @@
     "refund": "Reembolso",
     "fundsAddedSuccess": "Fundos adicionados com sucesso!",
     "paymentCanceled": "Pagamento foi cancelado"
+  },
+  "contracts": {
+    "title": "Contratos",
+    "subtitle": "Visualize e gerencie seus contratos ativos",
+    "all": "Todos",
+    "active": "Ativos",
+    "funded": "Financiados",
+    "completed": "Concluídos",
+    "cancelled": "Cancelados",
+    "noContracts": "Nenhum contrato ainda",
+    "noContractsDesc": "Os contratos são criados automaticamente quando propostas são aceitas.",
+    "statusDraft": "Rascunho",
+    "statusActive": "Ativo",
+    "statusFunded": "Financiado",
+    "statusCompleted": "Concluído",
+    "statusCancelled": "Cancelado",
+    "milestones": "Marcos",
+    "more": "mais",
+    "viewProject": "Ver Projeto"
   },
   "companyProfile": {
     "notFound": "Empresa não encontrada",

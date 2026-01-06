@@ -30,6 +30,7 @@ import FreelancerProfile from "./pages/FreelancerProfile";
 import Earnings from "./pages/Earnings";
 import CompanyFinances from "./pages/CompanyFinances";
 import FreelancerInvites from "./pages/FreelancerInvites";
+import Contracts from "./pages/Contracts";
 import ForCompanies from "./pages/ForCompanies";
 import ForFreelancers from "./pages/ForFreelancers";
 import Pricing from "./pages/Pricing";
@@ -147,6 +148,7 @@ const App = () => (
             >
               <Route path="/messages" element={<Messages />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/contracts" element={<Contracts />} />
               <Route path="/companies/:userId" element={<CompanyProfile />} />
             </Route>
             

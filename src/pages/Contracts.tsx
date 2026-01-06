@@ -40,7 +40,7 @@ const statusColors: Record<string, string> = {
 
 export default function Contracts() {
   const { t } = useTranslation();
-  const { user, userType } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
