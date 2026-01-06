@@ -1,13 +1,19 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Loader2, Building2 } from "lucide-react";
+import { Search, Loader2, Building2, CheckCircle, XCircle, Eye } from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { normalizeUrl } from "@/lib/normalizeUrl";
 
 interface CompanyProfile {
   id: string;
@@ -19,11 +25,16 @@ interface CompanyProfile {
   location: string | null;
   logo_url: string | null;
   website: string | null;
+  is_verified: boolean | null;
+  verified_at: string | null;
+  verified_by_admin_id: string | null;
   created_at: string;
 }
 
 export default function AdminCompanies() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [companies, setCompanies] = useState<CompanyProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -47,6 +58,42 @@ export default function AdminCompanies() {
 
     fetchCompanies();
   }, []);
+
+  const toggleVerification = async (company: CompanyProfile) => {
+    if (!user) return;
+
+    try {
+      const newStatus = !company.is_verified;
+      const { error } = await supabase
+        .from("company_profiles")
+        .update({ 
+          is_verified: newStatus,
+          verified_at: newStatus ? new Date().toISOString() : null,
+          verified_by_admin_id: newStatus ? user.id : null,
+        })
+        .eq("id", company.id);
+
+      if (error) throw error;
+
+      setCompanies((prev) =>
+        prev.map((c) => (c.id === company.id ? { 
+          ...c, 
+          is_verified: newStatus,
+          verified_at: newStatus ? new Date().toISOString() : null,
+          verified_by_admin_id: newStatus ? user.id : null,
+        } : c))
+      );
+
+      toast.success(
+        newStatus
+          ? t("admin.companyVerified")
+          : t("admin.companyUnverified")
+      );
+    } catch (error) {
+      console.error("Error toggling verification:", error);
+      toast.error(t("admin.errorUpdating"));
+    }
+  };
 
   const filteredCompanies = companies.filter(
     (c) =>
@@ -92,7 +139,8 @@ export default function AdminCompanies() {
                   <TableHead>{t("admin.size")}</TableHead>
                   <TableHead>{t("admin.location")}</TableHead>
                   <TableHead>{t("admin.website")}</TableHead>
-                  <TableHead>{t("admin.createdAt")}</TableHead>
+                  <TableHead>{t("admin.verified")}</TableHead>
+                  <TableHead>{t("admin.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -124,7 +172,7 @@ export default function AdminCompanies() {
                     <TableCell>
                       {company.website ? (
                         <a
-                          href={company.website}
+                          href={normalizeUrl(company.website)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-primary hover:underline"
@@ -136,13 +184,32 @@ export default function AdminCompanies() {
                       )}
                     </TableCell>
                     <TableCell>
-                      {format(new Date(company.created_at), "PP")}
+                      {company.is_verified ? (
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                      ) : (
+                        <XCircle className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={company.is_verified || false}
+                          onCheckedChange={() => toggleVerification(company)}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => navigate(`/admin/companies/${company.user_id}`)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
                 {filteredCompanies.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground">
                       {t("admin.noCompaniesFound")}
                     </TableCell>
                   </TableRow>

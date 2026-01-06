@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Loader2, Trash2, Download } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -20,11 +21,18 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Lead {
   id: string;
   email: string;
   source: string | null;
+  user_type: string | null;
   created_at: string;
 }
 
@@ -33,6 +41,7 @@ export default function AdminLeads() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
 
   useEffect(() => {
     fetchLeads();
@@ -66,33 +75,41 @@ export default function AdminLeads() {
     }
   };
 
-  const exportLeads = () => {
+  const exportLeads = (exportAll: boolean) => {
+    const dataToExport = exportAll ? leads : filteredLeads;
+    
     const csvContent = [
-      ["Email", "Source", "Created At"],
-      ...leads.map((lead) => [
+      ["Email", "Source", "Type", "Created At"],
+      ...dataToExport.map((lead) => [
         lead.email,
         lead.source || "",
+        lead.user_type || "",
         format(new Date(lead.created_at), "yyyy-MM-dd HH:mm:ss"),
       ]),
     ]
-      .map((row) => row.join(","))
+      .map((row) => row.map(cell => `"${cell}"`).join(","))
       .join("\n");
 
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `leads-${format(new Date(), "yyyy-MM-dd")}.csv`;
+    a.download = `leads-${exportAll ? 'all' : 'filtered'}-${format(new Date(), "yyyy-MM-dd")}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
     toast.success(t("admin.leadsExported"));
   };
 
-  const filteredLeads = leads.filter(
-    (lead) =>
+  const filteredLeads = leads.filter((lead) => {
+    const matchesSearch = 
       lead.email.toLowerCase().includes(search.toLowerCase()) ||
-      lead.source?.toLowerCase().includes(search.toLowerCase())
-  );
+      lead.source?.toLowerCase().includes(search.toLowerCase());
+    
+    const matchesType = typeFilter === "all" || lead.user_type === typeFilter || 
+      (typeFilter === "unknown" && !lead.user_type);
+    
+    return matchesSearch && matchesType;
+  });
 
   return (
     <div className="space-y-6">
@@ -105,11 +122,36 @@ export default function AdminLeads() {
         <CardHeader>
           <div className="flex items-center justify-between flex-wrap gap-4">
             <CardTitle>{t("admin.allLeads")} ({leads.length})</CardTitle>
-            <div className="flex items-center gap-4">
-              <Button variant="outline" onClick={exportLeads}>
-                <Download className="h-4 w-4 mr-2" />
-                {t("admin.exportCsv")}
-              </Button>
+            <div className="flex items-center gap-4 flex-wrap">
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder={t("admin.filterByType")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("admin.allTypes")}</SelectItem>
+                  <SelectItem value="company">{t("admin.companies")}</SelectItem>
+                  <SelectItem value="freelancer">{t("admin.freelancers")}</SelectItem>
+                  <SelectItem value="unknown">{t("admin.unknown")}</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    <Download className="h-4 w-4 mr-2" />
+                    {t("admin.exportCsv")}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => exportLeads(true)}>
+                    {t("admin.exportAll")} ({leads.length})
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => exportLeads(false)}>
+                    {t("admin.exportFiltered")} ({filteredLeads.length})
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
               <div className="relative w-64">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -133,6 +175,7 @@ export default function AdminLeads() {
                 <TableRow>
                   <TableHead>{t("admin.email")}</TableHead>
                   <TableHead>{t("admin.source")}</TableHead>
+                  <TableHead>{t("admin.type")}</TableHead>
                   <TableHead>{t("admin.createdAt")}</TableHead>
                   <TableHead>{t("admin.actions")}</TableHead>
                 </TableRow>
@@ -144,6 +187,15 @@ export default function AdminLeads() {
                     <TableCell>
                       {lead.source ? (
                         <Badge variant="outline">{lead.source}</Badge>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {lead.user_type ? (
+                        <Badge variant={lead.user_type === 'company' ? 'default' : 'secondary'}>
+                          {lead.user_type === 'company' ? t("admin.company") : t("admin.freelancer")}
+                        </Badge>
                       ) : (
                         "-"
                       )}
@@ -178,7 +230,7 @@ export default function AdminLeads() {
                 ))}
                 {filteredLeads.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground">
+                    <TableCell colSpan={5} className="text-center text-muted-foreground">
                       {t("admin.noLeadsFound")}
                     </TableCell>
                   </TableRow>
