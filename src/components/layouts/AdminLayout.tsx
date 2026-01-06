@@ -22,6 +22,7 @@ const navItems = [
   { path: "/admin/companies", icon: Building2, labelKey: "admin.companies" },
   { path: "/admin/projects", icon: FolderOpen, labelKey: "admin.projects" },
   { path: "/admin/payments", icon: CreditCard, labelKey: "admin.payments" },
+  { path: "/admin/payment-providers", icon: CreditCard, labelKey: "admin.paymentProviders" },
   { path: "/admin/leads", icon: Mail, labelKey: "admin.leads" },
 ];
 

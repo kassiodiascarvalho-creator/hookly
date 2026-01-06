@@ -21,7 +21,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import PortfolioManager from "@/components/settings/PortfolioManager";
 import CertificationsManager from "@/components/settings/CertificationsManager";
 import { CurrencySelect } from "@/components/CurrencySelect";
-import { WalletCard } from "@/components/billing/WalletCard";
+import { FreelancerCreditsCard } from "@/components/billing/FreelancerCreditsCard";
+import { CompanyWalletCard } from "@/components/billing/CompanyWalletCard";
 
 interface Profile {
   email: string;
@@ -573,7 +574,7 @@ export default function Settings() {
 
         {/* Billing Tab */}
         <TabsContent value="billing" className="space-y-6">
-          <WalletCard />
+          {isCompany ? <CompanyWalletCard /> : <FreelancerCreditsCard />}
         </TabsContent>
       </Tabs>
     </div>

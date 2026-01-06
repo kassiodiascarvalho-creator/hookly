@@ -789,6 +789,7 @@
     "dashboard": "Admin Dashboard",
     "dashboardDescription": "Overview of platform statistics and management",
     "adminPanel": "Admin Panel",
+    "paymentProviders": "Payment Providers",
     "users": "Users",
     "usersDescription": "Manage all registered users",
     "allUsers": "All Users",
