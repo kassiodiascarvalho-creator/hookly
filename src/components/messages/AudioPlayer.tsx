@@ -43,6 +43,11 @@ export function AudioPlayer({ src, duration, isOwn }: AudioPlayerProps) {
     setLoading(false);
   };
 
+  const handleError = () => {
+    setLoading(false);
+    console.error("Error loading audio:", src);
+  };
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -63,6 +68,8 @@ export function AudioPlayer({ src, duration, isOwn }: AudioPlayerProps) {
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleEnded}
         onLoadedData={handleLoadedData}
+        onError={handleError}
+        onCanPlay={() => setLoading(false)}
         preload="metadata"
       />
       

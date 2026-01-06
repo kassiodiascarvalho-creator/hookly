@@ -638,7 +638,46 @@
       "paid": "In Escrow",
       "released": "Released",
       "failed": "Failed"
-    }
+    },
+    "clickForDetails": "Click for details",
+    "receivableDetails": "To Receive Details",
+    "receivableDetailsDesc": "Breakdown by company and project",
+    "projectCompleted": "Project Completed",
+    "projectInProgress": "In Progress",
+    "unknownCompany": "Unknown Company"
+  },
+  "billing": {
+    "addFunds": "Add Funds",
+    "addFundsDescription": "Add credit to your wallet using your preferred currency",
+    "quickSelect": "Quick Select",
+    "amount": "Amount",
+    "currency": "Currency",
+    "youWillReceive": "You will receive",
+    "contracts": "Contracts",
+    "contract": "Contract",
+    "exchangeRate": "Exchange rate",
+    "proceedToPayment": "Proceed to Payment",
+    "invalidAmount": "Please enter a valid amount",
+    "walletBalance": "Wallet Balance",
+    "walletDescription": "Your internal credit balance for platform transactions",
+    "transactionHistory": "Transaction History",
+    "topup": "Funds Added",
+    "debit": "Debit",
+    "credit": "Credit",
+    "refund": "Refund",
+    "fundsAddedSuccess": "Funds added successfully!",
+    "paymentCanceled": "Payment was canceled"
+  },
+  "companyProfile": {
+    "notFound": "Company not found",
+    "unnamed": "Unnamed Company",
+    "employees": "employees",
+    "website": "Website",
+    "projects": "Projects",
+    "totalPaid": "Total Paid",
+    "freelancersHired": "Freelancers Hired",
+    "avgRating": "Avg. Rating",
+    "about": "About"
   },
   "uploads": {
     "selectFile": "Select File",

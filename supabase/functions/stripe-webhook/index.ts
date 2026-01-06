@@ -66,6 +66,44 @@ serve(async (req) => {
         });
 
         const metadata = session.metadata || {};
+        
+        // Check if this is a wallet topup
+        if (metadata.type === "wallet_topup") {
+          logStep("Processing wallet topup");
+          const userId = metadata.user_id;
+          const amount = parseFloat(metadata.topup_amount_contracts || "0");
+          const currency = metadata.currency || "USD";
+          const fiatAmount = parseFloat(metadata.fiat_amount || "0");
+
+          if (userId && amount > 0) {
+            const { data, error } = await supabaseClient.rpc("credit_wallet", {
+              p_user_id: userId,
+              p_amount: amount,
+              p_session_id: session.id,
+              p_currency: currency,
+              p_fiat_amount: fiatAmount,
+            });
+
+            if (error) {
+              logStep("Error crediting wallet", { error: error.message });
+            } else if (data === false) {
+              logStep("Wallet transaction already processed (idempotent)");
+            } else {
+              logStep("Wallet credited successfully", { userId, amount });
+              
+              // Notify user
+              await supabaseClient.from("notifications").insert({
+                user_id: userId,
+                type: "wallet_topup",
+                message: `${amount} Contracts have been added to your wallet!`,
+                link: "/settings?tab=billing",
+              });
+            }
+          }
+          break;
+        }
+
+        // Regular project payment handling
         const projectId = metadata.project_id;
         const milestoneId = metadata.milestone_id;
         const freelancerUserId = metadata.freelancer_user_id;

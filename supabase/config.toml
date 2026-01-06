@@ -14,3 +14,9 @@ verify_jwt = false
 
 [functions.list-payment-methods]
 verify_jwt = false
+
+[functions.add-funds]
+verify_jwt = false
+
+[functions.wallet-webhook]
+verify_jwt = false
