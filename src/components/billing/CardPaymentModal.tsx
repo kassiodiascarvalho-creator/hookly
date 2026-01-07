@@ -74,27 +74,64 @@ export function CardPaymentModal({
   useEffect(() => {
     if (!open || !publicKey) return;
 
-    console.log("[CardPaymentModal] Initializing with publicKey:", publicKey);
+    // Detailed SDK detection logs
+    console.log("[CardPaymentModal] === SDK DETECTION START ===");
+    console.log("[CardPaymentModal] sdkLoaded:", typeof window.MercadoPago !== "undefined");
+    console.log("[CardPaymentModal] mpPublicKeyPresent:", !!publicKey);
+    console.log("[CardPaymentModal] MercadoPago global type:", typeof window.MercadoPago);
+    console.log("[CardPaymentModal] MercadoPago.bricks type:", typeof window.MercadoPago?.bricks);
+    console.log("[CardPaymentModal] MercadoPago.bricksBuilder type:", typeof window.MercadoPago?.bricksBuilder);
     console.log("[CardPaymentModal] Amount:", amountValue);
 
     // Check if MercadoPago SDK is loaded
-    if (!window.MercadoPago) {
-      console.error("[CardPaymentModal] MercadoPago SDK not loaded");
+    if (typeof window.MercadoPago === "undefined") {
+      console.error("[CardPaymentModal] MercadoPago SDK not loaded on window");
       setBrickError(true);
       return;
     }
 
     const initBrick = async () => {
       try {
-        // Initialize MP instance
-        const mp = new window.MercadoPago(publicKey, {
-          locale: "pt-BR",
-        });
+        let mp: any;
+        let bricksBuilder: any;
+        let chosenInitPath = "";
 
-        console.log("[CardPaymentModal] MercadoPago instance created");
+        // Determine initialization path based on SDK shape
+        if (typeof window.MercadoPago === "function") {
+          // Standard path: new MercadoPago(publicKey)
+          chosenInitPath = "constructor";
+          console.log("[CardPaymentModal] chosenInitPath:", chosenInitPath);
+          
+          mp = new window.MercadoPago(publicKey, {
+            locale: "pt-BR",
+          });
+          console.log("[CardPaymentModal] MercadoPago instance created via constructor");
+          console.log("[CardPaymentModal] mp.bricks type:", typeof mp.bricks);
 
-        const bricksBuilder = mp.bricks();
-        console.log("[CardPaymentModal] BricksBuilder created");
+          if (typeof mp.bricks === "function") {
+            bricksBuilder = mp.bricks();
+            console.log("[CardPaymentModal] bricksBuilder created via mp.bricks()");
+          } else {
+            throw new Error("mp.bricks() not available after constructor initialization");
+          }
+        } else if (typeof window.MercadoPago === "object" && typeof window.MercadoPago.bricks === "function") {
+          // Alternative path: direct bricks access
+          chosenInitPath = "direct-bricks";
+          console.log("[CardPaymentModal] chosenInitPath:", chosenInitPath);
+          bricksBuilder = window.MercadoPago.bricks();
+          console.log("[CardPaymentModal] bricksBuilder created via window.MercadoPago.bricks()");
+        } else if (typeof window.MercadoPago === "object" && window.MercadoPago.bricksBuilder) {
+          // Alternative path: bricksBuilder property
+          chosenInitPath = "bricksBuilder-property";
+          console.log("[CardPaymentModal] chosenInitPath:", chosenInitPath);
+          bricksBuilder = window.MercadoPago.bricksBuilder;
+          console.log("[CardPaymentModal] bricksBuilder accessed via property");
+        } else {
+          console.error("[CardPaymentModal] Unknown SDK shape, cannot initialize");
+          console.error("[CardPaymentModal] MercadoPago object keys:", Object.keys(window.MercadoPago || {}));
+          setBrickError(true);
+          return;
+        }
 
         // Wait for container to be ready
         await new Promise((resolve) => setTimeout(resolve, 100));
@@ -114,7 +151,7 @@ export function CardPaymentModal({
           }
         }
 
-        console.log("[CardPaymentModal] Creating cardPayment brick...");
+        console.log("[CardPaymentModal] brickCreateStart");
 
         const controller = await bricksBuilder.create(
           "cardPayment",
@@ -125,7 +162,7 @@ export function CardPaymentModal({
             },
             callbacks: {
               onReady: () => {
-                console.log("[CardPaymentModal] Brick ready");
+                console.log("[CardPaymentModal] brickCreateSuccess - Brick ready");
                 setSdkReady(true);
                 setBrickError(false);
               },
@@ -134,7 +171,8 @@ export function CardPaymentModal({
                 await handleSubmit(formData);
               },
               onError: (error: any) => {
-                console.error("[CardPaymentModal] Brick error:", error);
+                console.error("[CardPaymentModal] brickCreateError:", error);
+                console.error("[CardPaymentModal] Error stack:", error?.stack || "no stack");
                 setBrickError(true);
               },
             },
@@ -152,9 +190,11 @@ export function CardPaymentModal({
         );
 
         brickControllerRef.current = controller;
-        console.log("[CardPaymentModal] Brick created successfully");
-      } catch (error) {
-        console.error("[CardPaymentModal] Error creating brick:", error);
+        console.log("[CardPaymentModal] brickCreateSuccess - Controller stored");
+      } catch (error: any) {
+        console.error("[CardPaymentModal] brickCreateError:", error);
+        console.error("[CardPaymentModal] Error message:", error?.message || "unknown");
+        console.error("[CardPaymentModal] Error stack:", error?.stack || "no stack");
         setBrickError(true);
       }
     };
