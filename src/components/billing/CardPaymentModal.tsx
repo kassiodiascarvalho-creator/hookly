@@ -1,5 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
-import { initMercadoPago, CardPayment } from "@mercadopago/sdk-react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Loader2, CreditCard, AlertTriangle, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +11,12 @@ import {
 import { toast } from "sonner";
 import { formatMoney } from "@/lib/formatMoney";
 import { supabase } from "@/integrations/supabase/client";
+
+declare global {
+  interface Window {
+    MercadoPago: any;
+  }
+}
 
 interface CardPaymentModalProps {
   open: boolean;
@@ -59,22 +64,115 @@ export function CardPaymentModal({
   const [sdkReady, setSdkReady] = useState(false);
   const [brickError, setBrickError] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<"pending" | "approved" | "rejected" | null>(null);
-  const [fallbackUrl, setFallbackUrl] = useState<string>("");
   const [loadingFallback, setLoadingFallback] = useState(false);
+  const brickContainerRef = useRef<HTMLDivElement>(null);
+  const brickControllerRef = useRef<any>(null);
 
-  // Initialize MercadoPago SDK
+  const amountValue = amount / 100;
+
+  // Initialize MercadoPago SDK and mount Brick
   useEffect(() => {
-    if (open && publicKey) {
+    if (!open || !publicKey) return;
+
+    console.log("[CardPaymentModal] Initializing with publicKey:", publicKey);
+    console.log("[CardPaymentModal] Amount:", amountValue);
+
+    // Check if MercadoPago SDK is loaded
+    if (!window.MercadoPago) {
+      console.error("[CardPaymentModal] MercadoPago SDK not loaded");
+      setBrickError(true);
+      return;
+    }
+
+    const initBrick = async () => {
       try {
-        initMercadoPago(publicKey, { locale: "pt-BR" });
-        setSdkReady(true);
-        setBrickError(false);
+        // Initialize MP instance
+        const mp = new window.MercadoPago(publicKey, {
+          locale: "pt-BR",
+        });
+
+        console.log("[CardPaymentModal] MercadoPago instance created");
+
+        const bricksBuilder = mp.bricks();
+        console.log("[CardPaymentModal] BricksBuilder created");
+
+        // Wait for container to be ready
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        if (!brickContainerRef.current) {
+          console.error("[CardPaymentModal] Brick container not found");
+          setBrickError(true);
+          return;
+        }
+
+        // Clear previous brick if any
+        if (brickControllerRef.current) {
+          try {
+            await brickControllerRef.current.unmount();
+          } catch (e) {
+            console.log("[CardPaymentModal] Error unmounting previous brick:", e);
+          }
+        }
+
+        console.log("[CardPaymentModal] Creating cardPayment brick...");
+
+        const controller = await bricksBuilder.create(
+          "cardPayment",
+          "cardPaymentBrick_container",
+          {
+            initialization: {
+              amount: amountValue,
+            },
+            callbacks: {
+              onReady: () => {
+                console.log("[CardPaymentModal] Brick ready");
+                setSdkReady(true);
+                setBrickError(false);
+              },
+              onSubmit: async (formData: CardFormData) => {
+                console.log("[CardPaymentModal] Form submitted:", formData);
+                await handleSubmit(formData);
+              },
+              onError: (error: any) => {
+                console.error("[CardPaymentModal] Brick error:", error);
+                setBrickError(true);
+              },
+            },
+            customization: {
+              paymentMethods: {
+                maxInstallments: 12,
+              },
+              visual: {
+                style: {
+                  theme: "default",
+                },
+              },
+            },
+          }
+        );
+
+        brickControllerRef.current = controller;
+        console.log("[CardPaymentModal] Brick created successfully");
       } catch (error) {
-        console.error("Error initializing MercadoPago SDK:", error);
+        console.error("[CardPaymentModal] Error creating brick:", error);
         setBrickError(true);
       }
-    }
-  }, [open, publicKey]);
+    };
+
+    initBrick();
+
+    return () => {
+      // Cleanup brick on unmount
+      if (brickControllerRef.current) {
+        try {
+          brickControllerRef.current.unmount();
+        } catch (e) {
+          console.log("[CardPaymentModal] Error during cleanup:", e);
+        }
+        brickControllerRef.current = null;
+      }
+    };
+  }, [open, publicKey, amountValue]);
 
   // Reset state when modal closes
   useEffect(() => {
@@ -82,7 +180,7 @@ export function CardPaymentModal({
       setProcessing(false);
       setPaymentStatus(null);
       setBrickError(false);
-      setFallbackUrl("");
+      setSdkReady(false);
       setLoadingFallback(false);
     }
   }, [open]);
@@ -92,6 +190,14 @@ export function CardPaymentModal({
     setBrickError(false);
 
     try {
+      console.log("[CardPaymentModal] Sending to backend:", {
+        token: formData.token,
+        paymentMethodId: formData.payment_method_id,
+        issuerId: formData.issuer_id,
+        installments: formData.installments,
+        transactionAmount: formData.transaction_amount,
+      });
+
       const { data, error } = await supabase.functions.invoke("create-card-payment", {
         body: {
           token: formData.token,
@@ -113,6 +219,8 @@ export function CardPaymentModal({
       if (error) {
         throw new Error(error.message || "Erro ao processar pagamento");
       }
+
+      console.log("[CardPaymentModal] Backend response:", data);
 
       if (data?.status === "approved") {
         setPaymentStatus("approved");
@@ -151,7 +259,7 @@ export function CardPaymentModal({
         onError?.(errorMessage);
       }
     } catch (error) {
-      console.error("Card payment error:", error);
+      console.error("[CardPaymentModal] Card payment error:", error);
       const errorMessage = error instanceof Error ? error.message : "Erro ao processar pagamento";
       toast.error(errorMessage);
       setBrickError(true);
@@ -161,13 +269,8 @@ export function CardPaymentModal({
     }
   }, [amount, paymentType, userType, creditsAmount, description, onPaymentConfirmed, onOpenChange, onError]);
 
-  const handleBrickError = useCallback((error: unknown) => {
-    console.error("[CardPaymentModal] Brick failed, using redirect fallback:", error);
-    setBrickError(true);
-  }, []);
-
   const handleFallback = async () => {
-    console.log("[CardPaymentModal] Brick failed, generating fallback redirect URL");
+    console.log("[CardPaymentModal] User clicked fallback, generating redirect URL");
     setLoadingFallback(true);
     
     try {
@@ -198,7 +301,13 @@ export function CardPaymentModal({
     }
   };
 
-  const amountValue = amount / 100;
+  const handleRetry = () => {
+    setSdkReady(false);
+    setBrickError(false);
+    // Force remount by closing and reopening
+    onOpenChange(false);
+    setTimeout(() => onOpenChange(true), 100);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -242,39 +351,25 @@ export function CardPaymentModal({
             </div>
           )}
 
-          {/* Card Payment Brick */}
-          {!paymentStatus && !brickError && sdkReady && (
-            <div className="min-h-[350px]">
+          {/* Card Payment Brick Container */}
+          {!paymentStatus && !brickError && (
+            <div className="relative min-h-[350px]">
               {processing && (
                 <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
               )}
-              <CardPayment
-                initialization={{
-                  amount: amountValue,
-                }}
-                onSubmit={handleSubmit}
-                onError={handleBrickError}
-                customization={{
-                  paymentMethods: {
-                    maxInstallments: 12,
-                  },
-                  visual: {
-                    style: {
-                      theme: "default",
-                    },
-                  },
-                }}
+              {!sdkReady && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <p className="text-muted-foreground text-sm">Carregando formulário...</p>
+                </div>
+              )}
+              <div 
+                id="cardPaymentBrick_container" 
+                ref={brickContainerRef}
+                className={sdkReady ? "" : "opacity-0"}
               />
-            </div>
-          )}
-
-          {/* Loading SDK */}
-          {!sdkReady && !brickError && (
-            <div className="flex flex-col items-center justify-center py-12 gap-3">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-muted-foreground text-sm">Carregando formulário...</p>
             </div>
           )}
 
@@ -297,21 +392,7 @@ export function CardPaymentModal({
               </div>
 
               <div className="flex flex-col gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setSdkReady(false);
-                    setBrickError(false);
-                    setTimeout(() => {
-                      try {
-                        initMercadoPago(publicKey, { locale: "pt-BR" });
-                        setSdkReady(true);
-                      } catch {
-                        setBrickError(true);
-                      }
-                    }, 500);
-                  }}
-                >
+                <Button variant="outline" onClick={handleRetry}>
                   Tentar novamente
                 </Button>
                 
