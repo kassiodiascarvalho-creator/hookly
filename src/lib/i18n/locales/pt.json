@@ -24,6 +24,8 @@
     "default": "Padrão",
     "addPayoutMethod": "Adicionar Método",
     "requestWithdrawal": "Solicitar Saque",
+    "withdrawableBalance": "Saldo Disponível para Saque",
+    "withdrawableDesc": "Este valor pode ser sacado a qualquer momento",
     "status": {
       "pending": "Pendente",
       "paid": "Pago",
