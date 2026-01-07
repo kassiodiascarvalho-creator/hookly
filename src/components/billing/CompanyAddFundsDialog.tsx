@@ -67,10 +67,39 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
 
   // Fetch MercadoPago public key on mount
   useEffect(() => {
-    const publicKey = import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY;
-    if (publicKey) {
-      setMpPublicKey(publicKey);
+    const envKey = import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY;
+    console.log("[CompanyAddFundsDialog] VITE_MERCADOPAGO_PUBLIC_KEY:", envKey ? `${envKey.substring(0, 12)}...` : "MISSING");
+    
+    if (envKey) {
+      setMpPublicKey(envKey);
+      return;
     }
+
+    // Fallback: fetch from payment_providers table
+    const fetchPublicKey = async () => {
+      console.log("[CompanyAddFundsDialog] Fetching public key from payment_providers...");
+      const { data, error } = await supabase
+        .from("payment_providers")
+        .select("config_encrypted")
+        .eq("provider", "mercadopago")
+        .eq("is_enabled", true)
+        .single();
+
+      if (error) {
+        console.error("[CompanyAddFundsDialog] Error fetching payment provider:", error);
+        return;
+      }
+
+      const config = data?.config_encrypted as { public_key?: string } | null;
+      if (config?.public_key) {
+        console.log("[CompanyAddFundsDialog] Public key from DB:", `${config.public_key.substring(0, 12)}...`);
+        setMpPublicKey(config.public_key);
+      } else {
+        console.warn("[CompanyAddFundsDialog] No public_key in payment_providers config");
+      }
+    };
+
+    fetchPublicKey();
   }, []);
 
   const fetchCompanyCountry = async () => {
