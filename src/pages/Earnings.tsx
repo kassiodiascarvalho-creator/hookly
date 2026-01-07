@@ -307,17 +307,9 @@ export default function Earnings() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">{t("earnings.title")}</h1>
-          <p className="text-muted-foreground">{t("earnings.subtitle")}</p>
-        </div>
-        {userBalance.earnings_available > 0 && (
-          <Button onClick={() => setWithdrawalModalOpen(true)} className="gap-2">
-            <Banknote className="h-4 w-4" />
-            {t("earnings.requestWithdrawal")}
-          </Button>
-        )}
+      <div>
+        <h1 className="text-3xl font-bold">{t("earnings.title")}</h1>
+        <p className="text-muted-foreground">{t("earnings.subtitle")}</p>
       </div>
 
       {/* Withdrawal Request Modal */}
@@ -329,6 +321,38 @@ export default function Earnings() {
         payoutMethods={payoutMethods}
         onSuccess={fetchData}
       />
+
+      {/* Withdrawable Balance Card */}
+      {userBalance.earnings_available > 0 && (
+        <Card className="border-green-500/50 bg-gradient-to-r from-green-500/10 to-emerald-500/10">
+          <CardContent className="pt-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="p-4 rounded-xl bg-green-500/20">
+                  <Banknote className="h-8 w-8 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">{t("earnings.withdrawableBalance")}</p>
+                  <p className="text-3xl font-bold text-green-600">
+                    {userBalance.currency} {userBalance.earnings_available.toFixed(2)}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {t("earnings.withdrawableDesc")}
+                  </p>
+                </div>
+              </div>
+              <Button 
+                onClick={() => setWithdrawalModalOpen(true)} 
+                size="lg"
+                className="gap-2 bg-green-600 hover:bg-green-700"
+              >
+                <Banknote className="h-5 w-5" />
+                {t("earnings.requestWithdrawal")}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

@@ -473,6 +473,7 @@ export default function Settings() {
                         <SelectItem value="SE">🇸🇪 Sweden</SelectItem>
                       </SelectContent>
                     </Select>
+                    <p className="text-xs text-muted-foreground">{t("settings.countryDesc")}</p>
                   </div>
                   <div className="space-y-2 md:col-span-2">
                     <Label>{t("settings.bio")}</Label>

@@ -24,6 +24,8 @@
     "default": "Default",
     "addPayoutMethod": "Add Method",
     "requestWithdrawal": "Request Withdrawal",
+    "withdrawableBalance": "Withdrawable Balance",
+    "withdrawableDesc": "This amount can be withdrawn anytime",
     "status": {
       "pending": "Pending",
       "paid": "Paid",

@@ -30,47 +30,49 @@ export default function VerifiedCompanies() {
 
   const fetchCompaniesWithHistory = async () => {
     try {
-      // Get all companies
+      // Get all companies with is_verified = true OR that have payment history
       const { data: companiesData } = await supabase
         .from("company_profiles")
         .select("id, user_id, company_name, logo_url, location, industry, is_verified");
 
-      if (!companiesData) {
+      if (!companiesData || companiesData.length === 0) {
         setLoading(false);
         return;
       }
 
-      // Get payment stats for each company
+      // Get all payments at once to avoid N+1 queries
+      const { data: allPayments } = await supabase
+        .from("payments")
+        .select("company_user_id, amount, status, escrow_status");
+
+      // Get all accepted proposals with project info
+      const { data: allProposals } = await supabase
+        .from("proposals")
+        .select("freelancer_user_id, project:projects!inner(company_user_id)")
+        .eq("status", "accepted");
+
       const companiesWithStats: CompanyWithHistory[] = [];
 
       for (const company of companiesData) {
-        // Get total paid
-        const { data: payments } = await supabase
-          .from("payments")
-          .select("amount, status, escrow_status")
-          .eq("company_user_id", company.user_id);
-
-        if (!payments || payments.length === 0) continue;
-
+        // Filter payments for this company
+        const payments = allPayments?.filter(p => p.company_user_id === company.user_id) || [];
+        
+        // Calculate total paid (paid or released status)
         const totalPaid = payments
           .filter(p => p.status === "paid" || p.status === "released")
           .reduce((sum, p) => sum + Number(p.amount), 0);
 
-        if (totalPaid === 0) continue;
+        // Skip companies with no payment history AND not verified
+        if (totalPaid === 0 && !company.is_verified) continue;
 
         // Calculate payment reliability
         const releasedCount = payments.filter(p => p.status === "released" || p.escrow_status === "released").length;
         const totalFunded = payments.filter(p => p.status !== "pending" && p.status !== "failed").length;
         const reliability = totalFunded > 0 ? (releasedCount / totalFunded) * 100 : 0;
 
-        // Get distinct freelancers
-        const { data: proposals } = await supabase
-          .from("proposals")
-          .select("freelancer_user_id, project:projects!inner(company_user_id)")
-          .eq("status", "accepted");
-
+        // Get distinct freelancers hired
         const uniqueFreelancers = new Set(
-          proposals?.filter(p => (p.project as any)?.company_user_id === company.user_id).map(p => p.freelancer_user_id)
+          allProposals?.filter(p => (p.project as any)?.company_user_id === company.user_id).map(p => p.freelancer_user_id)
         );
 
         companiesWithStats.push({
@@ -81,8 +83,13 @@ export default function VerifiedCompanies() {
         });
       }
 
-      // Sort by total paid descending
-      companiesWithStats.sort((a, b) => b.total_paid - a.total_paid);
+      // Sort: verified companies first, then by total paid descending
+      companiesWithStats.sort((a, b) => {
+        if (a.is_verified && !b.is_verified) return -1;
+        if (!a.is_verified && b.is_verified) return 1;
+        return b.total_paid - a.total_paid;
+      });
+      
       setCompanies(companiesWithStats);
     } catch (error) {
       console.error("Error fetching companies:", error);
