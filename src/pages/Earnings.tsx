@@ -11,14 +11,14 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { 
   DollarSign, Loader2, Clock, CheckCircle, AlertCircle,
-  Wallet, Building, CreditCard, Plus, Trash2, Save, ArrowDownToLine
+  Wallet, Building, CreditCard, Plus, Trash2, Save, ArrowDownToLine, Banknote
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Separator } from "@/components/ui/separator";
-
+import { WithdrawalRequestModal } from "@/components/earnings/WithdrawalRequestModal";
 interface Payment {
   id: string;
   amount: number;
@@ -68,6 +68,8 @@ export default function Earnings() {
   const [receivableDetails, setReceivableDetails] = useState<ReceivableDetail[]>([]);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [hasCompletedProjects, setHasCompletedProjects] = useState(false);
+  const [withdrawalModalOpen, setWithdrawalModalOpen] = useState(false);
+  const [userBalance, setUserBalance] = useState({ earnings_available: 0, currency: "USD" });
   
   // Payout method form
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -168,6 +170,21 @@ export default function Earnings() {
       .order("is_default", { ascending: false });
 
     if (methodsData) setPayoutMethods(methodsData);
+
+    // Fetch user balance from new ledger system
+    const { data: balanceData } = await supabase
+      .from("user_balances")
+      .select("earnings_available, currency")
+      .eq("user_id", user.id)
+      .eq("user_type", "freelancer")
+      .maybeSingle();
+
+    if (balanceData) {
+      setUserBalance({
+        earnings_available: Number(balanceData.earnings_available) || 0,
+        currency: balanceData.currency || "USD"
+      });
+    }
 
     setLoading(false);
   };
@@ -290,10 +307,28 @@ export default function Earnings() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">{t("earnings.title")}</h1>
-        <p className="text-muted-foreground">{t("earnings.subtitle")}</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold">{t("earnings.title")}</h1>
+          <p className="text-muted-foreground">{t("earnings.subtitle")}</p>
+        </div>
+        {userBalance.earnings_available > 0 && (
+          <Button onClick={() => setWithdrawalModalOpen(true)} className="gap-2">
+            <Banknote className="h-4 w-4" />
+            {t("earnings.requestWithdrawal")}
+          </Button>
+        )}
       </div>
+
+      {/* Withdrawal Request Modal */}
+      <WithdrawalRequestModal
+        open={withdrawalModalOpen}
+        onOpenChange={setWithdrawalModalOpen}
+        earningsAvailable={userBalance.earnings_available}
+        currency={userBalance.currency}
+        payoutMethods={payoutMethods}
+        onSuccess={fetchData}
+      />
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
