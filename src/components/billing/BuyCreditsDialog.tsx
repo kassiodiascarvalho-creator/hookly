@@ -61,17 +61,20 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
 
   // Fetch MercadoPago public key on mount
   useEffect(() => {
+    console.log("[BuyCreditsDialog] === PUBLIC KEY CHECK ===");
     const envKey = import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY;
-    console.log("[BuyCreditsDialog] VITE_MERCADOPAGO_PUBLIC_KEY:", envKey ? `${envKey.substring(0, 12)}...` : "MISSING");
+    console.log("[BuyCreditsDialog] ENV source:", envKey ? "PRESENT" : "MISSING");
     
     if (envKey) {
+      console.log("[BuyCreditsDialog] mpPublicKey source: env");
+      console.log("[BuyCreditsDialog] mpPublicKey masked:", `${envKey.substring(0, 12)}... (length: ${envKey.length})`);
       setMpPublicKey(envKey);
       return;
     }
 
     // Fallback: fetch from payment_providers table
     const fetchPublicKey = async () => {
-      console.log("[BuyCreditsDialog] Fetching public key from payment_providers...");
+      console.log("[BuyCreditsDialog] mpPublicKey source: db (fetching...)");
       const { data, error } = await supabase
         .from("payment_providers")
         .select("config_encrypted")
@@ -80,16 +83,20 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
         .single();
 
       if (error) {
-        console.error("[BuyCreditsDialog] Error fetching payment provider:", error);
+        console.error("[BuyCreditsDialog] DB fetch error:", error.message);
+        console.log("[BuyCreditsDialog] mpPublicKey source: missing");
         return;
       }
 
       const config = data?.config_encrypted as { public_key?: string } | null;
-      if (config?.public_key) {
-        console.log("[BuyCreditsDialog] Public key from DB:", `${config.public_key.substring(0, 12)}...`);
+      console.log("[BuyCreditsDialog] config_encrypted:", JSON.stringify(config));
+      
+      if (config?.public_key && config.public_key.length > 0) {
+        console.log("[BuyCreditsDialog] mpPublicKey source: db");
+        console.log("[BuyCreditsDialog] mpPublicKey masked:", `${config.public_key.substring(0, 12)}... (length: ${config.public_key.length})`);
         setMpPublicKey(config.public_key);
       } else {
-        console.warn("[BuyCreditsDialog] No public_key in payment_providers config");
+        console.warn("[BuyCreditsDialog] mpPublicKey source: missing (empty config)");
       }
     };
 
@@ -104,6 +111,10 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
   };
 
   const handleBuyCredits = async () => {
+    console.log("[BuyCreditsDialog] === PAYMENT FLOW ===");
+    console.log("[BuyCreditsDialog] paymentMethod:", paymentMethod);
+    console.log("[BuyCreditsDialog] mpPublicKey present:", !!mpPublicKey, "length:", mpPublicKey?.length || 0);
+
     if (!selectedPackage) {
       toast.error("Selecione um pacote de créditos");
       return;
@@ -113,7 +124,7 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
 
     try {
       if (paymentMethod === "pix") {
-        // Use transparent PIX checkout
+        console.log("[BuyCreditsDialog] → Using PIX checkout");
         const { data, error } = await supabase.functions.invoke("create-pix-payment", {
           body: {
             paymentType: "freelancer_credits",
@@ -136,13 +147,13 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
       } else {
         // Card payment for BRL with Mercado Pago
         if (mpPublicKey) {
-          console.log("[BuyCreditsDialog] Opening CardPaymentModal for transparent card checkout");
+          console.log("[BuyCreditsDialog] → Opening CardPaymentModal (transparent)");
           // Open transparent card checkout modal directly - NO redirect call
           setOpen(false);
           setCardModalOpen(true);
         } else {
           // No public key, use redirect checkout as fallback
-          console.log("[BuyCreditsDialog] No MP public key, using redirect checkout");
+          console.log("[BuyCreditsDialog] → Using redirect (create-unified-payment) - no public key");
           const { data, error } = await supabase.functions.invoke("create-unified-payment", {
             body: {
               paymentType: "freelancer_credits",

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,11 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+interface MpConfig {
+  public_key?: string;
+  [key: string]: unknown;
+}
+
 interface PaymentProvider {
   id: string;
   provider: string;
@@ -27,6 +33,7 @@ interface PaymentProvider {
   webhook_url: string | null;
   last_tested_at: string | null;
   test_status: string | null;
+  config_encrypted: MpConfig | null;
 }
 
 export default function AdminPaymentProviders() {
@@ -34,6 +41,7 @@ export default function AdminPaymentProviders() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [providers, setProviders] = useState<PaymentProvider[]>([]);
+  const [mpPublicKey, setMpPublicKey] = useState("");
 
   useEffect(() => {
     fetchProviders();
@@ -48,13 +56,19 @@ export default function AdminPaymentProviders() {
     if (error) {
       console.error("Error fetching providers:", error);
       toast.error("Erro ao carregar provedores");
-    } else {
-      setProviders(data || []);
+    } else if (data) {
+      const typedData = data as unknown as PaymentProvider[];
+      setProviders(typedData);
+      // Set MP public key from config
+      const mp = typedData.find(p => p.provider === "mercadopago");
+      if (mp?.config_encrypted?.public_key) {
+        setMpPublicKey(mp.config_encrypted.public_key);
+      }
     }
     setLoading(false);
   };
 
-  const updateProvider = async (id: string, updates: Partial<PaymentProvider>) => {
+  const updateProvider = async (id: string, updates: { is_enabled?: boolean; is_sandbox?: boolean }) => {
     setSaving(true);
     const { error } = await supabase
       .from("payment_providers")
@@ -66,6 +80,31 @@ export default function AdminPaymentProviders() {
       toast.error("Erro ao atualizar provedor");
     } else {
       toast.success("Provedor atualizado");
+      fetchProviders();
+    }
+    setSaving(false);
+  };
+
+  const saveMpPublicKey = async () => {
+    const mp = providers.find(p => p.provider === "mercadopago");
+    if (!mp) return;
+
+    setSaving(true);
+    const newConfig = { ...(mp.config_encrypted || {}), public_key: mpPublicKey };
+    
+    const { error } = await supabase
+      .from("payment_providers")
+      .update({ 
+        config_encrypted: newConfig as Json, 
+        updated_at: new Date().toISOString() 
+      })
+      .eq("id", mp.id);
+
+    if (error) {
+      console.error("Error saving public key:", error);
+      toast.error("Erro ao salvar Public Key");
+    } else {
+      toast.success("Public Key salva com sucesso");
       fetchProviders();
     }
     setSaving(false);
@@ -219,6 +258,29 @@ export default function AdminPaymentProviders() {
                 }
                 disabled={saving}
               />
+            </div>
+
+            <Separator />
+
+            <div className="space-y-2">
+              <Label>Public Key (Frontend)</Label>
+              <div className="flex gap-2">
+                <Input 
+                  value={mpPublicKey}
+                  onChange={(e) => setMpPublicKey(e.target.value)}
+                  placeholder="APP_USR-..."
+                  className="font-mono text-sm"
+                />
+                <Button 
+                  onClick={saveMpPublicKey}
+                  disabled={saving}
+                >
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                A Public Key é usada no frontend para inicializar o Mercado Pago Bricks (checkout transparente)
+              </p>
             </div>
 
             <Separator />

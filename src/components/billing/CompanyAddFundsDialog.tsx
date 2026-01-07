@@ -67,17 +67,20 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
 
   // Fetch MercadoPago public key on mount
   useEffect(() => {
+    console.log("[CompanyAddFundsDialog] === PUBLIC KEY CHECK ===");
     const envKey = import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY;
-    console.log("[CompanyAddFundsDialog] VITE_MERCADOPAGO_PUBLIC_KEY:", envKey ? `${envKey.substring(0, 12)}...` : "MISSING");
+    console.log("[CompanyAddFundsDialog] ENV source:", envKey ? "PRESENT" : "MISSING");
     
     if (envKey) {
+      console.log("[CompanyAddFundsDialog] mpPublicKey source: env");
+      console.log("[CompanyAddFundsDialog] mpPublicKey masked:", `${envKey.substring(0, 12)}... (length: ${envKey.length})`);
       setMpPublicKey(envKey);
       return;
     }
 
     // Fallback: fetch from payment_providers table
     const fetchPublicKey = async () => {
-      console.log("[CompanyAddFundsDialog] Fetching public key from payment_providers...");
+      console.log("[CompanyAddFundsDialog] mpPublicKey source: db (fetching...)");
       const { data, error } = await supabase
         .from("payment_providers")
         .select("config_encrypted")
@@ -86,16 +89,20 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
         .single();
 
       if (error) {
-        console.error("[CompanyAddFundsDialog] Error fetching payment provider:", error);
+        console.error("[CompanyAddFundsDialog] DB fetch error:", error.message);
+        console.log("[CompanyAddFundsDialog] mpPublicKey source: missing");
         return;
       }
 
       const config = data?.config_encrypted as { public_key?: string } | null;
-      if (config?.public_key) {
-        console.log("[CompanyAddFundsDialog] Public key from DB:", `${config.public_key.substring(0, 12)}...`);
+      console.log("[CompanyAddFundsDialog] config_encrypted:", JSON.stringify(config));
+      
+      if (config?.public_key && config.public_key.length > 0) {
+        console.log("[CompanyAddFundsDialog] mpPublicKey source: db");
+        console.log("[CompanyAddFundsDialog] mpPublicKey masked:", `${config.public_key.substring(0, 12)}... (length: ${config.public_key.length})`);
         setMpPublicKey(config.public_key);
       } else {
-        console.warn("[CompanyAddFundsDialog] No public_key in payment_providers config");
+        console.warn("[CompanyAddFundsDialog] mpPublicKey source: missing (empty config)");
       }
     };
 
@@ -126,6 +133,12 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
   const canUseTransparentCard = currency === "BRL" && mpPublicKey;
 
   const handleAddFunds = async () => {
+    console.log("[CompanyAddFundsDialog] === PAYMENT FLOW ===");
+    console.log("[CompanyAddFundsDialog] paymentMethod:", paymentMethod);
+    console.log("[CompanyAddFundsDialog] currency:", currency);
+    console.log("[CompanyAddFundsDialog] mpPublicKey present:", !!mpPublicKey, "length:", mpPublicKey?.length || 0);
+    console.log("[CompanyAddFundsDialog] canUseTransparentCard:", canUseTransparentCard);
+
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount < 1) {
       toast.error("Digite um valor válido");
@@ -138,6 +151,7 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
       const amountInCents = Math.round(numAmount * 100);
       
       if (paymentMethod === "pix" && canUsePix) {
+        console.log("[CompanyAddFundsDialog] → Using PIX checkout");
         // Use transparent PIX checkout
         const { data, error } = await supabase.functions.invoke("create-pix-payment", {
           body: {
@@ -158,12 +172,13 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
           setPixModalOpen(true);
         }
       } else if (paymentMethod === "card" && canUseTransparentCard) {
-        console.log("[CompanyAddFundsDialog] Opening CardPaymentModal for transparent card checkout");
+        console.log("[CompanyAddFundsDialog] → Opening CardPaymentModal (transparent)");
         // Open transparent card checkout modal directly - NO redirect call
         setCardAmountCents(amountInCents);
         setOpen(false);
         setCardModalOpen(true);
       } else {
+        console.log("[CompanyAddFundsDialog] → Using redirect (create-unified-payment)");
         // Use redirect checkout (for international cards via Stripe)
         const { data, error } = await supabase.functions.invoke("create-unified-payment", {
           body: {
