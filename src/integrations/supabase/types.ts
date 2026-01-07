@@ -443,6 +443,88 @@ export type Database = {
           },
         ]
       }
+      ledger_transactions: {
+        Row: {
+          amount: number
+          amount_original: number | null
+          balance_after_credits: number | null
+          balance_after_earnings: number | null
+          balance_after_escrow: number | null
+          context: string | null
+          created_at: string
+          currency: string
+          currency_original: string | null
+          exchange_rate: number | null
+          id: string
+          metadata: Json | null
+          related_contract_id: string | null
+          related_payment_id: string | null
+          related_withdrawal_id: string | null
+          tx_type: Database["public"]["Enums"]["ledger_tx_type"]
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          amount_original?: number | null
+          balance_after_credits?: number | null
+          balance_after_earnings?: number | null
+          balance_after_escrow?: number | null
+          context?: string | null
+          created_at?: string
+          currency?: string
+          currency_original?: string | null
+          exchange_rate?: number | null
+          id?: string
+          metadata?: Json | null
+          related_contract_id?: string | null
+          related_payment_id?: string | null
+          related_withdrawal_id?: string | null
+          tx_type: Database["public"]["Enums"]["ledger_tx_type"]
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          amount_original?: number | null
+          balance_after_credits?: number | null
+          balance_after_earnings?: number | null
+          balance_after_escrow?: number | null
+          context?: string | null
+          created_at?: string
+          currency?: string
+          currency_original?: string | null
+          exchange_rate?: number | null
+          id?: string
+          metadata?: Json | null
+          related_contract_id?: string | null
+          related_payment_id?: string | null
+          related_withdrawal_id?: string | null
+          tx_type?: Database["public"]["Enums"]["ledger_tx_type"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ledger_transactions_related_contract_id_fkey"
+            columns: ["related_contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ledger_transactions_related_payment_id_fkey"
+            columns: ["related_payment_id"]
+            isOneToOne: false
+            referencedRelation: "unified_payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ledger_transactions_withdrawal_fk"
+            columns: ["related_withdrawal_id"]
+            isOneToOne: false
+            referencedRelation: "withdrawal_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           audio_duration: number | null
@@ -1063,6 +1145,42 @@ export type Database = {
           },
         ]
       }
+      user_balances: {
+        Row: {
+          created_at: string
+          credits_available: number
+          currency: string
+          earnings_available: number
+          escrow_held: number
+          id: string
+          updated_at: string
+          user_id: string
+          user_type: string
+        }
+        Insert: {
+          created_at?: string
+          credits_available?: number
+          currency?: string
+          earnings_available?: number
+          escrow_held?: number
+          id?: string
+          updated_at?: string
+          user_id: string
+          user_type: string
+        }
+        Update: {
+          created_at?: string
+          credits_available?: number
+          currency?: string
+          earnings_available?: number
+          escrow_held?: number
+          id?: string
+          updated_at?: string
+          user_id?: string
+          user_type?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -1147,11 +1265,79 @@ export type Database = {
         }
         Relationships: []
       }
+      withdrawal_requests: {
+        Row: {
+          admin_notes: string | null
+          amount: number
+          created_at: string
+          currency: string
+          freelancer_user_id: string
+          id: string
+          paid_at: string | null
+          payout_details: Json | null
+          payout_method_id: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["withdrawal_status"]
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          amount: number
+          created_at?: string
+          currency?: string
+          freelancer_user_id: string
+          id?: string
+          paid_at?: string | null
+          payout_details?: Json | null
+          payout_method_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["withdrawal_status"]
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          amount?: number
+          created_at?: string
+          currency?: string
+          freelancer_user_id?: string
+          id?: string
+          paid_at?: string | null
+          payout_details?: Json | null
+          payout_method_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["withdrawal_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "withdrawal_requests_payout_method_id_fkey"
+            columns: ["payout_method_id"]
+            isOneToOne: false
+            referencedRelation: "payout_methods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      add_credits: {
+        Args: {
+          p_amount: number
+          p_amount_original?: number
+          p_context?: string
+          p_currency_original?: string
+          p_payment_id: string
+          p_user_id: string
+          p_user_type: string
+        }
+        Returns: boolean
+      }
       add_freelancer_credits: {
         Args: {
           p_credits: number
@@ -1188,7 +1374,20 @@ export type Database = {
         Args: { p_company_user_id: string }
         Returns: string
       }
+      ensure_user_balance: {
+        Args: { p_user_id: string; p_user_type: string }
+        Returns: string
+      }
       ensure_user_wallet: { Args: { p_user_id: string }; Returns: string }
+      fund_contract_escrow: {
+        Args: {
+          p_amount: number
+          p_company_user_id: string
+          p_contract_id: string
+          p_payment_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1201,6 +1400,37 @@ export type Database = {
         Returns: undefined
       }
       is_admin: { Args: never; Returns: boolean }
+      process_withdrawal: {
+        Args: {
+          p_admin_id: string
+          p_admin_notes?: string
+          p_new_status: Database["public"]["Enums"]["withdrawal_status"]
+          p_withdrawal_id: string
+        }
+        Returns: boolean
+      }
+      release_escrow_to_earnings: {
+        Args: {
+          p_amount: number
+          p_company_user_id: string
+          p_context?: string
+          p_contract_id: string
+          p_freelancer_user_id: string
+        }
+        Returns: boolean
+      }
+      request_withdrawal: {
+        Args: {
+          p_amount: number
+          p_freelancer_user_id: string
+          p_payout_method_id: string
+        }
+        Returns: string
+      }
+      spend_credits: {
+        Args: { p_amount: number; p_context?: string; p_user_id: string }
+        Returns: boolean
+      }
       update_freelancer_revenue_and_achievements: {
         Args: { p_freelancer_user_id: string }
         Returns: undefined
@@ -1208,11 +1438,21 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      ledger_tx_type:
+        | "topup_credit"
+        | "spend_credit"
+        | "contract_funding"
+        | "escrow_release"
+        | "withdrawal_request"
+        | "withdrawal_paid"
+        | "refund"
+        | "adjustment"
       payment_status: "pending" | "paid" | "released" | "failed"
       payout_type: "pix" | "bank"
       project_status: "draft" | "open" | "in_progress" | "completed"
       proposal_status: "sent" | "accepted" | "rejected"
       user_type: "company" | "freelancer"
+      withdrawal_status: "pending_review" | "approved" | "paid" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1341,11 +1581,22 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      ledger_tx_type: [
+        "topup_credit",
+        "spend_credit",
+        "contract_funding",
+        "escrow_release",
+        "withdrawal_request",
+        "withdrawal_paid",
+        "refund",
+        "adjustment",
+      ],
       payment_status: ["pending", "paid", "released", "failed"],
       payout_type: ["pix", "bank"],
       project_status: ["draft", "open", "in_progress", "completed"],
       proposal_status: ["sent", "accepted", "rejected"],
       user_type: ["company", "freelancer"],
+      withdrawal_status: ["pending_review", "approved", "paid", "rejected"],
     },
   },
 } as const
