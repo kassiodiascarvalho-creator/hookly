@@ -62,41 +62,42 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
   // Fetch MercadoPago public key on mount
   useEffect(() => {
     console.log("[BuyCreditsDialog] === PUBLIC KEY CHECK ===");
-    const envKey = import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY;
+    const envKey = import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY as string | undefined;
     console.log("[BuyCreditsDialog] ENV source:", envKey ? "PRESENT" : "MISSING");
-    
+
     if (envKey) {
       console.log("[BuyCreditsDialog] mpPublicKey source: env");
-      console.log("[BuyCreditsDialog] mpPublicKey masked:", `${envKey.substring(0, 12)}... (length: ${envKey.length})`);
+      console.log(
+        "[BuyCreditsDialog] mpPublicKey masked:",
+        `${envKey.substring(0, 12)}... (length: ${envKey.length})`
+      );
       setMpPublicKey(envKey);
       return;
     }
 
-    // Fallback: fetch from payment_providers table
+    // Fallback: fetch from backend function (bypasses RLS safely)
     const fetchPublicKey = async () => {
-      console.log("[BuyCreditsDialog] mpPublicKey source: db (fetching...)");
-      const { data, error } = await supabase
-        .from("payment_providers")
-        .select("config_encrypted")
-        .eq("provider", "mercadopago")
-        .eq("is_enabled", true)
-        .single();
+      console.log("[BuyCreditsDialog] mpPublicKey source: db (via function - fetching...)");
+      const { data, error } = await supabase.functions.invoke("get-mp-public-key");
 
       if (error) {
-        console.error("[BuyCreditsDialog] DB fetch error:", error.message);
+        console.error("[BuyCreditsDialog] Function fetch error:", error.message);
         console.log("[BuyCreditsDialog] mpPublicKey source: missing");
         return;
       }
 
-      const config = data?.config_encrypted as { public_key?: string } | null;
-      console.log("[BuyCreditsDialog] config_encrypted:", JSON.stringify(config));
-      
-      if (config?.public_key && config.public_key.length > 0) {
-        console.log("[BuyCreditsDialog] mpPublicKey source: db");
-        console.log("[BuyCreditsDialog] mpPublicKey masked:", `${config.public_key.substring(0, 12)}... (length: ${config.public_key.length})`);
-        setMpPublicKey(config.public_key);
-      } else {
-        console.warn("[BuyCreditsDialog] mpPublicKey source: missing (empty config)");
+      const publicKey = (data?.publicKey as string | undefined) ?? "";
+      const source = (data?.source as string | undefined) ?? "missing";
+
+      console.log("[BuyCreditsDialog] mpPublicKey source:", source);
+      console.log("[BuyCreditsDialog] mpPublicKey length:", publicKey ? publicKey.length : 0);
+
+      if (publicKey) {
+        console.log(
+          "[BuyCreditsDialog] mpPublicKey masked:",
+          `${publicKey.substring(0, 12)}... (length: ${publicKey.length})`
+        );
+        setMpPublicKey(publicKey);
       }
     };
 
@@ -152,24 +153,9 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
           setOpen(false);
           setCardModalOpen(true);
         } else {
-          // No public key, use redirect checkout as fallback
-          console.log("[BuyCreditsDialog] → Using redirect (create-unified-payment) - no public key");
-          const { data, error } = await supabase.functions.invoke("create-unified-payment", {
-            body: {
-              paymentType: "freelancer_credits",
-              userType: "freelancer",
-              amountCents: selectedPackage.priceInCents,
-              currency: selectedPackage.currency,
-              creditsAmount: selectedPackage.credits,
-              description: `${selectedPackage.credits} Créditos de Proposta`,
-            },
-          });
-
-          if (error) throw error;
-
-          if (data?.url) {
-            window.location.href = data.url;
-          }
+          console.warn("[BuyCreditsDialog] BRL card selected but mpPublicKey is missing");
+          toast.error("Configure a Public Key em Admin > Payment Providers");
+          return;
         }
       }
     } catch (error) {

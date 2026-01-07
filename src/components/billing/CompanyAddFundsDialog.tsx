@@ -68,41 +68,46 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
   // Fetch MercadoPago public key on mount
   useEffect(() => {
     console.log("[CompanyAddFundsDialog] === PUBLIC KEY CHECK ===");
-    const envKey = import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY;
+
+    const envKey = import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY as string | undefined;
     console.log("[CompanyAddFundsDialog] ENV source:", envKey ? "PRESENT" : "MISSING");
-    
+
     if (envKey) {
       console.log("[CompanyAddFundsDialog] mpPublicKey source: env");
-      console.log("[CompanyAddFundsDialog] mpPublicKey masked:", `${envKey.substring(0, 12)}... (length: ${envKey.length})`);
+      console.log(
+        "[CompanyAddFundsDialog] mpPublicKey masked:",
+        `${envKey.substring(0, 12)}... (length: ${envKey.length})`
+      );
       setMpPublicKey(envKey);
       return;
     }
 
-    // Fallback: fetch from payment_providers table
+    // Fallback: fetch from backend function (bypasses RLS safely)
     const fetchPublicKey = async () => {
-      console.log("[CompanyAddFundsDialog] mpPublicKey source: db (fetching...)");
-      const { data, error } = await supabase
-        .from("payment_providers")
-        .select("config_encrypted")
-        .eq("provider", "mercadopago")
-        .eq("is_enabled", true)
-        .single();
+      console.log("[CompanyAddFundsDialog] mpPublicKey source: db (via function - fetching...)");
+      const { data, error } = await supabase.functions.invoke("get-mp-public-key");
 
       if (error) {
-        console.error("[CompanyAddFundsDialog] DB fetch error:", error.message);
+        console.error("[CompanyAddFundsDialog] Function fetch error:", error.message);
         console.log("[CompanyAddFundsDialog] mpPublicKey source: missing");
         return;
       }
 
-      const config = data?.config_encrypted as { public_key?: string } | null;
-      console.log("[CompanyAddFundsDialog] config_encrypted:", JSON.stringify(config));
-      
-      if (config?.public_key && config.public_key.length > 0) {
-        console.log("[CompanyAddFundsDialog] mpPublicKey source: db");
-        console.log("[CompanyAddFundsDialog] mpPublicKey masked:", `${config.public_key.substring(0, 12)}... (length: ${config.public_key.length})`);
-        setMpPublicKey(config.public_key);
-      } else {
-        console.warn("[CompanyAddFundsDialog] mpPublicKey source: missing (empty config)");
+      const publicKey = (data?.publicKey as string | undefined) ?? "";
+      const source = (data?.source as string | undefined) ?? "missing";
+
+      console.log("[CompanyAddFundsDialog] mpPublicKey source:", source);
+      console.log(
+        "[CompanyAddFundsDialog] mpPublicKey length:",
+        publicKey ? publicKey.length : 0
+      );
+
+      if (publicKey) {
+        console.log(
+          "[CompanyAddFundsDialog] mpPublicKey masked:",
+          `${publicKey.substring(0, 12)}... (length: ${publicKey.length})`
+        );
+        setMpPublicKey(publicKey);
       }
     };
 
@@ -130,7 +135,7 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
   // PIX is only available for BRL
   const canUsePix = currency === "BRL";
   // Card transparent checkout only for BRL (Mercado Pago)
-  const canUseTransparentCard = currency === "BRL" && mpPublicKey;
+  const canUseTransparentCard = currency === "BRL" && mpPublicKey.length > 0;
 
   const handleAddFunds = async () => {
     console.log("[CompanyAddFundsDialog] === PAYMENT FLOW ===");
@@ -177,6 +182,10 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
         setCardAmountCents(amountInCents);
         setOpen(false);
         setCardModalOpen(true);
+      } else if (paymentMethod === "card" && currency === "BRL" && !mpPublicKey) {
+        console.warn("[CompanyAddFundsDialog] BRL card selected but mpPublicKey is missing");
+        toast.error("Configure a Public Key em Admin > Payment Providers");
+        return;
       } else {
         console.log("[CompanyAddFundsDialog] → Using redirect (create-unified-payment)");
         // Use redirect checkout (for international cards via Stripe)
