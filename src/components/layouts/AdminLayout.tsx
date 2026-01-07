@@ -12,8 +12,10 @@ import {
   Mail,
   LogOut,
   UserCheck,
+  Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ReactNode } from "react";
 
 const navItems = [
   { path: "/admin", icon: LayoutDashboard, labelKey: "admin.dashboard" },
@@ -22,11 +24,16 @@ const navItems = [
   { path: "/admin/companies", icon: Building2, labelKey: "admin.companies" },
   { path: "/admin/projects", icon: FolderOpen, labelKey: "admin.projects" },
   { path: "/admin/payments", icon: CreditCard, labelKey: "admin.payments" },
+  { path: "/admin/finances", icon: Wallet, labelKey: "admin.finances" },
   { path: "/admin/payment-providers", icon: CreditCard, labelKey: "admin.paymentProviders" },
   { path: "/admin/leads", icon: Mail, labelKey: "admin.leads" },
 ];
 
-export function AdminLayout() {
+interface AdminLayoutProps {
+  children?: ReactNode;
+}
+
+export function AdminLayout({ children }: AdminLayoutProps) {
   const { t } = useTranslation();
   const { signOut } = useAuth();
   const navigate = useNavigate();
@@ -83,7 +90,7 @@ export function AdminLayout() {
       {/* Main content */}
       <main className="flex-1 overflow-auto">
         <div className="p-8">
-          <Outlet />
+          {children || <Outlet />}
         </div>
       </main>
     </div>

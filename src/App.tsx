@@ -47,6 +47,7 @@ import AdminPaymentProviders from "./pages/admin/AdminPaymentProviders";
 import AdminLeads from "./pages/admin/AdminLeads";
 import AdminFreelancerDetail from "./pages/admin/AdminFreelancerDetail";
 import AdminCompanyDetail from "./pages/admin/AdminCompanyDetail";
+import AdminFinances from "./pages/admin/AdminFinances";
 
 // Public pages
 import VerifiedCompanies from "./pages/VerifiedCompanies";
@@ -99,6 +100,7 @@ const App = () => (
               <Route path="/admin/payments" element={<AdminPayments />} />
               <Route path="/admin/payment-providers" element={<AdminPaymentProviders />} />
               <Route path="/admin/leads" element={<AdminLeads />} />
+              <Route path="/admin/finances" element={<AdminFinances />} />
             </Route>
             
             {/* Company Dashboard Routes */}
