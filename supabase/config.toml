@@ -38,3 +38,12 @@ verify_jwt = false
 
 [functions.create-card-payment]
 verify_jwt = false
+
+[functions.get-mp-public-key]
+verify_jwt = false
+
+[functions.admin-payment-providers]
+verify_jwt = false
+
+[functions.fund-contract-with-credits]
+verify_jwt = false

@@ -841,7 +841,19 @@
     "checkoutError": "Failed to create checkout session",
     "releaseError": "Failed to release payment",
     "success": "Payment successful!",
-    "cancelled": "Payment was cancelled"
+    "cancelled": "Payment was cancelled",
+    "fundContract": "Fund Contract",
+    "amountToFund": "Amount to fund",
+    "paymentMethod": "Payment method",
+    "useCredits": "Account credits",
+    "availableBalance": "Available balance",
+    "insufficientBalance": "Insufficient balance",
+    "instant": "Instant payment",
+    "card": "Card",
+    "creditDebit": "Credit or debit",
+    "payWithCredits": "Pay with Credits",
+    "generatePix": "Generate PIX QR Code",
+    "payWithCard": "Pay with Card"
   },
   "notifications": {
     "title": "Notifications",

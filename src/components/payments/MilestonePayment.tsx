@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { DollarSign, Loader2, CheckCircle, Clock, CreditCard, ExternalLink } from "lucide-react";
+import { DollarSign, Loader2, CheckCircle, Clock, CreditCard } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,6 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { ContractFundingModal } from "./ContractFundingModal";
 
 interface Milestone {
   title: string;
@@ -37,6 +39,7 @@ interface MilestonePaymentProps {
   freelancerUserId: string;
   isCompany: boolean;
   payments: Payment[];
+  currency?: string;
   onPaymentComplete: () => void;
 }
 
@@ -47,14 +50,64 @@ export default function MilestonePayment({
   freelancerUserId,
   isCompany,
   payments,
+  currency = "USD",
   onPaymentComplete,
 }: MilestonePaymentProps) {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [loadingMilestone, setLoadingMilestone] = useState<number | null>(null);
   const [releasingPayment, setReleasingPayment] = useState<string | null>(null);
   const [confirmReleaseId, setConfirmReleaseId] = useState<string | null>(null);
+  
+  // Funding modal state
+  const [fundingModalOpen, setFundingModalOpen] = useState(false);
+  const [selectedMilestone, setSelectedMilestone] = useState<{ index: number; milestone: Milestone } | null>(null);
+  const [contractId, setContractId] = useState<string | null>(null);
+  const [companyCountry, setCompanyCountry] = useState<string | null>(null);
+
+  // Fetch contract ID and company country
+  useEffect(() => {
+    const fetchContractAndCountry = async () => {
+      if (!user || !projectId) return;
+
+      // Get contract for this project
+      const { data: contract } = await supabase
+        .from("contracts")
+        .select("id")
+        .eq("project_id", projectId)
+        .maybeSingle();
+
+      if (contract) {
+        setContractId(contract.id);
+      }
+
+      // Get company country for payment routing
+      const { data: company } = await supabase
+        .from("company_profiles")
+        .select("country")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (company?.country) {
+        setCompanyCountry(company.country);
+      }
+    };
+
+    fetchContractAndCountry();
+  }, [user, projectId]);
+
+  // Check if we should use transparent checkout (BR + BRL)
+  const shouldUseTransparentCheckout = companyCountry === "BR" && currency === "BRL";
 
   const handleFundMilestone = async (milestoneIndex: number, milestone: Milestone) => {
+    // If BR + BRL, use transparent checkout modal
+    if (shouldUseTransparentCheckout && contractId) {
+      setSelectedMilestone({ index: milestoneIndex, milestone });
+      setFundingModalOpen(true);
+      return;
+    }
+
+    // Fallback to Stripe redirect for international users
     setLoadingMilestone(milestoneIndex);
 
     try {
@@ -80,6 +133,12 @@ export default function MilestonePayment({
     } finally {
       setLoadingMilestone(null);
     }
+  };
+
+  const handleFundingComplete = () => {
+    setFundingModalOpen(false);
+    setSelectedMilestone(null);
+    onPaymentComplete();
   };
 
   const handleReleasePayment = async (paymentId: string) => {
@@ -273,6 +332,20 @@ export default function MilestonePayment({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Contract Funding Modal (Transparent Checkout for BR) */}
+      {selectedMilestone && contractId && (
+        <ContractFundingModal
+          open={fundingModalOpen}
+          onOpenChange={setFundingModalOpen}
+          contractId={contractId}
+          amount={selectedMilestone.milestone.amount}
+          currency={currency}
+          description={`${projectTitle} - ${selectedMilestone.milestone.title}`}
+          freelancerUserId={freelancerUserId}
+          onPaymentComplete={handleFundingComplete}
+        />
+      )}
     </>
   );
 }

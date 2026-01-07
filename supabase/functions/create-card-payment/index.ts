@@ -91,7 +91,9 @@ serve(async (req) => {
       userType, 
       amountCents, 
       creditsAmount,
-      description 
+      description,
+      contractId,
+      freelancerUserId,
     } = body as Record<string, unknown>;
 
     // Validate required fields
@@ -108,7 +110,14 @@ serve(async (req) => {
       throw new Error("Amount must be between R$1 and R$1,000,000");
     }
 
-    logStep("Request validated", { paymentType, userType, amountCents, installments });
+    // Validate contract ID if contract_funding
+    if (paymentType === 'contract_funding') {
+      if (typeof contractId !== 'string' || contractId.length < 10) {
+        throw new Error("Contract ID is required for contract funding");
+      }
+    }
+
+    logStep("Request validated", { paymentType, userType, amountCents, installments, contractId });
 
     // Get Mercado Pago access token
     const accessToken = Deno.env.get("MERCADOPAGO_ACCESS_TOKEN");
@@ -120,24 +129,32 @@ serve(async (req) => {
     const idempotencyKey = `card_${user.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     // Create payment record first
+    const paymentInsert: Record<string, unknown> = {
+      provider: 'mercadopago',
+      payment_type: paymentType as string,
+      user_id: user.id,
+      user_type: userType as string,
+      amount_cents: amountCents as number,
+      currency: 'BRL',
+      credits_amount: (creditsAmount as number) || null,
+      status: 'pending',
+      external_reference: idempotencyKey,
+      metadata: {
+        description: description || null,
+        user_email: user.email,
+        payment_method: 'card',
+        freelancer_user_id: freelancerUserId || null,
+      },
+    };
+
+    // Add contract_id if contract funding
+    if (paymentType === 'contract_funding' && contractId) {
+      paymentInsert.contract_id = contractId;
+    }
+
     const { data: payment, error: paymentError } = await supabaseAdmin
       .from('unified_payments')
-      .insert({
-        provider: 'mercadopago',
-        payment_type: paymentType as string,
-        user_id: user.id,
-        user_type: userType as string,
-        amount_cents: amountCents as number,
-        currency: 'BRL',
-        credits_amount: (creditsAmount as number) || null,
-        status: 'pending',
-        external_reference: idempotencyKey,
-        metadata: {
-          description: description || null,
-          user_email: user.email,
-          payment_method: 'card',
-        },
-      })
+      .insert(paymentInsert)
       .select()
       .single();
 
@@ -153,6 +170,8 @@ serve(async (req) => {
       ? `${creditsAmount} Créditos de Proposta - Hookly`
       : paymentType === 'company_wallet'
       ? `Fundos na Carteira - Hookly`
+      : paymentType === 'contract_funding'
+      ? String(description) || "Financiamento de Contrato - Hookly"
       : String(description) || "Pagamento Hookly";
 
     const mpPaymentBody: Record<string, unknown> = {

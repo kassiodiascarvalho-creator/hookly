@@ -925,7 +925,19 @@
     "checkoutError": "Falha ao criar sessão de checkout",
     "releaseError": "Falha ao liberar pagamento",
     "success": "Pagamento realizado com sucesso!",
-    "cancelled": "Pagamento foi cancelado"
+    "cancelled": "Pagamento foi cancelado",
+    "fundContract": "Financiar Contrato",
+    "amountToFund": "Valor a financiar",
+    "paymentMethod": "Forma de pagamento",
+    "useCredits": "Créditos em conta",
+    "availableBalance": "Saldo disponível",
+    "insufficientBalance": "Saldo insuficiente",
+    "instant": "Pagamento instantâneo",
+    "card": "Cartão",
+    "creditDebit": "Crédito ou débito",
+    "payWithCredits": "Pagar com Créditos",
+    "generatePix": "Gerar QR Code PIX",
+    "payWithCard": "Pagar com Cartão"
   },
   "notifications": {
     "title": "Notificações",
