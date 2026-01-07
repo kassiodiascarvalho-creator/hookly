@@ -183,6 +183,39 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
     onSuccess?.();
   };
 
+  const handleRegeneratePixPayment = async () => {
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount) || numAmount < 1) return;
+
+    setLoading(true);
+    try {
+      const amountInCents = Math.round(numAmount * 100);
+      
+      const { data, error } = await supabase.functions.invoke("create-pix-payment", {
+        body: {
+          paymentType: "company_wallet",
+          userType: "company",
+          amountCents: amountInCents,
+          description: `Adicionar ${formatMoney(numAmount, currency)} na carteira`,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.pix) {
+        setPixData(data.pix);
+        setPixPaymentId(data.paymentId);
+        setPixAmount(data.amount);
+        setPixModalOpen(true);
+      }
+    } catch (error) {
+      console.error("Error regenerating PIX:", error);
+      toast.error("Erro ao gerar novo PIX. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={setOpen}>
@@ -348,6 +381,7 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
         amount={pixAmount}
         paymentId={pixPaymentId}
         onPaymentConfirmed={handlePaymentConfirmed}
+        onRegeneratePayment={handleRegeneratePixPayment}
       />
 
       {/* Card Payment Modal */}
