@@ -22,7 +22,7 @@ interface CardPaymentModalProps {
   userType: string;
   creditsAmount?: number;
   description?: string;
-  fallbackUrl?: string;
+  currency?: string;
   onPaymentConfirmed?: () => void;
   onError?: (error: string) => void;
 }
@@ -51,7 +51,7 @@ export function CardPaymentModal({
   userType,
   creditsAmount,
   description,
-  fallbackUrl,
+  currency = "BRL",
   onPaymentConfirmed,
   onError,
 }: CardPaymentModalProps) {
@@ -59,6 +59,8 @@ export function CardPaymentModal({
   const [sdkReady, setSdkReady] = useState(false);
   const [brickError, setBrickError] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<"pending" | "approved" | "rejected" | null>(null);
+  const [fallbackUrl, setFallbackUrl] = useState<string>("");
+  const [loadingFallback, setLoadingFallback] = useState(false);
 
   // Initialize MercadoPago SDK
   useEffect(() => {
@@ -80,6 +82,8 @@ export function CardPaymentModal({
       setProcessing(false);
       setPaymentStatus(null);
       setBrickError(false);
+      setFallbackUrl("");
+      setLoadingFallback(false);
     }
   }, [open]);
 
@@ -158,13 +162,39 @@ export function CardPaymentModal({
   }, [amount, paymentType, userType, creditsAmount, description, onPaymentConfirmed, onOpenChange, onError]);
 
   const handleBrickError = useCallback((error: unknown) => {
-    console.error("Brick error:", error);
+    console.error("[CardPaymentModal] Brick failed, using redirect fallback:", error);
     setBrickError(true);
   }, []);
 
-  const handleFallback = () => {
-    if (fallbackUrl) {
-      window.location.href = fallbackUrl;
+  const handleFallback = async () => {
+    console.log("[CardPaymentModal] Brick failed, generating fallback redirect URL");
+    setLoadingFallback(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke("create-unified-payment", {
+        body: {
+          paymentType,
+          userType,
+          amountCents: amount,
+          currency,
+          creditsAmount,
+          description,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        console.log("[CardPaymentModal] Redirecting to fallback URL:", data.url);
+        window.location.href = data.url;
+      } else {
+        toast.error("Erro ao gerar link de pagamento alternativo");
+      }
+    } catch (err) {
+      console.error("[CardPaymentModal] Error generating fallback URL:", err);
+      toast.error("Erro ao gerar link de pagamento alternativo");
+    } finally {
+      setLoadingFallback(false);
     }
   };
 
@@ -285,16 +315,19 @@ export function CardPaymentModal({
                   Tentar novamente
                 </Button>
                 
-                {fallbackUrl && (
-                  <Button
-                    variant="secondary"
-                    onClick={handleFallback}
-                    className="gap-2"
-                  >
+                <Button
+                  variant="secondary"
+                  onClick={handleFallback}
+                  disabled={loadingFallback}
+                  className="gap-2"
+                >
+                  {loadingFallback ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
                     <ExternalLink className="h-4 w-4" />
-                    Pagar no Mercado Pago (alternativo)
-                  </Button>
-                )}
+                  )}
+                  Pagar no Mercado Pago (alternativo)
+                </Button>
               </div>
             </div>
           )}
