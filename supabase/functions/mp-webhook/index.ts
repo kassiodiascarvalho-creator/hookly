@@ -18,10 +18,6 @@ function isValidUUID(value: unknown): value is string {
   return uuidRegex.test(value);
 }
 
-function isValidPositiveNumber(value: unknown): value is number {
-  return typeof value === 'number' && !isNaN(value) && value > 0 && value <= 10000000;
-}
-
 // Map Mercado Pago status to our status
 function mapMPStatus(mpStatus: string): string {
   switch (mpStatus) {
@@ -162,6 +158,8 @@ serve(async (req) => {
     const externalReference = paymentData.external_reference as string;
     const mpStatus = paymentData.status as string;
     const mpPaymentId = String(paymentData.id);
+    const transactionAmount = paymentData.transaction_amount as number;
+    const currencyId = (paymentData.currency_id as string) || "BRL";
 
     if (!externalReference) {
       logStep("No external reference found, skipping");
@@ -172,11 +170,10 @@ serve(async (req) => {
     }
 
     // Find our payment record by external_reference (which is payment.id)
-    // The external_reference can be either the payment ID or a custom string we set
     let payment;
     
     // First try to find by external_reference field
-    const { data: paymentByRef, error: refError } = await supabaseAdmin
+    const { data: paymentByRef } = await supabaseAdmin
       .from('unified_payments')
       .select('*')
       .eq('external_reference', externalReference)
@@ -234,59 +231,135 @@ serve(async (req) => {
 
     logStep("Payment status updated", { paymentId: payment.id, newStatus });
 
-    // If payment is approved, execute financial effects
+    // If payment is approved, execute financial effects using NEW LEDGER SYSTEM
     if (newStatus === 'paid') {
       const paymentType = payment.payment_type;
       const userId = payment.user_id;
+      const userType = payment.user_type;
       const amountCents = payment.amount_cents;
       const creditsAmount = payment.credits_amount;
 
-      if (paymentType === 'freelancer_credits' && creditsAmount) {
-        // Add credits to freelancer
+      // Convert cents to currency units for ledger (1 BRL = 1 credit)
+      const amountUnits = amountCents / 100;
+
+      if (paymentType === 'freelancer_credits') {
+        // NEW LEDGER: Use add_credits function for freelancer credits
+        logStep("Adding credits via new ledger system", { userId, amount: amountUnits, creditsAmount });
+        
         const { data: result, error: rpcError } = await supabaseAdmin
-          .rpc('add_freelancer_credits', {
-            p_freelancer_user_id: userId,
-            p_credits: creditsAmount,
+          .rpc('add_credits', {
+            p_user_id: userId,
+            p_user_type: 'freelancer',
+            p_amount: creditsAmount || amountUnits, // Use credits_amount if set, else 1:1 conversion
             p_payment_id: payment.id,
-            p_reason: 'credits_purchase_mercadopago',
+            p_context: 'credits_purchase_mercadopago',
+            p_amount_original: transactionAmount,
+            p_currency_original: currencyId,
           });
 
         if (rpcError) {
-          logStep("Error adding freelancer credits", { error: rpcError });
+          logStep("Error adding credits via ledger", { error: rpcError });
+          
+          // Fallback to old system if new ledger fails
+          const { error: fallbackError } = await supabaseAdmin
+            .rpc('add_freelancer_credits', {
+              p_freelancer_user_id: userId,
+              p_credits: creditsAmount || Math.floor(amountUnits),
+              p_payment_id: payment.id,
+              p_reason: 'credits_purchase_mercadopago',
+            });
+          
+          if (fallbackError) {
+            logStep("Fallback also failed", { error: fallbackError });
+          } else {
+            logStep("Credits added via fallback", { userId, credits: creditsAmount });
+          }
         } else {
-          logStep("Freelancer credits added", { userId, credits: creditsAmount, result });
+          logStep("Credits added via new ledger", { userId, amount: amountUnits, result });
         }
 
-      } else if (paymentType === 'company_wallet') {
-        // Credit company wallet
+      } else if (paymentType === 'company_wallet' || paymentType === 'company_credits') {
+        // NEW LEDGER: Use add_credits for company top-ups
+        logStep("Adding company credits via new ledger", { userId, amount: amountUnits });
+        
         const { data: result, error: rpcError } = await supabaseAdmin
-          .rpc('credit_company_wallet', {
-            p_company_user_id: userId,
-            p_amount_cents: amountCents,
+          .rpc('add_credits', {
+            p_user_id: userId,
+            p_user_type: 'company',
+            p_amount: amountUnits,
             p_payment_id: payment.id,
-            p_reason: 'wallet_topup_mercadopago',
+            p_context: 'wallet_topup_mercadopago',
+            p_amount_original: transactionAmount,
+            p_currency_original: currencyId,
           });
 
         if (rpcError) {
-          logStep("Error crediting company wallet", { error: rpcError });
+          logStep("Error adding company credits via ledger", { error: rpcError });
+          
+          // Fallback to old system
+          const { error: fallbackError } = await supabaseAdmin
+            .rpc('credit_company_wallet', {
+              p_company_user_id: userId,
+              p_amount_cents: amountCents,
+              p_payment_id: payment.id,
+              p_reason: 'wallet_topup_mercadopago',
+            });
+          
+          if (fallbackError) {
+            logStep("Fallback also failed", { error: fallbackError });
+          } else {
+            logStep("Company wallet credited via fallback", { userId, amount: amountCents });
+          }
         } else {
-          logStep("Company wallet credited", { userId, amount: amountCents, result });
+          logStep("Company credits added via new ledger", { userId, amount: amountUnits, result });
+        }
+
+      } else if (paymentType === 'contract_funding') {
+        // NEW LEDGER: Use fund_contract_escrow for contract funding
+        const contractId = payment.contract_id;
+        
+        if (contractId) {
+          logStep("Funding contract escrow via new ledger", { userId, contractId, amount: amountUnits });
+          
+          const { data: result, error: rpcError } = await supabaseAdmin
+            .rpc('fund_contract_escrow', {
+              p_company_user_id: userId,
+              p_contract_id: contractId,
+              p_amount: amountUnits,
+              p_payment_id: payment.id,
+            });
+
+          if (rpcError) {
+            logStep("Error funding contract escrow", { error: rpcError });
+          } else {
+            logStep("Contract escrow funded", { userId, contractId, amount: amountUnits, result });
+          }
+        } else {
+          logStep("No contract_id for contract_funding payment", { paymentId: payment.id });
         }
       }
 
       // Send notification to user
-      await supabaseAdmin
-        .from('notifications')
-        .insert({
-          user_id: userId,
-          type: 'payment_success',
-          message: paymentType === 'freelancer_credits' 
-            ? `Seus ${creditsAmount} créditos de proposta foram adicionados!`
-            : `Seus fundos foram adicionados à sua carteira!`,
-          link: '/settings?tab=billing',
-        });
+      let notificationMessage = '';
+      if (paymentType === 'freelancer_credits') {
+        notificationMessage = `Seus ${creditsAmount || Math.floor(amountUnits)} créditos de proposta foram adicionados!`;
+      } else if (paymentType === 'company_wallet' || paymentType === 'company_credits') {
+        notificationMessage = `${currencyId} ${amountUnits.toFixed(2)} foram adicionados aos seus créditos!`;
+      } else if (paymentType === 'contract_funding') {
+        notificationMessage = `Pagamento de ${currencyId} ${amountUnits.toFixed(2)} foi depositado em garantia!`;
+      }
 
-      logStep("Notification sent", { userId });
+      if (notificationMessage) {
+        await supabaseAdmin
+          .from('notifications')
+          .insert({
+            user_id: userId,
+            type: 'payment_success',
+            message: notificationMessage,
+            link: '/settings?tab=billing',
+          });
+        logStep("Notification sent", { userId });
+      }
     }
 
     return new Response(JSON.stringify({ received: true, status: newStatus }), {
