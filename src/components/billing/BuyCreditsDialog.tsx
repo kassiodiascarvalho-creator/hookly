@@ -58,7 +58,6 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
   // Card payment state
   const [cardModalOpen, setCardModalOpen] = useState(false);
   const [mpPublicKey, setMpPublicKey] = useState<string>("");
-  const [fallbackUrl, setFallbackUrl] = useState<string>("");
 
   // Fetch MercadoPago public key on mount
   useEffect(() => {
@@ -106,29 +105,15 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
           setPixModalOpen(true);
         }
       } else {
-        // Check if we have MP public key for transparent checkout
+        // Card payment for BRL with Mercado Pago
         if (mpPublicKey) {
-          // First get fallback URL in case brick fails
-          const { data: fallbackData } = await supabase.functions.invoke("create-unified-payment", {
-            body: {
-              paymentType: "freelancer_credits",
-              userType: "freelancer",
-              amountCents: selectedPackage.priceInCents,
-              currency: selectedPackage.currency,
-              creditsAmount: selectedPackage.credits,
-              description: `${selectedPackage.credits} Créditos de Proposta`,
-            },
-          });
-
-          if (fallbackData?.url) {
-            setFallbackUrl(fallbackData.url);
-          }
-
-          // Open transparent card checkout modal
+          console.log("[BuyCreditsDialog] Opening CardPaymentModal for transparent card checkout");
+          // Open transparent card checkout modal directly - NO redirect call
           setOpen(false);
           setCardModalOpen(true);
         } else {
-          // No public key, use redirect checkout
+          // No public key, use redirect checkout as fallback
+          console.log("[BuyCreditsDialog] No MP public key, using redirect checkout");
           const { data, error } = await supabase.functions.invoke("create-unified-payment", {
             body: {
               paymentType: "freelancer_credits",
@@ -369,7 +354,7 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
           userType="freelancer"
           creditsAmount={selectedPackage.credits}
           description={`${selectedPackage.credits} Créditos de Proposta`}
-          fallbackUrl={fallbackUrl}
+          currency="BRL"
           onPaymentConfirmed={handlePaymentConfirmed}
         />
       )}

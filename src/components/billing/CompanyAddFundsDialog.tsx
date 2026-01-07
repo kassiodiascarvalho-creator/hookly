@@ -57,7 +57,6 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
   // Card payment state
   const [cardModalOpen, setCardModalOpen] = useState(false);
   const [mpPublicKey, setMpPublicKey] = useState<string>("");
-  const [fallbackUrl, setFallbackUrl] = useState<string>("");
   const [cardAmountCents, setCardAmountCents] = useState(0);
 
   useEffect(() => {
@@ -130,22 +129,8 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
           setPixModalOpen(true);
         }
       } else if (paymentMethod === "card" && canUseTransparentCard) {
-        // Get fallback URL first
-        const { data: fallbackData } = await supabase.functions.invoke("create-unified-payment", {
-          body: {
-            paymentType: "company_wallet",
-            userType: "company",
-            amountCents: amountInCents,
-            currency,
-            description: `Adicionar ${formatMoney(numAmount, currency)} na carteira`,
-          },
-        });
-
-        if (fallbackData?.url) {
-          setFallbackUrl(fallbackData.url);
-        }
-
-        // Open transparent card checkout modal
+        console.log("[CompanyAddFundsDialog] Opening CardPaymentModal for transparent card checkout");
+        // Open transparent card checkout modal directly - NO redirect call
         setCardAmountCents(amountInCents);
         setOpen(false);
         setCardModalOpen(true);
@@ -393,7 +378,7 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
         paymentType="company_wallet"
         userType="company"
         description={`Adicionar ${formatMoney(parseFloat(amount) || 0, currency)} na carteira`}
-        fallbackUrl={fallbackUrl}
+        currency={currency}
         onPaymentConfirmed={handlePaymentConfirmed}
       />
     </>
