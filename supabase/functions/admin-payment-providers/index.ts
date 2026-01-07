@@ -25,40 +25,43 @@ serve(async (req) => {
     });
   }
 
-  const supabaseUser = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-    {
-      global: {
-        headers: {
-          Authorization: authHeader,
-        },
-      },
-    }
-  );
-
   const supabaseAdmin = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
   );
 
   try {
-    // Validate user + admin
-    const { data: userData, error: userError } = await supabaseUser.auth.getUser();
+    // Validate user + admin using service role to query user_roles directly
+    const token = authHeader.replace("Bearer ", "");
+    const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
+    
     if (userError || !userData.user) {
+      console.log("[ADMIN-PAYMENT-PROVIDERS] Auth error:", userError?.message);
       return new Response(JSON.stringify({ error: "Not authenticated" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 401,
       });
     }
 
-    const { data: isAdmin, error: isAdminError } = await supabaseUser.rpc("is_admin");
-    if (isAdminError || !isAdmin) {
+    const userId = userData.user.id;
+
+    // Check admin role directly using service role
+    const { data: roleData, error: roleError } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .maybeSingle();
+
+    if (roleError || !roleData) {
+      console.log("[ADMIN-PAYMENT-PROVIDERS] Not admin:", { userId, roleError: roleError?.message });
       return new Response(JSON.stringify({ error: "Forbidden" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 403,
       });
     }
+
+    console.log("[ADMIN-PAYMENT-PROVIDERS] Admin verified:", { userId });
 
     const body = (await req.json().catch(() => null)) as any;
     const action: Action = body?.action;
