@@ -79,22 +79,20 @@ serve(async (req) => {
         });
 
         const metadata = session.metadata || {};
+        const currency = session.currency?.toUpperCase() || "USD";
         
-        // Check if this is a wallet topup
+        // Check if this is a wallet topup (legacy)
         if (metadata.type === "wallet_topup") {
-          logStep("Processing wallet topup");
+          logStep("Processing wallet topup via legacy flow");
           const userId = metadata.user_id;
           const amountStr = metadata.topup_amount_contracts || "0";
-          const currency = metadata.currency || "USD";
           const fiatAmountStr = metadata.fiat_amount || "0";
 
-          // Validate user_id
           if (!isValidUUID(userId)) {
             logStep("Invalid user_id in wallet topup metadata", { userId });
             break;
           }
 
-          // Parse and validate amounts
           const amount = parseFloat(amountStr);
           const fiatAmount = parseFloat(fiatAmountStr);
 
@@ -103,34 +101,49 @@ serve(async (req) => {
             break;
           }
 
-          if (!isValidPositiveNumber(fiatAmount)) {
-            logStep("Invalid fiat_amount in wallet topup metadata", { fiatAmount: fiatAmountStr });
-            break;
-          }
-
-          const { data, error } = await supabaseClient.rpc("credit_wallet", {
-            p_user_id: userId,
-            p_amount: amount,
-            p_session_id: session.id,
-            p_currency: currency,
-            p_fiat_amount: fiatAmount,
-          });
-
-          if (error) {
-            logStep("Error crediting wallet", { error: error.message });
-          } else if (data === false) {
-            logStep("Wallet transaction already processed (idempotent)");
-          } else {
-            logStep("Wallet credited successfully", { userId, amount });
-            
-            // Notify user
-            await supabaseClient.from("notifications").insert({
-              user_id: userId,
-              type: "wallet_topup",
-              message: `${amount} Contracts have been added to your wallet!`,
-              link: "/settings?tab=billing",
+          // NEW LEDGER: Use add_credits for company credits
+          logStep("Adding company credits via new ledger", { userId, amount });
+          
+          const { data: result, error: rpcError } = await supabaseClient
+            .rpc('add_credits', {
+              p_user_id: userId,
+              p_user_type: 'company',
+              p_amount: amount,
+              p_payment_id: session.id,
+              p_context: 'wallet_topup_stripe_legacy',
+              p_amount_original: fiatAmount,
+              p_currency_original: currency,
             });
+
+          if (rpcError) {
+            logStep("Error adding credits via new ledger, trying fallback", { error: rpcError });
+            
+            const { data, error } = await supabaseClient.rpc("credit_wallet", {
+              p_user_id: userId,
+              p_amount: amount,
+              p_session_id: session.id,
+              p_currency: currency,
+              p_fiat_amount: fiatAmount,
+            });
+
+            if (error) {
+              logStep("Fallback credit_wallet also failed", { error: error.message });
+            } else if (data === false) {
+              logStep("Wallet transaction already processed (idempotent)");
+            } else {
+              logStep("Wallet credited via fallback", { userId, amount });
+            }
+          } else {
+            logStep("Company credits added via new ledger", { userId, amount, result });
           }
+          
+          // Notify user
+          await supabaseClient.from("notifications").insert({
+            user_id: userId,
+            type: "wallet_topup",
+            message: `${amount} credits have been added to your account!`,
+            link: "/settings?tab=billing",
+          });
           break;
         }
 
@@ -139,6 +152,7 @@ serve(async (req) => {
         const milestoneId = metadata.milestone_id;
         const freelancerUserId = metadata.freelancer_user_id;
         const companyUserId = session.client_reference_id || metadata.company_user_id;
+        const contractId = metadata.contract_id;
 
         // Validate UUIDs before proceeding
         if (projectId && !isValidUUID(projectId)) {
@@ -156,10 +170,9 @@ serve(async (req) => {
           break;
         }
 
-        logStep("Extracted metadata", { projectId, milestoneId, freelancerUserId, companyUserId });
+        logStep("Extracted metadata", { projectId, milestoneId, freelancerUserId, companyUserId, contractId });
 
         if (projectId && session.payment_intent) {
-          // Validate amount from Stripe
           const amount = (session.amount_total || 0) / 100;
           if (!isValidPositiveNumber(amount)) {
             logStep("Invalid amount from Stripe session", { amount: session.amount_total });
@@ -186,7 +199,7 @@ serve(async (req) => {
               company_user_id: companyUserId,
               freelancer_user_id: freelancerUserId,
               amount: amount,
-              currency: session.currency?.toUpperCase() || "USD",
+              currency: currency,
               status: "paid",
               escrow_status: "held",
               stripe_payment_intent_id: session.payment_intent as string,
@@ -201,6 +214,25 @@ serve(async (req) => {
           } else {
             logStep("Payment record created", { paymentId: payment.id });
 
+            // NEW LEDGER: If there's a contract, fund escrow via new ledger system
+            if (contractId && isValidUUID(contractId) && companyUserId) {
+              logStep("Funding contract escrow via new ledger", { companyUserId, contractId, amount });
+              
+              const { data: escrowResult, error: escrowError } = await supabaseClient
+                .rpc('fund_contract_escrow', {
+                  p_company_user_id: companyUserId,
+                  p_contract_id: contractId,
+                  p_amount: amount,
+                  p_payment_id: payment.id,
+                });
+
+              if (escrowError) {
+                logStep("Error funding escrow via new ledger", { error: escrowError });
+              } else {
+                logStep("Contract escrow funded via new ledger", { contractId, amount, result: escrowResult });
+              }
+            }
+
             // Log the payment creation
             await supabaseClient.from("payment_logs").insert({
               payment_id: payment.id,
@@ -209,8 +241,9 @@ serve(async (req) => {
                 stripe_session_id: session.id,
                 stripe_payment_intent_id: session.payment_intent,
                 amount: amount,
-                currency: session.currency?.toUpperCase() || "USD",
-                source: "stripe_webhook"
+                currency: currency,
+                source: "stripe_webhook",
+                ledger_system: "v2"
               }
             });
 
@@ -219,7 +252,7 @@ serve(async (req) => {
               await supabaseClient.from("notifications").insert({
                 user_id: freelancerUserId,
                 type: "payment_received",
-                message: `A payment of $${amount} has been placed in escrow for your work!`,
+                message: `A payment of ${currency} ${amount.toFixed(2)} has been placed in escrow for your work!`,
                 link: "/earnings",
               });
               logStep("Freelancer notified", { freelancerUserId });
@@ -230,7 +263,7 @@ serve(async (req) => {
               await supabaseClient.from("notifications").insert({
                 user_id: companyUserId,
                 type: "payment_success",
-                message: `Your payment of $${amount} has been processed and is held in escrow.`,
+                message: `Your payment of ${currency} ${amount.toFixed(2)} has been processed and is held in escrow.`,
                 link: "/finances",
               });
               logStep("Company notified", { companyUserId });
