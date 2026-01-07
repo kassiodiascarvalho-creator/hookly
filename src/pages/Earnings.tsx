@@ -69,7 +69,8 @@ export default function Earnings() {
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [hasCompletedProjects, setHasCompletedProjects] = useState(false);
   const [withdrawalModalOpen, setWithdrawalModalOpen] = useState(false);
-  const [userBalance, setUserBalance] = useState({ earnings_available: 0, currency: "USD" });
+  const [userBalance, setUserBalance] = useState({ earnings_available: 0, credits_available: 0, escrow_held: 0, currency: "USD" });
+  const [withdrawalRequests, setWithdrawalRequests] = useState<any[]>([]);
   
   // Payout method form
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -174,7 +175,7 @@ export default function Earnings() {
     // Fetch user balance from new ledger system
     const { data: balanceData } = await supabase
       .from("user_balances")
-      .select("earnings_available, currency")
+      .select("earnings_available, credits_available, escrow_held, currency")
       .eq("user_id", user.id)
       .eq("user_type", "freelancer")
       .maybeSingle();
@@ -182,8 +183,21 @@ export default function Earnings() {
     if (balanceData) {
       setUserBalance({
         earnings_available: Number(balanceData.earnings_available) || 0,
+        credits_available: Number(balanceData.credits_available) || 0,
+        escrow_held: Number(balanceData.escrow_held) || 0,
         currency: balanceData.currency || "USD"
       });
+    }
+
+    // Fetch withdrawal requests
+    const { data: withdrawalsData } = await supabase
+      .from("withdrawal_requests")
+      .select("*")
+      .eq("freelancer_user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (withdrawalsData) {
+      setWithdrawalRequests(withdrawalsData);
     }
 
     setLoading(false);
@@ -322,37 +336,45 @@ export default function Earnings() {
         onSuccess={fetchData}
       />
 
-      {/* Withdrawable Balance Card */}
-      {userBalance.earnings_available > 0 && (
-        <Card className="border-green-500/50 bg-gradient-to-r from-green-500/10 to-emerald-500/10">
-          <CardContent className="pt-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="p-4 rounded-xl bg-green-500/20">
-                  <Banknote className="h-8 w-8 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">{t("earnings.withdrawableBalance")}</p>
-                  <p className="text-3xl font-bold text-green-600">
-                    {userBalance.currency} {userBalance.earnings_available.toFixed(2)}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {t("earnings.withdrawableDesc")}
-                  </p>
-                </div>
+      {/* Withdrawable Balance Card - Always show */}
+      <Card className={`border-2 ${userBalance.earnings_available > 0 ? 'border-green-500/50 bg-gradient-to-r from-green-500/10 to-emerald-500/10' : 'border-muted'}`}>
+        <CardContent className="pt-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className={`p-4 rounded-xl ${userBalance.earnings_available > 0 ? 'bg-green-500/20' : 'bg-muted'}`}>
+                <Banknote className={`h-8 w-8 ${userBalance.earnings_available > 0 ? 'text-green-600' : 'text-muted-foreground'}`} />
               </div>
-              <Button 
-                onClick={() => setWithdrawalModalOpen(true)} 
-                size="lg"
-                className="gap-2 bg-green-600 hover:bg-green-700"
-              >
-                <Banknote className="h-5 w-5" />
-                {t("earnings.requestWithdrawal")}
-              </Button>
+              <div>
+                <p className="text-sm text-muted-foreground">{t("earnings.withdrawableBalance")}</p>
+                <p className={`text-3xl font-bold ${userBalance.earnings_available > 0 ? 'text-green-600' : 'text-muted-foreground'}`}>
+                  {userBalance.currency} {userBalance.earnings_available.toFixed(2)}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {userBalance.earnings_available > 0 
+                    ? t("earnings.withdrawableDesc")
+                    : t("earnings.noWithdrawableBalance")
+                  }
+                </p>
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+            <Button 
+              onClick={() => setWithdrawalModalOpen(true)} 
+              size="lg"
+              className="gap-2"
+              variant={userBalance.earnings_available > 0 ? "default" : "outline"}
+              disabled={userBalance.earnings_available <= 0 || payoutMethods.length === 0}
+            >
+              <Banknote className="h-5 w-5" />
+              {t("earnings.requestWithdrawal")}
+            </Button>
+          </div>
+          {payoutMethods.length === 0 && (
+            <p className="text-xs text-amber-600 mt-3">
+              ⚠️ {t("earnings.configurePayoutFirst")}
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -479,6 +501,7 @@ export default function Earnings() {
       <Tabs defaultValue="history" className="space-y-6">
         <TabsList>
           <TabsTrigger value="history">{t("earnings.paymentHistory")}</TabsTrigger>
+          <TabsTrigger value="withdrawals">{t("earnings.withdrawalHistory")}</TabsTrigger>
           <TabsTrigger value="payout">{t("earnings.payoutMethods")}</TabsTrigger>
         </TabsList>
 
@@ -514,6 +537,79 @@ export default function Earnings() {
                       </div>
                     </div>
                   ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="withdrawals">
+          {withdrawalRequests.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <Banknote className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                <h3 className="font-semibold mb-2">{t("earnings.noWithdrawals")}</h3>
+                <p className="text-muted-foreground">{t("earnings.noWithdrawalsDesc")}</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="space-y-4">
+                  {withdrawalRequests.map((withdrawal) => {
+                    const statusConfig: Record<string, { icon: React.ReactNode; variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
+                      pending_review: { 
+                        icon: <Clock className="h-4 w-4 text-yellow-500" />, 
+                        variant: "outline", 
+                        label: t("earnings.withdrawalStatus.pending_review") 
+                      },
+                      approved: { 
+                        icon: <CheckCircle className="h-4 w-4 text-blue-500" />, 
+                        variant: "secondary", 
+                        label: t("earnings.withdrawalStatus.approved") 
+                      },
+                      paid: { 
+                        icon: <CheckCircle className="h-4 w-4 text-green-500" />, 
+                        variant: "default", 
+                        label: t("earnings.withdrawalStatus.paid") 
+                      },
+                      rejected: { 
+                        icon: <AlertCircle className="h-4 w-4 text-destructive" />, 
+                        variant: "destructive", 
+                        label: t("earnings.withdrawalStatus.rejected") 
+                      },
+                    };
+                    const config = statusConfig[withdrawal.status] || statusConfig.pending_review;
+                    
+                    return (
+                      <div key={withdrawal.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center gap-4">
+                          {config.icon}
+                          <div>
+                            <p className="font-medium">
+                              {t("earnings.withdrawalRequest")} - {withdrawal.currency} {Number(withdrawal.amount).toFixed(2)}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {format(new Date(withdrawal.created_at), "MMM d, yyyy HH:mm")}
+                            </p>
+                            {withdrawal.admin_notes && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {t("earnings.adminNotes")}: {withdrawal.admin_notes}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <Badge variant={config.variant}>{config.label}</Badge>
+                          {withdrawal.paid_at && (
+                            <p className="text-xs text-muted-foreground">
+                              {t("earnings.paidAt")}: {format(new Date(withdrawal.paid_at), "MMM d, yyyy")}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>

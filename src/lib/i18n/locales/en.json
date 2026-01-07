@@ -26,6 +26,20 @@
     "requestWithdrawal": "Request Withdrawal",
     "withdrawableBalance": "Withdrawable Balance",
     "withdrawableDesc": "This amount can be withdrawn anytime",
+    "noWithdrawableBalance": "Complete projects to earn withdrawable balance",
+    "configurePayoutFirst": "Configure a payout method in the 'Payout Methods' tab first",
+    "withdrawalHistory": "Withdrawal History",
+    "noWithdrawals": "No withdrawal requests",
+    "noWithdrawalsDesc": "Your withdrawal requests will appear here",
+    "withdrawalRequest": "Withdrawal Request",
+    "adminNotes": "Note",
+    "paidAt": "Paid on",
+    "withdrawalStatus": {
+      "pending_review": "Under Review",
+      "approved": "Approved",
+      "paid": "Paid",
+      "rejected": "Rejected"
+    },
     "status": {
       "pending": "Pending",
       "paid": "Paid",

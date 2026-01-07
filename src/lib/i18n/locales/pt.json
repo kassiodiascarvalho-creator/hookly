@@ -26,6 +26,20 @@
     "requestWithdrawal": "Solicitar Saque",
     "withdrawableBalance": "Saldo Disponível para Saque",
     "withdrawableDesc": "Este valor pode ser sacado a qualquer momento",
+    "noWithdrawableBalance": "Complete projetos para ganhar saldo sacável",
+    "configurePayoutFirst": "Configure um método de saque na aba 'Métodos de Saque' primeiro",
+    "withdrawalHistory": "Histórico de Saques",
+    "noWithdrawals": "Nenhuma solicitação de saque",
+    "noWithdrawalsDesc": "Suas solicitações de saque aparecerão aqui",
+    "withdrawalRequest": "Solicitação de Saque",
+    "adminNotes": "Observação",
+    "paidAt": "Pago em",
+    "withdrawalStatus": {
+      "pending_review": "Em Análise",
+      "approved": "Aprovado",
+      "paid": "Pago",
+      "rejected": "Rejeitado"
+    },
     "status": {
       "pending": "Pendente",
       "paid": "Pago",
