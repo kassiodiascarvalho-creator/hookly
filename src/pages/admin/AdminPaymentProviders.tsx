@@ -47,66 +47,110 @@ export default function AdminPaymentProviders() {
     fetchProviders();
   }, []);
 
+  const maskKey = (key: string) => `${key.substring(0, 12)}...`;
+
   const fetchProviders = async () => {
-    const { data, error } = await supabase
-      .from("payment_providers")
-      .select("*")
-      .order("provider");
+    setLoading(true);
+
+    const { data, error } = await supabase.functions.invoke("admin-payment-providers", {
+      body: { action: "list" },
+    });
 
     if (error) {
-      console.error("Error fetching providers:", error);
-      toast.error("Erro ao carregar provedores");
-    } else if (data) {
-      const typedData = data as unknown as PaymentProvider[];
-      setProviders(typedData);
-      // Set MP public key from config
-      const mp = typedData.find(p => p.provider === "mercadopago");
-      if (mp?.config_encrypted?.public_key) {
-        setMpPublicKey(mp.config_encrypted.public_key);
-      }
+      console.error("[AdminPaymentProviders] Error fetching providers:", error);
+      toast.error(`Erro ao carregar provedores: ${error.message}`);
+      setLoading(false);
+      return;
     }
+
+    const typedData = (data?.providers ?? []) as unknown as PaymentProvider[];
+    setProviders(typedData);
+
+    const mp = typedData.find((p) => p.provider === "mercadopago");
+    if (mp?.config_encrypted?.public_key) {
+      setMpPublicKey(mp.config_encrypted.public_key);
+    } else {
+      setMpPublicKey("");
+    }
+
     setLoading(false);
   };
 
-  const updateProvider = async (id: string, updates: { is_enabled?: boolean; is_sandbox?: boolean }) => {
+  const updateProvider = async (
+    provider: string,
+    updates: { is_enabled?: boolean; is_sandbox?: boolean }
+  ) => {
     setSaving(true);
-    const { error } = await supabase
-      .from("payment_providers")
-      .update({ ...updates, updated_at: new Date().toISOString() })
-      .eq("id", id);
+
+    const { error } = await supabase.functions.invoke("admin-payment-providers", {
+      body: { action: "update", provider, updates },
+    });
 
     if (error) {
-      console.error("Error updating provider:", error);
-      toast.error("Erro ao atualizar provedor");
+      console.error("[AdminPaymentProviders] Error updating provider:", error);
+      toast.error(`Erro ao atualizar provedor: ${error.message}`);
     } else {
       toast.success("Provedor atualizado");
-      fetchProviders();
+      await fetchProviders();
     }
+
     setSaving(false);
   };
 
   const saveMpPublicKey = async () => {
-    const mp = providers.find(p => p.provider === "mercadopago");
-    if (!mp) return;
+    const mp = providers.find((p) => p.provider === "mercadopago");
+    if (!mp) {
+      toast.error("Provedor Mercado Pago não encontrado");
+      return;
+    }
+
+    const trimmed = mpPublicKey.trim();
+    if (!trimmed) {
+      toast.error("Informe a Public Key");
+      return;
+    }
 
     setSaving(true);
-    const newConfig = { ...(mp.config_encrypted || {}), public_key: mpPublicKey };
-    
-    const { error } = await supabase
-      .from("payment_providers")
-      .update({ 
-        config_encrypted: newConfig as Json, 
-        updated_at: new Date().toISOString() 
-      })
-      .eq("id", mp.id);
+
+    const { error } = await supabase.functions.invoke("admin-payment-providers", {
+      body: {
+        action: "update",
+        provider: "mercadopago",
+        updates: { public_key: trimmed },
+      },
+    });
 
     if (error) {
-      console.error("Error saving public key:", error);
-      toast.error("Erro ao salvar Public Key");
-    } else {
-      toast.success("Public Key salva com sucesso");
-      fetchProviders();
+      console.error("[AdminPaymentProviders] Error saving public key:", error);
+      toast.error(`Erro ao salvar Public Key: ${error.message}`);
+      setSaving(false);
+      return;
     }
+
+    // Evidence: read immediately after save and print masked + length
+    const { data: verifyData, error: verifyError } = await supabase.functions.invoke(
+      "admin-payment-providers",
+      {
+        body: { action: "get", provider: "mercadopago" },
+      }
+    );
+
+    if (verifyError) {
+      console.error("[AdminPaymentProviders] Verify read failed:", verifyError);
+      toast.error(`Salvou, mas falhou ao ler de volta: ${verifyError.message}`);
+      setSaving(false);
+      return;
+    }
+
+    const publicKey = (verifyData?.provider?.config_encrypted?.public_key as string | undefined) ?? "";
+    console.log("[AdminPaymentProviders] SAVED OK", {
+      provider: "mercadopago",
+      public_key_masked: publicKey ? maskKey(publicKey) : null,
+      public_key_length: publicKey ? publicKey.length : 0,
+    });
+
+    toast.success("Public Key salva com sucesso");
+    await fetchProviders();
     setSaving(false);
   };
 
@@ -200,13 +244,13 @@ export default function AdminPaymentProviders() {
 
           <div className="flex items-center justify-between">
             <Label>Habilitado</Label>
-            <Switch
-              checked={stripeProvider?.is_enabled ?? true}
-              onCheckedChange={(checked) => 
-                stripeProvider && updateProvider(stripeProvider.id, { is_enabled: checked })
-              }
-              disabled={saving}
-            />
+              <Switch
+                checked={stripeProvider?.is_enabled ?? true}
+                onCheckedChange={(checked) =>
+                  stripeProvider && updateProvider(stripeProvider.provider, { is_enabled: checked })
+                }
+                disabled={saving}
+              />
           </div>
         </CardContent>
       </Card>
@@ -253,8 +297,8 @@ export default function AdminPaymentProviders() {
               </div>
               <Switch
                 checked={mpProvider?.is_sandbox ?? true}
-                onCheckedChange={(checked) => 
-                  mpProvider && updateProvider(mpProvider.id, { is_sandbox: checked })
+                onCheckedChange={(checked) =>
+                  mpProvider && updateProvider(mpProvider.provider, { is_sandbox: checked })
                 }
                 disabled={saving}
               />
@@ -312,8 +356,8 @@ export default function AdminPaymentProviders() {
               <Label>Habilitado</Label>
               <Switch
                 checked={mpProvider?.is_enabled ?? false}
-                onCheckedChange={(checked) => 
-                  mpProvider && updateProvider(mpProvider.id, { is_enabled: checked })
+                onCheckedChange={(checked) =>
+                  mpProvider && updateProvider(mpProvider.provider, { is_enabled: checked })
                 }
                 disabled={saving}
               />
