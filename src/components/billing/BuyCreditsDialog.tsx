@@ -163,6 +163,37 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
     onSuccess?.();
   };
 
+  const handleRegeneratePixPayment = async () => {
+    if (!selectedPackage) return;
+    
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-pix-payment", {
+        body: {
+          paymentType: "freelancer_credits",
+          userType: "freelancer",
+          amountCents: selectedPackage.priceInCents,
+          creditsAmount: selectedPackage.credits,
+          description: `${selectedPackage.credits} Créditos de Proposta`,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.pix) {
+        setPixData(data.pix);
+        setPixPaymentId(data.paymentId);
+        setPixAmount(data.amount);
+        setPixModalOpen(true);
+      }
+    } catch (error) {
+      console.error("Error regenerating PIX:", error);
+      toast.error("Erro ao gerar novo PIX. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={setOpen}>
@@ -324,6 +355,7 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
         amount={pixAmount}
         paymentId={pixPaymentId}
         onPaymentConfirmed={handlePaymentConfirmed}
+        onRegeneratePayment={handleRegeneratePixPayment}
       />
 
       {/* Card Payment Modal */}
