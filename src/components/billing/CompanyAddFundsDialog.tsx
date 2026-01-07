@@ -23,6 +23,7 @@ import { Plus, Loader2, Wallet, QrCode, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { formatMoney } from "@/lib/formatMoney";
 import { PixPaymentModal } from "./PixPaymentModal";
+import { CardPaymentModal } from "./CardPaymentModal";
 
 const CURRENCIES = ["USD", "BRL", "EUR", "GBP"];
 const PRESET_AMOUNTS = [50, 100, 250, 500, 1000];
@@ -53,11 +54,25 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
   const [pixPaymentId, setPixPaymentId] = useState<string>("");
   const [pixAmount, setPixAmount] = useState(0);
 
+  // Card payment state
+  const [cardModalOpen, setCardModalOpen] = useState(false);
+  const [mpPublicKey, setMpPublicKey] = useState<string>("");
+  const [fallbackUrl, setFallbackUrl] = useState<string>("");
+  const [cardAmountCents, setCardAmountCents] = useState(0);
+
   useEffect(() => {
     if (user && open) {
       fetchCompanyCountry();
     }
   }, [user, open]);
+
+  // Fetch MercadoPago public key on mount
+  useEffect(() => {
+    const publicKey = import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY;
+    if (publicKey) {
+      setMpPublicKey(publicKey);
+    }
+  }, []);
 
   const fetchCompanyCountry = async () => {
     if (!user) return;
@@ -79,6 +94,8 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
 
   // PIX is only available for BRL
   const canUsePix = currency === "BRL";
+  // Card transparent checkout only for BRL (Mercado Pago)
+  const canUseTransparentCard = currency === "BRL" && mpPublicKey;
 
   const handleAddFunds = async () => {
     const numAmount = parseFloat(amount);
@@ -112,8 +129,28 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
           setOpen(false);
           setPixModalOpen(true);
         }
+      } else if (paymentMethod === "card" && canUseTransparentCard) {
+        // Get fallback URL first
+        const { data: fallbackData } = await supabase.functions.invoke("create-unified-payment", {
+          body: {
+            paymentType: "company_wallet",
+            userType: "company",
+            amountCents: amountInCents,
+            currency,
+            description: `Adicionar ${formatMoney(numAmount, currency)} na carteira`,
+          },
+        });
+
+        if (fallbackData?.url) {
+          setFallbackUrl(fallbackData.url);
+        }
+
+        // Open transparent card checkout modal
+        setCardAmountCents(amountInCents);
+        setOpen(false);
+        setCardModalOpen(true);
       } else {
-        // Use redirect checkout
+        // Use redirect checkout (for international cards via Stripe)
         const { data, error } = await supabase.functions.invoke("create-unified-payment", {
           body: {
             paymentType: "company_wallet",
@@ -141,6 +178,7 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
   const handlePaymentConfirmed = () => {
     toast.success("Fundos adicionados com sucesso!");
     setPixModalOpen(false);
+    setCardModalOpen(false);
     setPixData(null);
     onSuccess?.();
   };
@@ -289,13 +327,13 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
               ) : paymentMethod === "pix" && canUsePix ? (
                 <QrCode className="h-4 w-4 mr-2" />
               ) : (
-                <Wallet className="h-4 w-4 mr-2" />
+                <CreditCard className="h-4 w-4 mr-2" />
               )}
               {loading 
                 ? "Processando..." 
                 : paymentMethod === "pix" && canUsePix 
                   ? "Gerar QR Code PIX" 
-                  : "Continuar para pagamento"
+                  : "Pagar com Cartão"
               }
             </Button>
           </div>
@@ -309,6 +347,19 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
         pixData={pixData}
         amount={pixAmount}
         paymentId={pixPaymentId}
+        onPaymentConfirmed={handlePaymentConfirmed}
+      />
+
+      {/* Card Payment Modal */}
+      <CardPaymentModal
+        open={cardModalOpen}
+        onOpenChange={setCardModalOpen}
+        amount={cardAmountCents}
+        publicKey={mpPublicKey}
+        paymentType="company_wallet"
+        userType="company"
+        description={`Adicionar ${formatMoney(parseFloat(amount) || 0, currency)} na carteira`}
+        fallbackUrl={fallbackUrl}
         onPaymentConfirmed={handlePaymentConfirmed}
       />
     </>

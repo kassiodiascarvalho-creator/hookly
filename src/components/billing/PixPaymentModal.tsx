@@ -133,7 +133,7 @@ export function PixPaymentModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-[420px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <QrCode className="h-5 w-5 text-primary" />
@@ -144,18 +144,18 @@ export function PixPaymentModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-3 py-3 max-h-[70vh] overflow-y-auto">
           {/* Amount */}
           <div className="text-center">
-            <p className="text-sm text-muted-foreground">Valor a pagar</p>
-            <p className="text-3xl font-bold text-primary">
+            <p className="text-xs text-muted-foreground">Valor a pagar</p>
+            <p className="text-2xl font-bold text-primary">
               {formatMoney(amount, "BRL")}
             </p>
           </div>
 
           {/* Timer */}
-          <div className="flex items-center justify-center gap-2 text-sm">
-            <Clock className="h-4 w-4" />
+          <div className="flex items-center justify-center gap-2 text-xs">
+            <Clock className="h-3 w-3" />
             {isExpired ? (
               <span className="text-destructive font-medium">
                 QR Code expirado
@@ -169,34 +169,34 @@ export function PixPaymentModal({
 
           {/* QR Code */}
           {!isExpired && (
-            <div className="flex flex-col items-center gap-4">
-              <div className="p-4 bg-white rounded-lg border">
+            <div className="flex flex-col items-center gap-3">
+              <div className="p-3 bg-white rounded-lg border">
                 <img
                   src={`data:image/png;base64,${pixData.qrCodeBase64}`}
                   alt="QR Code PIX"
-                  className="w-48 h-48"
+                  className="w-52 h-52 max-w-[220px] max-h-[220px]"
                 />
               </div>
 
               {/* Copy Code */}
               <div className="w-full space-y-2">
-                <p className="text-sm text-center text-muted-foreground">
+                <p className="text-xs text-center text-muted-foreground">
                   Ou copie o código PIX
                 </p>
                 <div className="flex gap-2">
-                  <div className="flex-1 p-3 bg-muted rounded-md font-mono text-xs break-all max-h-20 overflow-y-auto">
+                  <div className="flex-1 p-2 bg-muted rounded-md font-mono text-[10px] break-all max-h-16 overflow-y-auto leading-tight">
                     {pixData.qrCode}
                   </div>
                   <Button
                     variant="outline"
                     size="icon"
                     onClick={handleCopyCode}
-                    className="shrink-0"
+                    className="shrink-0 h-8 w-8"
                   >
                     {copied ? (
-                      <Check className="h-4 w-4 text-green-500" />
+                      <Check className="h-3 w-3 text-green-500" />
                     ) : (
-                      <Copy className="h-4 w-4" />
+                      <Copy className="h-3 w-3" />
                     )}
                   </Button>
                 </div>
@@ -205,12 +205,12 @@ export function PixPaymentModal({
           )}
 
           {/* Instructions */}
-          <div className="rounded-lg bg-muted/50 p-4 space-y-2 text-sm">
+          <div className="rounded-lg bg-muted/50 p-3 space-y-1.5 text-xs">
             <p className="font-medium">Como pagar:</p>
-            <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+            <ol className="list-decimal list-inside space-y-0.5 text-muted-foreground">
               <li>Abra o app do seu banco</li>
-              <li>Escolha pagar via PIX com QR Code</li>
-              <li>Escaneie o código ou cole o código copiado</li>
+              <li>Escolha pagar via PIX</li>
+              <li>Escaneie ou cole o código</li>
               <li>Confirme o pagamento</li>
             </ol>
           </div>
@@ -221,9 +221,10 @@ export function PixPaymentModal({
             disabled={checking || isExpired}
             variant="outline"
             className="w-full"
+            size="sm"
           >
             {checking ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              <Loader2 className="h-3 w-3 animate-spin mr-2" />
             ) : null}
             Já paguei, verificar status
           </Button>

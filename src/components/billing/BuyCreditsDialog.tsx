@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Loader2, Coins, Sparkles, Check, QrCode, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { PixPaymentModal } from "./PixPaymentModal";
+import { CardPaymentModal } from "./CardPaymentModal";
 
 interface CreditPackage {
   credits: number;
@@ -54,6 +55,19 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
   const [pixPaymentId, setPixPaymentId] = useState<string>("");
   const [pixAmount, setPixAmount] = useState(0);
 
+  // Card payment state
+  const [cardModalOpen, setCardModalOpen] = useState(false);
+  const [mpPublicKey, setMpPublicKey] = useState<string>("");
+  const [fallbackUrl, setFallbackUrl] = useState<string>("");
+
+  // Fetch MercadoPago public key on mount
+  useEffect(() => {
+    const publicKey = import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY;
+    if (publicKey) {
+      setMpPublicKey(publicKey);
+    }
+  }, []);
+
   const formatPrice = (priceInCents: number, currency: string) => {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
@@ -92,22 +106,45 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
           setPixModalOpen(true);
         }
       } else {
-        // Use redirect checkout (Stripe or MP redirect)
-        const { data, error } = await supabase.functions.invoke("create-unified-payment", {
-          body: {
-            paymentType: "freelancer_credits",
-            userType: "freelancer",
-            amountCents: selectedPackage.priceInCents,
-            currency: selectedPackage.currency,
-            creditsAmount: selectedPackage.credits,
-            description: `${selectedPackage.credits} Créditos de Proposta`,
-          },
-        });
+        // Check if we have MP public key for transparent checkout
+        if (mpPublicKey) {
+          // First get fallback URL in case brick fails
+          const { data: fallbackData } = await supabase.functions.invoke("create-unified-payment", {
+            body: {
+              paymentType: "freelancer_credits",
+              userType: "freelancer",
+              amountCents: selectedPackage.priceInCents,
+              currency: selectedPackage.currency,
+              creditsAmount: selectedPackage.credits,
+              description: `${selectedPackage.credits} Créditos de Proposta`,
+            },
+          });
 
-        if (error) throw error;
+          if (fallbackData?.url) {
+            setFallbackUrl(fallbackData.url);
+          }
 
-        if (data?.url) {
-          window.location.href = data.url;
+          // Open transparent card checkout modal
+          setOpen(false);
+          setCardModalOpen(true);
+        } else {
+          // No public key, use redirect checkout
+          const { data, error } = await supabase.functions.invoke("create-unified-payment", {
+            body: {
+              paymentType: "freelancer_credits",
+              userType: "freelancer",
+              amountCents: selectedPackage.priceInCents,
+              currency: selectedPackage.currency,
+              creditsAmount: selectedPackage.credits,
+              description: `${selectedPackage.credits} Créditos de Proposta`,
+            },
+          });
+
+          if (error) throw error;
+
+          if (data?.url) {
+            window.location.href = data.url;
+          }
         }
       }
     } catch (error) {
@@ -121,6 +158,7 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
   const handlePaymentConfirmed = () => {
     toast.success("Créditos adicionados com sucesso!");
     setPixModalOpen(false);
+    setCardModalOpen(false);
     setPixData(null);
     onSuccess?.();
   };
@@ -270,7 +308,7 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
               ) : paymentMethod === "pix" ? (
                 <QrCode className="h-4 w-4 mr-2" />
               ) : (
-                <Coins className="h-4 w-4 mr-2" />
+                <CreditCard className="h-4 w-4 mr-2" />
               )}
               {loading ? "Gerando pagamento..." : paymentMethod === "pix" ? "Gerar QR Code PIX" : "Pagar com Cartão"}
             </Button>
@@ -287,6 +325,22 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
         paymentId={pixPaymentId}
         onPaymentConfirmed={handlePaymentConfirmed}
       />
+
+      {/* Card Payment Modal */}
+      {selectedPackage && (
+        <CardPaymentModal
+          open={cardModalOpen}
+          onOpenChange={setCardModalOpen}
+          amount={selectedPackage.priceInCents}
+          publicKey={mpPublicKey}
+          paymentType="freelancer_credits"
+          userType="freelancer"
+          creditsAmount={selectedPackage.credits}
+          description={`${selectedPackage.credits} Créditos de Proposta`}
+          fallbackUrl={fallbackUrl}
+          onPaymentConfirmed={handlePaymentConfirmed}
+        />
+      )}
     </>
   );
 }
