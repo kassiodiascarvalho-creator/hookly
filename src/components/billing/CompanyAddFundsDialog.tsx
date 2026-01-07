@@ -19,12 +19,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Loader2, Wallet } from "lucide-react";
+import { Plus, Loader2, Wallet, QrCode, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { formatMoney } from "@/lib/formatMoney";
+import { PixPaymentModal } from "./PixPaymentModal";
 
 const CURRENCIES = ["USD", "BRL", "EUR", "GBP"];
 const PRESET_AMOUNTS = [50, 100, 250, 500, 1000];
+
+type PaymentMethod = "pix" | "card";
 
 interface CompanyAddFundsDialogProps {
   onSuccess?: () => void;
@@ -37,6 +40,18 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState("USD");
   const [country, setCountry] = useState<string | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pix");
+
+  // PIX payment state
+  const [pixModalOpen, setPixModalOpen] = useState(false);
+  const [pixData, setPixData] = useState<{
+    qrCode: string;
+    qrCodeBase64: string;
+    expiresAt: string;
+    ticketUrl?: string;
+  } | null>(null);
+  const [pixPaymentId, setPixPaymentId] = useState<string>("");
+  const [pixAmount, setPixAmount] = useState(0);
 
   useEffect(() => {
     if (user && open) {
@@ -62,6 +77,9 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
     }
   };
 
+  // PIX is only available for BRL
+  const canUsePix = currency === "BRL";
+
   const handleAddFunds = async () => {
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount < 1) {
@@ -74,20 +92,43 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
     try {
       const amountInCents = Math.round(numAmount * 100);
       
-      const { data, error } = await supabase.functions.invoke("create-unified-payment", {
-        body: {
-          paymentType: "company_wallet",
-          userType: "company",
-          amountCents: amountInCents,
-          currency,
-          description: `Adicionar ${formatMoney(numAmount, currency)} na carteira`,
-        },
-      });
+      if (paymentMethod === "pix" && canUsePix) {
+        // Use transparent PIX checkout
+        const { data, error } = await supabase.functions.invoke("create-pix-payment", {
+          body: {
+            paymentType: "company_wallet",
+            userType: "company",
+            amountCents: amountInCents,
+            description: `Adicionar ${formatMoney(numAmount, currency)} na carteira`,
+          },
+        });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      if (data?.url) {
-        window.location.href = data.url;
+        if (data?.pix) {
+          setPixData(data.pix);
+          setPixPaymentId(data.paymentId);
+          setPixAmount(data.amount);
+          setOpen(false);
+          setPixModalOpen(true);
+        }
+      } else {
+        // Use redirect checkout
+        const { data, error } = await supabase.functions.invoke("create-unified-payment", {
+          body: {
+            paymentType: "company_wallet",
+            userType: "company",
+            amountCents: amountInCents,
+            currency,
+            description: `Adicionar ${formatMoney(numAmount, currency)} na carteira`,
+          },
+        });
+
+        if (error) throw error;
+
+        if (data?.url) {
+          window.location.href = data.url;
+        }
       }
     } catch (error) {
       console.error("Error adding funds:", error);
@@ -97,109 +138,179 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
     }
   };
 
-  const paymentMethodInfo = country === "BR" 
-    ? "Pagamento via PIX ou cartão (Mercado Pago)"
-    : "Pagamento via cartão de crédito (Stripe)";
+  const handlePaymentConfirmed = () => {
+    toast.success("Fundos adicionados com sucesso!");
+    setPixModalOpen(false);
+    setPixData(null);
+    onSuccess?.();
+  };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          Adicionar Fundos
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Wallet className="h-5 w-5 text-primary" />
+    <>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button className="gap-2">
+            <Plus className="h-4 w-4" />
             Adicionar Fundos
-          </DialogTitle>
-          <DialogDescription>
-            Adicione saldo à sua carteira para acessar funcionalidades premium
-          </DialogDescription>
-        </DialogHeader>
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Wallet className="h-5 w-5 text-primary" />
+              Adicionar Fundos
+            </DialogTitle>
+            <DialogDescription>
+              Adicione saldo à sua carteira para acessar funcionalidades premium
+            </DialogDescription>
+          </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          {/* Preset amounts */}
-          <div className="space-y-2">
-            <Label>Valores sugeridos</Label>
-            <div className="flex flex-wrap gap-2">
-              {PRESET_AMOUNTS.map((preset) => (
-                <Button
-                  key={preset}
-                  variant={amount === preset.toString() ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setAmount(preset.toString())}
-                >
-                  {formatMoney(preset, currency)}
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          {/* Custom amount */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="col-span-2 space-y-2">
-              <Label>Valor personalizado</Label>
-              <Input
-                type="number"
-                min="1"
-                step="0.01"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="100.00"
-              />
-            </div>
+          <div className="space-y-4 py-4">
+            {/* Preset amounts */}
             <div className="space-y-2">
-              <Label>Moeda</Label>
-              <Select value={currency} onValueChange={setCurrency}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {CURRENCIES.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Summary */}
-          {amount && parseFloat(amount) > 0 && (
-            <div className="rounded-lg bg-muted p-4">
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Total a adicionar</span>
-                <span className="text-xl font-bold">
-                  {formatMoney(parseFloat(amount), currency)}
-                </span>
+              <Label>Valores sugeridos</Label>
+              <div className="flex flex-wrap gap-2">
+                {PRESET_AMOUNTS.map((preset) => (
+                  <Button
+                    key={preset}
+                    variant={amount === preset.toString() ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setAmount(preset.toString())}
+                  >
+                    {formatMoney(preset, currency)}
+                  </Button>
+                ))}
               </div>
             </div>
-          )}
 
-          {/* Payment method info */}
-          <p className="text-sm text-center text-muted-foreground">
-            {paymentMethodInfo}
-          </p>
+            {/* Custom amount */}
+            <div className="grid grid-cols-3 gap-4">
+              <div className="col-span-2 space-y-2">
+                <Label>Valor personalizado</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  step="0.01"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="100.00"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Moeda</Label>
+                <Select value={currency} onValueChange={(v) => {
+                  setCurrency(v);
+                  // Reset to card if currency is not BRL
+                  if (v !== "BRL") {
+                    setPaymentMethod("card");
+                  }
+                }}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CURRENCIES.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
-          <Button
-            onClick={handleAddFunds}
-            disabled={loading || !amount || parseFloat(amount) < 1}
-            className="w-full"
-            size="lg"
-          >
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : (
-              <Wallet className="h-4 w-4 mr-2" />
+            {/* Payment Method Selection - only show if BRL */}
+            {canUsePix && (
+              <div className="space-y-3">
+                <Label>Forma de pagamento</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => setPaymentMethod("pix")}
+                    className={`
+                      p-4 rounded-lg border-2 text-left transition-all flex items-center gap-3
+                      ${paymentMethod === "pix" 
+                        ? "border-primary bg-primary/5" 
+                        : "border-border hover:border-primary/50"
+                      }
+                    `}
+                  >
+                    <QrCode className="h-6 w-6 text-primary" />
+                    <div>
+                      <p className="font-medium">PIX</p>
+                      <p className="text-xs text-muted-foreground">Instantâneo</p>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setPaymentMethod("card")}
+                    className={`
+                      p-4 rounded-lg border-2 text-left transition-all flex items-center gap-3
+                      ${paymentMethod === "card" 
+                        ? "border-primary bg-primary/5" 
+                        : "border-border hover:border-primary/50"
+                      }
+                    `}
+                  >
+                    <CreditCard className="h-6 w-6 text-primary" />
+                    <div>
+                      <p className="font-medium">Cartão</p>
+                      <p className="text-xs text-muted-foreground">Crédito/Débito</p>
+                    </div>
+                  </button>
+                </div>
+              </div>
             )}
-            {loading ? "Processando..." : "Continuar para pagamento"}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+
+            {/* Summary */}
+            {amount && parseFloat(amount) > 0 && (
+              <div className="rounded-lg bg-muted p-4 space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Total a adicionar</span>
+                  <span className="text-xl font-bold">
+                    {formatMoney(parseFloat(amount), currency)}
+                  </span>
+                </div>
+                {canUsePix && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Pagamento</span>
+                    <span>{paymentMethod === "pix" ? "PIX" : "Cartão"}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <Button
+              onClick={handleAddFunds}
+              disabled={loading || !amount || parseFloat(amount) < 1}
+              className="w-full"
+              size="lg"
+            >
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : paymentMethod === "pix" && canUsePix ? (
+                <QrCode className="h-4 w-4 mr-2" />
+              ) : (
+                <Wallet className="h-4 w-4 mr-2" />
+              )}
+              {loading 
+                ? "Processando..." 
+                : paymentMethod === "pix" && canUsePix 
+                  ? "Gerar QR Code PIX" 
+                  : "Continuar para pagamento"
+              }
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* PIX Payment Modal */}
+      <PixPaymentModal
+        open={pixModalOpen}
+        onOpenChange={setPixModalOpen}
+        pixData={pixData}
+        amount={pixAmount}
+        paymentId={pixPaymentId}
+        onPaymentConfirmed={handlePaymentConfirmed}
+      />
+    </>
   );
 }
