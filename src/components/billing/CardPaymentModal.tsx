@@ -102,31 +102,44 @@ export const CardPaymentModal = forwardRef<HTMLDivElement, CardPaymentModalProps
       }
     }, [open, cleanupBrick]);
 
-    // Initialize MercadoPago SDK and mount Brick
+    // Container ref for DOM readiness check
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    // Initialize MercadoPago SDK and mount Brick when container is ready
     useEffect(() => {
       if (!open || !publicKey || initAttemptedRef.current) return;
 
-      // Mark that we've attempted initialization
-      initAttemptedRef.current = true;
-
       console.log("[CardPaymentModal] === INITIALIZATION START ===");
-      console.log("[CardPaymentModal] SDK loaded:", typeof window.MercadoPago !== "undefined");
-      console.log("[CardPaymentModal] mpPublicKey loaded:", !!publicKey);
-      console.log("[CardPaymentModal] Amount:", amountValue);
-
-      // Check if MercadoPago SDK is loaded
-      if (typeof window.MercadoPago === "undefined") {
-        console.error("[CardPaymentModal] MercadoPago SDK not loaded on window");
+      
+      // Log 1: SDK loaded
+      const sdkLoaded = typeof window.MercadoPago !== "undefined";
+      console.log("[CardPaymentModal] SDK loaded:", sdkLoaded);
+      
+      if (!sdkLoaded) {
+        console.error("[CardPaymentModal] MercadoPago SDK not available on window");
         setBrickError("SDK do Mercado Pago não foi carregado. Recarregue a página.");
         return;
       }
 
-      console.log("[CardPaymentModal] MercadoPago global type:", typeof window.MercadoPago);
+      // Log 2: mpPublicKey loaded
+      console.log("[CardPaymentModal] mpPublicKey loaded:", !!publicKey);
 
-      // Use a longer delay to ensure DOM is ready
-      const initTimer = setTimeout(() => {
-        initBrick();
-      }, 500);
+      // Wait for container to be ready using polling instead of fixed delay
+      const checkContainerReady = () => {
+        const container = document.getElementById("cardPaymentBrick_container");
+        if (container && open) {
+          console.log("[CardPaymentModal] Container ready, proceeding with initialization");
+          initAttemptedRef.current = true;
+          initBrick();
+        } else if (open) {
+          // Container not ready yet, check again
+          console.log("[CardPaymentModal] Waiting for container...");
+          setTimeout(checkContainerReady, 100);
+        }
+      };
+
+      // Start checking after a short initial delay to allow React to render
+      const initTimer = setTimeout(checkContainerReady, 200);
 
       return () => {
         clearTimeout(initTimer);
@@ -134,10 +147,10 @@ export const CardPaymentModal = forwardRef<HTMLDivElement, CardPaymentModalProps
     }, [open, publicKey, amountValue]);
 
     const initBrick = async () => {
-      try {
-        console.log("[CardPaymentModal] Initializing Brick");
+      // Log 3: Initializing Brick
+      console.log("[CardPaymentModal] Initializing Brick");
 
-        // Check container exists
+      try {
         const container = document.getElementById("cardPaymentBrick_container");
         if (!container) {
           console.error("[CardPaymentModal] Container not found in DOM");
