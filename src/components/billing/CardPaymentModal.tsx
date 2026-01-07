@@ -70,6 +70,7 @@ export const CardPaymentModal = forwardRef<HTMLDivElement, CardPaymentModalProps
     const [paymentStatus, setPaymentStatus] = useState<"pending" | "approved" | "rejected" | null>(null);
     const [loadingFallback, setLoadingFallback] = useState(false);
     const [brickMounted, setBrickMounted] = useState(false);
+    const [rejectionDetails, setRejectionDetails] = useState<{ message: string; code: string } | null>(null);
     const brickControllerRef = useRef<any>(null);
     const initAttemptedRef = useRef(false);
 
@@ -98,6 +99,7 @@ export const CardPaymentModal = forwardRef<HTMLDivElement, CardPaymentModalProps
         setBrickError(null);
         setSdkReady(false);
         setLoadingFallback(false);
+        setRejectionDetails(null);
         initAttemptedRef.current = false;
       }
     }, [open, cleanupBrick]);
@@ -277,7 +279,15 @@ export const CardPaymentModal = forwardRef<HTMLDivElement, CardPaymentModalProps
           throw new Error(error.message || "Erro ao processar pagamento");
         }
 
-        console.log("[CardPaymentModal] Backend response:", data);
+        // Enhanced logging for debugging
+        console.log("[CardPaymentModal] Backend response:", {
+          status: data?.status,
+          statusDetail: data?.statusDetail,
+          paymentMethodId: data?.paymentMethodId,
+          paymentTypeId: data?.paymentTypeId,
+          mpPaymentId: data?.mpPaymentId,
+          errorMessage: data?.errorMessage,
+        });
 
         if (data?.status === "approved") {
           setPaymentStatus("approved");
@@ -295,25 +305,36 @@ export const CardPaymentModal = forwardRef<HTMLDivElement, CardPaymentModalProps
         } else {
           setPaymentStatus("rejected");
           const statusDetail = data?.statusDetail || "unknown";
-          let errorMessage = "Pagamento recusado.";
           
-          // Map common rejection reasons
-          if (statusDetail === "cc_rejected_insufficient_amount") {
-            errorMessage = "Saldo insuficiente no cartão.";
-          } else if (statusDetail === "cc_rejected_bad_filled_security_code") {
-            errorMessage = "CVV incorreto.";
-          } else if (statusDetail === "cc_rejected_bad_filled_card_number") {
-            errorMessage = "Número do cartão inválido.";
-          } else if (statusDetail === "cc_rejected_bad_filled_date") {
-            errorMessage = "Data de validade inválida.";
-          } else if (statusDetail === "cc_rejected_high_risk") {
-            errorMessage = "Pagamento recusado por segurança.";
-          } else if (statusDetail === "cc_rejected_call_for_authorize") {
-            errorMessage = "Entre em contato com seu banco para autorizar.";
-          }
+          // Expanded mapping of Mercado Pago rejection codes
+          const rejectionMessages: Record<string, string> = {
+            cc_rejected_insufficient_amount: "Saldo insuficiente no cartão.",
+            cc_rejected_bad_filled_security_code: "CVV incorreto.",
+            cc_rejected_bad_filled_card_number: "Número do cartão inválido.",
+            cc_rejected_bad_filled_date: "Data de validade inválida.",
+            cc_rejected_high_risk: "Pagamento recusado por segurança (antifraude).",
+            cc_rejected_call_for_authorize: "Entre em contato com seu banco para autorizar.",
+            cc_rejected_blacklist: "Cartão bloqueado por segurança.",
+            cc_rejected_card_disabled: "Cartão desabilitado.",
+            cc_rejected_duplicated_payment: "Pagamento duplicado detectado.",
+            cc_rejected_max_attempts: "Limite de tentativas atingido.",
+            cc_rejected_other_reason: "Erro no pagamento. Tente outro cartão.",
+            cc_rejected_card_error: "Erro no cartão. Verifique os dados.",
+            cc_rejected_invalid_installments: "Número de parcelas inválido.",
+            rejected_by_bank: "Transação recusada pelo banco.",
+            rejected_by_regulations: "Recusado por regulamentação.",
+          };
 
-          toast.error(errorMessage);
-          onError?.(errorMessage);
+          const friendlyMessage = rejectionMessages[statusDetail] || "Pagamento recusado.";
+          
+          // Store full error details for UI display
+          setRejectionDetails({
+            message: friendlyMessage,
+            code: statusDetail,
+          });
+
+          toast.error(`${friendlyMessage} (${statusDetail})`);
+          onError?.(friendlyMessage);
         }
       } catch (error) {
         console.error("[CardPaymentModal] Card payment error:", error);
@@ -408,7 +429,13 @@ export const CardPaymentModal = forwardRef<HTMLDivElement, CardPaymentModalProps
             {paymentStatus === "rejected" && (
               <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-center">
                 <p className="text-red-800 font-medium">Pagamento recusado</p>
-                <p className="text-red-600 text-sm mt-1">Tente novamente ou use outro cartão</p>
+                {rejectionDetails && (
+                  <>
+                    <p className="text-red-600 text-sm mt-1">{rejectionDetails.message}</p>
+                    <p className="text-red-500 text-xs mt-1 font-mono">Código: {rejectionDetails.code}</p>
+                  </>
+                )}
+                <p className="text-red-600 text-sm mt-2">Tente novamente ou use outro cartão</p>
               </div>
             )}
 

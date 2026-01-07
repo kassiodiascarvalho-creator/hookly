@@ -315,11 +315,16 @@ serve(async (req) => {
     }
 
     return new Response(JSON.stringify({ 
-      success: true,
+      success: ourStatus === 'paid',
       paymentId: payment.id,
       mpPaymentId: mpPayment.id,
       status: mpPayment.status,
       statusDetail: mpPayment.status_detail,
+      paymentMethodId: mpPayment.payment_method_id || null,
+      paymentTypeId: mpPayment.payment_type_id || null,
+      errorMessage: mpPayment.status === 'rejected' 
+        ? (mpPayment.status_detail || 'Pagamento rejeitado') 
+        : null,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
