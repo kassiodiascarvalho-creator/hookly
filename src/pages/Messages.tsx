@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,35 +25,168 @@ export default function Messages() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
-  
+
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [loading, setLoading] = useState(true);
   const [userType, setUserType] = useState<"company" | "freelancer" | null>(null);
 
+  // Prevent overlapping fetch loops (this was causing the UI to keep "refreshing")
+  const fetchingConversationsRef = useRef(false);
+
+  const fetchUserType = useCallback(async () => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("user_type")
+      .eq("user_id", user.id)
+      .single();
+
+    if (!error && data?.user_type) {
+      setUserType(data.user_type as "company" | "freelancer");
+    }
+  }, [user]);
+
+  const fetchConversations = useCallback(async () => {
+    if (!user || !userType) return;
+    if (fetchingConversationsRef.current) return;
+
+    fetchingConversationsRef.current = true;
+    setLoading(true);
+
+    try {
+      const { data: conversationsData, error } = await supabase
+        .from("conversations")
+        .select(
+          `
+          id,
+          company_user_id,
+          freelancer_user_id,
+          project_id,
+          created_at
+        `,
+        )
+        .or(`company_user_id.eq.${user.id},freelancer_user_id.eq.${user.id}`)
+        .order("created_at", { ascending: false });
+
+      if (error || !conversationsData) {
+        return;
+      }
+
+      // Fetch additional data for each conversation
+      const enrichedConversations = await Promise.all(
+        conversationsData.map(async (conv) => {
+          const otherUserId = userType === "company" ? conv.freelancer_user_id : conv.company_user_id;
+
+          // Get other user's profile
+          let otherUserName = "Unknown";
+          let otherUserAvatar: string | null = null;
+
+          if (userType === "company") {
+            const { data: freelancerProfile } = await supabase
+              .from("freelancer_profiles")
+              .select("full_name, avatar_url")
+              .eq("user_id", otherUserId)
+              .single();
+
+            if (freelancerProfile) {
+              otherUserName = freelancerProfile.full_name || "Freelancer";
+              otherUserAvatar = freelancerProfile.avatar_url;
+            }
+          } else {
+            const { data: companyProfile } = await supabase
+              .from("company_profiles")
+              .select("company_name, contact_name, logo_url")
+              .eq("user_id", otherUserId)
+              .single();
+
+            if (companyProfile) {
+              otherUserName = companyProfile.company_name || companyProfile.contact_name || "Company";
+              otherUserAvatar = companyProfile.logo_url;
+            }
+          }
+
+          // Get project title if exists
+          let projectTitle: string | null = null;
+          if (conv.project_id) {
+            const { data: project } = await supabase
+              .from("projects")
+              .select("title")
+              .eq("id", conv.project_id)
+              .single();
+
+            if (project) {
+              projectTitle = project.title;
+            }
+          }
+
+          // Get last message (maybeSingle prevents 406 when there are no messages yet)
+          const { data: lastMessage } = await supabase
+            .from("messages")
+            .select("content, created_at")
+            .eq("conversation_id", conv.id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          // Get unread count
+          const { count: unreadCount } = await supabase
+            .from("messages")
+            .select("*", { count: "exact", head: true })
+            .eq("conversation_id", conv.id)
+            .neq("sender_user_id", user.id)
+            .is("read_at", null);
+
+          return {
+            ...conv,
+            other_user_name: otherUserName,
+            other_user_avatar: otherUserAvatar,
+            project_title: projectTitle,
+            last_message: lastMessage?.content || null,
+            last_message_at: lastMessage?.created_at || conv.created_at,
+            unread_count: unreadCount || 0,
+          } as Conversation;
+        }),
+      );
+
+      // Sort by last message
+      enrichedConversations.sort((a, b) => {
+        const dateA = new Date(a.last_message_at || a.created_at);
+        const dateB = new Date(b.last_message_at || b.created_at);
+        return dateB.getTime() - dateA.getTime();
+      });
+
+      setConversations(enrichedConversations);
+    } finally {
+      setLoading(false);
+      fetchingConversationsRef.current = false;
+    }
+  }, [user, userType]);
+
   useEffect(() => {
     if (user) {
       fetchUserType();
     }
-  }, [user]);
+  }, [user, fetchUserType]);
 
   useEffect(() => {
     if (user && userType) {
       fetchConversations();
-      
+
       // Subscribe to new conversations
       const channel = supabase
-        .channel('conversations-changes')
+        .channel("conversations-changes")
         .on(
-          'postgres_changes',
+          "postgres_changes",
           {
-            event: '*',
-            schema: 'public',
-            table: 'conversations',
+            event: "*",
+            schema: "public",
+            table: "conversations",
           },
           () => {
             fetchConversations();
-          }
+          },
         )
         .subscribe();
 
@@ -61,143 +194,21 @@ export default function Messages() {
         supabase.removeChannel(channel);
       };
     }
-  }, [user, userType]);
+  }, [user, userType, fetchConversations]);
 
   // Handle conversation ID from URL params
   useEffect(() => {
-    const conversationId = searchParams.get('conversation');
-    if (conversationId && conversations.length > 0) {
-      const conv = conversations.find(c => c.id === conversationId);
-      if (conv) {
-        setSelectedConversation(conv);
-      }
+    const conversationId = searchParams.get("conversation");
+    if (!conversationId || conversations.length === 0) return;
+
+    // Avoid re-setting the same conversation on every refresh
+    if (selectedConversation?.id === conversationId) return;
+
+    const conv = conversations.find((c) => c.id === conversationId);
+    if (conv) {
+      setSelectedConversation(conv);
     }
-  }, [searchParams, conversations]);
-
-  const fetchUserType = async () => {
-    if (!user) return;
-    
-    const { data } = await supabase
-      .from("profiles")
-      .select("user_type")
-      .eq("user_id", user.id)
-      .single();
-    
-    if (data) {
-      setUserType(data.user_type as "company" | "freelancer");
-    }
-  };
-
-  const fetchConversations = async () => {
-    if (!user || !userType) return;
-    
-    setLoading(true);
-    
-    const { data: conversationsData, error } = await supabase
-      .from("conversations")
-      .select(`
-        id,
-        company_user_id,
-        freelancer_user_id,
-        project_id,
-        created_at
-      `)
-      .or(`company_user_id.eq.${user.id},freelancer_user_id.eq.${user.id}`)
-      .order("created_at", { ascending: false });
-
-    if (error || !conversationsData) {
-      setLoading(false);
-      return;
-    }
-
-    // Fetch additional data for each conversation
-    const enrichedConversations = await Promise.all(
-      conversationsData.map(async (conv) => {
-        const otherUserId = userType === "company" 
-          ? conv.freelancer_user_id 
-          : conv.company_user_id;
-
-        // Get other user's profile
-        let otherUserName = "Unknown";
-        let otherUserAvatar: string | null = null;
-
-        if (userType === "company") {
-          const { data: freelancerProfile } = await supabase
-            .from("freelancer_profiles")
-            .select("full_name, avatar_url")
-            .eq("user_id", otherUserId)
-            .single();
-          
-          if (freelancerProfile) {
-            otherUserName = freelancerProfile.full_name || "Freelancer";
-            otherUserAvatar = freelancerProfile.avatar_url;
-          }
-        } else {
-          const { data: companyProfile } = await supabase
-            .from("company_profiles")
-            .select("company_name, contact_name, logo_url")
-            .eq("user_id", otherUserId)
-            .single();
-          
-          if (companyProfile) {
-            otherUserName = companyProfile.company_name || companyProfile.contact_name || "Company";
-            otherUserAvatar = companyProfile.logo_url;
-          }
-        }
-
-        // Get project title if exists
-        let projectTitle: string | null = null;
-        if (conv.project_id) {
-          const { data: project } = await supabase
-            .from("projects")
-            .select("title")
-            .eq("id", conv.project_id)
-            .single();
-          
-          if (project) {
-            projectTitle = project.title;
-          }
-        }
-
-        // Get last message
-        const { data: lastMessage } = await supabase
-          .from("messages")
-          .select("content, created_at")
-          .eq("conversation_id", conv.id)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .single();
-
-        // Get unread count
-        const { count: unreadCount } = await supabase
-          .from("messages")
-          .select("*", { count: "exact", head: true })
-          .eq("conversation_id", conv.id)
-          .neq("sender_user_id", user.id)
-          .is("read_at", null);
-
-        return {
-          ...conv,
-          other_user_name: otherUserName,
-          other_user_avatar: otherUserAvatar,
-          project_title: projectTitle,
-          last_message: lastMessage?.content || null,
-          last_message_at: lastMessage?.created_at || conv.created_at,
-          unread_count: unreadCount || 0,
-        } as Conversation;
-      })
-    );
-
-    // Sort by last message
-    enrichedConversations.sort((a, b) => {
-      const dateA = new Date(a.last_message_at || a.created_at);
-      const dateB = new Date(b.last_message_at || b.created_at);
-      return dateB.getTime() - dateA.getTime();
-    });
-
-    setConversations(enrichedConversations);
-    setLoading(false);
-  };
+  }, [searchParams, conversations, selectedConversation]);
 
   return (
     <div className="h-[calc(100vh-7rem)] flex flex-col">
