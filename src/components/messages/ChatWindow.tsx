@@ -115,6 +115,7 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
   }, []);
 
   const fetchMessages = useCallback(async () => {
+    console.log('[ChatWindow] fetchMessages started for conversation:', conversation.id);
     setLoading(true);
     
     const { data, error } = await supabase
@@ -123,9 +124,15 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
       .eq("conversation_id", conversation.id)
       .order("created_at", { ascending: true });
 
+    if (error) {
+      console.error('[ChatWindow] fetchMessages error:', error);
+    }
+    
     if (!error && data) {
+      console.log('[ChatWindow] fetchMessages got', data.length, 'messages');
       const messagesWithUrls = await generateSignedUrls(data);
       setMessages(messagesWithUrls);
+      console.log('[ChatWindow] uiRendered with', messagesWithUrls.length, 'messages');
     }
     
     setLoading(false);
@@ -149,6 +156,8 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
     markMessagesAsRead();
 
     // Subscribe to new messages in this conversation
+    console.log('[ChatWindow] Setting up realtime subscription for conversation:', conversation.id);
+    
     const channel = supabase
       .channel(`messages-${conversation.id}`)
       .on(
@@ -160,12 +169,31 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
           filter: `conversation_id=eq.${conversation.id}`,
         },
         async (payload) => {
+          console.log('[ChatWindow] realtimeEventReceived:', payload.new);
           const newMsg = payload.new as Message;
+          
+          // Check if message already exists to avoid duplicates
+          setMessages((prev) => {
+            const exists = prev.some(m => m.id === newMsg.id);
+            if (exists) {
+              console.log('[ChatWindow] Message already exists, skipping:', newMsg.id);
+              return prev;
+            }
+            return prev; // Will update below
+          });
           
           // Generate signed URL for the new message if it has a file
           const [msgWithUrl] = await generateSignedUrls([newMsg]);
+          console.log('[ChatWindow] Generated signed URL for new message:', msgWithUrl.id, 'signedUrl:', !!msgWithUrl.signedUrl);
           
-          setMessages((prev) => [...prev, msgWithUrl]);
+          setMessages((prev) => {
+            const exists = prev.some(m => m.id === newMsg.id);
+            if (exists) {
+              return prev;
+            }
+            console.log('[ChatWindow] Adding new message to UI:', msgWithUrl.id);
+            return [...prev, msgWithUrl];
+          });
           
           // Mark as read if not from current user
           if (newMsg.sender_user_id !== user?.id) {

@@ -517,6 +517,11 @@
     "today": "Today",
     "yesterday": "Yesterday",
     "recordAudio": "Record audio",
+    "stopRecording": "Stop recording",
+    "cancelRecording": "Cancel recording",
+    "sendAudio": "Send audio",
+    "discardAudio": "Discard audio",
+    "noAudioToSend": "No audio to send",
     "attachFile": "Attach file",
     "attachImage": "Image",
     "attachVideo": "Video",
@@ -524,7 +529,8 @@
     "microphoneError": "Could not access microphone",
     "uploadError": "Failed to upload file",
     "fileTooLarge": "File is too large (max 10MB)",
-    "invalidFileType": "Invalid file type"
+    "invalidFileType": "Invalid file type",
+    "fileSent": "File sent successfully"
   },
   "verifiedCompanies": {
     "title": "Verified Companies",
