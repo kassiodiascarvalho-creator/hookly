@@ -96,43 +96,14 @@ export default function MilestonePayment({
     fetchContractAndCountry();
   }, [user, projectId]);
 
-  // Check if we should use transparent checkout (BR + BRL)
-  const shouldUseTransparentCheckout = companyCountry === "BR" && currency === "BRL";
-
-  const handleFundMilestone = async (milestoneIndex: number, milestone: Milestone) => {
-    // If BR + BRL, use transparent checkout modal
-    if (shouldUseTransparentCheckout && contractId) {
-      setSelectedMilestone({ index: milestoneIndex, milestone });
-      setFundingModalOpen(true);
+  // Always use transparent checkout modal (for any currency)
+  const handleFundMilestone = (milestoneIndex: number, milestone: Milestone) => {
+    if (!contractId) {
+      toast.error("Contrato não encontrado");
       return;
     }
-
-    // Fallback to Stripe redirect for international users
-    setLoadingMilestone(milestoneIndex);
-
-    try {
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: {
-          projectId,
-          milestoneId: `milestone-${milestoneIndex}`,
-          amount: milestone.amount,
-          description: `${projectTitle} - ${milestone.title}`,
-          freelancerUserId,
-        },
-      });
-
-      if (error) throw error;
-
-      if (data?.url) {
-        window.open(data.url, "_blank");
-        toast.success(t("payments.checkoutOpened"));
-      }
-    } catch (error) {
-      console.error("Checkout error:", error);
-      toast.error(t("payments.checkoutError"));
-    } finally {
-      setLoadingMilestone(null);
-    }
+    setSelectedMilestone({ index: milestoneIndex, milestone });
+    setFundingModalOpen(true);
   };
 
   const handleFundingComplete = () => {
