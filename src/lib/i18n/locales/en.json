@@ -5,6 +5,7 @@
     "received": "Received",
     "receivable": "Receivable",
     "inEscrow": "In Escrow",
+    "escrowDesc": "Funds reserved for active milestones",
     "totalEarnings": "Total Earnings",
     "paymentHistory": "Payment History",
     "payoutMethods": "Payout Methods",

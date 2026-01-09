@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { 
   DollarSign, Loader2, Clock, CheckCircle, AlertCircle,
-  Wallet, Building, CreditCard, Plus, Trash2, Save, ArrowDownToLine, Banknote
+  Wallet, Building, CreditCard, Plus, Trash2, Save, ArrowDownToLine, Banknote, Shield
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -391,6 +391,28 @@ export default function Earnings() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Escrow Card - Funds held for active milestones */}
+        {userBalance.escrow_held > 0 && (
+          <Card className="border-blue-500/50 bg-blue-500/5">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-blue-500/10">
+                  <Shield className="h-6 w-6 text-blue-500" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">{t("earnings.inEscrow")}</p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {userBalance.currency} {userBalance.escrow_held.toFixed(2)}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {t("earnings.escrowDesc")}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {totals.receivable > 0 && (
           <Card 

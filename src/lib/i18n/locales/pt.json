@@ -5,6 +5,7 @@
     "received": "Recebido",
     "receivable": "A Receber",
     "inEscrow": "Em Garantia",
+    "escrowDesc": "Fundos reservados para milestones ativos",
     "totalEarnings": "Total de Ganhos",
     "paymentHistory": "Histórico de Pagamentos",
     "payoutMethods": "Métodos de Saque",
