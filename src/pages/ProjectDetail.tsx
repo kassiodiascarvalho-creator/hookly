@@ -16,6 +16,7 @@ import {
 import { ReviewForm } from "@/components/reviews/ReviewForm";
 import { format } from "date-fns";
 import MilestonePayment from "@/components/payments/MilestonePayment";
+import { formatMoney } from "@/lib/formatMoney";
 
 interface Project {
   id: string;
@@ -25,6 +26,7 @@ interface Project {
   status: "draft" | "open" | "in_progress" | "completed";
   budget_min: number | null;
   budget_max: number | null;
+  currency: string;
   kpis: unknown;
   created_at: string;
   company_user_id: string;
@@ -280,11 +282,11 @@ export default function ProjectDetail() {
     setActionLoading(null);
   };
 
-  const formatBudget = (min: number | null, max: number | null) => {
+  const formatBudget = (min: number | null, max: number | null, currency: string) => {
     if (!min && !max) return t("projects.budgetNegotiable");
-    if (min && max) return `$${min.toLocaleString()} - $${max.toLocaleString()}`;
-    if (min) return `${t("projects.from")} $${min.toLocaleString()}`;
-    return `${t("projects.upTo")} $${max?.toLocaleString()}`;
+    if (min && max) return `${formatMoney(min, currency)} - ${formatMoney(max, currency)}`;
+    if (min) return `${t("projects.from")} ${formatMoney(min, currency)}`;
+    return `${t("projects.upTo")} ${formatMoney(max || 0, currency)}`;
   };
 
   if (loading) {
@@ -384,7 +386,7 @@ export default function ProjectDetail() {
                     <DollarSign className="h-4 w-4" />
                     <span className="text-sm">{t("projects.budget")}</span>
                   </div>
-                  <p className="font-semibold">{formatBudget(project.budget_min, project.budget_max)}</p>
+                  <p className="font-semibold">{formatBudget(project.budget_min, project.budget_max, project.currency || "USD")}</p>
                 </div>
                 <div className="p-4 bg-muted rounded-lg">
                   <div className="flex items-center gap-2 text-muted-foreground mb-1">
@@ -485,7 +487,7 @@ export default function ProjectDetail() {
                                 <div className="flex flex-wrap gap-2">
                                   {(proposal.milestones as { title: string; amount: number }[]).map((m, idx) => (
                                     <Badge key={idx} variant="outline">
-                                      {m.title}: ${m.amount}
+                                      {m.title}: {formatMoney(m.amount, project.currency || "USD")}
                                     </Badge>
                                   ))}
                                 </div>
@@ -543,6 +545,7 @@ export default function ProjectDetail() {
               freelancerUserId={acceptedProposal.freelancer_user_id}
               isCompany={isOwner}
               payments={payments}
+              currency={project.currency || "USD"}
               onPaymentComplete={fetchPayments}
             />
           )}
