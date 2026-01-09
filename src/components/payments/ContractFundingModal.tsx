@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { formatMoney } from "@/lib/formatMoney";
 import { PixPaymentModal } from "@/components/billing/PixPaymentModal";
 import { CardPaymentModal } from "@/components/billing/CardPaymentModal";
+import { StripeCardModal } from "@/components/billing/StripeCardModal";
 
 type PaymentMethod = "credits" | "pix" | "card";
 
@@ -64,9 +65,14 @@ export function ContractFundingModal({
   const [pixPaymentId, setPixPaymentId] = useState("");
   const [pixAmount, setPixAmount] = useState(0);
 
-  // Card payment state
+  // Card payment state (Mercado Pago)
   const [cardModalOpen, setCardModalOpen] = useState(false);
   const [cardAmountCents, setCardAmountCents] = useState(0);
+
+  // Stripe card payment state
+  const [stripeModalOpen, setStripeModalOpen] = useState(false);
+  const [stripeClientSecret, setStripeClientSecret] = useState("");
+  const [stripeLoading, setStripeLoading] = useState(false);
 
   // Credits payment state
   const [creditsLoading, setCreditsLoading] = useState(false);
@@ -76,7 +82,8 @@ export function ContractFundingModal({
   const amountCents = Math.round(amount * 100);
   const isBRL = currency === "BRL";
   const canUsePix = isBRL;
-  const canUseTransparentCard = isBRL && mpPublicKey.length > 0;
+  const canUseMercadoPagoCard = isBRL && mpPublicKey.length > 0;
+  const canUseStripeCard = !isBRL; // Stripe for international currencies
   const hasEnoughCredits = userBalance && userBalance.credits_available >= amountCents;
 
   useEffect(() => {
@@ -206,16 +213,51 @@ export function ContractFundingModal({
   };
 
   const handlePayWithCard = async () => {
-    console.log("[ContractFundingModal] Opening card modal", { contractId, amount: amountCents });
-    setCardAmountCents(amountCents);
-    onOpenChange(false);
-    setCardModalOpen(true);
+    if (isBRL && canUseMercadoPagoCard) {
+      // Mercado Pago card for BRL
+      console.log("[ContractFundingModal] Opening MP card modal", { contractId, amount: amountCents });
+      setCardAmountCents(amountCents);
+      onOpenChange(false);
+      setCardModalOpen(true);
+    } else if (canUseStripeCard) {
+      // Stripe card for international currencies
+      console.log("[ContractFundingModal] Creating Stripe PaymentIntent", { contractId, amount: amountCents, currency });
+      setStripeLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("create-stripe-payment-intent", {
+          body: {
+            amountCents,
+            currency,
+            contractId,
+            description: `Financiar: ${description}`,
+            paymentType: "contract_funding",
+          },
+        });
+
+        if (error) throw error;
+
+        if (data?.clientSecret) {
+          setStripeClientSecret(data.clientSecret);
+          onOpenChange(false);
+          setStripeModalOpen(true);
+        } else {
+          throw new Error("Failed to get client secret");
+        }
+      } catch (error) {
+        console.error("[ContractFundingModal] Stripe error:", error);
+        toast.error("Erro ao iniciar pagamento. Tente novamente.");
+      } finally {
+        setStripeLoading(false);
+      }
+    }
   };
 
   const handlePaymentConfirmed = () => {
     toast.success("Pagamento confirmado! Contrato financiado.");
     setPixModalOpen(false);
     setCardModalOpen(false);
+    setStripeModalOpen(false);
+    setStripeClientSecret("");
     setPixData(null);
     onPaymentComplete();
   };
@@ -370,7 +412,7 @@ export function ContractFundingModal({
                   )}
 
                   {/* Card Option */}
-                  {(canUseTransparentCard || !isBRL) && (
+                  {(canUseMercadoPagoCard || canUseStripeCard) && (
                     <button
                       onClick={() => setPaymentMethod("card")}
                       className={`
@@ -403,11 +445,11 @@ export function ContractFundingModal({
             {!creditsSuccess && (
               <Button
                 onClick={handleSubmit}
-                disabled={loading || creditsLoading || (paymentMethod === "credits" && !hasEnoughCredits)}
+                disabled={loading || creditsLoading || stripeLoading || (paymentMethod === "credits" && !hasEnoughCredits)}
                 className="w-full"
                 size="lg"
               >
-                {loading || creditsLoading ? (
+                {loading || creditsLoading || stripeLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 ) : paymentMethod === "credits" ? (
                   <Wallet className="h-4 w-4 mr-2" />
@@ -416,7 +458,7 @@ export function ContractFundingModal({
                 ) : (
                   <CreditCard className="h-4 w-4 mr-2" />
                 )}
-                {loading || creditsLoading
+                {loading || creditsLoading || stripeLoading
                   ? t("common.processing", "Processando...")
                   : paymentMethod === "credits"
                   ? t("payments.payWithCredits", "Pagar com Créditos")
@@ -441,7 +483,7 @@ export function ContractFundingModal({
         onRegeneratePayment={handleRegeneratePixPayment}
       />
 
-      {/* Card Payment Modal */}
+      {/* Card Payment Modal (Mercado Pago - BRL) */}
       <CardPaymentModal
         open={cardModalOpen}
         onOpenChange={setCardModalOpen}
@@ -451,6 +493,17 @@ export function ContractFundingModal({
         userType="company"
         description={`Financiar: ${description}`}
         currency={currency}
+        onPaymentConfirmed={handlePaymentConfirmed}
+      />
+
+      {/* Stripe Card Modal (International currencies) */}
+      <StripeCardModal
+        open={stripeModalOpen}
+        onOpenChange={setStripeModalOpen}
+        clientSecret={stripeClientSecret}
+        amount={amountCents}
+        currency={currency}
+        description={`Financiar: ${description}`}
         onPaymentConfirmed={handlePaymentConfirmed}
       />
     </>
