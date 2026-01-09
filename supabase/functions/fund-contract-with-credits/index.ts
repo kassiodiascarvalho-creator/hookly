@@ -42,7 +42,7 @@ serve(async (req) => {
   );
 
   try {
-    logStep("Function started");
+    logStep("Function started - INTERNAL LEDGER MOVEMENT (no external payment)");
 
     // Authenticate user
     const authHeader = req.headers.get("Authorization");
@@ -71,7 +71,7 @@ serve(async (req) => {
       throw new Error("Invalid request body");
     }
 
-    const { contractId, amountCents, freelancerUserId, description } = body as Record<string, unknown>;
+    const { contractId, amountCents, freelancerUserId, description, milestoneIndex } = body as Record<string, unknown>;
 
     // Validate required fields
     if (!isValidUUID(contractId)) {
@@ -84,12 +84,12 @@ serve(async (req) => {
       throw new Error("Invalid freelancer ID");
     }
 
-    logStep("Request validated", { contractId, amountCents, freelancerUserId });
+    logStep("Request validated", { contractId, amountCents, freelancerUserId, milestoneIndex });
 
     // Verify the contract exists and belongs to the user
     const { data: contract, error: contractError } = await supabaseAdmin
       .from('contracts')
-      .select('id, company_user_id, status, amount_cents, currency')
+      .select('id, company_user_id, freelancer_user_id, status, amount_cents, currency')
       .eq('id', contractId)
       .single();
 
@@ -102,18 +102,30 @@ serve(async (req) => {
       throw new Error("You are not authorized to fund this contract");
     }
 
-    logStep("Contract verified", { contractId, status: contract.status });
+    logStep("Contract verified", { 
+      contractId, 
+      status: contract.status,
+      contractAmount: contract.amount_cents,
+      requestedAmount: amountCents 
+    });
 
-    // Check user balance
-    const { data: balance, error: balanceError } = await supabaseAdmin
+    // Validate amount doesn't exceed contract value
+    if (amountCents > contract.amount_cents) {
+      throw new Error(`Amount cannot exceed contract value of ${contract.amount_cents / 100}`);
+    }
+
+    // Check user balance (credits_available in user_balances table)
+    const { data: balanceData, error: balanceError } = await supabaseAdmin
       .from('user_balances')
-      .select('credits_available')
+      .select('id, credits_available, escrow_held')
       .eq('user_id', user.id)
       .eq('user_type', 'company')
       .single();
 
-    if (balanceError || !balance) {
-      logStep("Balance not found, creating...", { error: balanceError });
+    let currentBalance = balanceData;
+
+    if (balanceError || !currentBalance) {
+      logStep("Balance not found, creating new record");
       
       // Create balance if not exists
       await supabaseAdmin.rpc('ensure_user_balance', {
@@ -122,123 +134,180 @@ serve(async (req) => {
       });
 
       // Re-fetch
-      const { data: newBalance } = await supabaseAdmin
+      const { data: newBalance, error: balanceRetryError } = await supabaseAdmin
         .from('user_balances')
-        .select('credits_available')
+        .select('id, credits_available, escrow_held')
         .eq('user_id', user.id)
         .eq('user_type', 'company')
         .single();
 
-      if (!newBalance || newBalance.credits_available < amountCents) {
-        throw new Error("Insufficient balance");
+      if (balanceRetryError || !newBalance) {
+        throw new Error("Failed to retrieve or create user balance");
       }
-    } else if (balance.credits_available < amountCents) {
-      throw new Error("Insufficient balance");
+      
+      currentBalance = newBalance;
     }
 
-    logStep("Balance verified", { available: balance?.credits_available, required: amountCents });
+    const creditsAvailable = currentBalance.credits_available;
+    const currentEscrow = currentBalance.escrow_held || 0;
+    
+    if (creditsAvailable < amountCents) {
+      logStep("Insufficient balance", { available: creditsAvailable, required: amountCents });
+      throw new Error(`Saldo insuficiente. Disponível: ${creditsAvailable / 100}, Necessário: ${amountCents / 100}`);
+    }
 
-    // Create a unified_payments record for tracking
-    const { data: payment, error: paymentError } = await supabaseAdmin
-      .from('unified_payments')
-      .insert({
-        provider: 'credits',
-        payment_type: 'contract_funding',
-        user_id: user.id,
-        user_type: 'company',
-        amount_cents: amountCents,
-        currency: contract.currency || 'BRL',
-        contract_id: contractId,
-        status: 'paid',
-        paid_at: new Date().toISOString(),
-        metadata: {
-          description: description || null,
-          freelancer_user_id: freelancerUserId,
-          payment_method: 'credits',
-        },
+    logStep("Balance verified", { creditsAvailable, requiredAmount: amountCents });
+
+    // ====================================================================
+    // INTERNAL LEDGER MOVEMENT - NO EXTERNAL PAYMENT
+    // This is a SIMULATION of payment, not real money movement
+    // The freelancer will see credits, NOT real money
+    // ====================================================================
+
+    // Generate idempotency reference (internal, not from payment gateway)
+    const internalReference = `internal_funding_${contractId}_${Date.now()}`;
+
+    // Check for duplicate funding (idempotency)
+    const { data: existingFunding } = await supabaseAdmin
+      .from('ledger_transactions')
+      .select('id')
+      .eq('related_contract_id', contractId)
+      .eq('tx_type', 'contract_funding')
+      .eq('user_id', user.id)
+      .limit(1)
+      .maybeSingle();
+
+    if (existingFunding) {
+      logStep("Contract already funded (idempotency check)", { existingId: existingFunding.id });
+      return new Response(JSON.stringify({
+        success: true,
+        message: "Contract already funded",
+        alreadyFunded: true,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    // STEP 1: Debit credits_available (remove from available balance)
+    const newCreditsAvailable = creditsAvailable - amountCents;
+    const newEscrowHeld = currentEscrow + amountCents;
+
+    const { error: updateBalanceError } = await supabaseAdmin
+      .from('user_balances')
+      .update({
+        credits_available: newCreditsAvailable,
+        escrow_held: newEscrowHeld,
+        updated_at: new Date().toISOString(),
       })
-      .select()
-      .single();
+      .eq('user_id', user.id)
+      .eq('user_type', 'company');
 
-    if (paymentError || !payment) {
-      logStep("Failed to create payment record", { error: paymentError });
-      throw new Error("Failed to create payment record");
+    if (updateBalanceError) {
+      logStep("Failed to update balance", { error: updateBalanceError });
+      throw new Error("Failed to update balance");
     }
 
-    logStep("Payment record created", { paymentId: payment.id });
-
-    // Try to use the new ledger system first
-    const { error: fundError } = await supabaseAdmin.rpc('fund_contract_escrow', {
-      p_company_user_id: user.id,
-      p_contract_id: contractId,
-      p_amount: amountCents,
-      p_payment_id: payment.id,
+    logStep("Balance updated", { 
+      previousCredits: creditsAvailable,
+      newCredits: newCreditsAvailable,
+      previousEscrow: currentEscrow,
+      newEscrow: newEscrowHeld,
     });
 
-    if (fundError) {
-      logStep("fund_contract_escrow failed, trying fallback", { error: fundError.message });
+    // STEP 2: Record in ledger_transactions as internal simulation
+    const { error: ledgerError } = await supabaseAdmin
+      .from('ledger_transactions')
+      .insert({
+        user_id: user.id,
+        tx_type: 'contract_funding',
+        amount: amountCents,
+        currency: contract.currency || 'BRL',
+        context: description || `Internal funding for contract: ${contractId}`,
+        related_contract_id: contractId,
+        balance_after_credits: newCreditsAvailable,
+        balance_after_escrow: newEscrowHeld,
+        metadata: {
+          funding_type: 'internal_credits',
+          milestone_index: milestoneIndex ?? null,
+          freelancer_user_id: freelancerUserId,
+          internal_reference: internalReference,
+          // Flag to indicate this was NOT a real payment
+          is_real_payment: false,
+        },
+      });
 
-      // Fallback: manually update balances
-      // Debit credits_available
-      const { error: debitError } = await supabaseAdmin
+    if (ledgerError) {
+      logStep("Failed to record ledger transaction, attempting rollback", { error: ledgerError });
+      
+      // Rollback balance
+      await supabaseAdmin
         .from('user_balances')
         .update({
-          credits_available: (balance?.credits_available || 0) - amountCents,
+          credits_available: creditsAvailable,
+          escrow_held: currentEscrow,
           updated_at: new Date().toISOString(),
         })
         .eq('user_id', user.id)
         .eq('user_type', 'company');
 
-      if (debitError) {
-        logStep("Debit failed", { error: debitError });
-        throw new Error("Failed to debit balance");
-      }
-
-      // Create ledger transaction
-      await supabaseAdmin
-        .from('ledger_transactions')
-        .insert({
-          user_id: user.id,
-          tx_type: 'contract_funding',
-          amount: amountCents,
-          currency: contract.currency || 'BRL',
-          context: `Contract funding via credits: ${contractId}`,
-          related_contract_id: contractId,
-          related_payment_id: payment.id,
-        });
+      throw new Error("Failed to record transaction");
     }
 
-    logStep("Contract funded successfully");
+    logStep("Ledger transaction recorded (internal simulation)");
 
-    // Update contract status to funded if applicable
-    if (contract.status === 'draft' || contract.status === 'active') {
-      await supabaseAdmin
-        .from('contracts')
-        .update({
-          status: 'funded',
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', contractId);
+    // STEP 3: Update contract status to funded
+    const { error: contractUpdateError } = await supabaseAdmin
+      .from('contracts')
+      .update({
+        status: 'funded',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', contractId);
 
-      logStep("Contract status updated to funded");
+    if (contractUpdateError) {
+      logStep("Warning: Failed to update contract status", { error: contractUpdateError });
+      // Don't throw - the funding was successful, just the status update failed
+    } else {
+      logStep("Contract status updated to 'funded'");
     }
 
-    // Send notification to freelancer
-    await supabaseAdmin
+    // STEP 4: Send notification to freelancer
+    // Note: Freelancer sees internal credits, NOT real money
+    const { error: notificationError } = await supabaseAdmin
       .from('notifications')
       .insert({
         user_id: freelancerUserId,
-        type: 'contract_funded',
-        message: `Um contrato foi financiado!`,
+        type: 'milestone_funded',
+        message: `Um milestone foi financiado! O valor está em escrow aguardando aprovação.`,
         link: `/contracts`,
       });
 
-    logStep("Notification sent to freelancer");
+    if (notificationError) {
+      logStep("Warning: Failed to send notification", { error: notificationError });
+    } else {
+      logStep("Notification sent to freelancer");
+    }
+
+    logStep("SUCCESS - Internal funding completed", {
+      contractId,
+      amountCents,
+      newCreditsAvailable,
+      newEscrowHeld,
+      internalReference,
+    });
 
     return new Response(JSON.stringify({
       success: true,
-      paymentId: payment.id,
-      message: "Contract funded successfully",
+      message: "Milestone financiado com sucesso (saldo interno)",
+      funding: {
+        type: 'internal_credits',
+        amountCents,
+        newBalance: newCreditsAvailable,
+        escrowHeld: newEscrowHeld,
+        contractId,
+        isRealPayment: false, // Flag: this is NOT real money
+      },
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

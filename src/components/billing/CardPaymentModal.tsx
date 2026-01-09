@@ -18,7 +18,7 @@ declare global {
   }
 }
 
-interface CardPaymentModalProps {
+export interface CardPaymentModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   amount: number; // in cents
@@ -28,6 +28,7 @@ interface CardPaymentModalProps {
   creditsAmount?: number;
   description?: string;
   currency?: string;
+  contractId?: string; // Contract ID for contract funding payments
   onPaymentConfirmed?: () => void;
   onError?: (error: string) => void;
 }
@@ -59,6 +60,7 @@ export const CardPaymentModal = forwardRef<HTMLDivElement, CardPaymentModalProps
       creditsAmount,
       description,
       currency = "BRL",
+      contractId,
       onPaymentConfirmed,
       onError,
     },
@@ -272,6 +274,7 @@ export const CardPaymentModal = forwardRef<HTMLDivElement, CardPaymentModalProps
             amountCents: amount,
             creditsAmount,
             description,
+            contractId,
           },
         });
 
@@ -345,7 +348,7 @@ export const CardPaymentModal = forwardRef<HTMLDivElement, CardPaymentModalProps
       } finally {
         setProcessing(false);
       }
-    }, [amount, paymentType, userType, creditsAmount, description, onPaymentConfirmed, onOpenChange, onError]);
+    }, [amount, paymentType, userType, creditsAmount, description, contractId, onPaymentConfirmed, onOpenChange, onError]);
 
     const handleFallback = async () => {
       console.log("[CardPaymentModal] User clicked fallback");
@@ -360,6 +363,7 @@ export const CardPaymentModal = forwardRef<HTMLDivElement, CardPaymentModalProps
             currency,
             creditsAmount,
             description,
+            contractId,
           },
         });
 
