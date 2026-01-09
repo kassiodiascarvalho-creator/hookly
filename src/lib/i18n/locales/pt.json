@@ -638,6 +638,11 @@
     "today": "Hoje",
     "yesterday": "Ontem",
     "recordAudio": "Gravar áudio",
+    "stopRecording": "Parar gravação",
+    "cancelRecording": "Cancelar gravação",
+    "sendAudio": "Enviar áudio",
+    "discardAudio": "Descartar áudio",
+    "noAudioToSend": "Nenhum áudio para enviar",
     "attachFile": "Anexar arquivo",
     "attachImage": "Imagem",
     "attachVideo": "Vídeo",
@@ -645,7 +650,8 @@
     "microphoneError": "Não foi possível acessar o microfone",
     "uploadError": "Falha ao enviar arquivo",
     "fileTooLarge": "Arquivo muito grande",
-    "invalidFileType": "Tipo de arquivo inválido"
+    "invalidFileType": "Tipo de arquivo inválido",
+    "fileSent": "Arquivo enviado com sucesso"
   },
   "notifications": {
     "title": "Notificações",

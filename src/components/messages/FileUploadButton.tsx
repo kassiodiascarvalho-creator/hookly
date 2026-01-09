@@ -36,10 +36,12 @@ export function FileUploadButton({ conversationId, onFileSent, disabled }: FileU
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    // Reset input
+    // Reset input immediately
     e.target.value = '';
+    
+    console.log('[FileUpload] fileSelected:', files.length, 'files, type:', type);
 
-    // Upload each file
+    // Process all files
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       
@@ -47,6 +49,7 @@ export function FileUploadButton({ conversationId, onFileSent, disabled }: FileU
       const maxSize = type === 'video' ? MAX_FILE_SIZE : (type === 'image' ? MAX_IMAGE_SIZE : MAX_DOC_SIZE);
       if (file.size > maxSize) {
         toast.error(t("messages.fileTooLarge"));
+        console.error('[FileUpload] File too large:', file.name, file.size);
         continue;
       }
 
@@ -58,6 +61,7 @@ export function FileUploadButton({ conversationId, onFileSent, disabled }: FileU
       
       if (!allowedTypes.includes(file.type)) {
         toast.error(t("messages.invalidFileType"));
+        console.error('[FileUpload] Invalid file type:', file.name, file.type);
         continue;
       }
 
@@ -75,6 +79,8 @@ export function FileUploadButton({ conversationId, onFileSent, disabled }: FileU
       const fileExt = file.name.split('.').pop();
       const fileName = `${conversationId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
 
+      console.log('[FileUpload] uploadStarted:', fileName, 'size:', file.size, 'mime:', file.type);
+
       const { error: uploadError } = await supabase.storage
         .from('chat_uploads')
         .upload(fileName, file, {
@@ -82,7 +88,12 @@ export function FileUploadButton({ conversationId, onFileSent, disabled }: FileU
           upsert: false
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('[FileUpload] Storage upload error:', uploadError);
+        throw uploadError;
+      }
+      
+      console.log('[FileUpload] uploadDone:', fileName);
 
       // Determine message type
       let messageType: string;
@@ -90,8 +101,10 @@ export function FileUploadButton({ conversationId, onFileSent, disabled }: FileU
       else if (type === 'video') messageType = 'video';
       else messageType = 'file';
 
+      console.log('[FileUpload] messageCreateStarted, type:', messageType);
+
       // Insert message with storage path (not full URL)
-      const { error: messageError } = await supabase
+      const { data: messageData, error: messageError } = await supabase
         .from('messages')
         .insert({
           conversation_id: conversationId,
@@ -102,14 +115,22 @@ export function FileUploadButton({ conversationId, onFileSent, disabled }: FileU
           file_name: file.name,
           file_mime: file.type,
           file_size: file.size
-        });
+        })
+        .select('id')
+        .single();
 
-      if (messageError) throw messageError;
+      if (messageError) {
+        console.error('[FileUpload] Message insert error:', messageError);
+        throw messageError;
+      }
 
+      console.log('[FileUpload] messageCreated:', messageData?.id);
+      
+      toast.success(t("messages.fileSent"));
       onFileSent();
 
     } catch (err) {
-      console.error('Upload error:', err);
+      console.error('[FileUpload] error:', err);
       toast.error(t("messages.uploadError"));
     } finally {
       setUploading(false);
