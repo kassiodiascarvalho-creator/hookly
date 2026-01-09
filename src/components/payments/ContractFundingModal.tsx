@@ -31,9 +31,9 @@ interface ContractFundingModalProps {
   onPaymentComplete: () => void;
 }
 
-interface UserBalance {
-  credits_available: number;
-  escrow_held: number;
+interface CompanyWallet {
+  balance_cents: number;
+  currency: string;
 }
 
 export function ContractFundingModal({
@@ -50,7 +50,7 @@ export function ContractFundingModal({
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
-  const [userBalance, setUserBalance] = useState<UserBalance | null>(null);
+  const [companyWallet, setCompanyWallet] = useState<CompanyWallet | null>(null);
   const [country, setCountry] = useState<string | null>(null);
   const [mpPublicKey, setMpPublicKey] = useState("");
 
@@ -84,7 +84,7 @@ export function ContractFundingModal({
   const canUsePix = isBRL;
   const canUseMercadoPagoCard = isBRL && mpPublicKey.length > 0;
   const canUseStripeCard = !isBRL; // Stripe for international currencies
-  const hasEnoughCredits = userBalance && userBalance.credits_available >= amountCents;
+  const hasEnoughCredits = companyWallet && companyWallet.balance_cents >= amountCents;
 
   useEffect(() => {
     if (user && open) {
@@ -131,16 +131,18 @@ export function ContractFundingModal({
       setCountry(companyProfile.country);
     }
 
-    // Fetch user balance
-    const { data: balance } = await supabase
-      .from("user_balances")
-      .select("credits_available, escrow_held")
-      .eq("user_id", user.id)
-      .eq("user_type", "company")
+    // Fetch company wallet balance
+    const { data: wallet } = await supabase
+      .from("company_wallets")
+      .select("balance_cents, currency")
+      .eq("company_user_id", user.id)
       .single();
 
-    if (balance) {
-      setUserBalance(balance);
+    if (wallet) {
+      setCompanyWallet(wallet);
+    } else {
+      // No wallet exists, set to zero
+      setCompanyWallet({ balance_cents: 0, currency: currency || "USD" });
     }
   };
 
@@ -377,7 +379,7 @@ export function ContractFundingModal({
                         {t("payments.useCredits", "Créditos em conta")}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {t("payments.availableBalance", "Saldo disponível")}: {formatMoney((userBalance?.credits_available || 0) / 100, currency)}
+                        {t("payments.availableBalance", "Saldo disponível")}: {formatMoney((companyWallet?.balance_cents || 0) / 100, companyWallet?.currency || currency)}
                       </p>
                       {!hasEnoughCredits && (
                         <p className="text-xs text-destructive mt-1">
