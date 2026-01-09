@@ -519,6 +519,7 @@
     "recordAudio": "Record audio",
     "attachFile": "Attach file",
     "attachImage": "Image",
+    "attachVideo": "Video",
     "attachDocument": "Document",
     "microphoneError": "Could not access microphone",
     "uploadError": "Failed to upload file",
