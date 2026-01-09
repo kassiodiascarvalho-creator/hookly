@@ -21,6 +21,14 @@ export interface Conversation {
   unread_count: number;
 }
 
+interface ConversationRow {
+  id: string;
+  company_user_id: string;
+  freelancer_user_id: string;
+  project_id: string | null;
+  created_at: string;
+}
+
 export default function Messages() {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -31,7 +39,7 @@ export default function Messages() {
   const [loading, setLoading] = useState(true);
   const [userType, setUserType] = useState<"company" | "freelancer" | null>(null);
 
-  // Prevent overlapping fetch loops (this was causing the UI to keep "refreshing")
+  // Prevent overlapping fetch loops
   const fetchingConversationsRef = useRef(false);
 
   const fetchUserType = useCallback(async () => {
@@ -56,101 +64,146 @@ export default function Messages() {
     setLoading(true);
 
     try {
+      // Get all conversations for this user
       const { data: conversationsData, error } = await supabase
         .from("conversations")
-        .select(
-          `
-          id,
-          company_user_id,
-          freelancer_user_id,
-          project_id,
-          created_at
-        `,
-        )
+        .select("id, company_user_id, freelancer_user_id, project_id, created_at")
         .or(`company_user_id.eq.${user.id},freelancer_user_id.eq.${user.id}`)
         .order("created_at", { ascending: false });
 
-      if (error || !conversationsData) {
+      if (error || !conversationsData || conversationsData.length === 0) {
+        setConversations([]);
         return;
       }
 
-      // Fetch additional data for each conversation
-      const enrichedConversations = await Promise.all(
-        conversationsData.map(async (conv) => {
-          const otherUserId = userType === "company" ? conv.freelancer_user_id : conv.company_user_id;
+      const convIds = conversationsData.map((c: ConversationRow) => c.id);
+      const otherUserIds = conversationsData.map((c: ConversationRow) => 
+        userType === "company" ? c.freelancer_user_id : c.company_user_id
+      );
+      const projectIds = conversationsData
+        .filter((c: ConversationRow) => c.project_id)
+        .map((c: ConversationRow) => c.project_id as string);
 
-          // Get other user's profile
-          let otherUserName = "Unknown";
-          let otherUserAvatar: string | null = null;
-
-          if (userType === "company") {
-            const { data: freelancerProfile } = await supabase
+      // Batch fetch all related data in parallel
+      const [
+        freelancerProfilesResult,
+        companyProfilesResult,
+        projectsResult,
+        lastMessagesResult,
+        unreadCountsResult
+      ] = await Promise.all([
+        // Fetch freelancer profiles if user is company
+        userType === "company"
+          ? supabase
               .from("freelancer_profiles")
-              .select("full_name, avatar_url")
-              .eq("user_id", otherUserId)
-              .single();
-
-            if (freelancerProfile) {
-              otherUserName = freelancerProfile.full_name || "Freelancer";
-              otherUserAvatar = freelancerProfile.avatar_url;
-            }
-          } else {
-            const { data: companyProfile } = await supabase
+              .select("user_id, full_name, avatar_url")
+              .in("user_id", otherUserIds)
+          : Promise.resolve({ data: [] }),
+        
+        // Fetch company profiles if user is freelancer
+        userType === "freelancer"
+          ? supabase
               .from("company_profiles")
-              .select("company_name, contact_name, logo_url")
-              .eq("user_id", otherUserId)
-              .single();
-
-            if (companyProfile) {
-              otherUserName = companyProfile.company_name || companyProfile.contact_name || "Company";
-              otherUserAvatar = companyProfile.logo_url;
-            }
-          }
-
-          // Get project title if exists
-          let projectTitle: string | null = null;
-          if (conv.project_id) {
-            const { data: project } = await supabase
+              .select("user_id, company_name, contact_name, logo_url")
+              .in("user_id", otherUserIds)
+          : Promise.resolve({ data: [] }),
+        
+        // Fetch projects
+        projectIds.length > 0
+          ? supabase
               .from("projects")
-              .select("title")
-              .eq("id", conv.project_id)
-              .single();
+              .select("id, title")
+              .in("id", projectIds)
+          : Promise.resolve({ data: [] }),
+        
+        // Fetch last message for each conversation using a single query
+        // Get all messages ordered by created_at desc, then deduplicate in JS
+        supabase
+          .from("messages")
+          .select("conversation_id, content, created_at, type")
+          .in("conversation_id", convIds)
+          .order("created_at", { ascending: false }),
+        
+        // Fetch unread counts - messages not from current user and not read
+        supabase
+          .from("messages")
+          .select("conversation_id")
+          .in("conversation_id", convIds)
+          .neq("sender_user_id", user.id)
+          .is("read_at", null)
+      ]);
 
-            if (project) {
-              projectTitle = project.title;
-            }
-          }
-
-          // Get last message (maybeSingle prevents 406 when there are no messages yet)
-          const { data: lastMessage } = await supabase
-            .from("messages")
-            .select("content, created_at")
-            .eq("conversation_id", conv.id)
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .maybeSingle();
-
-          // Get unread count
-          const { count: unreadCount } = await supabase
-            .from("messages")
-            .select("*", { count: "exact", head: true })
-            .eq("conversation_id", conv.id)
-            .neq("sender_user_id", user.id)
-            .is("read_at", null);
-
-          return {
-            ...conv,
-            other_user_name: otherUserName,
-            other_user_avatar: otherUserAvatar,
-            project_title: projectTitle,
-            last_message: lastMessage?.content || null,
-            last_message_at: lastMessage?.created_at || conv.created_at,
-            unread_count: unreadCount || 0,
-          } as Conversation;
-        }),
+      // Create lookup maps
+      const freelancerProfiles = new Map(
+        (freelancerProfilesResult.data || []).map((p: { user_id: string; full_name: string | null; avatar_url: string | null }) => [p.user_id, p])
+      );
+      const companyProfiles = new Map(
+        (companyProfilesResult.data || []).map((p: { user_id: string; company_name: string | null; contact_name: string | null; logo_url: string | null }) => [p.user_id, p])
+      );
+      const projects = new Map(
+        (projectsResult.data || []).map((p: { id: string; title: string }) => [p.id, p])
       );
 
-      // Sort by last message
+      // Get last message per conversation (first occurrence since ordered desc)
+      const lastMessageMap = new Map<string, { content: string; created_at: string; type: string | null }>();
+      for (const msg of lastMessagesResult.data || []) {
+        if (!lastMessageMap.has(msg.conversation_id)) {
+          lastMessageMap.set(msg.conversation_id, msg);
+        }
+      }
+
+      // Count unread messages per conversation
+      const unreadCountMap = new Map<string, number>();
+      for (const msg of unreadCountsResult.data || []) {
+        unreadCountMap.set(msg.conversation_id, (unreadCountMap.get(msg.conversation_id) || 0) + 1);
+      }
+
+      // Build enriched conversations
+      const enrichedConversations: Conversation[] = conversationsData.map((conv: ConversationRow) => {
+        const otherUserId = userType === "company" ? conv.freelancer_user_id : conv.company_user_id;
+        
+        let otherUserName = "Unknown";
+        let otherUserAvatar: string | null = null;
+
+        if (userType === "company") {
+          const profile = freelancerProfiles.get(otherUserId);
+          if (profile) {
+            otherUserName = profile.full_name || "Freelancer";
+            otherUserAvatar = profile.avatar_url;
+          }
+        } else {
+          const profile = companyProfiles.get(otherUserId);
+          if (profile) {
+            otherUserName = profile.company_name || profile.contact_name || "Company";
+            otherUserAvatar = profile.logo_url;
+          }
+        }
+
+        const project = conv.project_id ? projects.get(conv.project_id) : null;
+        const lastMessage = lastMessageMap.get(conv.id);
+        const unreadCount = unreadCountMap.get(conv.id) || 0;
+
+        // Format last message content for display
+        let lastMessageContent = lastMessage?.content || null;
+        if (lastMessage?.type && lastMessage.type !== 'text') {
+          if (lastMessage.type === 'audio') lastMessageContent = '🎤 Audio';
+          else if (lastMessage.type === 'image') lastMessageContent = '📷 Image';
+          else if (lastMessage.type === 'video') lastMessageContent = '🎬 Video';
+          else if (lastMessage.type === 'file') lastMessageContent = '📎 File';
+        }
+
+        return {
+          ...conv,
+          other_user_name: otherUserName,
+          other_user_avatar: otherUserAvatar,
+          project_title: project?.title || null,
+          last_message: lastMessageContent,
+          last_message_at: lastMessage?.created_at || conv.created_at,
+          unread_count: unreadCount,
+        };
+      });
+
+      // Sort by last message date
       enrichedConversations.sort((a, b) => {
         const dateA = new Date(a.last_message_at || a.created_at);
         const dateB = new Date(b.last_message_at || b.created_at);
@@ -174,8 +227,8 @@ export default function Messages() {
     if (user && userType) {
       fetchConversations();
 
-      // Subscribe to new conversations
-      const channel = supabase
+      // Subscribe to new conversations and messages
+      const conversationsChannel = supabase
         .channel("conversations-changes")
         .on(
           "postgres_changes",
@@ -190,8 +243,26 @@ export default function Messages() {
         )
         .subscribe();
 
+      // Subscribe to message changes for unread count updates
+      const messagesChannel = supabase
+        .channel("messages-list-updates")
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "messages",
+          },
+          () => {
+            // Debounce updates to avoid too many fetches
+            fetchConversations();
+          },
+        )
+        .subscribe();
+
       return () => {
-        supabase.removeChannel(channel);
+        supabase.removeChannel(conversationsChannel);
+        supabase.removeChannel(messagesChannel);
       };
     }
   }, [user, userType, fetchConversations]);

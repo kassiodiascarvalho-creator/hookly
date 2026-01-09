@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Send, FileText, Download } from "lucide-react";
+import { ArrowLeft, Send, FileText, Download, Play } from "lucide-react";
 import { format, isToday, isYesterday } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Conversation } from "@/pages/Messages";
@@ -65,10 +65,10 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const signedUrlCache = useRef<Map<string, string>>(new Map());
 
-  // Generate signed URLs for messages with files
+  // Generate signed URLs for messages with files - with caching
   const generateSignedUrls = useCallback(async (msgs: Message[]): Promise<MessageWithSignedUrl[]> => {
     const messagesWithUrls = await Promise.all(
       msgs.map(async (msg) => {
@@ -83,9 +83,14 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
           if (extracted) {
             storagePath = extracted;
           } else {
-            // If we can't extract path, return with original URL as fallback
             return { ...msg, signedUrl: msg.file_url };
           }
+        }
+
+        // Check cache first
+        const cached = signedUrlCache.current.get(storagePath);
+        if (cached) {
+          return { ...msg, signedUrl: cached };
         }
 
         // Generate signed URL (1 hour expiration)
@@ -96,6 +101,9 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
         if (error || !data?.signedUrl) {
           return { ...msg, signedUrl: null };
         }
+
+        // Cache the URL
+        signedUrlCache.current.set(storagePath, data.signedUrl);
 
         return { ...msg, signedUrl: data.signedUrl };
       })
@@ -248,7 +256,26 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
               alt={message.file_name || 'Image'}
               className="rounded-lg max-w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
               onClick={() => window.open(fileUrl, '_blank')}
+              loading="lazy"
             />
+          </div>
+        );
+
+      case 'video':
+        return (
+          <div className="max-w-xs">
+            <video 
+              src={fileUrl} 
+              controls
+              className="rounded-lg max-w-full h-auto"
+              preload="metadata"
+            >
+              <track kind="captions" />
+              Your browser does not support the video tag.
+            </video>
+            {message.file_name && (
+              <p className="text-xs mt-1 opacity-70 truncate">{message.file_name}</p>
+            )}
           </div>
         );
 
@@ -320,7 +347,7 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
       </div>
 
       {/* Messages */}
-      <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+      <ScrollArea className="flex-1 p-4">
         {loading ? (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (

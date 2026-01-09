@@ -636,7 +636,16 @@
     "startConversation": "Envie uma mensagem para iniciar a conversa",
     "typeMessage": "Digite uma mensagem...",
     "today": "Hoje",
-    "yesterday": "Ontem"
+    "yesterday": "Ontem",
+    "recordAudio": "Gravar áudio",
+    "attachFile": "Anexar arquivo",
+    "attachImage": "Imagem",
+    "attachVideo": "Vídeo",
+    "attachDocument": "Documento",
+    "microphoneError": "Não foi possível acessar o microfone",
+    "uploadError": "Falha ao enviar arquivo",
+    "fileTooLarge": "Arquivo muito grande",
+    "invalidFileType": "Tipo de arquivo inválido"
   },
   "notifications": {
     "title": "Notificações",
