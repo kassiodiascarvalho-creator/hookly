@@ -96,14 +96,12 @@ serve(async (req) => {
 
     logStep("Created payment record", { paymentId: paymentRecord.id });
 
-    // Create PaymentIntent
+    // Create PaymentIntent with explicit payment method types
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountCents,
       currency: currency.toLowerCase(),
       customer: customerId,
-      automatic_payment_methods: {
-        enabled: true,
-      },
+      payment_method_types: ["card"],
       metadata: {
         type: "contract_funding",
         paymentId: paymentRecord.id,
