@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { DollarSign, Loader2, CheckCircle, Clock, CreditCard } from "lucide-react";
+import { formatMoney } from "@/lib/formatMoney";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -195,15 +196,15 @@ export default function MilestonePayment({
           <div className="grid grid-cols-3 gap-4 p-4 bg-muted rounded-lg">
             <div className="text-center">
               <p className="text-sm text-muted-foreground">{t("payments.totalValue")}</p>
-              <p className="text-lg font-bold">${totalAmount.toFixed(2)}</p>
+              <p className="text-lg font-bold">{formatMoney(totalAmount, currency)}</p>
             </div>
             <div className="text-center">
               <p className="text-sm text-muted-foreground">{t("payments.inEscrow")}</p>
-              <p className="text-lg font-bold text-yellow-600">${(fundedAmount - releasedAmount).toFixed(2)}</p>
+              <p className="text-lg font-bold text-yellow-600">{formatMoney(fundedAmount - releasedAmount, currency)}</p>
             </div>
             <div className="text-center">
               <p className="text-sm text-muted-foreground">{t("payments.released")}</p>
-              <p className="text-lg font-bold text-green-600">${releasedAmount.toFixed(2)}</p>
+              <p className="text-lg font-bold text-green-600">{formatMoney(releasedAmount, currency)}</p>
             </div>
           </div>
 
@@ -238,7 +239,7 @@ export default function MilestonePayment({
                   
                   <div className="flex items-center gap-4">
                     <div className="text-right">
-                      <p className="text-lg font-bold">${milestone.amount.toFixed(2)}</p>
+                      <p className="text-lg font-bold">{formatMoney(milestone.amount, currency)}</p>
                     </div>
                     
                     {canFund && (
