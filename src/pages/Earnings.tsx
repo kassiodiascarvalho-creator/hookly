@@ -353,7 +353,9 @@ export default function Earnings() {
                 <p className="text-xs text-muted-foreground mt-1">
                   {userBalance.earnings_available > 0 
                     ? t("earnings.withdrawableDesc")
-                    : t("earnings.noWithdrawableBalance")
+                    : userBalance.escrow_held > 0
+                      ? t("earnings.escrowPendingDesc", { amount: `${userBalance.currency} ${userBalance.escrow_held.toFixed(2)}` })
+                      : t("earnings.noWithdrawableBalance")
                   }
                 </p>
               </div>

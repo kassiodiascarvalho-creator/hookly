@@ -69,15 +69,29 @@ export function AchievementsCard({ freelancerUserId }: AchievementsCardProps) {
         setAchievements(achievementsData);
       }
 
-      // Fetch total revenue from freelancer_profiles
-      const { data: profileData } = await supabase
-        .from("freelancer_profiles")
-        .select("total_revenue")
+      // Fetch real revenue from user_balances (escrow + earnings, stored in cents)
+      const { data: balanceData } = await supabase
+        .from("user_balances")
+        .select("earnings_available, escrow_held")
         .eq("user_id", targetUserId)
-        .single();
+        .eq("user_type", "freelancer")
+        .maybeSingle();
 
-      if (profileData) {
-        setTotalRevenue(profileData.total_revenue || 0);
+      if (balanceData) {
+        // Convert from cents to currency units
+        const earningsCents = Number(balanceData.earnings_available || 0) + Number(balanceData.escrow_held || 0);
+        setTotalRevenue(earningsCents / 100);
+      } else {
+        // Fallback to freelancer_profiles total_revenue if no balance record
+        const { data: profileData } = await supabase
+          .from("freelancer_profiles")
+          .select("total_revenue")
+          .eq("user_id", targetUserId)
+          .single();
+
+        if (profileData) {
+          setTotalRevenue(profileData.total_revenue || 0);
+        }
       }
     } catch (error) {
       console.error("Error fetching achievements data:", error);

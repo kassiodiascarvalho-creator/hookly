@@ -28,6 +28,7 @@
     "requestWithdrawal": "Solicitar Saque",
     "withdrawableBalance": "Saldo Disponível para Saque",
     "withdrawableDesc": "Este valor pode ser sacado a qualquer momento",
+    "escrowPendingDesc": "Você tem {{amount}} em garantia aguardando aprovação",
     "noWithdrawableBalance": "Complete projetos para ganhar saldo sacável",
     "configurePayoutFirst": "Configure um método de saque na aba 'Métodos de Saque' primeiro",
     "withdrawalHistory": "Histórico de Saques",
