@@ -49,7 +49,7 @@ export function ContractFundingModal({
   const { t } = useTranslation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pix");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
   const [userBalance, setUserBalance] = useState<UserBalance | null>(null);
   const [country, setCountry] = useState<string | null>(null);
   const [mpPublicKey, setMpPublicKey] = useState("");
@@ -91,8 +91,14 @@ export function ContractFundingModal({
       fetchUserData();
       setCreditsSuccess(false);
       setCreditsError(null);
+      // Set initial payment method based on currency
+      if (isBRL) {
+        setPaymentMethod("pix");
+      } else {
+        setPaymentMethod("card");
+      }
     }
-  }, [user, open]);
+  }, [user, open, isBRL]);
 
   // Fetch MercadoPago public key
   useEffect(() => {
@@ -351,40 +357,38 @@ export function ContractFundingModal({
               <div className="space-y-3">
                 <Label>{t("payments.paymentMethod", "Forma de pagamento")}</Label>
                 <div className="grid gap-3">
-                  {/* Credits Option */}
-                  {userBalance && (
-                    <button
-                      onClick={() => setPaymentMethod("credits")}
-                      disabled={!hasEnoughCredits}
-                      className={`
-                        p-4 rounded-lg border-2 text-left transition-all flex items-center gap-3
-                        ${paymentMethod === "credits" && hasEnoughCredits
-                          ? "border-primary bg-primary/5"
-                          : !hasEnoughCredits
-                          ? "border-border opacity-50 cursor-not-allowed"
-                          : "border-border hover:border-primary/50"
-                        }
-                      `}
-                    >
-                      <Wallet className="h-6 w-6 text-primary" />
-                      <div className="flex-1">
-                        <p className="font-medium">
-                          {t("payments.useCredits", "Créditos em conta")}
+                  {/* Credits Option - Always show */}
+                  <button
+                    onClick={() => setPaymentMethod("credits")}
+                    disabled={!hasEnoughCredits}
+                    className={`
+                      p-4 rounded-lg border-2 text-left transition-all flex items-center gap-3
+                      ${paymentMethod === "credits" && hasEnoughCredits
+                        ? "border-primary bg-primary/5"
+                        : !hasEnoughCredits
+                        ? "border-border opacity-50 cursor-not-allowed"
+                        : "border-border hover:border-primary/50"
+                      }
+                    `}
+                  >
+                    <Wallet className="h-6 w-6 text-primary" />
+                    <div className="flex-1">
+                      <p className="font-medium">
+                        {t("payments.useCredits", "Créditos em conta")}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {t("payments.availableBalance", "Saldo disponível")}: {formatMoney((userBalance?.credits_available || 0) / 100, currency)}
+                      </p>
+                      {!hasEnoughCredits && (
+                        <p className="text-xs text-destructive mt-1">
+                          {t("payments.insufficientBalance", "Saldo insuficiente")}
                         </p>
-                        <p className="text-xs text-muted-foreground">
-                          {t("payments.availableBalance", "Saldo disponível")}: {formatMoney(userBalance.credits_available / 100, currency)}
-                        </p>
-                        {!hasEnoughCredits && (
-                          <p className="text-xs text-destructive mt-1">
-                            {t("payments.insufficientBalance", "Saldo insuficiente")}
-                          </p>
-                        )}
-                      </div>
-                      {hasEnoughCredits && paymentMethod === "credits" && (
-                        <CheckCircle className="h-5 w-5 text-primary" />
                       )}
-                    </button>
-                  )}
+                    </div>
+                    {hasEnoughCredits && paymentMethod === "credits" && (
+                      <CheckCircle className="h-5 w-5 text-primary" />
+                    )}
+                  </button>
 
                   {/* PIX Option */}
                   {canUsePix && (
@@ -445,7 +449,7 @@ export function ContractFundingModal({
             {!creditsSuccess && (
               <Button
                 onClick={handleSubmit}
-                disabled={loading || creditsLoading || stripeLoading || (paymentMethod === "credits" && !hasEnoughCredits)}
+                disabled={loading || creditsLoading || stripeLoading || !paymentMethod || (paymentMethod === "credits" && !hasEnoughCredits)}
                 className="w-full"
                 size="lg"
               >
