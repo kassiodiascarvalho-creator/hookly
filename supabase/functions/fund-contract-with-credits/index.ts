@@ -255,11 +255,79 @@ serve(async (req) => {
       throw new Error("Failed to update escrow balance");
     }
 
-    logStep("Balance updated", { 
+    logStep("Company balance updated", { 
       previousWalletBalance: walletBalance,
       newWalletBalance,
       previousEscrow: currentEscrow,
       newEscrow: newEscrowHeld,
+    });
+
+    // STEP 1.5: Also add escrow_held to FREELANCER's user_balances
+    // This syncs the freelancer's view of "funds reserved for them"
+    let freelancerBalance: { id: string; escrow_held: number } | null = null;
+    const { data: freelancerBalanceData } = await supabaseAdmin
+      .from('user_balances')
+      .select('id, escrow_held')
+      .eq('user_id', freelancerUserId)
+      .eq('user_type', 'freelancer')
+      .single();
+
+    if (!freelancerBalanceData) {
+      await supabaseAdmin.rpc('ensure_user_balance', {
+        p_user_id: freelancerUserId,
+        p_user_type: 'freelancer',
+      });
+      
+      const { data: newFreelancerBalance } = await supabaseAdmin
+        .from('user_balances')
+        .select('id, escrow_held')
+        .eq('user_id', freelancerUserId)
+        .eq('user_type', 'freelancer')
+        .single();
+      
+      freelancerBalance = newFreelancerBalance;
+    } else {
+      freelancerBalance = freelancerBalanceData;
+    }
+
+    const freelancerCurrentEscrow = freelancerBalance?.escrow_held || 0;
+    const freelancerNewEscrow = freelancerCurrentEscrow + amountCents;
+
+    // Update freelancer's escrow_held
+    const { error: updateFreelancerBalanceError } = await supabaseAdmin
+      .from('user_balances')
+      .update({
+        escrow_held: freelancerNewEscrow,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('user_id', freelancerUserId)
+      .eq('user_type', 'freelancer');
+
+    if (updateFreelancerBalanceError) {
+      logStep("Failed to update freelancer escrow balance", { error: updateFreelancerBalanceError });
+      // Rollback company wallet and escrow
+      await supabaseAdmin
+        .from('company_wallets')
+        .update({
+          balance_cents: walletBalance,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('company_user_id', user.id);
+      await supabaseAdmin
+        .from('user_balances')
+        .update({
+          escrow_held: currentEscrow,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('user_id', user.id)
+        .eq('user_type', 'company');
+      throw new Error("Failed to update freelancer escrow balance");
+    }
+
+    logStep("Freelancer escrow updated", { 
+      freelancerUserId,
+      previousEscrow: freelancerCurrentEscrow,
+      newEscrow: freelancerNewEscrow,
     });
 
     // STEP 2: Record in ledger_transactions as internal simulation
