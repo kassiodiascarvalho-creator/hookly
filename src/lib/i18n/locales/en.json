@@ -3,6 +3,7 @@
     "title": "My Earnings",
     "subtitle": "Manage your payments and withdrawals",
     "received": "Received",
+    "receivedDesc": "Amount funded by company (available + escrow)",
     "receivable": "Receivable",
     "inEscrow": "In Escrow",
     "escrowDesc": "Funds reserved for active milestones",

@@ -181,11 +181,12 @@ export default function Earnings() {
       .maybeSingle();
 
     if (balanceData) {
+      // Values are stored in cents, convert to currency units
       setUserBalance({
-        earnings_available: Number(balanceData.earnings_available) || 0,
-        credits_available: Number(balanceData.credits_available) || 0,
-        escrow_held: Number(balanceData.escrow_held) || 0,
-        currency: balanceData.currency || "USD"
+        earnings_available: (Number(balanceData.earnings_available) || 0) / 100,
+        credits_available: Number(balanceData.credits_available) || 0, // credits stay as units
+        escrow_held: (Number(balanceData.escrow_held) || 0) / 100,
+        currency: balanceData.currency || "BRL"
       });
     }
 
@@ -378,7 +379,7 @@ export default function Earnings() {
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card className={userBalance.escrow_held > 0 || userBalance.earnings_available > 0 ? "border-green-500/50 bg-green-500/5" : ""}>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-xl bg-green-500/10">
@@ -386,7 +387,12 @@ export default function Earnings() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t("earnings.received")}</p>
-                <p className="text-2xl font-bold">${totals.available.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {userBalance.currency} {(userBalance.earnings_available + userBalance.escrow_held).toFixed(2)}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {t("earnings.receivedDesc")}
+                </p>
               </div>
             </div>
           </CardContent>
