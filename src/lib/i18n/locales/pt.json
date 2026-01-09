@@ -3,6 +3,7 @@
     "title": "Meus Ganhos",
     "subtitle": "Gerencie seus pagamentos e saques",
     "received": "Recebido",
+    "receivedDesc": "Valor financiado pela empresa (disponível + garantia)",
     "receivable": "A Receber",
     "inEscrow": "Em Garantia",
     "escrowDesc": "Fundos reservados para milestones ativos",

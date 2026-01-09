@@ -81,11 +81,12 @@ export default function FreelancerDashboard() {
       const pendingProposals = proposalsResult.count || 0;
       const conversations = conversationsResult.count || 0;
       
-      // Total earnings = available + in escrow
-      const earnings = balanceResult.data 
+      // Total earnings = available + in escrow (values are stored in cents)
+      const earningsCents = balanceResult.data 
         ? Number(balanceResult.data.earnings_available || 0) + Number(balanceResult.data.escrow_held || 0)
         : 0;
-      const currency = balanceResult.data?.currency || "USD";
+      const earnings = earningsCents / 100; // Convert from cents to currency units
+      const currency = balanceResult.data?.currency || "BRL";
 
       setStats({
         activeProjects,
