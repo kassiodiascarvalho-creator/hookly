@@ -3,11 +3,32 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
-import { 
-  Search, Code, Palette, TrendingUp, PenTool, Database, 
-  Video, Briefcase, DollarSign, Scale, ChevronRight, 
-  Shield, Globe, Zap, Check, X, Star, ChevronDown,
-  FileText, Users, Sparkles, Menu, Building2, Award, Clock
+import {
+  Search,
+  Code,
+  Palette,
+  TrendingUp,
+  PenTool,
+  Database,
+  Video,
+  Briefcase,
+  DollarSign,
+  Scale,
+  ChevronRight,
+  Shield,
+  Globe,
+  Zap,
+  Check,
+  X,
+  Star,
+  ChevronDown,
+  FileText,
+  Users,
+  Sparkles,
+  Menu,
+  Building2,
+  Award,
+  Clock,
 } from "lucide-react";
 import { useState } from "react";
 import { languages, LanguageCode } from "@/lib/i18n";
@@ -18,23 +39,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const Index = () => {
   const { t } = useTranslation();
-  const [currentLang, setCurrentLang] = useState<LanguageCode>(
-    (i18n.language as LanguageCode) || "en"
-  );
+  const [currentLang, setCurrentLang] = useState<LanguageCode>((i18n.language as LanguageCode) || "en");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const changeLanguage = (lang: LanguageCode) => {
@@ -98,25 +108,25 @@ const Index = () => {
           <div className="flex items-center gap-8">
             <Logo size="md" />
             <div className="hidden lg:flex items-center gap-6">
-              {navLinks.map((link) => (
+              {navLinks.map((link) =>
                 link.isAnchor ? (
-                  <a 
+                  <a
                     key={link.label}
-                    href={link.to} 
+                    href={link.to}
                     className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {link.label}
                   </a>
                 ) : (
-                  <Link 
+                  <Link
                     key={link.to}
-                    to={link.to} 
+                    to={link.to}
                     className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {link.label}
                   </Link>
-                )
-              ))}
+                ),
+              )}
             </div>
           </div>
 
@@ -125,14 +135,14 @@ const Index = () => {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
                   <Globe className="h-4 w-4" />
-                  {languages.find(l => l.code === currentLang)?.flag}
+                  {languages.find((l) => l.code === currentLang)?.flag}
                   <ChevronDown className="h-3 w-3" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-card border-border">
                 {languages.map((lang) => (
-                  <DropdownMenuItem 
-                    key={lang.code} 
+                  <DropdownMenuItem
+                    key={lang.code}
                     onClick={() => changeLanguage(lang.code)}
                     className="hover:bg-accent"
                   >
@@ -165,30 +175,32 @@ const Index = () => {
               </SheetTrigger>
               <SheetContent side="right" className="bg-card border-border w-[300px]">
                 <div className="flex flex-col gap-6 mt-8">
-                  {navLinks.map((link) => (
+                  {navLinks.map((link) =>
                     link.isAnchor ? (
-                      <a 
+                      <a
                         key={link.label}
-                        href={link.to} 
+                        href={link.to}
                         className="text-lg text-foreground"
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         {link.label}
                       </a>
                     ) : (
-                      <Link 
+                      <Link
                         key={link.to}
-                        to={link.to} 
+                        to={link.to}
                         className="text-lg text-foreground"
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         {link.label}
                       </Link>
-                    )
-                  ))}
+                    ),
+                  )}
                   <div className="border-t border-border pt-6 flex flex-col gap-3">
                     <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
-                      <Button variant="outline" className="w-full">{t("nav.login")}</Button>
+                      <Button variant="outline" className="w-full">
+                        {t("nav.login")}
+                      </Button>
                     </Link>
                     <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
                       <Button className="w-full btn-gradient">{t("nav.signup")}</Button>
@@ -205,15 +217,13 @@ const Index = () => {
       <section className="relative pt-16 pb-24 lg:pt-24 lg:pb-32">
         <div className="container mx-auto px-4">
           {/* Toggle Buttons */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="flex justify-center gap-3 mb-12"
           >
             <Link to="/empresas">
-              <Button className="btn-gradient rounded-full px-6">
-                {t("nav.forCompanies")}
-              </Button>
+              <Button className="btn-gradient rounded-full px-6">{t("nav.forCompanies")}</Button>
             </Link>
             <Link to="/freelancers">
               <Button variant="outline" className="rounded-full px-6 border-border hover:bg-accent">
@@ -234,12 +244,8 @@ const Index = () => {
               <br />
               <span className="text-gradient-primary">{t("hero.titleLine2")}</span>
             </h1>
-            <p className="text-xl md:text-2xl text-primary font-semibold mb-4">
-              {t("hero.titleLine3")}
-            </p>
-            <p className="text-lg text-muted-foreground mb-10 max-w-2xl mx-auto">
-              {t("hero.subtitle")}
-            </p>
+            <p className="text-xl md:text-2xl text-primary font-semibold mb-4">{t("hero.titleLine3")}</p>
+            <p className="text-lg text-muted-foreground mb-10 max-w-2xl mx-auto">{t("hero.subtitle")}</p>
 
             {/* CTA Buttons */}
             <div className="flex flex-wrap justify-center gap-4 mb-16">
@@ -250,9 +256,9 @@ const Index = () => {
                 </Button>
               </Link>
               <Link to="/talent-pool">
-                <Button 
-                  size="lg" 
-                  variant="outline" 
+                <Button
+                  size="lg"
+                  variant="outline"
                   className="text-lg px-8 py-6 rounded-xl border-border hover:bg-accent"
                 >
                   {t("hero.ctaSecondary")}
@@ -268,8 +274,8 @@ const Index = () => {
               className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto"
             >
               {stats.map((stat, i) => (
-                <div 
-                  key={i} 
+                <div
+                  key={i}
                   className="surface-card p-6 text-center group hover:border-primary/30 transition-all duration-300"
                 >
                   <stat.icon className="h-6 w-6 text-primary mx-auto mb-3 opacity-70 group-hover:opacity-100 transition-opacity" />
@@ -285,18 +291,14 @@ const Index = () => {
       {/* Categories Section */}
       <section className="py-20 relative">
         <div className="container mx-auto px-4">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="text-center mb-12"
           >
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-              {t("categories.title")}
-            </h2>
-            <p className="text-muted-foreground text-lg">
-              {t("categories.subtitle")}
-            </p>
+            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">{t("categories.title")}</h2>
+            <p className="text-muted-foreground text-lg">{t("categories.subtitle")}</p>
           </motion.div>
 
           <motion.div
@@ -340,18 +342,14 @@ const Index = () => {
       {/* How It Works */}
       <section className="py-20 relative">
         <div className="container mx-auto px-4">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-              {t("howItWorks.title")}
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              {t("howItWorks.subtitle")}
-            </p>
+            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">{t("howItWorks.title")}</h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">{t("howItWorks.subtitle")}</p>
           </motion.div>
 
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
@@ -369,9 +367,7 @@ const Index = () => {
                   {i === 1 && <Users className="h-7 w-7 text-primary" />}
                   {i === 2 && <Sparkles className="h-7 w-7 text-primary" />}
                 </div>
-                <h3 className="font-display text-xl font-semibold mb-3">
-                  {t(`howItWorks.steps.${step}.title`)}
-                </h3>
+                <h3 className="font-display text-xl font-semibold mb-3">{t(`howItWorks.steps.${step}.title`)}</h3>
                 <p className="text-muted-foreground text-sm leading-relaxed">
                   {t(`howItWorks.steps.${step}.description`)}
                 </p>
@@ -384,18 +380,14 @@ const Index = () => {
       {/* Why HOOKLY - Comparison Table */}
       <section className="py-20 relative">
         <div className="container mx-auto px-4">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-              {t("whyHookly.title")}
-            </h2>
-            <p className="text-muted-foreground text-lg">
-              {t("comparison.subtitle")}
-            </p>
+            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">{t("whyHookly.title")}</h2>
+            <p className="text-muted-foreground text-lg">{t("comparison.subtitle")}</p>
           </motion.div>
 
           {/* Comparison Table */}
@@ -421,9 +413,9 @@ const Index = () => {
 
               {/* Rows */}
               {comparisonFeatures.map((feature, i) => (
-                <div 
-                  key={feature.key} 
-                  className={`grid grid-cols-5 ${i < comparisonFeatures.length - 1 ? 'border-b border-border/50' : ''}`}
+                <div
+                  key={feature.key}
+                  className={`grid grid-cols-5 ${i < comparisonFeatures.length - 1 ? "border-b border-border/50" : ""}`}
                 >
                   <div className="p-4 text-sm text-muted-foreground">{feature.label}</div>
                   <div className="p-4 flex justify-center">
@@ -466,18 +458,14 @@ const Index = () => {
       {/* Pricing Section */}
       <section className="py-20 relative">
         <div className="container mx-auto px-4">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-              {t("pricing.title")}
-            </h2>
-            <p className="text-muted-foreground text-lg">
-              {t("pricing.subtitle")}
-            </p>
+            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">{t("pricing.title")}</h2>
+            <p className="text-muted-foreground text-lg">{t("pricing.subtitle")}</p>
           </motion.div>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
@@ -488,12 +476,8 @@ const Index = () => {
               viewport={{ once: true }}
               className="surface-card p-8"
             >
-              <h3 className="font-display text-2xl font-bold mb-2">
-                {t("pricing.starter.name")}
-              </h3>
-              <p className="text-muted-foreground text-sm mb-6">
-                {t("pricing.starter.description")}
-              </p>
+              <h3 className="font-display text-2xl font-bold mb-2">{t("pricing.starter.name")}</h3>
+              <p className="text-muted-foreground text-sm mb-6">{t("pricing.starter.description")}</p>
               <div className="mb-6">
                 <span className="text-4xl font-bold text-primary">{t("pricing.starter.price")}</span>
               </div>
@@ -525,12 +509,8 @@ const Index = () => {
                   {t("pricing.business.popular")}
                 </span>
               </div>
-              <h3 className="font-display text-2xl font-bold mb-2">
-                {t("pricing.business.name")}
-              </h3>
-              <p className="text-muted-foreground text-sm mb-6">
-                {t("pricing.business.description")}
-              </p>
+              <h3 className="font-display text-2xl font-bold mb-2">{t("pricing.business.name")}</h3>
+              <p className="text-muted-foreground text-sm mb-6">{t("pricing.business.description")}</p>
               <div className="mb-6">
                 <span className="text-4xl font-bold text-primary">{t("pricing.business.price")}</span>
               </div>
@@ -543,9 +523,7 @@ const Index = () => {
                 ))}
               </ul>
               <Link to="/auth">
-                <Button className="w-full btn-gradient">
-                  {t("pricing.business.cta")}
-                </Button>
+                <Button className="w-full btn-gradient">{t("pricing.business.cta")}</Button>
               </Link>
             </motion.div>
           </div>
@@ -555,54 +533,55 @@ const Index = () => {
       {/* Testimonials */}
       <section className="py-20 relative">
         <div className="container mx-auto px-4">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-              {t("testimonials.title")}
-            </h2>
-            <p className="text-muted-foreground text-lg">
-              {t("testimonials.subtitle")}
-            </p>
+            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">{t("testimonials.title")}</h2>
+            <p className="text-muted-foreground text-lg">{t("testimonials.subtitle")}</p>
           </motion.div>
 
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {(t("testimonials.items", { returnObjects: true }) as Array<{ quote: string; author: string; role: string }>).slice(0, 3).map((testimonial, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="surface-card-hover p-6"
-              >
-                {/* Stars */}
-                <div className="flex gap-1 mb-4">
-                  {[...Array(5)].map((_, j) => (
-                    <Star key={j} className="h-4 w-4 fill-primary text-primary" />
-                  ))}
-                </div>
-                
-                <p className="text-sm text-muted-foreground mb-6 leading-relaxed italic">
-                  "{testimonial.quote}"
-                </p>
-                
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                    <span className="text-primary font-semibold text-sm">
-                      {testimonial.author.split(' ').map(n => n[0]).join('')}
-                    </span>
+            {(
+              t("testimonials.items", { returnObjects: true }) as Array<{ quote: string; author: string; role: string }>
+            )
+              .slice(0, 3)
+              .map((testimonial, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  className="surface-card-hover p-6"
+                >
+                  {/* Stars */}
+                  <div className="flex gap-1 mb-4">
+                    {[...Array(5)].map((_, j) => (
+                      <Star key={j} className="h-4 w-4 fill-primary text-primary" />
+                    ))}
                   </div>
-                  <div>
-                    <div className="font-semibold text-sm">{testimonial.author}</div>
-                    <div className="text-xs text-muted-foreground">{testimonial.role}</div>
+
+                  <p className="text-sm text-muted-foreground mb-6 leading-relaxed italic">"{testimonial.quote}"</p>
+
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                      <span className="text-primary font-semibold text-sm">
+                        {testimonial.author
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      </span>
+                    </div>
+                    <div>
+                      <div className="font-semibold text-sm">{testimonial.author}</div>
+                      <div className="text-xs text-muted-foreground">{testimonial.role}</div>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              ))}
           </div>
         </div>
       </section>
@@ -610,40 +589,32 @@ const Index = () => {
       {/* FAQ */}
       <section id="faq" className="py-20 relative">
         <div className="container mx-auto px-4 max-w-3xl">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-              {t("faq.title")}
-            </h2>
-            <p className="text-muted-foreground text-lg">
-              {t("faq.subtitle")}
-            </p>
+            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">{t("faq.title")}</h2>
+            <p className="text-muted-foreground text-lg">{t("faq.subtitle")}</p>
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
             <Accordion type="single" collapsible className="w-full space-y-3">
-              {(t("faq.items", { returnObjects: true }) as Array<{ question: string; answer: string }>).map((item, i) => (
-                <AccordionItem 
-                  key={i} 
-                  value={`item-${i}`} 
-                  className="surface-card px-6 border border-border rounded-xl overflow-hidden"
-                >
-                  <AccordionTrigger className="text-left hover:no-underline py-5 text-foreground">
-                    {item.question}
-                  </AccordionTrigger>
-                  <AccordionContent className="text-muted-foreground pb-5">
-                    {item.answer}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
+              {(t("faq.items", { returnObjects: true }) as Array<{ question: string; answer: string }>).map(
+                (item, i) => (
+                  <AccordionItem
+                    key={i}
+                    value={`item-${i}`}
+                    className="surface-card px-6 border border-border rounded-xl overflow-hidden"
+                  >
+                    <AccordionTrigger className="text-left hover:no-underline py-5 text-foreground">
+                      {item.question}
+                    </AccordionTrigger>
+                    <AccordionContent className="text-muted-foreground pb-5">{item.answer}</AccordionContent>
+                  </AccordionItem>
+                ),
+              )}
             </Accordion>
           </motion.div>
         </div>
@@ -661,9 +632,7 @@ const Index = () => {
             <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-6 text-gradient-primary">
               {t("cta.title")}
             </h2>
-            <p className="text-muted-foreground text-lg mb-10">
-              {t("cta.subtitle")}
-            </p>
+            <p className="text-muted-foreground text-lg mb-10">{t("cta.subtitle")}</p>
             <Link to="/auth">
               <Button size="lg" className="btn-gradient text-lg px-10 py-6 rounded-xl">
                 {t("cta.primary")}
@@ -679,18 +648,31 @@ const Index = () => {
           <div className="grid md:grid-cols-5 gap-8 mb-12">
             <div className="md:col-span-2">
               <Logo className="mb-4" />
-              <p className="text-muted-foreground text-sm max-w-xs leading-relaxed">
-                {t("footer.description")}
-              </p>
+              <p className="text-muted-foreground text-sm max-w-xs leading-relaxed">{t("footer.description")}</p>
               <div className="flex gap-3 mt-6">
-                <a href="#" className="w-9 h-9 rounded-lg bg-card border border-border flex items-center justify-center hover:border-primary/50 transition-colors">
-                  <svg className="h-4 w-4 text-muted-foreground" fill="currentColor" viewBox="0 0 24 24"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/></svg>
+                <a
+                  href="#"
+                  className="w-9 h-9 rounded-lg bg-card border border-border flex items-center justify-center hover:border-primary/50 transition-colors"
+                >
+                  <svg className="h-4 w-4 text-muted-foreground" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
+                  </svg>
                 </a>
-                <a href="#" className="w-9 h-9 rounded-lg bg-card border border-border flex items-center justify-center hover:border-primary/50 transition-colors">
-                  <svg className="h-4 w-4 text-muted-foreground" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                <a
+                  href="#"
+                  className="w-9 h-9 rounded-lg bg-card border border-border flex items-center justify-center hover:border-primary/50 transition-colors"
+                >
+                  <svg className="h-4 w-4 text-muted-foreground" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+                  </svg>
                 </a>
-                <a href="#" className="w-9 h-9 rounded-lg bg-card border border-border flex items-center justify-center hover:border-primary/50 transition-colors">
-                  <svg className="h-4 w-4 text-muted-foreground" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                <a
+                  href="#"
+                  className="w-9 h-9 rounded-lg bg-card border border-border flex items-center justify-center hover:border-primary/50 transition-colors"
+                >
+                  <svg className="h-4 w-4 text-muted-foreground" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                  </svg>
                 </a>
               </div>
             </div>
@@ -699,48 +681,78 @@ const Index = () => {
             <div>
               <h4 className="font-semibold mb-4 text-foreground">{t("footer.platform.title")}</h4>
               <ul className="space-y-3 text-sm">
-                <li><Link to="/como-funciona" className="text-muted-foreground hover:text-foreground transition-colors">{t("footer.platform.howItWorks")}</Link></li>
-                <li><Link to="/talent-pool" className="text-muted-foreground hover:text-foreground transition-colors">{t("footer.platform.findTalent")}</Link></li>
-                <li><Link to="/precos" className="text-muted-foreground hover:text-foreground transition-colors">{t("footer.platform.pricing")}</Link></li>
+                <li>
+                  <Link to="/como-funciona" className="text-muted-foreground hover:text-foreground transition-colors">
+                    {t("footer.platform.howItWorks")}
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/talent-pool" className="text-muted-foreground hover:text-foreground transition-colors">
+                    {t("footer.platform.findTalent")}
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/precos" className="text-muted-foreground hover:text-foreground transition-colors">
+                    {t("footer.platform.pricing")}
+                  </Link>
+                </li>
               </ul>
             </div>
 
             <div>
               <h4 className="font-semibold mb-4 text-foreground">{t("footer.company.title")}</h4>
               <ul className="space-y-3 text-sm">
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">{t("footer.company.about")}</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">{t("footer.company.careers")}</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">{t("footer.company.blog")}</a></li>
+                <li>
+                  <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                    {t("footer.company.about")}
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                    {t("footer.company.careers")}
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                    {t("footer.company.blog")}
+                  </a>
+                </li>
               </ul>
             </div>
 
             <div>
               <h4 className="font-semibold mb-4 text-foreground">{t("footer.legal.title")}</h4>
               <ul className="space-y-3 text-sm">
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">{t("footer.legal.privacy")}</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">{t("footer.legal.terms")}</a></li>
+                <li>
+                  <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                    {t("footer.legal.privacy")}
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                    {t("footer.legal.terms")}
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
 
           {/* Bottom Bar */}
           <div className="border-t border-border pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-muted-foreground">
-              {t("footer.copyright")}
-            </p>
+            <p className="text-sm text-muted-foreground">{t("footer.copyright")}</p>
             <div className="flex items-center gap-4">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
-                    {languages.find(l => l.code === currentLang)?.flag}
+                    {languages.find((l) => l.code === currentLang)?.flag}
                     <span className="text-xs">{currentLang.toUpperCase()}</span>
                     <ChevronDown className="h-3 w-3" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="bg-card border-border">
                   {languages.map((lang) => (
-                    <DropdownMenuItem 
-                      key={lang.code} 
+                    <DropdownMenuItem
+                      key={lang.code}
                       onClick={() => changeLanguage(lang.code)}
                       className="hover:bg-accent"
                     >
