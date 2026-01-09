@@ -33,18 +33,19 @@ export function FileUploadButton({ conversationId, onFileSent, disabled }: FileU
   const docInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'video' | 'document') => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0) return;
 
-    // Reset input immediately
+    // Copy files to array BEFORE resetting input (FileList is a live reference)
+    const files = Array.from(fileList);
+    
+    // Reset input after copying
     e.target.value = '';
     
     console.log('[FileUpload] fileSelected:', files.length, 'files, type:', type);
 
     // Process all files
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      
+    for (const file of files) {
       // Validate file size based on type
       const maxSize = type === 'video' ? MAX_FILE_SIZE : (type === 'image' ? MAX_IMAGE_SIZE : MAX_DOC_SIZE);
       if (file.size > maxSize) {
