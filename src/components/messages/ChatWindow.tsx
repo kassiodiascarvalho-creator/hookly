@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Send, FileText, Download, Play } from "lucide-react";
+import { ArrowLeft, Send, FileText, Download } from "lucide-react";
 import { format, isToday, isYesterday } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Conversation } from "@/pages/Messages";
@@ -99,13 +99,15 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
           .createSignedUrl(storagePath, 3600);
 
         if (error || !data?.signedUrl) {
+          console.error('Failed to generate signed URL for:', storagePath, error);
           return { ...msg, signedUrl: null };
         }
 
-        // Cache the URL
-        signedUrlCache.current.set(storagePath, data.signedUrl);
+        // The SDK returns a full URL, cache and return it
+        const fullSignedUrl = data.signedUrl;
+        signedUrlCache.current.set(storagePath, fullSignedUrl);
 
-        return { ...msg, signedUrl: data.signedUrl };
+        return { ...msg, signedUrl: fullSignedUrl };
       })
     );
 
@@ -238,6 +240,11 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
     const type = message.type || 'text';
     const fileUrl = message.signedUrl || message.file_url || '';
 
+    // Debug log for file messages
+    if (type !== 'text' && !message.signedUrl) {
+      console.warn('Missing signed URL for message:', message.id, 'type:', type, 'file_url:', message.file_url);
+    }
+
     switch (type) {
       case 'audio':
         return (
@@ -251,28 +258,47 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
       case 'image':
         return (
           <div className="max-w-xs">
-            <img 
-              src={fileUrl} 
-              alt={message.file_name || 'Image'}
-              className="rounded-lg max-w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
-              onClick={() => window.open(fileUrl, '_blank')}
-              loading="lazy"
-            />
+            {fileUrl ? (
+              <img 
+                src={fileUrl} 
+                alt={message.file_name || 'Image'}
+                className="rounded-lg max-w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
+                onClick={() => window.open(fileUrl, '_blank')}
+                loading="lazy"
+                onError={(e) => {
+                  console.error('Image load error:', fileUrl);
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            ) : (
+              <div className="p-4 bg-muted rounded-lg text-sm text-muted-foreground">
+                📷 {message.file_name || 'Image'}
+              </div>
+            )}
           </div>
         );
 
       case 'video':
         return (
           <div className="max-w-xs">
-            <video 
-              src={fileUrl} 
-              controls
-              className="rounded-lg max-w-full h-auto"
-              preload="metadata"
-            >
-              <track kind="captions" />
-              Your browser does not support the video tag.
-            </video>
+            {fileUrl ? (
+              <video 
+                src={fileUrl} 
+                controls
+                className="rounded-lg max-w-full h-auto"
+                preload="metadata"
+                onError={(e) => {
+                  console.error('Video load error:', fileUrl);
+                }}
+              >
+                <track kind="captions" />
+                Your browser does not support the video tag.
+              </video>
+            ) : (
+              <div className="p-4 bg-muted rounded-lg text-sm text-muted-foreground">
+                🎬 {message.file_name || 'Video'}
+              </div>
+            )}
             {message.file_name && (
               <p className="text-xs mt-1 opacity-70 truncate">{message.file_name}</p>
             )}
@@ -282,12 +308,13 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
       case 'file':
         return (
           <a 
-            href={fileUrl} 
+            href={fileUrl || '#'} 
             target="_blank" 
             rel="noopener noreferrer"
             className={cn(
               "flex items-center gap-2 p-2 rounded-lg hover:opacity-80 transition-opacity",
-              isOwn ? "bg-primary-foreground/20" : "bg-background/50"
+              isOwn ? "bg-primary-foreground/20" : "bg-background/50",
+              !fileUrl && "pointer-events-none opacity-50"
             )}
           >
             <FileText className="h-8 w-8 shrink-0" />
