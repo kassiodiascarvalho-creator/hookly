@@ -114,49 +114,74 @@ serve(async (req) => {
       throw new Error(`Amount cannot exceed contract value of ${contract.amount_cents / 100}`);
     }
 
-    // Check user balance (credits_available in user_balances table)
-    const { data: balanceData, error: balanceError } = await supabaseAdmin
+    // Check company wallet balance (balance_cents in company_wallets table)
+    const { data: walletData, error: walletError } = await supabaseAdmin
+      .from('company_wallets')
+      .select('id, balance_cents, currency')
+      .eq('company_user_id', user.id)
+      .single();
+
+    let companyWallet = walletData;
+
+    if (walletError || !companyWallet) {
+      logStep("Wallet not found, creating new record");
+      
+      // Create wallet if not exists
+      await supabaseAdmin.rpc('ensure_company_wallet', {
+        p_company_user_id: user.id,
+      });
+
+      // Re-fetch
+      const { data: newWallet, error: walletRetryError } = await supabaseAdmin
+        .from('company_wallets')
+        .select('id, balance_cents, currency')
+        .eq('company_user_id', user.id)
+        .single();
+
+      if (walletRetryError || !newWallet) {
+        throw new Error("Failed to retrieve or create company wallet");
+      }
+      
+      companyWallet = newWallet;
+    }
+
+    const walletBalance = companyWallet.balance_cents;
+    
+    // Also get/create user_balances for escrow tracking
+    let userBalance: { id: string; escrow_held: number } | null = null;
+    const { data: userBalanceData } = await supabaseAdmin
       .from('user_balances')
-      .select('id, credits_available, escrow_held')
+      .select('id, escrow_held')
       .eq('user_id', user.id)
       .eq('user_type', 'company')
       .single();
 
-    let currentBalance = balanceData;
-
-    if (balanceError || !currentBalance) {
-      logStep("Balance not found, creating new record");
-      
-      // Create balance if not exists
+    if (!userBalanceData) {
       await supabaseAdmin.rpc('ensure_user_balance', {
         p_user_id: user.id,
         p_user_type: 'company',
       });
-
-      // Re-fetch
-      const { data: newBalance, error: balanceRetryError } = await supabaseAdmin
+      
+      const { data: newUserBalance } = await supabaseAdmin
         .from('user_balances')
-        .select('id, credits_available, escrow_held')
+        .select('id, escrow_held')
         .eq('user_id', user.id)
         .eq('user_type', 'company')
         .single();
-
-      if (balanceRetryError || !newBalance) {
-        throw new Error("Failed to retrieve or create user balance");
-      }
       
-      currentBalance = newBalance;
+      userBalance = newUserBalance;
+    } else {
+      userBalance = userBalanceData;
     }
 
-    const creditsAvailable = currentBalance.credits_available;
-    const currentEscrow = currentBalance.escrow_held || 0;
+    const currentEscrow = userBalance?.escrow_held || 0;
     
-    if (creditsAvailable < amountCents) {
-      logStep("Insufficient balance", { available: creditsAvailable, required: amountCents });
-      throw new Error(`Saldo insuficiente. Disponível: ${creditsAvailable / 100}, Necessário: ${amountCents / 100}`);
+    if (walletBalance < amountCents) {
+      logStep("Insufficient balance", { available: walletBalance, required: amountCents });
+      throw new Error(`Saldo insuficiente. Disponível: ${walletBalance / 100}, Necessário: ${amountCents / 100}`);
     }
 
-    logStep("Balance verified", { creditsAvailable, requiredAmount: amountCents });
+    logStep("Balance verified", { walletBalance, requiredAmount: amountCents });
 
     // ====================================================================
     // INTERNAL LEDGER MOVEMENT - NO EXTERNAL PAYMENT
@@ -189,14 +214,28 @@ serve(async (req) => {
       });
     }
 
-    // STEP 1: Debit credits_available (remove from available balance)
-    const newCreditsAvailable = creditsAvailable - amountCents;
+    // STEP 1: Debit company_wallets.balance_cents and credit escrow
+    const newWalletBalance = walletBalance - amountCents;
     const newEscrowHeld = currentEscrow + amountCents;
 
+    // Update company_wallets
+    const { error: updateWalletError } = await supabaseAdmin
+      .from('company_wallets')
+      .update({
+        balance_cents: newWalletBalance,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('company_user_id', user.id);
+
+    if (updateWalletError) {
+      logStep("Failed to update wallet", { error: updateWalletError });
+      throw new Error("Failed to update wallet balance");
+    }
+
+    // Update user_balances escrow
     const { error: updateBalanceError } = await supabaseAdmin
       .from('user_balances')
       .update({
-        credits_available: newCreditsAvailable,
         escrow_held: newEscrowHeld,
         updated_at: new Date().toISOString(),
       })
@@ -204,13 +243,21 @@ serve(async (req) => {
       .eq('user_type', 'company');
 
     if (updateBalanceError) {
-      logStep("Failed to update balance", { error: updateBalanceError });
-      throw new Error("Failed to update balance");
+      logStep("Failed to update escrow balance", { error: updateBalanceError });
+      // Rollback wallet
+      await supabaseAdmin
+        .from('company_wallets')
+        .update({
+          balance_cents: walletBalance,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('company_user_id', user.id);
+      throw new Error("Failed to update escrow balance");
     }
 
     logStep("Balance updated", { 
-      previousCredits: creditsAvailable,
-      newCredits: newCreditsAvailable,
+      previousWalletBalance: walletBalance,
+      newWalletBalance,
       previousEscrow: currentEscrow,
       newEscrow: newEscrowHeld,
     });
@@ -225,7 +272,7 @@ serve(async (req) => {
         currency: contract.currency || 'BRL',
         context: description || `Internal funding for contract: ${contractId}`,
         related_contract_id: contractId,
-        balance_after_credits: newCreditsAvailable,
+        balance_after_credits: newWalletBalance,
         balance_after_escrow: newEscrowHeld,
         metadata: {
           funding_type: 'internal_credits',
@@ -240,11 +287,19 @@ serve(async (req) => {
     if (ledgerError) {
       logStep("Failed to record ledger transaction, attempting rollback", { error: ledgerError });
       
-      // Rollback balance
+      // Rollback wallet balance
+      await supabaseAdmin
+        .from('company_wallets')
+        .update({
+          balance_cents: walletBalance,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('company_user_id', user.id);
+
+      // Rollback escrow
       await supabaseAdmin
         .from('user_balances')
         .update({
-          credits_available: creditsAvailable,
           escrow_held: currentEscrow,
           updated_at: new Date().toISOString(),
         })
@@ -292,7 +347,7 @@ serve(async (req) => {
     logStep("SUCCESS - Internal funding completed", {
       contractId,
       amountCents,
-      newCreditsAvailable,
+      newWalletBalance,
       newEscrowHeld,
       internalReference,
     });
@@ -303,7 +358,7 @@ serve(async (req) => {
       funding: {
         type: 'internal_credits',
         amountCents,
-        newBalance: newCreditsAvailable,
+        newBalance: newWalletBalance,
         escrowHeld: newEscrowHeld,
         contractId,
         isRealPayment: false, // Flag: this is NOT real money
