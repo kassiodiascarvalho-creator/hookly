@@ -529,5 +529,491 @@
     "holderName": "账户持有人姓名",
     "holderDoc": "CPF/CNPJ",
     "setDefault": "设为默认"
+  },
+  "findProjects": {
+    "title": "寻找项目",
+    "subtitle": "浏览由验证企业发布的可用机会",
+    "filters": "筛选器",
+    "category": "类别",
+    "allCategories": "所有类别",
+    "budgetRange": "预算范围",
+    "minBudget": "最低预算",
+    "maxBudget": "最高预算",
+    "status": "状态",
+    "allStatuses": "所有状态",
+    "open": "开放",
+    "inProgress": "进行中",
+    "apply": "申请",
+    "clearFilters": "清除筛选器",
+    "noProjects": "未找到项目",
+    "noProjectsDesc": "尝试调整筛选器或稍后再来查看",
+    "loading": "加载项目中...",
+    "postedBy": "发布者",
+    "budget": "预算",
+    "proposals": "提案",
+    "viewDetails": "查看详情",
+    "submitProposal": "提交提案"
+  },
+  "myProposals": {
+    "title": "我的提案",
+    "subtitle": "跟踪您发送给项目的所有提案",
+    "noProposals": "暂无提案",
+    "noProposalsDesc": "当您向项目提交提案时，它们将显示在这里",
+    "project": "项目",
+    "company": "企业",
+    "proposedAmount": "提议金额",
+    "status": "状态",
+    "submittedAt": "提交时间",
+    "viewProject": "查看项目",
+    "coverLetter": "求职信",
+    "milestones": "里程碑"
+  },
+  "companyProposals": {
+    "title": "提案",
+    "subtitle": "审核和管理您项目的提案",
+    "noProposals": "暂无提案",
+    "noProposalsDesc": "当自由职业者向您的项目提交提案时，它们将显示在这里",
+    "freelancer": "自由职业者",
+    "project": "项目",
+    "proposedAmount": "提议金额",
+    "status": "状态",
+    "receivedAt": "收到时间",
+    "viewProfile": "查看档案",
+    "accept": "接受",
+    "reject": "拒绝",
+    "accepted": "已接受",
+    "rejected": "已拒绝",
+    "pending": "待处理",
+    "coverLetter": "求职信",
+    "milestones": "里程碑",
+    "acceptConfirm": "接受提案",
+    "acceptConfirmDesc": "您确定要接受此提案吗？这将创建与自由职业者的合同。",
+    "rejectConfirm": "拒绝提案",
+    "rejectConfirmDesc": "您确定要拒绝此提案吗？"
+  },
+  "freelancerDashboard": {
+    "title": "自由职业者控制台",
+    "welcome": "欢迎回来",
+    "stats": {
+      "activeProjects": "活跃项目",
+      "totalEarned": "总收入",
+      "proposalsSent": "已发送提案",
+      "profileViews": "档案浏览量",
+      "proposalCredits": "提案积分"
+    },
+    "quickActions": {
+      "title": "快捷操作",
+      "findProjects": "寻找项目",
+      "myProposals": "我的提案",
+      "viewMessages": "查看消息",
+      "viewEarnings": "查看收入"
+    },
+    "recentProposals": "最近的提案",
+    "noRecentProposals": "暂无最近的提案"
+  },
+  "verifiedCompanies": {
+    "title": "验证企业",
+    "subtitle": "浏览所有验证企业",
+    "noCompanies": "未找到验证企业",
+    "viewProfile": "查看档案",
+    "industry": "行业",
+    "location": "地点",
+    "verified": "已验证"
+  },
+  "achievements": {
+    "title": "成就",
+    "subtitle": "跟踪您的进度并解锁奖励",
+    "locked": "锁定",
+    "unlocked": "已解锁",
+    "progress": "进度",
+    "viewAll": "查看全部",
+    "noAchievements": "暂无成就",
+    "revenueRequired": "需要收入"
+  },
+  "talentPool": {
+    "title": "人才库",
+    "subtitle": "发现适合您项目的验证人才",
+    "filters": "筛选器",
+    "skills": "技能",
+    "allSkills": "所有技能",
+    "location": "地点",
+    "allLocations": "所有地点",
+    "hourlyRate": "时薪",
+    "minRate": "最低时薪",
+    "maxRate": "最高时薪",
+    "clearFilters": "清除筛选器",
+    "noTalents": "未找到人才",
+    "noTalentsDesc": "尝试调整筛选器或稍后再来查看",
+    "loading": "加载人才中...",
+    "viewProfile": "查看档案",
+    "invite": "邀请参加项目",
+    "verified": "已验证",
+    "perHour": "/小时",
+    "projects": "项目",
+    "reviews": "评价"
+  },
+  "freelancerProfile": {
+    "title": "自由职业者档案",
+    "about": "关于",
+    "skills": "技能",
+    "portfolio": "作品集",
+    "reviews": "评价",
+    "certifications": "认证",
+    "hourlyRate": "时薪",
+    "location": "地点",
+    "memberSince": "加入时间",
+    "totalEarned": "总收入",
+    "projectsCompleted": "已完成项目",
+    "inviteToProject": "邀请参加项目",
+    "sendMessage": "发送消息",
+    "noPortfolio": "暂无作品集项目",
+    "noReviews": "暂无评价",
+    "noCertifications": "暂无认证",
+    "verified": "已验证",
+    "notVerified": "未验证"
+  },
+  "billing": {
+    "title": "账单",
+    "wallet": "钱包",
+    "balance": "余额",
+    "addFunds": "添加资金",
+    "transactions": "交易记录",
+    "noTransactions": "暂无交易",
+    "amount": "金额",
+    "type": "类型",
+    "date": "日期",
+    "status": "状态",
+    "deposit": "存款",
+    "withdrawal": "提款",
+    "payment": "付款",
+    "credits": "积分",
+    "buyCredits": "购买积分",
+    "creditsBalance": "积分余额",
+    "creditsDesc": "用积分提交提案",
+    "perCredit": "每积分"
+  },
+  "contracts": {
+    "title": "合同",
+    "subtitle": "管理您的活跃合同和里程碑",
+    "noContracts": "暂无合同",
+    "noContractsDesc": "当您接受提案时，合同将显示在这里",
+    "status": {
+      "active": "活跃",
+      "completed": "已完成",
+      "cancelled": "已取消",
+      "pending": "待处理"
+    },
+    "milestones": "里程碑",
+    "totalValue": "总价值",
+    "freelancer": "自由职业者",
+    "company": "企业",
+    "startDate": "开始日期",
+    "endDate": "结束日期",
+    "viewDetails": "查看详情",
+    "fundMilestone": "资助里程碑",
+    "releaseFunds": "释放资金",
+    "markComplete": "标记完成"
+  },
+  "companyProfile": {
+    "title": "企业档案",
+    "companyName": "企业名称",
+    "contactName": "联系人姓名",
+    "industry": "行业",
+    "companySize": "企业规模",
+    "website": "网站",
+    "phone": "电话",
+    "location": "地点",
+    "country": "国家",
+    "about": "关于企业",
+    "logo": "企业标志",
+    "uploadLogo": "上传标志",
+    "verified": "已验证企业",
+    "notVerified": "未验证",
+    "save": "保存更改",
+    "saving": "保存中...",
+    "success": "档案更新成功",
+    "error": "更新档案出错"
+  },
+  "uploads": {
+    "dragDrop": "拖放文件到这里",
+    "or": "或",
+    "browse": "浏览文件",
+    "maxSize": "最大大小",
+    "uploading": "上传中...",
+    "success": "文件上传成功",
+    "error": "上传文件出错",
+    "remove": "移除",
+    "preview": "预览"
+  },
+  "reviews": {
+    "title": "评价",
+    "leaveReview": "留下评价",
+    "rating": "评分",
+    "comment": "评论",
+    "submit": "提交评价",
+    "noReviews": "暂无评价",
+    "averageRating": "平均评分",
+    "totalReviews": "总评价数"
+  },
+  "portfolio": {
+    "title": "作品集",
+    "addProject": "添加项目",
+    "editProject": "编辑项目",
+    "projectTitle": "项目标题",
+    "description": "描述",
+    "projectUrl": "项目链接",
+    "tags": "标签",
+    "image": "图片",
+    "save": "保存",
+    "delete": "删除",
+    "noProjects": "暂无作品集项目",
+    "addFirst": "添加您的第一个项目来展示您的作品"
+  },
+  "certifications": {
+    "title": "认证",
+    "addCertification": "添加认证",
+    "editCertification": "编辑认证",
+    "name": "认证名称",
+    "issuer": "颁发机构",
+    "issueDate": "颁发日期",
+    "expiryDate": "过期日期",
+    "credentialUrl": "证书链接",
+    "save": "保存",
+    "delete": "删除",
+    "noCertifications": "暂无认证",
+    "addFirst": "添加您的认证来展示您的专业技能"
+  },
+  "payments": {
+    "title": "付款",
+    "subtitle": "管理您的付款和交易",
+    "noPayments": "暂无付款",
+    "amount": "金额",
+    "status": "状态",
+    "date": "日期",
+    "project": "项目",
+    "freelancer": "自由职业者",
+    "company": "企业",
+    "pending": "待处理",
+    "completed": "已完成",
+    "failed": "失败",
+    "refunded": "已退款"
+  },
+  "finances": {
+    "title": "财务",
+    "subtitle": "管理您的财务和交易",
+    "overview": "概览",
+    "transactions": "交易记录",
+    "wallet": "钱包",
+    "balance": "余额",
+    "income": "收入",
+    "expenses": "支出",
+    "pending": "待处理",
+    "addFunds": "添加资金",
+    "withdraw": "提款",
+    "noTransactions": "暂无交易",
+    "viewAll": "查看全部"
+  },
+  "currency": {
+    "usd": "美元",
+    "eur": "欧元",
+    "brl": "巴西雷亚尔",
+    "gbp": "英镑"
+  },
+  "invites": {
+    "title": "项目邀请",
+    "subtitle": "管理您的项目邀请",
+    "noInvites": "暂无邀请",
+    "noInvitesDesc": "当企业邀请您参加项目时，将显示在这里",
+    "accept": "接受",
+    "decline": "拒绝",
+    "viewProject": "查看项目",
+    "from": "来自",
+    "message": "消息",
+    "status": {
+      "pending": "待处理",
+      "accepted": "已接受",
+      "declined": "已拒绝"
+    }
+  },
+  "forCompanies": {
+    "title": "企业服务",
+    "subtitle": "发现 HOOKLY 如何帮助您找到完美的人才",
+    "hero": {
+      "title": "以成果为导向雇佣",
+      "subtitle": "接触顶级验证自由职业者，只为交付的成果付费",
+      "cta": "免费开始"
+    },
+    "benefits": {
+      "title": "为什么企业选择 HOOKLY",
+      "verified": {
+        "title": "验证人才",
+        "description": "每位自由职业者都经过我们严格的验证过程"
+      },
+      "escrow": {
+        "title": "托管保护",
+        "description": "资金安全保留，直到您批准工作"
+      },
+      "results": {
+        "title": "按成果付费",
+        "description": "只为批准的交付物付款，而非工时"
+      },
+      "support": {
+        "title": "专业支持",
+        "description": "项目全程获得专业帮助"
+      }
+    },
+    "howItWorks": {
+      "title": "如何运作",
+      "step1": {
+        "title": "发布您的项目",
+        "description": "描述您的需求并设定预算"
+      },
+      "step2": {
+        "title": "接收提案",
+        "description": "获得验证自由职业者的提案"
+      },
+      "step3": {
+        "title": "雇佣并合作",
+        "description": "选择最佳人选并开始工作"
+      },
+      "step4": {
+        "title": "按成果付费",
+        "description": "批准交付物并释放付款"
+      }
+    },
+    "cta": {
+      "title": "准备好寻找您的完美人才了吗？",
+      "subtitle": "今天免费发布您的第一个项目",
+      "button": "发布项目"
+    }
+  },
+  "forFreelancers": {
+    "title": "自由职业者服务",
+    "subtitle": "发现 HOOKLY 如何帮助您发展事业",
+    "hero": {
+      "title": "与您合作的优质客户",
+      "subtitle": "接触验证企业的真实项目",
+      "cta": "加入 HOOKLY"
+    },
+    "benefits": {
+      "title": "为什么自由职业者选择 HOOKLY",
+      "clients": {
+        "title": "验证客户",
+        "description": "与认真对待项目的真实企业合作"
+      },
+      "payment": {
+        "title": "安全付款",
+        "description": "您的付款受托管保护"
+      },
+      "growth": {
+        "title": "职业发展",
+        "description": "建立您的作品集并获得评价"
+      },
+      "support": {
+        "title": "社区支持",
+        "description": "加入专业人士网络"
+      }
+    },
+    "howItWorks": {
+      "title": "如何运作",
+      "step1": {
+        "title": "创建您的档案",
+        "description": "展示您的技能和作品集"
+      },
+      "step2": {
+        "title": "寻找项目",
+        "description": "浏览并申请匹配您技能的项目"
+      },
+      "step3": {
+        "title": "提交提案",
+        "description": "发送个性化提案赢得项目"
+      },
+      "step4": {
+        "title": "获得付款",
+        "description": "完成工作并安全收取付款"
+      }
+    },
+    "cta": {
+      "title": "准备好开始赚钱了吗？",
+      "subtitle": "今天加入数千名成功的自由职业者",
+      "button": "创建档案"
+    }
+  },
+  "pricingPage": {
+    "title": "定价",
+    "subtitle": "选择适合您需求的计划",
+    "monthly": "月付",
+    "yearly": "年付",
+    "yearlyDiscount": "年付节省20%",
+    "perMonth": "/月",
+    "perYear": "/年",
+    "getStarted": "开始使用",
+    "contactSales": "联系销售",
+    "popular": "最受欢迎",
+    "features": "功能",
+    "allPlans": "所有计划包括",
+    "faq": {
+      "title": "常见问题",
+      "items": [
+        {
+          "question": "我可以随时取消吗？",
+          "answer": "是的，您可以随时取消订阅，不会受到任何处罚。"
+        },
+        {
+          "question": "积分是什么？",
+          "answer": "积分用于向项目提交提案。每份提案需要一定数量的积分。"
+        },
+        {
+          "question": "你们提供退款吗？",
+          "answer": "我们为年度计划提供30天退款保证。"
+        }
+      ]
+    }
+  },
+  "howItWorksPage": {
+    "title": "如何运作",
+    "subtitle": "了解 HOOKLY 如何帮助您取得成功",
+    "forCompanies": {
+      "title": "企业专区",
+      "steps": [
+        {
+          "title": "发布您的项目",
+          "description": "描述您的需求、预算和时间表。发布是完全免费的。"
+        },
+        {
+          "title": "接收提案",
+          "description": "验证的自由职业者会发送根据您需求定制的提案。"
+        },
+        {
+          "title": "审核和雇佣",
+          "description": "比较提案、查看档案并选择最佳人选。"
+        },
+        {
+          "title": "按成果付费",
+          "description": "资金安全保留在托管账户。只有在批准交付物后才释放付款。"
+        }
+      ]
+    },
+    "forFreelancers": {
+      "title": "自由职业者专区",
+      "steps": [
+        {
+          "title": "创建您的档案",
+          "description": "展示您的技能、作品集和经验。"
+        },
+        {
+          "title": "寻找项目",
+          "description": "浏览验证企业发布的可用项目。"
+        },
+        {
+          "title": "提交提案",
+          "description": "发送个性化提案，提出您的方法和条款。"
+        },
+        {
+          "title": "完成工作并获得付款",
+          "description": "交付优质工作并安全收取付款。"
+        }
+      ]
+    }
   }
 }
