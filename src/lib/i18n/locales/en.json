@@ -135,7 +135,8 @@
     "published": "Project published successfully!",
     "notFound": "Project not found",
     "markComplete": "Mark as Complete",
-    "completed": "Project marked as completed!"
+    "completed": "Project marked as completed!",
+    "currency": "Currency"
   },
   "proposals": {
     "received": "Proposals Received",
@@ -619,7 +620,9 @@
     "paymentMethods": "Payment Methods",
     "paymentMethodsDesc": "Manage your saved payment methods",
     "noPaymentMethods": "No payment methods saved",
-    "addPaymentMethod": "Add Payment Method"
+    "addPaymentMethod": "Add Payment Method",
+    "preferredPayoutCurrency": "Preferred Payout Currency",
+    "preferredPayoutCurrencyDesc": "This is your preference for display and manual payment receipt"
   },
   "talentPool": {
     "title": "Talent Pool",
@@ -1250,12 +1253,5 @@
     "ctaTitle": "Ready to Get Started?",
     "ctaSubtitle": "Join thousands of successful companies and freelancers",
     "ctaButton": "Create Free Account"
-  },
-  "projects": {
-    "currency": "Currency"
-  },
-  "settings": {
-    "preferredPayoutCurrency": "Preferred Payout Currency",
-    "preferredPayoutCurrencyDesc": "This is your preference for display and manual payment receipt"
   }
 }
