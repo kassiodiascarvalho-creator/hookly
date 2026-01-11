@@ -135,7 +135,8 @@
     "published": "Projeto publicado com sucesso!",
     "notFound": "Projeto não encontrado",
     "markComplete": "Marcar como Concluído",
-    "completed": "Projeto marcado como concluído!"
+    "completed": "Projeto marcado como concluído!",
+    "currency": "Moeda"
   },
   "proposals": {
     "received": "Propostas Recebidas",
@@ -695,7 +696,9 @@
     "paymentMethods": "Métodos de Pagamento",
     "paymentMethodsDesc": "Gerencie seus métodos de pagamento salvos",
     "noPaymentMethods": "Nenhum método de pagamento salvo",
-    "addPaymentMethod": "Adicionar Método de Pagamento"
+    "addPaymentMethod": "Adicionar Método de Pagamento",
+    "preferredPayoutCurrency": "Moeda de Recebimento Preferida",
+    "preferredPayoutCurrencyDesc": "Esta é sua preferência para exibição e recebimento manual de pagamentos"
   },
   "talentPool": {
     "title": "Pool de Talentos",
@@ -1300,12 +1303,5 @@
     "ctaTitle": "Pronto para Começar?",
     "ctaSubtitle": "Junte-se a milhares de empresas e freelancers de sucesso",
     "ctaButton": "Criar Conta Grátis"
-  },
-  "projects": {
-    "currency": "Moeda"
-  },
-  "settings": {
-    "preferredPayoutCurrency": "Moeda de Recebimento Preferida",
-    "preferredPayoutCurrencyDesc": "Esta é sua preferência para exibição e recebimento manual de pagamentos"
   }
 }
