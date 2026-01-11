@@ -529,5 +529,475 @@
     "holderName": "Nombre del Titular",
     "holderDoc": "CPF/CNPJ",
     "setDefault": "Establecer como Predeterminado"
+  },
+  "findProjects": {
+    "title": "Encontrar Proyectos",
+    "subtitle": "Explora proyectos abiertos y envía propuestas",
+    "searchPlaceholder": "Buscar proyectos por título o descripción...",
+    "projectsFound": "proyectos encontrados",
+    "noProjects": "No hay proyectos disponibles",
+    "noProjectsDesc": "Vuelve más tarde para nuevas oportunidades",
+    "proposalSent": "Propuesta Enviada",
+    "sendProposal": "Enviar Propuesta",
+    "viewProposal": "Ver Propuesta",
+    "postedBy": "Publicado por",
+    "aboutCompany": "Sobre la Empresa"
+  },
+  "myProposals": {
+    "title": "Mis Propuestas",
+    "subtitle": "Rastrea todas tus propuestas enviadas",
+    "all": "Todas",
+    "pending": "Pendientes",
+    "accepted": "Aceptadas",
+    "rejected": "Rechazadas",
+    "noProposals": "Sin propuestas aún",
+    "noProposalsDesc": "Comienza a explorar proyectos para enviar tu primera propuesta",
+    "browseProjects": "Explorar Proyectos",
+    "yourBid": "Tu Oferta"
+  },
+  "companyProposals": {
+    "title": "Propuestas",
+    "subtitle": "{{total}} propuestas totales, {{pending}} pendientes de revisión",
+    "noProposals": "Sin propuestas recibidas aún",
+    "noProposalsDesc": "Publica un proyecto para comenzar a recibir propuestas",
+    "postProject": "Publicar un Proyecto"
+  },
+  "freelancerDashboard": {
+    "welcome": "¡Bienvenido de vuelta!",
+    "subtitle": "Encuentra proyectos y crece tu carrera freelance",
+    "activeProjects": "Proyectos Activos",
+    "pendingProposals": "Propuestas Pendientes",
+    "messages": "Mensajes No Leídos",
+    "totalEarnings": "Ganancias Totales",
+    "quickActions": "Acciones Rápidas",
+    "findProjects": "Encontrar Proyectos",
+    "myProposals": "Mis Propuestas",
+    "viewMessages": "Ver Mensajes",
+    "recommendedProjects": "Proyectos Recomendados",
+    "noProjects": "No hay proyectos disponibles ahora",
+    "browseProjects": "Explorar todos los proyectos"
+  },
+  "verifiedCompanies": {
+    "title": "Empresas Verificadas",
+    "subtitle": "Empresas con historial real de pagos en la plataforma",
+    "noCompanies": "Sin empresas con historial aún",
+    "noCompaniesDesc": "Las empresas aparecerán aquí después de completar proyectos",
+    "unnamed": "Empresa Sin Nombre",
+    "paid": "Pagado",
+    "hired": "Contratados",
+    "reliability": "Confiabilidad"
+  },
+  "achievements": {
+    "myEvolution": "Mi Evolución",
+    "updatedDaily": "Actualizado diariamente",
+    "currentRevenue": "Ingresos Actuales",
+    "youAreDoing": "¡Lo estás haciendo genial!",
+    "startYourJourney": "Comienza tu viaje",
+    "milestonesUnlocked": "logros desbloqueados",
+    "next": "Siguiente:",
+    "viewNextAchievements": "Ver Próximos Logros",
+    "nextAchievements": "Próximos Logros",
+    "modalDescription": "Por cada hito, una recompensa para recordar: tú lo haces posible",
+    "unlocked": "Desbloqueado",
+    "locked": "Bloqueado",
+    "unlockedAt": "Desbloqueado el",
+    "current": "Actual"
+  },
+  "talentPool": {
+    "title": "Pool de Talento",
+    "subtitle": "Encuentra freelancers verificados para tus proyectos",
+    "searchPlaceholder": "Buscar por nombre, habilidad o título...",
+    "filters": "Filtros",
+    "filtersDesc": "Refina tu búsqueda",
+    "hourlyRate": "Tarifa por Hora",
+    "location": "Ubicación",
+    "locationPlaceholder": "Ingresa una ubicación...",
+    "verifiedOnly": "Solo Verificados",
+    "skills": "Habilidades",
+    "clearFilters": "Limpiar Filtros",
+    "freelancersFound": "freelancers encontrados",
+    "noResults": "Sin resultados",
+    "noResultsDesc": "Intenta ajustar tus filtros",
+    "unnamed": "Sin Nombre",
+    "viewProfile": "Ver Perfil",
+    "contact": "Contactar",
+    "noProjectsToInvite": "Necesitas proyectos abiertos para invitar freelancers",
+    "inviteAlreadySent": "Ya enviaste una invitación para este proyecto",
+    "inviteSent": "¡Invitación enviada exitosamente!",
+    "inviteTitle": "Invitar a Proyecto",
+    "inviteDescription": "Invita a {{name}} a colaborar en uno de tus proyectos",
+    "selectProject": "Seleccionar Proyecto",
+    "selectProjectPlaceholder": "Elige un proyecto...",
+    "inviteMessageLabel": "Mensaje (opcional)",
+    "inviteMessagePlaceholder": "Agrega un mensaje personalizado...",
+    "sendInvite": "Enviar Invitación",
+    "inviteNotification": "Recibiste una invitación para el proyecto: {{project}}"
+  },
+  "freelancerProfile": {
+    "notFound": "Freelancer no encontrado",
+    "unnamed": "Freelancer Sin Nombre",
+    "reviews": "reseñas",
+    "memberSince": "Miembro desde",
+    "sendMessage": "Enviar Mensaje",
+    "inviteToProject": "Invitar a Proyecto",
+    "inviteDescription": "Envía una invitación directa a este freelancer para uno de tus proyectos",
+    "selectProject": "Seleccionar Proyecto",
+    "chooseProject": "Elige un proyecto...",
+    "personalMessage": "Mensaje Personal (Opcional)",
+    "inviteMessagePlaceholder": "Escribe un mensaje personal al freelancer...",
+    "defaultInviteMessage": "¡Hola! Me gustaría invitarte a enviar una propuesta para mi proyecto: {{projectTitle}}",
+    "sendInvite": "Enviar Invitación",
+    "inviteSent": "¡Invitación enviada exitosamente!",
+    "about": "Acerca de",
+    "portfolio": "Portafolio",
+    "reviewsTab": "Reseñas",
+    "certifications": "Certificaciones",
+    "aboutMe": "Sobre Mí",
+    "languages": "Idiomas",
+    "noPortfolio": "Sin elementos de portafolio aún",
+    "noReviews": "Sin reseñas aún",
+    "noCertifications": "Sin certificaciones aún",
+    "anonymousCompany": "Empresa Anónima",
+    "viewProject": "Ver Proyecto",
+    "viewCredential": "Ver Credencial",
+    "issued": "Emitido",
+    "expires": "Expira"
+  },
+  "billing": {
+    "addFunds": "Agregar Fondos",
+    "addFundsDescription": "Agrega crédito a tu billetera usando tu moneda preferida",
+    "quickSelect": "Selección Rápida",
+    "amount": "Monto",
+    "currency": "Moneda",
+    "youWillReceive": "Recibirás",
+    "contracts": "Contratos",
+    "contract": "Contrato",
+    "exchangeRate": "Tasa de cambio",
+    "proceedToPayment": "Proceder al Pago",
+    "invalidAmount": "Por favor ingresa un monto válido",
+    "walletBalance": "Saldo de Billetera",
+    "walletDescription": "Tu saldo de crédito interno para transacciones de la plataforma",
+    "transactionHistory": "Historial de Transacciones",
+    "topup": "Fondos Agregados",
+    "debit": "Débito",
+    "credit": "Crédito",
+    "refund": "Reembolso",
+    "fundsAddedSuccess": "¡Fondos agregados exitosamente!",
+    "paymentCanceled": "El pago fue cancelado"
+  },
+  "contracts": {
+    "title": "Contratos",
+    "subtitle": "Ve y gestiona tus contratos activos",
+    "all": "Todos",
+    "active": "Activos",
+    "funded": "Financiados",
+    "completed": "Completados",
+    "cancelled": "Cancelados",
+    "noContracts": "Sin contratos aún",
+    "noContractsDesc": "Los contratos se crean automáticamente cuando las propuestas son aceptadas.",
+    "statusDraft": "Borrador",
+    "statusActive": "Activo",
+    "statusFunded": "Financiado",
+    "statusCompleted": "Completado",
+    "statusCancelled": "Cancelado",
+    "milestones": "Hitos",
+    "more": "más",
+    "viewProject": "Ver Proyecto"
+  },
+  "companyProfile": {
+    "notFound": "Empresa no encontrada",
+    "unnamed": "Empresa Sin Nombre",
+    "employees": "empleados",
+    "website": "Sitio Web",
+    "projects": "Proyectos",
+    "totalPaid": "Total Pagado",
+    "freelancersHired": "Freelancers Contratados",
+    "avgRating": "Calificación Promedio",
+    "about": "Acerca de"
+  },
+  "uploads": {
+    "selectFile": "Seleccionar Archivo",
+    "success": "¡Archivo subido exitosamente!",
+    "error": "Error al subir archivo",
+    "fileTooLarge": "El archivo es muy grande. Tamaño máximo: {{size}}MB",
+    "invalidFileType": "Tipo de archivo inválido"
+  },
+  "reviews": {
+    "leaveReview": "Dejar una Reseña",
+    "leaveReviewDesc": "Comparte tu experiencia trabajando con este freelancer",
+    "rating": "Calificación",
+    "comment": "Comentario",
+    "commentPlaceholder": "Cuéntales a otros sobre tu experiencia...",
+    "submitReview": "Enviar Reseña",
+    "submitted": "¡Reseña enviada exitosamente!"
+  },
+  "portfolio": {
+    "title": "Portafolio",
+    "description": "Muestra tu mejor trabajo a clientes potenciales",
+    "addItem": "Agregar Elemento",
+    "editItem": "Editar Elemento",
+    "itemDescription": "Agrega detalles sobre tu proyecto de portafolio",
+    "image": "Imagen del Proyecto",
+    "uploadImage": "Subir Imagen",
+    "itemTitle": "Título del Proyecto",
+    "titlePlaceholder": "ej., Rediseño de Sitio de E-commerce",
+    "itemDesc": "Descripción",
+    "descPlaceholder": "Describe lo que construiste y las tecnologías usadas...",
+    "projectUrl": "URL del Proyecto",
+    "tags": "Etiquetas",
+    "tagsPlaceholder": "React, TypeScript, Tailwind CSS...",
+    "noItems": "Sin elementos de portafolio aún. ¡Agrega tu primer proyecto!",
+    "added": "¡Elemento de portafolio agregado!",
+    "updated": "¡Elemento de portafolio actualizado!",
+    "deleted": "Elemento de portafolio eliminado"
+  },
+  "certifications": {
+    "title": "Certificaciones",
+    "description": "Agrega tus certificaciones profesionales y credenciales",
+    "addCert": "Agregar Certificación",
+    "editCert": "Editar Certificación",
+    "certDescription": "Agrega los detalles de tu certificación",
+    "certName": "Nombre de la Certificación",
+    "namePlaceholder": "ej., AWS Certified Solutions Architect",
+    "issuer": "Organización Emisora",
+    "issuerPlaceholder": "ej., Amazon Web Services",
+    "issueDate": "Fecha de Emisión",
+    "expiryDate": "Fecha de Expiración",
+    "credentialUrl": "URL de la Credencial",
+    "noCerts": "Sin certificaciones aún. ¡Agrega tu primera certificación!",
+    "added": "¡Certificación agregada!",
+    "updated": "¡Certificación actualizada!",
+    "deleted": "Certificación eliminada",
+    "issued": "Emitida",
+    "expires": "Expira",
+    "expired": "Expirada"
+  },
+  "payments": {
+    "milestones": "Pagos por Hitos",
+    "milestonesDescCompany": "Financia hitos para mantener el pago en custodia. Libera cuando el trabajo sea aprobado.",
+    "milestonesDescFreelancer": "Rastrea tus pagos por hitos y estado de custodia.",
+    "totalValue": "Valor Total",
+    "inEscrow": "En Custodia",
+    "released": "Liberado",
+    "pending": "Pendiente",
+    "milestone": "Hito",
+    "fund": "Financiar",
+    "release": "Liberar",
+    "confirmRelease": "Confirmar Liberación de Pago",
+    "confirmReleaseDesc": "Esto liberará los fondos en custodia al freelancer. Esta acción no se puede deshacer.",
+    "confirmReleaseBtn": "Liberar Pago",
+    "checkoutOpened": "Checkout abierto en nueva pestaña",
+    "checkoutError": "Error al crear sesión de checkout",
+    "releaseError": "Error al liberar pago",
+    "success": "¡Pago exitoso!",
+    "cancelled": "El pago fue cancelado",
+    "fundContract": "Financiar Contrato",
+    "amountToFund": "Monto a financiar",
+    "paymentMethod": "Método de pago",
+    "useCredits": "Créditos de cuenta",
+    "availableBalance": "Saldo disponible",
+    "insufficientBalance": "Saldo insuficiente",
+    "instant": "Pago instantáneo",
+    "card": "Tarjeta",
+    "creditDebit": "Crédito o débito",
+    "payWithCredits": "Pagar con Créditos",
+    "generatePix": "Generar Código QR PIX",
+    "payWithCard": "Pagar con Tarjeta"
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "markAllRead": "Marcar todas como leídas",
+    "noNotifications": "Sin notificaciones aún",
+    "projectInvite": "Has sido invitado a enviar una propuesta para: {{projectTitle}}",
+    "newReview": "¡Recibiste una nueva reseña!",
+    "projectCompleted": "¡El proyecto \"{{projectTitle}}\" ha sido marcado como completado!"
+  },
+  "finances": {
+    "title": "Finanzas",
+    "subtitle": "Rastrea tus pagos e historial financiero",
+    "totalSpent": "Total Gastado",
+    "inEscrow": "En Custodia",
+    "released": "Liberado",
+    "paymentHistory": "Historial de Pagos",
+    "paymentHistoryDesc": "Ve todos tus pagos a freelancers",
+    "noPayments": "Sin pagos aún",
+    "noPaymentsDesc": "Tu historial de pagos aparecerá aquí una vez que financies hitos de proyectos",
+    "project": "Proyecto",
+    "freelancer": "Freelancer",
+    "amount": "Monto",
+    "status": "Estado",
+    "date": "Fecha",
+    "unknownProject": "Proyecto Desconocido",
+    "unknownFreelancer": "Freelancer Desconocido",
+    "pending": "Pendiente",
+    "failed": "Fallido",
+    "releasedToFreelancer": "Liberado al Freelancer"
+  },
+  "currency": {
+    "select": "Seleccionar moneda",
+    "showAll": "Mostrar todas las monedas"
+  },
+  "invites": {
+    "title": "Invitaciones a Proyectos",
+    "subtitle": "Gestiona las invitaciones recibidas de empresas",
+    "pending": "Invitaciones Pendientes",
+    "history": "Historial",
+    "new": "Nueva",
+    "accept": "Aceptar",
+    "decline": "Rechazar",
+    "accepted": "¡Invitación aceptada exitosamente!",
+    "declined": "Invitación rechazada",
+    "statusAccepted": "Aceptada",
+    "statusDeclined": "Rechazada",
+    "noInvites": "Sin invitaciones aún",
+    "noInvitesDesc": "Las empresas pueden invitarte a proyectos cuando encuentren tu perfil",
+    "browseProjects": "Explorar Proyectos",
+    "notifications": {
+      "accepted": "¡Tu invitación para el proyecto {{project}} fue aceptada!"
+    }
+  },
+  "forCompanies": {
+    "badge": "Para Empresas",
+    "title": "Contrata Talento Verificado con Confianza",
+    "subtitle": "HOOKLY conecta tu negocio con los mejores freelancers. Paga por resultados, no por horas.",
+    "cta": "Crear Cuenta Gratis",
+    "ctaSecondary": "Explorar Talento",
+    "benefitsTitle": "¿Por Qué Elegir HOOKLY?",
+    "benefits": {
+      "verified": {
+        "title": "Talento Verificado",
+        "description": "Todos los freelancers pasan por un riguroso proceso de verificación"
+      },
+      "escrow": {
+        "title": "Pago Seguro",
+        "description": "Fondos protegidos en custodia hasta que el trabajo sea aprobado"
+      },
+      "talent": {
+        "title": "Pool Global",
+        "description": "Accede a profesionales de más de 150 países"
+      },
+      "fast": {
+        "title": "Match Rápido",
+        "description": "Encuentra al profesional ideal en menos de 24 horas"
+      }
+    },
+    "howItWorks": "Cómo Funciona",
+    "steps": {
+      "post": {
+        "title": "Publica Tu Proyecto",
+        "description": "Describe lo que necesitas y establece tu presupuesto"
+      },
+      "receive": {
+        "title": "Recibe Propuestas",
+        "description": "Freelancers verificados enviarán propuestas"
+      },
+      "hire": {
+        "title": "Contrata y Rastrea",
+        "description": "Elige al mejor y rastrea el progreso"
+      },
+      "pay": {
+        "title": "Paga por Resultados",
+        "description": "Libera el pago cuando apruebes el trabajo"
+      }
+    },
+    "ctaTitle": "¿Listo para Comenzar?",
+    "ctaSubtitle": "Únete a miles de empresas que encontraron su talento ideal",
+    "ctaButton": "Regístrate Gratis"
+  },
+  "forFreelancers": {
+    "badge": "Para Freelancers",
+    "title": "Construye Tu Carrera con Clientes de Calidad",
+    "subtitle": "Conéctate con empresas serias que valoran tu trabajo y pagan por la calidad entregada.",
+    "cta": "Crear Perfil Gratis",
+    "benefitsTitle": "Ventajas de HOOKLY",
+    "benefits": {
+      "payment": {
+        "title": "Pago Garantizado",
+        "description": "Siempre cobra por el trabajo aprobado"
+      },
+      "escrow": {
+        "title": "Custodia Protegida",
+        "description": "Fondos garantizados antes de comenzar el trabajo"
+      },
+      "clients": {
+        "title": "Clientes Verificados",
+        "description": "Trabaja solo con empresas serias y confiables"
+      },
+      "growth": {
+        "title": "Crece Tu Carrera",
+        "description": "Construye tu portafolio y reputación en la plataforma"
+      }
+    },
+    "howItWorks": "Cómo Funciona",
+    "steps": {
+      "profile": {
+        "title": "Crea Tu Perfil",
+        "description": "Destaca tus habilidades y experiencia"
+      },
+      "browse": {
+        "title": "Encuentra Proyectos",
+        "description": "Explora oportunidades que coincidan con tu perfil"
+      },
+      "propose": {
+        "title": "Envía Propuestas",
+        "description": "Presenta tu solución con hitos claros"
+      },
+      "earn": {
+        "title": "Trabaja y Gana",
+        "description": "Entrega resultados y recibe tu pago"
+      }
+    },
+    "ctaTitle": "Comienza Tu Viaje Hoy",
+    "ctaSubtitle": "Miles de proyectos esperando profesionales como tú",
+    "ctaButton": "Crear Perfil Gratis"
+  },
+  "pricingPage": {
+    "title": "Planes Flexibles para Cada Necesidad",
+    "subtitle": "Comienza gratis, actualiza cuando necesites más funciones",
+    "faqTitle": "Preguntas Frecuentes sobre Precios",
+    "faqSubtitle": "Obtén respuestas sobre nuestros planes",
+    "faq": {
+      "fees": {
+        "question": "¿Cuáles son las tarifas de la plataforma?",
+        "answer": "HOOKLY cobra 10% en transacciones completadas. No hay tarifas ocultas ni suscripciones obligatorias."
+      },
+      "payment": {
+        "question": "¿Cómo funciona el pago?",
+        "answer": "El pago se mantiene en custodia hasta que apruebes el trabajo. Una vez aprobado, lo liberamos al freelancer."
+      }
+    },
+    "ctaTitle": "¿Listo para Comenzar?",
+    "ctaSubtitle": "Crea tu cuenta gratis y explora la plataforma",
+    "ctaButton": "Comenzar Ahora"
+  },
+  "howItWorksPage": {
+    "title": "Cómo Funciona HOOKLY",
+    "subtitle": "Un proceso simple y transparente para conectar talento y empresas",
+    "step": "Paso",
+    "steps": {
+      "post": {
+        "title": "Publica Tu Proyecto",
+        "description": "Describe en detalle lo que necesitas, establece el presupuesto y los KPIs esperados. Es gratis y toma solo unos minutos."
+      },
+      "match": {
+        "title": "Recibe Propuestas Calificadas",
+        "description": "Freelancers verificados analizan tu proyecto y envían propuestas con hitos y valores. Puedes comparar y negociar."
+      },
+      "work": {
+        "title": "Rastrea el Progreso",
+        "description": "Comunícate directamente con el freelancer, rastrea entregas de hitos y mantén control total del proyecto."
+      },
+      "pay": {
+        "title": "Paga por Resultados",
+        "description": "Aprueba cada entrega y libera el pago. La custodia asegura seguridad para ambas partes."
+      }
+    },
+    "security": {
+      "title": "Tu Seguridad es Nuestra Prioridad",
+      "description": "Todos los pagos están protegidos con custodia. Solo pagas cuando apruebas el trabajo. Los freelancers son verificados y calificados."
+    },
+    "ctaTitle": "¿Listo para Comenzar?",
+    "ctaSubtitle": "Únete a miles de empresas y freelancers exitosos",
+    "ctaButton": "Crear Cuenta Gratis"
   }
 }
