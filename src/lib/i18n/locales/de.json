@@ -529,5 +529,475 @@
     "holderName": "Name des Kontoinhabers",
     "holderDoc": "CPF/CNPJ",
     "setDefault": "Als Standard Festlegen"
+  },
+  "findProjects": {
+    "title": "Projekte Finden",
+    "subtitle": "Durchsuchen Sie offene Projekte und reichen Sie Vorschläge ein",
+    "searchPlaceholder": "Projekte nach Titel oder Beschreibung suchen...",
+    "projectsFound": "Projekte gefunden",
+    "noProjects": "Keine Projekte verfügbar",
+    "noProjectsDesc": "Schauen Sie später für neue Möglichkeiten vorbei",
+    "proposalSent": "Vorschlag Gesendet",
+    "sendProposal": "Vorschlag Senden",
+    "viewProposal": "Vorschlag Ansehen",
+    "postedBy": "Veröffentlicht von",
+    "aboutCompany": "Über das Unternehmen"
+  },
+  "myProposals": {
+    "title": "Meine Vorschläge",
+    "subtitle": "Verfolgen Sie alle Ihre eingereichten Vorschläge",
+    "all": "Alle",
+    "pending": "Ausstehend",
+    "accepted": "Akzeptiert",
+    "rejected": "Abgelehnt",
+    "noProposals": "Noch keine Vorschläge",
+    "noProposalsDesc": "Durchsuchen Sie Projekte, um Ihren ersten Vorschlag einzureichen",
+    "browseProjects": "Projekte Durchsuchen",
+    "yourBid": "Ihr Angebot"
+  },
+  "companyProposals": {
+    "title": "Vorschläge",
+    "subtitle": "{{total}} Vorschläge insgesamt, {{pending}} zur Überprüfung ausstehend",
+    "noProposals": "Noch keine Vorschläge erhalten",
+    "noProposalsDesc": "Veröffentlichen Sie ein Projekt, um Vorschläge zu erhalten",
+    "postProject": "Ein Projekt Veröffentlichen"
+  },
+  "freelancerDashboard": {
+    "welcome": "Willkommen Zurück!",
+    "subtitle": "Finden Sie Projekte und entwickeln Sie Ihre Freelancer-Karriere",
+    "activeProjects": "Aktive Projekte",
+    "pendingProposals": "Ausstehende Vorschläge",
+    "messages": "Ungelesene Nachrichten",
+    "totalEarnings": "Gesamteinnahmen",
+    "quickActions": "Schnellaktionen",
+    "findProjects": "Projekte Finden",
+    "myProposals": "Meine Vorschläge",
+    "viewMessages": "Nachrichten Ansehen",
+    "recommendedProjects": "Empfohlene Projekte",
+    "noProjects": "Derzeit keine Projekte verfügbar",
+    "browseProjects": "Alle Projekte durchsuchen"
+  },
+  "verifiedCompanies": {
+    "title": "Verifizierte Unternehmen",
+    "subtitle": "Unternehmen mit echter Zahlungshistorie auf der Plattform",
+    "noCompanies": "Noch keine Unternehmen mit Historie",
+    "noCompaniesDesc": "Unternehmen erscheinen hier nach Abschluss von Projekten",
+    "unnamed": "Unbenanntes Unternehmen",
+    "paid": "Bezahlt",
+    "hired": "Eingestellt",
+    "reliability": "Zuverlässigkeit"
+  },
+  "achievements": {
+    "myEvolution": "Meine Entwicklung",
+    "updatedDaily": "Täglich aktualisiert",
+    "currentRevenue": "Aktuelle Einnahmen",
+    "youAreDoing": "Sie machen das großartig!",
+    "startYourJourney": "Starten Sie Ihre Reise",
+    "milestonesUnlocked": "Meilensteine freigeschaltet",
+    "next": "Nächster:",
+    "viewNextAchievements": "Nächste Meilensteine Ansehen",
+    "nextAchievements": "Nächste Meilensteine",
+    "modalDescription": "Für jeden Meilenstein eine Belohnung zum Erinnern: Sie machen es möglich",
+    "unlocked": "Freigeschaltet",
+    "locked": "Gesperrt",
+    "unlockedAt": "Freigeschaltet am",
+    "current": "Aktuell"
+  },
+  "talentPool": {
+    "title": "Talentpool",
+    "subtitle": "Finden Sie verifizierte Freelancer für Ihre Projekte",
+    "searchPlaceholder": "Nach Name, Fähigkeit oder Titel suchen...",
+    "filters": "Filter",
+    "filtersDesc": "Verfeinern Sie Ihre Suche",
+    "hourlyRate": "Stundensatz",
+    "location": "Standort",
+    "locationPlaceholder": "Standort eingeben...",
+    "verifiedOnly": "Nur Verifizierte",
+    "skills": "Fähigkeiten",
+    "clearFilters": "Filter Löschen",
+    "freelancersFound": "Freelancer gefunden",
+    "noResults": "Keine Ergebnisse",
+    "noResultsDesc": "Versuchen Sie, Ihre Filter anzupassen",
+    "unnamed": "Unbenannt",
+    "viewProfile": "Profil Ansehen",
+    "contact": "Kontaktieren",
+    "noProjectsToInvite": "Sie benötigen offene Projekte, um Freelancer einzuladen",
+    "inviteAlreadySent": "Sie haben bereits eine Einladung für dieses Projekt gesendet",
+    "inviteSent": "Einladung erfolgreich gesendet!",
+    "inviteTitle": "Zum Projekt Einladen",
+    "inviteDescription": "Laden Sie {{name}} ein, an einem Ihrer Projekte mitzuarbeiten",
+    "selectProject": "Projekt Auswählen",
+    "selectProjectPlaceholder": "Wählen Sie ein Projekt...",
+    "inviteMessageLabel": "Nachricht (optional)",
+    "inviteMessagePlaceholder": "Fügen Sie eine personalisierte Nachricht hinzu...",
+    "sendInvite": "Einladung Senden",
+    "inviteNotification": "Sie haben eine Einladung für das Projekt erhalten: {{project}}"
+  },
+  "freelancerProfile": {
+    "notFound": "Freelancer nicht gefunden",
+    "unnamed": "Unbenannter Freelancer",
+    "reviews": "Bewertungen",
+    "memberSince": "Mitglied seit",
+    "sendMessage": "Nachricht Senden",
+    "inviteToProject": "Zum Projekt Einladen",
+    "inviteDescription": "Senden Sie eine direkte Einladung an diesen Freelancer für eines Ihrer Projekte",
+    "selectProject": "Projekt Auswählen",
+    "chooseProject": "Wählen Sie ein Projekt...",
+    "personalMessage": "Persönliche Nachricht (Optional)",
+    "inviteMessagePlaceholder": "Schreiben Sie eine persönliche Nachricht an den Freelancer...",
+    "defaultInviteMessage": "Hallo! Ich möchte Sie einladen, einen Vorschlag für mein Projekt einzureichen: {{projectTitle}}",
+    "sendInvite": "Einladung Senden",
+    "inviteSent": "Einladung erfolgreich gesendet!",
+    "about": "Über",
+    "portfolio": "Portfolio",
+    "reviewsTab": "Bewertungen",
+    "certifications": "Zertifizierungen",
+    "aboutMe": "Über Mich",
+    "languages": "Sprachen",
+    "noPortfolio": "Noch keine Portfolio-Elemente",
+    "noReviews": "Noch keine Bewertungen",
+    "noCertifications": "Noch keine Zertifizierungen",
+    "anonymousCompany": "Anonymes Unternehmen",
+    "viewProject": "Projekt Ansehen",
+    "viewCredential": "Zertifikat Ansehen",
+    "issued": "Ausgestellt",
+    "expires": "Läuft ab"
+  },
+  "billing": {
+    "addFunds": "Guthaben Hinzufügen",
+    "addFundsDescription": "Fügen Sie Ihrem Konto Guthaben in Ihrer bevorzugten Währung hinzu",
+    "quickSelect": "Schnellauswahl",
+    "amount": "Betrag",
+    "currency": "Währung",
+    "youWillReceive": "Sie erhalten",
+    "contracts": "Verträge",
+    "contract": "Vertrag",
+    "exchangeRate": "Wechselkurs",
+    "proceedToPayment": "Zur Zahlung Fortfahren",
+    "invalidAmount": "Bitte geben Sie einen gültigen Betrag ein",
+    "walletBalance": "Kontostand",
+    "walletDescription": "Ihr internes Guthaben für Plattformtransaktionen",
+    "transactionHistory": "Transaktionsverlauf",
+    "topup": "Guthaben Hinzugefügt",
+    "debit": "Belastung",
+    "credit": "Gutschrift",
+    "refund": "Rückerstattung",
+    "fundsAddedSuccess": "Guthaben erfolgreich hinzugefügt!",
+    "paymentCanceled": "Zahlung wurde abgebrochen"
+  },
+  "contracts": {
+    "title": "Verträge",
+    "subtitle": "Sehen und verwalten Sie Ihre aktiven Verträge",
+    "all": "Alle",
+    "active": "Aktiv",
+    "funded": "Finanziert",
+    "completed": "Abgeschlossen",
+    "cancelled": "Storniert",
+    "noContracts": "Noch keine Verträge",
+    "noContractsDesc": "Verträge werden automatisch erstellt, wenn Vorschläge akzeptiert werden.",
+    "statusDraft": "Entwurf",
+    "statusActive": "Aktiv",
+    "statusFunded": "Finanziert",
+    "statusCompleted": "Abgeschlossen",
+    "statusCancelled": "Storniert",
+    "milestones": "Meilensteine",
+    "more": "weitere",
+    "viewProject": "Projekt Ansehen"
+  },
+  "companyProfile": {
+    "notFound": "Unternehmen nicht gefunden",
+    "unnamed": "Unbenanntes Unternehmen",
+    "employees": "Mitarbeiter",
+    "website": "Webseite",
+    "projects": "Projekte",
+    "totalPaid": "Gesamt Bezahlt",
+    "freelancersHired": "Freelancer Eingestellt",
+    "avgRating": "Durchschnittsbewertung",
+    "about": "Über"
+  },
+  "uploads": {
+    "selectFile": "Datei Auswählen",
+    "success": "Datei erfolgreich hochgeladen!",
+    "error": "Fehler beim Hochladen der Datei",
+    "fileTooLarge": "Datei ist zu groß. Maximalgröße: {{size}}MB",
+    "invalidFileType": "Ungültiger Dateityp"
+  },
+  "reviews": {
+    "leaveReview": "Bewertung Abgeben",
+    "leaveReviewDesc": "Teilen Sie Ihre Erfahrung mit diesem Freelancer",
+    "rating": "Bewertung",
+    "comment": "Kommentar",
+    "commentPlaceholder": "Erzählen Sie anderen von Ihrer Erfahrung...",
+    "submitReview": "Bewertung Abgeben",
+    "submitted": "Bewertung erfolgreich eingereicht!"
+  },
+  "portfolio": {
+    "title": "Portfolio",
+    "description": "Präsentieren Sie Ihre beste Arbeit potenziellen Kunden",
+    "addItem": "Element Hinzufügen",
+    "editItem": "Element Bearbeiten",
+    "itemDescription": "Fügen Sie Details zu Ihrem Portfolio-Projekt hinzu",
+    "image": "Projektbild",
+    "uploadImage": "Bild Hochladen",
+    "itemTitle": "Projekttitel",
+    "titlePlaceholder": "z.B. E-Commerce-Webseite Neugestaltung",
+    "itemDesc": "Beschreibung",
+    "descPlaceholder": "Beschreiben Sie, was Sie gebaut haben und welche Technologien verwendet wurden...",
+    "projectUrl": "Projekt-URL",
+    "tags": "Tags",
+    "tagsPlaceholder": "React, TypeScript, Tailwind CSS...",
+    "noItems": "Noch keine Portfolio-Elemente. Fügen Sie Ihr erstes Projekt hinzu!",
+    "added": "Portfolio-Element hinzugefügt!",
+    "updated": "Portfolio-Element aktualisiert!",
+    "deleted": "Portfolio-Element gelöscht"
+  },
+  "certifications": {
+    "title": "Zertifizierungen",
+    "description": "Fügen Sie Ihre professionellen Zertifizierungen und Qualifikationen hinzu",
+    "addCert": "Zertifizierung Hinzufügen",
+    "editCert": "Zertifizierung Bearbeiten",
+    "certDescription": "Fügen Sie Ihre Zertifizierungsdetails hinzu",
+    "certName": "Zertifizierungsname",
+    "namePlaceholder": "z.B. AWS Certified Solutions Architect",
+    "issuer": "Ausstellende Organisation",
+    "issuerPlaceholder": "z.B. Amazon Web Services",
+    "issueDate": "Ausstellungsdatum",
+    "expiryDate": "Ablaufdatum",
+    "credentialUrl": "Zertifikats-URL",
+    "noCerts": "Noch keine Zertifizierungen. Fügen Sie Ihre erste Zertifizierung hinzu!",
+    "added": "Zertifizierung hinzugefügt!",
+    "updated": "Zertifizierung aktualisiert!",
+    "deleted": "Zertifizierung gelöscht",
+    "issued": "Ausgestellt",
+    "expires": "Läuft ab",
+    "expired": "Abgelaufen"
+  },
+  "payments": {
+    "milestones": "Meilenstein-Zahlungen",
+    "milestonesDescCompany": "Finanzieren Sie Meilensteine, um die Zahlung in Treuhand zu halten. Freigabe nach Genehmigung der Arbeit.",
+    "milestonesDescFreelancer": "Verfolgen Sie Ihre Meilenstein-Zahlungen und den Treuhand-Status.",
+    "totalValue": "Gesamtwert",
+    "inEscrow": "In Treuhand",
+    "released": "Freigegeben",
+    "pending": "Ausstehend",
+    "milestone": "Meilenstein",
+    "fund": "Finanzieren",
+    "release": "Freigeben",
+    "confirmRelease": "Zahlungsfreigabe Bestätigen",
+    "confirmReleaseDesc": "Dies gibt die Treuhandmittel an den Freelancer frei. Diese Aktion kann nicht rückgängig gemacht werden.",
+    "confirmReleaseBtn": "Zahlung Freigeben",
+    "checkoutOpened": "Checkout in neuem Tab geöffnet",
+    "checkoutError": "Fehler beim Erstellen der Checkout-Sitzung",
+    "releaseError": "Fehler bei der Zahlungsfreigabe",
+    "success": "Zahlung erfolgreich!",
+    "cancelled": "Zahlung wurde abgebrochen",
+    "fundContract": "Vertrag Finanzieren",
+    "amountToFund": "Zu finanzierender Betrag",
+    "paymentMethod": "Zahlungsmethode",
+    "useCredits": "Kontoguthaben",
+    "availableBalance": "Verfügbares Guthaben",
+    "insufficientBalance": "Unzureichendes Guthaben",
+    "instant": "Sofortzahlung",
+    "card": "Karte",
+    "creditDebit": "Kredit- oder Debitkarte",
+    "payWithCredits": "Mit Guthaben Bezahlen",
+    "generatePix": "PIX QR-Code Generieren",
+    "payWithCard": "Mit Karte Bezahlen"
+  },
+  "notifications": {
+    "title": "Benachrichtigungen",
+    "markAllRead": "Alle als gelesen markieren",
+    "noNotifications": "Noch keine Benachrichtigungen",
+    "projectInvite": "Sie wurden eingeladen, einen Vorschlag einzureichen für: {{projectTitle}}",
+    "newReview": "Sie haben eine neue Bewertung erhalten!",
+    "projectCompleted": "Das Projekt \"{{projectTitle}}\" wurde als abgeschlossen markiert!"
+  },
+  "finances": {
+    "title": "Finanzen",
+    "subtitle": "Verfolgen Sie Ihre Zahlungen und Finanzhistorie",
+    "totalSpent": "Gesamt Ausgegeben",
+    "inEscrow": "In Treuhand",
+    "released": "Freigegeben",
+    "paymentHistory": "Zahlungshistorie",
+    "paymentHistoryDesc": "Sehen Sie alle Ihre Zahlungen an Freelancer",
+    "noPayments": "Noch keine Zahlungen",
+    "noPaymentsDesc": "Ihre Zahlungshistorie erscheint hier, sobald Sie Projekt-Meilensteine finanzieren",
+    "project": "Projekt",
+    "freelancer": "Freelancer",
+    "amount": "Betrag",
+    "status": "Status",
+    "date": "Datum",
+    "unknownProject": "Unbekanntes Projekt",
+    "unknownFreelancer": "Unbekannter Freelancer",
+    "pending": "Ausstehend",
+    "failed": "Fehlgeschlagen",
+    "releasedToFreelancer": "An Freelancer Freigegeben"
+  },
+  "currency": {
+    "select": "Währung auswählen",
+    "showAll": "Alle Währungen anzeigen"
+  },
+  "invites": {
+    "title": "Projekteinladungen",
+    "subtitle": "Verwalten Sie Einladungen von Unternehmen",
+    "pending": "Ausstehende Einladungen",
+    "history": "Verlauf",
+    "new": "Neu",
+    "accept": "Akzeptieren",
+    "decline": "Ablehnen",
+    "accepted": "Einladung erfolgreich akzeptiert!",
+    "declined": "Einladung abgelehnt",
+    "statusAccepted": "Akzeptiert",
+    "statusDeclined": "Abgelehnt",
+    "noInvites": "Noch keine Einladungen",
+    "noInvitesDesc": "Unternehmen können Sie zu Projekten einladen, wenn sie Ihr Profil finden",
+    "browseProjects": "Projekte Durchsuchen",
+    "notifications": {
+      "accepted": "Ihre Einladung für das Projekt {{project}} wurde akzeptiert!"
+    }
+  },
+  "forCompanies": {
+    "badge": "Für Unternehmen",
+    "title": "Stellen Sie Verifizierte Talente mit Vertrauen Ein",
+    "subtitle": "HOOKLY verbindet Ihr Unternehmen mit Top-Freelancern. Zahlen Sie für Ergebnisse, nicht für Stunden.",
+    "cta": "Kostenloses Konto Erstellen",
+    "ctaSecondary": "Talente Durchsuchen",
+    "benefitsTitle": "Warum HOOKLY Wählen?",
+    "benefits": {
+      "verified": {
+        "title": "Verifizierte Talente",
+        "description": "Alle Freelancer durchlaufen einen strengen Verifizierungsprozess"
+      },
+      "escrow": {
+        "title": "Sichere Zahlung",
+        "description": "Gelder in Treuhand geschützt bis zur Arbeitsgenehmigung"
+      },
+      "talent": {
+        "title": "Globaler Pool",
+        "description": "Zugang zu Fachleuten aus über 150 Ländern"
+      },
+      "fast": {
+        "title": "Schnelle Vermittlung",
+        "description": "Finden Sie den idealen Fachmann in weniger als 24 Stunden"
+      }
+    },
+    "howItWorks": "So Funktioniert Es",
+    "steps": {
+      "post": {
+        "title": "Veröffentlichen Sie Ihr Projekt",
+        "description": "Beschreiben Sie, was Sie brauchen und legen Sie Ihr Budget fest"
+      },
+      "receive": {
+        "title": "Erhalten Sie Vorschläge",
+        "description": "Verifizierte Freelancer werden Vorschläge senden"
+      },
+      "hire": {
+        "title": "Einstellen und Verfolgen",
+        "description": "Wählen Sie den Besten und verfolgen Sie den Fortschritt"
+      },
+      "pay": {
+        "title": "Zahlen für Ergebnisse",
+        "description": "Geben Sie die Zahlung frei, wenn Sie die Arbeit genehmigen"
+      }
+    },
+    "ctaTitle": "Bereit Loszulegen?",
+    "ctaSubtitle": "Schließen Sie sich Tausenden von Unternehmen an, die ihr ideales Talent gefunden haben",
+    "ctaButton": "Kostenlos Registrieren"
+  },
+  "forFreelancers": {
+    "badge": "Für Freelancer",
+    "title": "Bauen Sie Ihre Karriere mit Qualitätskunden Auf",
+    "subtitle": "Verbinden Sie sich mit seriösen Unternehmen, die Ihre Arbeit wertschätzen und für gelieferte Qualität bezahlen.",
+    "cta": "Kostenloses Profil Erstellen",
+    "benefitsTitle": "HOOKLY Vorteile",
+    "benefits": {
+      "payment": {
+        "title": "Garantierte Zahlung",
+        "description": "Werden Sie immer für genehmigte Arbeit bezahlt"
+      },
+      "escrow": {
+        "title": "Geschütztes Treuhandkonto",
+        "description": "Gelder garantiert bevor die Arbeit beginnt"
+      },
+      "clients": {
+        "title": "Verifizierte Kunden",
+        "description": "Arbeiten Sie nur mit seriösen und zuverlässigen Unternehmen"
+      },
+      "growth": {
+        "title": "Karriere Entwickeln",
+        "description": "Bauen Sie Ihr Portfolio und Ihren Ruf auf der Plattform auf"
+      }
+    },
+    "howItWorks": "So Funktioniert Es",
+    "steps": {
+      "profile": {
+        "title": "Erstellen Sie Ihr Profil",
+        "description": "Heben Sie Ihre Fähigkeiten und Erfahrung hervor"
+      },
+      "browse": {
+        "title": "Projekte Finden",
+        "description": "Durchsuchen Sie Möglichkeiten, die zu Ihrem Profil passen"
+      },
+      "propose": {
+        "title": "Vorschläge Senden",
+        "description": "Präsentieren Sie Ihre Lösung mit klaren Meilensteinen"
+      },
+      "earn": {
+        "title": "Arbeiten und Verdienen",
+        "description": "Liefern Sie Ergebnisse und erhalten Sie Ihre Zahlung"
+      }
+    },
+    "ctaTitle": "Starten Sie Ihre Reise Heute",
+    "ctaSubtitle": "Tausende von Projekten warten auf Fachleute wie Sie",
+    "ctaButton": "Kostenloses Profil Erstellen"
+  },
+  "pricingPage": {
+    "title": "Flexible Pläne für Jeden Bedarf",
+    "subtitle": "Starten Sie kostenlos, upgraden Sie wenn Sie mehr Funktionen brauchen",
+    "faqTitle": "Häufige Fragen zu Preisen",
+    "faqSubtitle": "Erhalten Sie Antworten zu unseren Plänen",
+    "faq": {
+      "fees": {
+        "question": "Was sind die Plattformgebühren?",
+        "answer": "HOOKLY berechnet 10% auf abgeschlossene Transaktionen. Es gibt keine versteckten Gebühren oder Pflichtabonnements."
+      },
+      "payment": {
+        "question": "Wie funktioniert die Zahlung?",
+        "answer": "Die Zahlung wird in Treuhand gehalten, bis Sie die Arbeit genehmigen. Nach Genehmigung geben wir sie an den Freelancer frei."
+      }
+    },
+    "ctaTitle": "Bereit Loszulegen?",
+    "ctaSubtitle": "Erstellen Sie Ihr kostenloses Konto und erkunden Sie die Plattform",
+    "ctaButton": "Jetzt Starten"
+  },
+  "howItWorksPage": {
+    "title": "Wie HOOKLY Funktioniert",
+    "subtitle": "Ein einfacher und transparenter Prozess, um Talente und Unternehmen zu verbinden",
+    "step": "Schritt",
+    "steps": {
+      "post": {
+        "title": "Veröffentlichen Sie Ihr Projekt",
+        "description": "Beschreiben Sie detailliert, was Sie brauchen, legen Sie das Budget und die erwarteten KPIs fest. Es ist kostenlos und dauert nur wenige Minuten."
+      },
+      "match": {
+        "title": "Erhalten Sie Qualifizierte Vorschläge",
+        "description": "Verifizierte Freelancer analysieren Ihr Projekt und senden Vorschläge mit Meilensteinen und Preisen. Sie können vergleichen und verhandeln."
+      },
+      "work": {
+        "title": "Verfolgen Sie den Fortschritt",
+        "description": "Kommunizieren Sie direkt mit dem Freelancer, verfolgen Sie Meilenstein-Lieferungen und behalten Sie die volle Projektkontrolle."
+      },
+      "pay": {
+        "title": "Zahlen für Ergebnisse",
+        "description": "Genehmigen Sie jede Lieferung und geben Sie die Zahlung frei. Die Treuhand gewährleistet Sicherheit für beide Parteien."
+      }
+    },
+    "security": {
+      "title": "Ihre Sicherheit ist Unsere Priorität",
+      "description": "Alle Zahlungen sind durch Treuhand geschützt. Sie zahlen nur, wenn Sie die Arbeit genehmigen. Freelancer sind verifiziert und bewertet."
+    },
+    "ctaTitle": "Bereit Loszulegen?",
+    "ctaSubtitle": "Schließen Sie sich Tausenden von erfolgreichen Unternehmen und Freelancern an",
+    "ctaButton": "Kostenloses Konto Erstellen"
   }
 }
