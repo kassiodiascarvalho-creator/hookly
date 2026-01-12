@@ -70,6 +70,7 @@ export default function Earnings() {
   const [hasCompletedProjects, setHasCompletedProjects] = useState(false);
   const [withdrawalModalOpen, setWithdrawalModalOpen] = useState(false);
   const [userBalance, setUserBalance] = useState({ earnings_available: 0, credits_available: 0, escrow_held: 0, currency: "USD" });
+  const [contractsEscrow, setContractsEscrow] = useState(0);
   const [withdrawalRequests, setWithdrawalRequests] = useState<any[]>([]);
   
   // Payout method form
@@ -189,6 +190,19 @@ export default function Earnings() {
         currency: balanceData.currency || "BRL"
       });
     }
+
+    // Fetch active contracts (accepted but not yet funded/completed)
+    const { data: activeContracts } = await supabase
+      .from("contracts")
+      .select("amount_cents, currency")
+      .eq("freelancer_user_id", user.id)
+      .eq("status", "active"); // active = aceito, funded = financiado
+
+    const escrowFromContracts = activeContracts?.reduce(
+      (sum, c) => sum + (c.amount_cents || 0), 0
+    ) || 0;
+
+    setContractsEscrow(escrowFromContracts / 100); // convert from cents
 
     // Fetch withdrawal requests
     const { data: withdrawalsData } = await supabase
@@ -353,8 +367,8 @@ export default function Earnings() {
                 <p className="text-xs text-muted-foreground mt-1">
                   {userBalance.earnings_available > 0 
                     ? t("earnings.withdrawableDesc")
-                    : userBalance.escrow_held > 0
-                      ? t("earnings.escrowPendingDesc", { amount: `${userBalance.currency} ${userBalance.escrow_held.toFixed(2)}` })
+                    : contractsEscrow > 0
+                      ? t("earnings.pendingFundingDesc", { amount: `${userBalance.currency} ${contractsEscrow.toFixed(2)}` })
                       : t("earnings.noWithdrawableBalance")
                   }
                 </p>
@@ -381,7 +395,8 @@ export default function Earnings() {
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className={userBalance.escrow_held > 0 || userBalance.earnings_available > 0 ? "border-green-500/50 bg-green-500/5" : ""}>
+        {/* Received Card - Shows earnings_available only */}
+        <Card className={userBalance.earnings_available > 0 ? "border-green-500/50 bg-green-500/5" : ""}>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-xl bg-green-500/10">
@@ -390,7 +405,7 @@ export default function Earnings() {
               <div>
                 <p className="text-sm text-muted-foreground">{t("earnings.received")}</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {userBalance.currency} {(userBalance.earnings_available + userBalance.escrow_held).toFixed(2)}
+                  {userBalance.currency} {userBalance.earnings_available.toFixed(2)}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
                   {t("earnings.receivedDesc")}
@@ -400,8 +415,8 @@ export default function Earnings() {
           </CardContent>
         </Card>
 
-        {/* Escrow Card - Funds held for active milestones */}
-        {userBalance.escrow_held > 0 && (
+        {/* Escrow Card - Shows contracts accepted but not yet funded */}
+        {contractsEscrow > 0 && (
           <Card className="border-blue-500/50 bg-blue-500/5">
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
@@ -411,10 +426,10 @@ export default function Earnings() {
                 <div>
                   <p className="text-sm text-muted-foreground">{t("earnings.inEscrow")}</p>
                   <p className="text-2xl font-bold text-blue-600">
-                    {userBalance.currency} {userBalance.escrow_held.toFixed(2)}
+                    {userBalance.currency} {contractsEscrow.toFixed(2)}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {t("earnings.escrowDesc")}
+                    {t("earnings.pendingFunding")}
                   </p>
                 </div>
               </div>
