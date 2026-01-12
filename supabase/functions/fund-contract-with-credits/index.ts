@@ -262,12 +262,12 @@ serve(async (req) => {
       newEscrow: newEscrowHeld,
     });
 
-    // STEP 1.5: Also add escrow_held to FREELANCER's user_balances
-    // This syncs the freelancer's view of "funds reserved for them"
-    let freelancerBalance: { id: string; escrow_held: number } | null = null;
+    // STEP 1.5: Add to FREELANCER's earnings_available (directly available for withdrawal)
+    // When company funds, money goes DIRECTLY to freelancer's available earnings
+    let freelancerBalance: { id: string; earnings_available: number; escrow_held: number } | null = null;
     const { data: freelancerBalanceData } = await supabaseAdmin
       .from('user_balances')
-      .select('id, escrow_held')
+      .select('id, earnings_available, escrow_held')
       .eq('user_id', freelancerUserId)
       .eq('user_type', 'freelancer')
       .single();
@@ -280,7 +280,7 @@ serve(async (req) => {
       
       const { data: newFreelancerBalance } = await supabaseAdmin
         .from('user_balances')
-        .select('id, escrow_held')
+        .select('id, earnings_available, escrow_held')
         .eq('user_id', freelancerUserId)
         .eq('user_type', 'freelancer')
         .single();
@@ -290,21 +290,21 @@ serve(async (req) => {
       freelancerBalance = freelancerBalanceData;
     }
 
-    const freelancerCurrentEscrow = freelancerBalance?.escrow_held || 0;
-    const freelancerNewEscrow = freelancerCurrentEscrow + amountCents;
+    const freelancerCurrentEarnings = freelancerBalance?.earnings_available || 0;
+    const freelancerNewEarnings = freelancerCurrentEarnings + amountCents;
 
-    // Update freelancer's escrow_held
+    // Update freelancer's earnings_available (immediately available for withdrawal)
     const { error: updateFreelancerBalanceError } = await supabaseAdmin
       .from('user_balances')
       .update({
-        escrow_held: freelancerNewEscrow,
+        earnings_available: freelancerNewEarnings,
         updated_at: new Date().toISOString(),
       })
       .eq('user_id', freelancerUserId)
       .eq('user_type', 'freelancer');
 
     if (updateFreelancerBalanceError) {
-      logStep("Failed to update freelancer escrow balance", { error: updateFreelancerBalanceError });
+      logStep("Failed to update freelancer earnings", { error: updateFreelancerBalanceError });
       // Rollback company wallet and escrow
       await supabaseAdmin
         .from('company_wallets')
@@ -321,13 +321,13 @@ serve(async (req) => {
         })
         .eq('user_id', user.id)
         .eq('user_type', 'company');
-      throw new Error("Failed to update freelancer escrow balance");
+      throw new Error("Failed to update freelancer earnings");
     }
 
-    logStep("Freelancer escrow updated", { 
+    logStep("Freelancer earnings updated (available for withdrawal)", { 
       freelancerUserId,
-      previousEscrow: freelancerCurrentEscrow,
-      newEscrow: freelancerNewEscrow,
+      previousEarnings: freelancerCurrentEarnings,
+      newEarnings: freelancerNewEarnings,
     });
 
     // STEP 2: Record in ledger_transactions as internal simulation
@@ -396,14 +396,15 @@ serve(async (req) => {
     }
 
     // STEP 4: Send notification to freelancer
-    // Note: Freelancer sees internal credits, NOT real money
+    // Freelancer receives funds directly available for withdrawal
+    const formattedAmount = (amountCents / 100).toFixed(2);
     const { error: notificationError } = await supabaseAdmin
       .from('notifications')
       .insert({
         user_id: freelancerUserId,
-        type: 'milestone_funded',
-        message: `Um milestone foi financiado! O valor está em escrow aguardando aprovação.`,
-        link: `/contracts`,
+        type: 'payment_received',
+        message: `Você recebeu ${contract.currency || 'BRL'} ${formattedAmount}! O valor já está disponível para saque.`,
+        link: `/earnings`,
       });
 
     if (notificationError) {
