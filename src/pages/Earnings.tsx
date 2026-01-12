@@ -536,7 +536,9 @@ export default function Earnings() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t("earnings.totalEarnings")}</p>
-                <p className="text-2xl font-bold">${totals.total.toFixed(2)}</p>
+                <p className="text-2xl font-bold">
+                  {userBalance.currency} {userBalance.earnings_available.toFixed(2)}
+                </p>
               </div>
             </div>
           </CardContent>
