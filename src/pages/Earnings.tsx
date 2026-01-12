@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { Separator } from "@/components/ui/separator";
 import { WithdrawalRequestModal } from "@/components/earnings/WithdrawalRequestModal";
+import { formatMoney } from "@/lib/formatMoney";
 interface Payment {
   id: string;
   amount: number;
@@ -537,7 +538,7 @@ export default function Earnings() {
               <div>
                 <p className="text-sm text-muted-foreground">{t("earnings.totalEarnings")}</p>
                 <p className="text-2xl font-bold">
-                  {userBalance.currency} {userBalance.earnings_available.toFixed(2)}
+                  {formatMoney(userBalance.earnings_available + userBalance.escrow_held, userBalance.currency)}
                 </p>
               </div>
             </div>
@@ -634,7 +635,7 @@ export default function Earnings() {
                           {config.icon}
                           <div>
                             <p className="font-medium">
-                              {t("earnings.withdrawalRequest")} - {withdrawal.currency} {Number(withdrawal.amount).toFixed(2)}
+                              {t("earnings.withdrawalRequest")} - {formatMoney(Number(withdrawal.amount), withdrawal.currency)}
                             </p>
                             <p className="text-sm text-muted-foreground">
                               {format(new Date(withdrawal.created_at), "MMM d, yyyy HH:mm")}
