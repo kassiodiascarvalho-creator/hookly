@@ -184,12 +184,13 @@ serve(async (req) => {
           }
 
         } else if (paymentType === 'contract_funding') {
-          // NEW LEDGER: Use fund_contract_escrow
+          // Contract funding: update company escrow AND freelancer earnings
           const contractId = payment.contract_id;
           
           if (contractId) {
-            logStep("Funding contract escrow via new ledger", { userId, contractId, amount: amountUnits });
+            logStep("Funding contract", { userId, contractId, amount: amountUnits });
             
+            // 1. Update company escrow via RPC
             const { data: result, error: rpcError } = await supabaseAdmin
               .rpc('fund_contract_escrow', {
                 p_company_user_id: userId,
@@ -202,6 +203,78 @@ serve(async (req) => {
               logStep("Error funding contract escrow", { error: rpcError });
             } else {
               logStep("Contract escrow funded", { userId, contractId, amount: amountUnits, result });
+            }
+
+            // 2. Get freelancer from contract and credit their earnings directly
+            const { data: contract } = await supabaseAdmin
+              .from('contracts')
+              .select('freelancer_user_id, currency')
+              .eq('id', contractId)
+              .single();
+
+            if (contract?.freelancer_user_id) {
+              const freelancerUserId = contract.freelancer_user_id;
+              logStep("Crediting freelancer earnings", { freelancerUserId, amount: amountCents });
+
+              // Ensure freelancer balance exists
+              await supabaseAdmin.rpc('ensure_user_balance', {
+                p_user_id: freelancerUserId,
+                p_user_type: 'freelancer',
+              });
+
+              // Get current earnings
+              const { data: freelancerBalance } = await supabaseAdmin
+                .from('user_balances')
+                .select('earnings_available')
+                .eq('user_id', freelancerUserId)
+                .eq('user_type', 'freelancer')
+                .single();
+
+              const currentEarnings = freelancerBalance?.earnings_available || 0;
+              const newEarnings = currentEarnings + amountCents;
+
+              // Update freelancer earnings (directly available for withdrawal)
+              const { error: updateError } = await supabaseAdmin
+                .from('user_balances')
+                .update({
+                  earnings_available: newEarnings,
+                  updated_at: new Date().toISOString(),
+                })
+                .eq('user_id', freelancerUserId)
+                .eq('user_type', 'freelancer');
+
+              if (updateError) {
+                logStep("Error updating freelancer earnings", { error: updateError });
+              } else {
+                logStep("Freelancer earnings credited", { freelancerUserId, newEarnings });
+
+                // Record ledger transaction for freelancer
+                await supabaseAdmin
+                  .from('ledger_transactions')
+                  .insert({
+                    user_id: freelancerUserId,
+                    tx_type: 'escrow_release',
+                    amount: amountCents,
+                    currency: contract.currency || 'BRL',
+                    context: 'contract_funded_stripe',
+                    related_contract_id: contractId,
+                    related_payment_id: paymentId,
+                    balance_after_earnings: newEarnings,
+                  });
+
+                // Notify freelancer
+                const formattedAmount = (amountCents / 100).toFixed(2);
+                await supabaseAdmin
+                  .from('notifications')
+                  .insert({
+                    user_id: freelancerUserId,
+                    type: 'payment_received',
+                    message: `Você recebeu ${contract.currency || 'BRL'} ${formattedAmount}! O valor já está disponível para saque.`,
+                    link: '/earnings',
+                  });
+                
+                logStep("Freelancer notified", { freelancerUserId });
+              }
             }
           } else {
             logStep("No contract_id for contract_funding payment", { paymentId });
