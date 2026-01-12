@@ -153,7 +153,7 @@ export default function AdminFinances() {
   const fetchSummary = async () => {
     let balanceQuery = supabase
       .from("user_balances")
-      .select("credits_available, earnings_available, escrow_held, updated_at");
+      .select("credits_available, earnings_available, escrow_held, user_type, updated_at");
     
     const { start } = getDateRange(dateFilter);
     if (start) {
@@ -182,7 +182,8 @@ export default function AdminFinances() {
         (acc, b) => ({
           total_credits: acc.total_credits + Number(b.credits_available || 0),
           total_earnings: acc.total_earnings + Number(b.earnings_available || 0),
-          total_escrow: acc.total_escrow + Number(b.escrow_held || 0),
+          // Only count escrow from companies for the summary card
+          total_escrow: acc.total_escrow + (b.user_type === 'company' ? Number(b.escrow_held || 0) : 0),
         }),
         { total_credits: 0, total_earnings: 0, total_escrow: 0 }
       );
