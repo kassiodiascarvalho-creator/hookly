@@ -457,7 +457,7 @@ export default function AdminFinances() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">{formatMoney(summary.total_escrow, "BRL")}</div>
-            <p className="text-xs text-muted-foreground">Retido em contratos</p>
+            <p className="text-xs text-muted-foreground">Total em contratos</p>
           </CardContent>
         </Card>
         
