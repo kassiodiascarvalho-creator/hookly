@@ -72,6 +72,10 @@ interface FinancialSummary {
   total_escrow: number;
   pending_withdrawals: number;
   pending_withdrawal_amount: number;
+  approved_withdrawals: number;
+  approved_withdrawal_amount: number;
+  paid_withdrawals: number;
+  paid_withdrawal_amount: number;
 }
 
 type DateFilterOption = "today" | "7days" | "30days" | "90days" | "1year" | "all";
@@ -86,6 +90,10 @@ export default function AdminFinances() {
     total_escrow: 0,
     pending_withdrawals: 0,
     pending_withdrawal_amount: 0,
+    approved_withdrawals: 0,
+    approved_withdrawal_amount: 0,
+    paid_withdrawals: 0,
+    paid_withdrawal_amount: 0,
   });
   const [balances, setBalances] = useState<UserBalance[]>([]);
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
@@ -154,16 +162,20 @@ export default function AdminFinances() {
     
     const { data: balanceData } = await balanceQuery;
     
-    let withdrawalQuery = supabase
+    // Fetch all withdrawal data for different statuses
+    let baseWithdrawalQuery = supabase
       .from("withdrawal_requests")
-      .select("amount, status, created_at")
-      .eq("status", "pending_review");
+      .select("amount, status, created_at");
     
     if (start) {
-      withdrawalQuery = withdrawalQuery.gte("created_at", start.toISOString());
+      baseWithdrawalQuery = baseWithdrawalQuery.gte("created_at", start.toISOString());
     }
     
-    const { data: withdrawalData } = await withdrawalQuery;
+    const { data: allWithdrawals } = await baseWithdrawalQuery;
+    
+    const pendingWithdrawals = allWithdrawals?.filter(w => w.status === "pending_review") || [];
+    const approvedWithdrawals = allWithdrawals?.filter(w => w.status === "approved") || [];
+    const paidWithdrawals = allWithdrawals?.filter(w => w.status === "paid") || [];
     
     if (balanceData) {
       const totals = balanceData.reduce(
@@ -177,8 +189,12 @@ export default function AdminFinances() {
       
       setSummary({
         ...totals,
-        pending_withdrawals: withdrawalData?.length || 0,
-        pending_withdrawal_amount: withdrawalData?.reduce((sum, w) => sum + Number(w.amount), 0) || 0,
+        pending_withdrawals: pendingWithdrawals.length,
+        pending_withdrawal_amount: pendingWithdrawals.reduce((sum, w) => sum + Number(w.amount), 0),
+        approved_withdrawals: approvedWithdrawals.length,
+        approved_withdrawal_amount: approvedWithdrawals.reduce((sum, w) => sum + Number(w.amount), 0),
+        paid_withdrawals: paidWithdrawals.length,
+        paid_withdrawal_amount: paidWithdrawals.reduce((sum, w) => sum + Number(w.amount), 0),
       });
     }
   };
@@ -470,6 +486,32 @@ export default function AdminFinances() {
             <div className="text-2xl font-bold text-yellow-600">{summary.pending_withdrawals}</div>
             <p className="text-xs text-muted-foreground">
               {formatMoney(summary.pending_withdrawal_amount, "BRL")} total
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Saques Aprovados</CardTitle>
+            <Check className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">{summary.approved_withdrawals}</div>
+            <p className="text-xs text-muted-foreground">
+              {formatMoney(summary.approved_withdrawal_amount, "BRL")} total
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Saques Pagos</CardTitle>
+            <DollarSign className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{summary.paid_withdrawals}</div>
+            <p className="text-xs text-muted-foreground">
+              {formatMoney(summary.paid_withdrawal_amount, "BRL")} total
             </p>
           </CardContent>
         </Card>
