@@ -11,24 +11,32 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Loader2, Coins, Sparkles, Check, QrCode, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { PixPaymentModal } from "./PixPaymentModal";
 import { CardPaymentModal } from "./CardPaymentModal";
+import { getAllowedCurrencies, getCurrencyByCountry } from "@/lib/currencyByCountry";
 
 interface CreditPackage {
   credits: number;
   priceInCents: number;
-  currency: string;
   discount?: number;
   popular?: boolean;
 }
 
+// Base prices in cents (1 credit = 100 cents in local currency)
 const CREDIT_PACKAGES: CreditPackage[] = [
-  { credits: 10, priceInCents: 1000, currency: "BRL" },
-  { credits: 50, priceInCents: 4500, currency: "BRL", discount: 10, popular: true },
-  { credits: 100, priceInCents: 8000, currency: "BRL", discount: 20 },
+  { credits: 10, priceInCents: 1000 },
+  { credits: 50, priceInCents: 4500, discount: 10, popular: true },
+  { credits: 100, priceInCents: 8000, discount: 20 },
 ];
 
 type PaymentMethod = "pix" | "card";
@@ -43,6 +51,9 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
   const [loading, setLoading] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<CreditPackage | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pix");
+  const [country, setCountry] = useState<string | null>(null);
+  const [currency, setCurrency] = useState<string>("USD");
+  const [allowedCurrencies, setAllowedCurrencies] = useState<string[]>(["USD"]);
   
   // PIX payment state
   const [pixModalOpen, setPixModalOpen] = useState(false);
@@ -58,6 +69,43 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
   // Card payment state
   const [cardModalOpen, setCardModalOpen] = useState(false);
   const [mpPublicKey, setMpPublicKey] = useState<string>("");
+
+  // Fetch freelancer country on mount
+  useEffect(() => {
+    if (user && open) {
+      fetchFreelancerCountry();
+    }
+  }, [user, open]);
+
+  const fetchFreelancerCountry = async () => {
+    if (!user) return;
+    
+    const { data } = await supabase
+      .from("freelancer_profiles")
+      .select("country_code")
+      .eq("user_id", user.id)
+      .single();
+
+    const userCountry = data?.country_code || null;
+    setCountry(userCountry);
+    
+    // Set allowed currencies based on country
+    const allowed = getAllowedCurrencies(userCountry);
+    setAllowedCurrencies(allowed);
+    
+    // Set default currency to local currency
+    const localCurrency = getCurrencyByCountry(userCountry);
+    setCurrency(localCurrency);
+    
+    // Set payment method based on currency
+    if (localCurrency === "BRL") {
+      setPaymentMethod("pix");
+    } else {
+      setPaymentMethod("card");
+    }
+    
+    console.log("[BuyCreditsDialog] Country:", userCountry, "Currency:", localCurrency, "Allowed:", allowed);
+  };
 
   // Fetch MercadoPago public key on mount
   useEffect(() => {
@@ -104,16 +152,21 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
     fetchPublicKey();
   }, []);
 
-  const formatPrice = (priceInCents: number, currency: string) => {
+  const isBRL = currency === "BRL";
+  const canUsePix = isBRL;
+  const canUseTransparentCard = isBRL && mpPublicKey.length > 0;
+
+  const formatPrice = (priceInCents: number, curr: string) => {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
-      currency,
+      currency: curr,
     }).format(priceInCents / 100);
   };
 
   const handleBuyCredits = async () => {
     console.log("[BuyCreditsDialog] === PAYMENT FLOW ===");
     console.log("[BuyCreditsDialog] paymentMethod:", paymentMethod);
+    console.log("[BuyCreditsDialog] currency:", currency);
     console.log("[BuyCreditsDialog] mpPublicKey present:", !!mpPublicKey, "length:", mpPublicKey?.length || 0);
 
     if (!selectedPackage) {
@@ -121,10 +174,16 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
       return;
     }
 
+    // Validate currency is allowed
+    if (!allowedCurrencies.includes(currency)) {
+      toast.error("Moeda não permitida para o seu país");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      if (paymentMethod === "pix") {
+      if (paymentMethod === "pix" && canUsePix) {
         console.log("[BuyCreditsDialog] → Using PIX checkout");
         const { data, error } = await supabase.functions.invoke("create-pix-payment", {
           body: {
@@ -132,6 +191,7 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
             userType: "freelancer",
             amountCents: selectedPackage.priceInCents,
             creditsAmount: selectedPackage.credits,
+            currency,
             description: `${selectedPackage.credits} Créditos de Proposta`,
           },
         });
@@ -145,18 +205,34 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
           setOpen(false);
           setPixModalOpen(true);
         }
-      } else {
-        // Card payment for BRL with Mercado Pago
-        if (mpPublicKey) {
-          console.log("[BuyCreditsDialog] → Opening CardPaymentModal (transparent)");
-          // Open transparent card checkout modal directly - NO redirect call
-          setOpen(false);
-          setCardModalOpen(true);
-        } else {
-          console.warn("[BuyCreditsDialog] BRL card selected but mpPublicKey is missing");
-          toast.error("Configure a Public Key em Admin > Payment Providers");
-          return;
+      } else if (paymentMethod === "card" && canUseTransparentCard) {
+        console.log("[BuyCreditsDialog] → Opening CardPaymentModal (transparent - Mercado Pago)");
+        // Open transparent card checkout modal directly - NO redirect call
+        setOpen(false);
+        setCardModalOpen(true);
+      } else if (paymentMethod === "card" && !isBRL) {
+        console.log("[BuyCreditsDialog] → Using Stripe redirect for non-BRL");
+        // Use Stripe redirect for international cards
+        const { data, error } = await supabase.functions.invoke("create-unified-payment", {
+          body: {
+            paymentType: "freelancer_credits",
+            userType: "freelancer",
+            amountCents: selectedPackage.priceInCents,
+            creditsAmount: selectedPackage.credits,
+            currency,
+            description: `${selectedPackage.credits} Créditos de Proposta`,
+          },
+        });
+
+        if (error) throw error;
+
+        if (data?.url) {
+          window.location.href = data.url;
         }
+      } else {
+        console.warn("[BuyCreditsDialog] BRL card selected but mpPublicKey is missing");
+        toast.error("Configure a Public Key em Admin > Payment Providers");
+        return;
       }
     } catch (error) {
       console.error("Error creating payment:", error);
@@ -185,6 +261,7 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
           userType: "freelancer",
           amountCents: selectedPackage.priceInCents,
           creditsAmount: selectedPackage.credits,
+          currency,
           description: `${selectedPackage.credits} Créditos de Proposta`,
         },
       });
@@ -202,6 +279,16 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
       toast.error("Erro ao gerar novo PIX. Tente novamente.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCurrencyChange = (newCurrency: string) => {
+    setCurrency(newCurrency);
+    // Reset payment method based on currency
+    if (newCurrency === "BRL") {
+      setPaymentMethod("pix");
+    } else {
+      setPaymentMethod("card");
     }
   };
 
@@ -226,6 +313,25 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
+            {/* Currency Selection */}
+            {allowedCurrencies.length > 1 && (
+              <div className="space-y-2">
+                <Label>Moeda</Label>
+                <Select value={currency} onValueChange={handleCurrencyChange}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allowedCurrencies.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             {/* Package Selection */}
             <div className="space-y-3">
               <Label>Selecione um pacote</Label>
@@ -268,10 +374,10 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
                       </div>
                       <div className="text-right">
                         <p className="text-lg font-semibold">
-                          {formatPrice(pkg.priceInCents, pkg.currency)}
+                          {formatPrice(pkg.priceInCents, currency)}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {formatPrice(pkg.priceInCents / pkg.credits * 100, pkg.currency)}/crédito
+                          {formatPrice(pkg.priceInCents / pkg.credits * 100, currency)}/crédito
                         </p>
                       </div>
                     </div>
@@ -284,22 +390,24 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
             <div className="space-y-3">
               <Label>Forma de pagamento</Label>
               <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => setPaymentMethod("pix")}
-                  className={`
-                    p-4 rounded-lg border-2 text-left transition-all flex items-center gap-3
-                    ${paymentMethod === "pix" 
-                      ? "border-primary bg-primary/5" 
-                      : "border-border hover:border-primary/50"
-                    }
-                  `}
-                >
-                  <QrCode className="h-6 w-6 text-primary" />
-                  <div>
-                    <p className="font-medium">PIX</p>
-                    <p className="text-xs text-muted-foreground">Instantâneo</p>
-                  </div>
-                </button>
+                {canUsePix && (
+                  <button
+                    onClick={() => setPaymentMethod("pix")}
+                    className={`
+                      p-4 rounded-lg border-2 text-left transition-all flex items-center gap-3
+                      ${paymentMethod === "pix" 
+                        ? "border-primary bg-primary/5" 
+                        : "border-border hover:border-primary/50"
+                      }
+                    `}
+                  >
+                    <QrCode className="h-6 w-6 text-primary" />
+                    <div>
+                      <p className="font-medium">PIX</p>
+                      <p className="text-xs text-muted-foreground">Instantâneo</p>
+                    </div>
+                  </button>
+                )}
                 <button
                   onClick={() => setPaymentMethod("card")}
                   className={`
@@ -308,6 +416,7 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
                       ? "border-primary bg-primary/5" 
                       : "border-border hover:border-primary/50"
                     }
+                    ${!canUsePix ? "col-span-2" : ""}
                   `}
                 >
                   <CreditCard className="h-6 w-6 text-primary" />
@@ -327,13 +436,17 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
                   <span className="font-medium">{selectedPackage.credits} créditos</span>
                 </div>
                 <div className="flex justify-between">
+                  <span className="text-muted-foreground">Moeda</span>
+                  <span className="font-medium">{currency}</span>
+                </div>
+                <div className="flex justify-between">
                   <span className="text-muted-foreground">Pagamento</span>
                   <span className="font-medium">{paymentMethod === "pix" ? "PIX" : "Cartão"}</span>
                 </div>
                 <div className="flex justify-between border-t pt-2 mt-2">
                   <span className="text-muted-foreground">Total</span>
                   <span className="text-xl font-bold">
-                    {formatPrice(selectedPackage.priceInCents, selectedPackage.currency)}
+                    {formatPrice(selectedPackage.priceInCents, currency)}
                   </span>
                 </div>
               </div>
@@ -380,7 +493,7 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
           userType="freelancer"
           creditsAmount={selectedPackage.credits}
           description={`${selectedPackage.credits} Créditos de Proposta`}
-          currency="BRL"
+          currency={currency}
           onPaymentConfirmed={handlePaymentConfirmed}
         />
       )}

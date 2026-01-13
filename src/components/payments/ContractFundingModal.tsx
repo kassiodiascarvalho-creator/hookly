@@ -11,12 +11,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2, QrCode, CreditCard, Wallet, CheckCircle, AlertCircle } from "lucide-react";
+import { Loader2, QrCode, CreditCard, Wallet, CheckCircle, AlertCircle, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { formatMoney } from "@/lib/formatMoney";
 import { PixPaymentModal } from "@/components/billing/PixPaymentModal";
 import { CardPaymentModal } from "@/components/billing/CardPaymentModal";
 import { StripeCardModal } from "@/components/billing/StripeCardModal";
+import { isCurrencyAllowed, getAllowedCurrencies } from "@/lib/currencyByCountry";
 
 type PaymentMethod = "credits" | "pix" | "card";
 
@@ -85,6 +86,10 @@ export function ContractFundingModal({
   const canUseMercadoPagoCard = isBRL && mpPublicKey.length > 0;
   const canUseStripeCard = !isBRL; // Stripe for international currencies
   const hasEnoughCredits = companyWallet && companyWallet.balance_cents >= amountCents;
+  
+  // Check if project currency is allowed for user's country
+  const isCurrencyAllowedForUser = isCurrencyAllowed(currency, country);
+  const allowedCurrencies = getAllowedCurrencies(country);
 
   useEffect(() => {
     if (user && open) {
@@ -335,6 +340,26 @@ export function ContractFundingModal({
               </p>
             </div>
 
+            {/* Currency Restriction Warning */}
+            {!isCurrencyAllowedForUser && !hasEnoughCredits && (
+              <div className="rounded-lg bg-amber-50 border border-amber-200 p-4">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
+                  <div>
+                    <p className="text-amber-800 font-medium">
+                      {t("payments.currencyNotAllowed", "Moeda não permitida")}
+                    </p>
+                    <p className="text-amber-700 text-sm mt-1">
+                      {t(
+                        "payments.currencyRestrictionMessage", 
+                        `A moeda ${currency} não é permitida para seu país. Moedas permitidas: ${allowedCurrencies.join(", ")}. Use créditos da plataforma para financiar este contrato.`
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Success State */}
             {creditsSuccess && (
               <div className="rounded-lg bg-green-50 border border-green-200 p-4 flex items-center justify-center gap-2">
@@ -392,8 +417,8 @@ export function ContractFundingModal({
                     )}
                   </button>
 
-                  {/* PIX Option */}
-                  {canUsePix && (
+                  {/* PIX Option - Only show if currency is allowed or BRL */}
+                  {canUsePix && isCurrencyAllowedForUser && (
                     <button
                       onClick={() => setPaymentMethod("pix")}
                       className={`
@@ -417,8 +442,8 @@ export function ContractFundingModal({
                     </button>
                   )}
 
-                  {/* Card Option */}
-                  {(canUseMercadoPagoCard || canUseStripeCard) && (
+                  {/* Card Option - Only show if currency is allowed */}
+                  {(canUseMercadoPagoCard || canUseStripeCard) && isCurrencyAllowedForUser && (
                     <button
                       onClick={() => setPaymentMethod("card")}
                       className={`
