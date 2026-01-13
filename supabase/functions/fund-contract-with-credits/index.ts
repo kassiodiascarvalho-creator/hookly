@@ -44,20 +44,26 @@ serve(async (req) => {
   try {
     logStep("Function started - INTERNAL LEDGER MOVEMENT (no external payment)");
 
-    // Authenticate user
+    // Authenticate user using getClaims (more reliable with signing-keys)
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      throw new Error("Missing authorization header");
+    if (!authHeader?.startsWith("Bearer ")) {
+      throw new Error("Missing or invalid authorization header");
     }
     
     const token = authHeader.replace("Bearer ", "");
-    const { data } = await supabaseClient.auth.getUser(token);
-    const user = data.user;
+    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
     
-    if (!user) {
-      throw new Error("User not authenticated");
+    if (claimsError || !claimsData?.claims) {
+      logStep("Auth failed", { error: claimsError?.message });
+      throw new Error("User not authenticated - invalid or expired session");
     }
-    logStep("User authenticated", { userId: user.id });
+    
+    const userId = claimsData.claims.sub as string;
+    if (!userId) {
+      throw new Error("User not authenticated - no user ID in claims");
+    }
+    
+    logStep("User authenticated", { userId });
 
     // Parse and validate request body
     let body: unknown;
@@ -98,7 +104,7 @@ serve(async (req) => {
       throw new Error("Contract not found");
     }
 
-    if (contract.company_user_id !== user.id) {
+    if (contract.company_user_id !== userId) {
       throw new Error("You are not authorized to fund this contract");
     }
 
@@ -118,7 +124,7 @@ serve(async (req) => {
     const { data: walletData, error: walletError } = await supabaseAdmin
       .from('company_wallets')
       .select('id, balance_cents, currency')
-      .eq('company_user_id', user.id)
+      .eq('company_user_id', userId)
       .single();
 
     let companyWallet = walletData;
@@ -128,14 +134,14 @@ serve(async (req) => {
       
       // Create wallet if not exists
       await supabaseAdmin.rpc('ensure_company_wallet', {
-        p_company_user_id: user.id,
+        p_company_user_id: userId,
       });
 
       // Re-fetch
       const { data: newWallet, error: walletRetryError } = await supabaseAdmin
         .from('company_wallets')
         .select('id, balance_cents, currency')
-        .eq('company_user_id', user.id)
+        .eq('company_user_id', userId)
         .single();
 
       if (walletRetryError || !newWallet) {
@@ -152,20 +158,20 @@ serve(async (req) => {
     const { data: userBalanceData } = await supabaseAdmin
       .from('user_balances')
       .select('id, escrow_held')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .eq('user_type', 'company')
       .single();
 
     if (!userBalanceData) {
       await supabaseAdmin.rpc('ensure_user_balance', {
-        p_user_id: user.id,
+        p_user_id: userId,
         p_user_type: 'company',
       });
       
       const { data: newUserBalance } = await supabaseAdmin
         .from('user_balances')
         .select('id, escrow_held')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .eq('user_type', 'company')
         .single();
       
@@ -198,7 +204,7 @@ serve(async (req) => {
       .select('id')
       .eq('related_contract_id', contractId)
       .eq('tx_type', 'contract_funding')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .limit(1)
       .maybeSingle();
 
@@ -225,7 +231,7 @@ serve(async (req) => {
         balance_cents: newWalletBalance,
         updated_at: new Date().toISOString(),
       })
-      .eq('company_user_id', user.id);
+      .eq('company_user_id', userId);
 
     if (updateWalletError) {
       logStep("Failed to update wallet", { error: updateWalletError });
@@ -239,7 +245,7 @@ serve(async (req) => {
         escrow_held: newEscrowHeld,
         updated_at: new Date().toISOString(),
       })
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .eq('user_type', 'company');
 
     if (updateBalanceError) {
@@ -251,7 +257,7 @@ serve(async (req) => {
           balance_cents: walletBalance,
           updated_at: new Date().toISOString(),
         })
-        .eq('company_user_id', user.id);
+        .eq('company_user_id', userId);
       throw new Error("Failed to update escrow balance");
     }
 
@@ -312,14 +318,14 @@ serve(async (req) => {
           balance_cents: walletBalance,
           updated_at: new Date().toISOString(),
         })
-        .eq('company_user_id', user.id);
+        .eq('company_user_id', userId);
       await supabaseAdmin
         .from('user_balances')
         .update({
           escrow_held: currentEscrow,
           updated_at: new Date().toISOString(),
         })
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .eq('user_type', 'company');
       throw new Error("Failed to update freelancer earnings");
     }
@@ -334,7 +340,7 @@ serve(async (req) => {
     const { error: ledgerError } = await supabaseAdmin
       .from('ledger_transactions')
       .insert({
-        user_id: user.id,
+        user_id: userId,
         tx_type: 'contract_funding',
         amount: amountCents,
         currency: contract.currency || 'BRL',
@@ -362,7 +368,7 @@ serve(async (req) => {
           balance_cents: walletBalance,
           updated_at: new Date().toISOString(),
         })
-        .eq('company_user_id', user.id);
+        .eq('company_user_id', userId);
 
       // Rollback escrow
       await supabaseAdmin
@@ -371,7 +377,7 @@ serve(async (req) => {
           escrow_held: currentEscrow,
           updated_at: new Date().toISOString(),
         })
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .eq('user_type', 'company');
 
       throw new Error("Failed to record transaction");
