@@ -65,10 +65,22 @@ export function minorToMajor(amountMinor: number, currency: string): number {
 
 /**
  * Convert major units to minor units (cents)
+ * Use this when converting user input (e.g., "2.00") to database format
  */
 export function majorToMinor(amountMajor: number, currency: string): number {
   const divisor = getMinorUnitDivisor(currency);
   return Math.round(amountMajor * divisor);
+}
+
+/**
+ * Safely parse a user input string as major units and convert to minor units
+ * Returns 0 for invalid inputs
+ */
+export function parseAmountToMinor(input: string, currency: string): number {
+  const sanitized = input.replace(/[^0-9.]/g, "");
+  const parsed = parseFloat(sanitized);
+  if (isNaN(parsed) || parsed < 0) return 0;
+  return majorToMinor(parsed, currency);
 }
 
 /**
