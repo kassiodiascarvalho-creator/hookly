@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { formatMoneyFromCents } from "@/lib/formatMoney";
 import { 
@@ -26,7 +27,9 @@ import {
   Users,
   Building2,
   User,
-  Calendar
+  Calendar,
+  Globe,
+  ArrowRightLeft
 } from "lucide-react";
 import { subDays, subMonths, subYears, startOfDay, endOfDay } from "date-fns";
 
@@ -41,6 +44,8 @@ interface UserBalance {
   updated_at: string;
   email?: string;
   name?: string;
+  country_code?: string;
+  currency_code?: string;
 }
 
 interface WithdrawalRequest {
@@ -54,6 +59,15 @@ interface WithdrawalRequest {
   created_at: string;
   freelancer_name?: string;
   freelancer_email?: string;
+  freelancer_country?: string;
+  freelancer_currency?: string;
+  // FX fields
+  payment_currency?: string;
+  payment_amount_minor?: number;
+  amount_usd_minor?: number;
+  fx_rate_applied?: number;
+  fx_spread_percent?: number;
+  fx_spread_amount_usd_minor?: number;
 }
 
 interface LedgerTransaction {
@@ -64,18 +78,28 @@ interface LedgerTransaction {
   currency: string;
   context: string | null;
   created_at: string;
+  // FX fields
+  payment_currency?: string;
+  payment_amount_minor?: number;
+  payment_method?: string;
+  gateway_provider?: string;
+  amount_usd_minor?: number;
+  fx_rate_applied?: number;
+  fx_spread_percent?: number;
+  fx_spread_amount_usd_minor?: number;
 }
 
 interface FinancialSummary {
-  total_credits: number;
-  total_earnings: number;
-  total_escrow: number;
+  total_credits_usd: number;
+  total_earnings_usd: number;
+  total_escrow_usd: number;
   pending_withdrawals: number;
-  pending_withdrawal_amount: number;
+  pending_withdrawal_amount_usd: number;
   approved_withdrawals: number;
-  approved_withdrawal_amount: number;
+  approved_withdrawal_amount_usd: number;
   paid_withdrawals: number;
-  paid_withdrawal_amount: number;
+  paid_withdrawal_amount_usd: number;
+  total_fx_spread_usd: number;
 }
 
 type DateFilterOption = "today" | "7days" | "30days" | "90days" | "1year" | "all";
@@ -85,15 +109,16 @@ export default function AdminFinances() {
   
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<FinancialSummary>({
-    total_credits: 0,
-    total_earnings: 0,
-    total_escrow: 0,
+    total_credits_usd: 0,
+    total_earnings_usd: 0,
+    total_escrow_usd: 0,
     pending_withdrawals: 0,
-    pending_withdrawal_amount: 0,
+    pending_withdrawal_amount_usd: 0,
     approved_withdrawals: 0,
-    approved_withdrawal_amount: 0,
+    approved_withdrawal_amount_usd: 0,
     paid_withdrawals: 0,
-    paid_withdrawal_amount: 0,
+    paid_withdrawal_amount_usd: 0,
+    total_fx_spread_usd: 0,
   });
   const [balances, setBalances] = useState<UserBalance[]>([]);
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
@@ -153,7 +178,7 @@ export default function AdminFinances() {
   const fetchSummary = async () => {
     let balanceQuery = supabase
       .from("user_balances")
-      .select("credits_available, earnings_available, escrow_held, user_type, updated_at");
+      .select("credits_available, earnings_available, escrow_held, user_type, currency, updated_at");
     
     const { start } = getDateRange(dateFilter);
     if (start) {
@@ -162,10 +187,10 @@ export default function AdminFinances() {
     
     const { data: balanceData } = await balanceQuery;
     
-    // Fetch all withdrawal data for different statuses
+    // Fetch all withdrawal data with FX fields
     let baseWithdrawalQuery = supabase
       .from("withdrawal_requests")
-      .select("amount, status, created_at");
+      .select("amount, status, created_at, currency, amount_usd_minor, fx_spread_amount_usd_minor");
     
     if (start) {
       baseWithdrawalQuery = baseWithdrawalQuery.gte("created_at", start.toISOString());
@@ -177,25 +202,35 @@ export default function AdminFinances() {
     const approvedWithdrawals = allWithdrawals?.filter(w => w.status === "approved") || [];
     const paidWithdrawals = allWithdrawals?.filter(w => w.status === "paid") || [];
     
+    // Calculate total FX spread earned
+    const totalFxSpread = (allWithdrawals || []).reduce((sum, w) => 
+      sum + Number(w.fx_spread_amount_usd_minor || 0), 0);
+    
     if (balanceData) {
+      // All amounts in user_balances are already in cents (or minor units)
       const totals = balanceData.reduce(
         (acc, b) => ({
-          total_credits: acc.total_credits + Number(b.credits_available || 0),
-          total_earnings: acc.total_earnings + Number(b.earnings_available || 0),
-          // Only count escrow from companies for the summary card
-          total_escrow: acc.total_escrow + (b.user_type === 'company' ? Number(b.escrow_held || 0) : 0),
+          total_credits_usd: acc.total_credits_usd + Number(b.credits_available || 0),
+          total_earnings_usd: acc.total_earnings_usd + Number(b.earnings_available || 0),
+          // Only count escrow from companies
+          total_escrow_usd: acc.total_escrow_usd + (b.user_type === 'company' ? Number(b.escrow_held || 0) : 0),
         }),
-        { total_credits: 0, total_earnings: 0, total_escrow: 0 }
+        { total_credits_usd: 0, total_earnings_usd: 0, total_escrow_usd: 0 }
       );
+      
+      // For withdrawals, use amount_usd_minor if available, fallback to amount
+      const calcWithdrawalAmount = (withdrawals: any[]) => 
+        withdrawals.reduce((sum, w) => sum + Number(w.amount_usd_minor || w.amount), 0);
       
       setSummary({
         ...totals,
         pending_withdrawals: pendingWithdrawals.length,
-        pending_withdrawal_amount: pendingWithdrawals.reduce((sum, w) => sum + Number(w.amount), 0),
+        pending_withdrawal_amount_usd: calcWithdrawalAmount(pendingWithdrawals),
         approved_withdrawals: approvedWithdrawals.length,
-        approved_withdrawal_amount: approvedWithdrawals.reduce((sum, w) => sum + Number(w.amount), 0),
+        approved_withdrawal_amount_usd: calcWithdrawalAmount(approvedWithdrawals),
         paid_withdrawals: paidWithdrawals.length,
-        paid_withdrawal_amount: paidWithdrawals.reduce((sum, w) => sum + Number(w.amount), 0),
+        paid_withdrawal_amount_usd: calcWithdrawalAmount(paidWithdrawals),
+        total_fx_spread_usd: totalFxSpread,
       });
     }
   };
@@ -226,21 +261,26 @@ export default function AdminFinances() {
       (data || []).map(async (balance) => {
         let email = "";
         let name = "";
+        let country_code = "";
+        let currency_code = "";
         
         if (balance.user_type === "freelancer") {
           const { data: profile } = await supabase
             .from("freelancer_profiles")
-            .select("full_name")
+            .select("full_name, country_code, currency_code, country")
             .eq("user_id", balance.user_id)
             .single();
           name = profile?.full_name || "";
+          country_code = profile?.country_code || profile?.country || "";
+          currency_code = profile?.currency_code || "USD";
         } else {
           const { data: profile } = await supabase
             .from("company_profiles")
-            .select("company_name, contact_name")
+            .select("company_name, contact_name, country")
             .eq("user_id", balance.user_id)
             .single();
           name = profile?.company_name || profile?.contact_name || "";
+          country_code = profile?.country || "";
         }
         
         const { data: profileData } = await supabase
@@ -250,7 +290,7 @@ export default function AdminFinances() {
           .single();
         email = profileData?.email || "";
         
-        return { ...balance, email, name };
+        return { ...balance, email, name, country_code, currency_code };
       })
     );
     
@@ -283,7 +323,7 @@ export default function AdminFinances() {
       (data || []).map(async (withdrawal) => {
         const { data: profile } = await supabase
           .from("freelancer_profiles")
-          .select("full_name")
+          .select("full_name, country_code, currency_code, country")
           .eq("user_id", withdrawal.freelancer_user_id)
           .single();
         
@@ -297,6 +337,8 @@ export default function AdminFinances() {
           ...withdrawal,
           freelancer_name: profile?.full_name || "",
           freelancer_email: profileData?.email || "",
+          freelancer_country: profile?.country_code || profile?.country || "",
+          freelancer_currency: profile?.currency_code || "USD",
         };
       })
     );
@@ -411,6 +453,28 @@ export default function AdminFinances() {
     );
   };
 
+  // Render dual currency display (original + USD)
+  const renderDualCurrency = (
+    amountUsdMinor: number | undefined | null, 
+    paymentAmountMinor: number | undefined | null, 
+    paymentCurrency: string | undefined | null
+  ) => {
+    const hasOriginal = paymentAmountMinor && paymentCurrency && paymentCurrency !== 'USD';
+    
+    return (
+      <div className="text-right">
+        <div className="font-mono font-bold">
+          {formatMoneyFromCents(amountUsdMinor || 0, "USD")}
+        </div>
+        {hasOriginal && (
+          <div className="text-xs text-muted-foreground">
+            ({formatMoneyFromCents(paymentAmountMinor, paymentCurrency)})
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -418,7 +482,7 @@ export default function AdminFinances() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Finanças</h1>
           <p className="text-muted-foreground">
-            Gestão de créditos, ganhos e saques da plataforma
+            Gestão de créditos, ganhos e saques da plataforma (valores em USD)
           </p>
         </div>
         <div className="flex items-center gap-4">
@@ -443,15 +507,15 @@ export default function AdminFinances() {
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      {/* Summary Cards - All in USD */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Créditos</CardTitle>
             <Coins className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{Number(summary.total_credits).toFixed(2)}</div>
+            <div className="text-2xl font-bold">{formatMoneyFromCents(summary.total_credits_usd, "USD")}</div>
             <p className="text-xs text-muted-foreground">Não sacáveis</p>
           </CardContent>
         </Card>
@@ -462,7 +526,7 @@ export default function AdminFinances() {
             <Wallet className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{formatMoneyFromCents(summary.total_earnings, "BRL")}</div>
+            <div className="text-2xl font-bold text-green-600">{formatMoneyFromCents(summary.total_earnings_usd, "USD")}</div>
             <p className="text-xs text-muted-foreground">Sacáveis</p>
           </CardContent>
         </Card>
@@ -473,7 +537,7 @@ export default function AdminFinances() {
             <Lock className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{formatMoneyFromCents(summary.total_escrow * 100, "BRL")}</div>
+            <div className="text-2xl font-bold text-blue-600">{formatMoneyFromCents(summary.total_escrow_usd * 100, "USD")}</div>
             <p className="text-xs text-muted-foreground">Total em contratos</p>
           </CardContent>
         </Card>
@@ -486,7 +550,7 @@ export default function AdminFinances() {
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">{summary.pending_withdrawals}</div>
             <p className="text-xs text-muted-foreground">
-              {formatMoneyFromCents(summary.pending_withdrawal_amount, "BRL")} total
+              {formatMoneyFromCents(summary.pending_withdrawal_amount_usd, "USD")} total
             </p>
           </CardContent>
         </Card>
@@ -499,32 +563,19 @@ export default function AdminFinances() {
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">{summary.approved_withdrawals}</div>
             <p className="text-xs text-muted-foreground">
-              {formatMoneyFromCents(summary.approved_withdrawal_amount, "BRL")} total
+              {formatMoneyFromCents(summary.approved_withdrawal_amount_usd, "USD")} total
             </p>
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Saques Pagos</CardTitle>
-            <DollarSign className="h-4 w-4 text-green-600" />
+            <CardTitle className="text-sm font-medium">Receita FX Spread</CardTitle>
+            <ArrowRightLeft className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{summary.paid_withdrawals}</div>
-            <p className="text-xs text-muted-foreground">
-              {formatMoneyFromCents(summary.paid_withdrawal_amount, "BRL")} total
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Usuários Ativos</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{balances.length}</div>
-            <p className="text-xs text-muted-foreground">Com saldo</p>
+            <div className="text-2xl font-bold text-purple-600">{formatMoneyFromCents(summary.total_fx_spread_usd, "USD")}</div>
+            <p className="text-xs text-muted-foreground">Ganho com câmbio</p>
           </CardContent>
         </Card>
       </div>
@@ -572,9 +623,10 @@ export default function AdminFinances() {
                 <TableRow>
                   <TableHead>Usuário</TableHead>
                   <TableHead>Tipo</TableHead>
-                  <TableHead className="text-right">Créditos</TableHead>
-                  <TableHead className="text-right">Ganhos</TableHead>
-                  <TableHead className="text-right">Escrow</TableHead>
+                  <TableHead>País/Moeda</TableHead>
+                  <TableHead className="text-right">Créditos (USD)</TableHead>
+                  <TableHead className="text-right">Ganhos (USD)</TableHead>
+                  <TableHead className="text-right">Escrow (USD)</TableHead>
                   <TableHead>Atualizado</TableHead>
                 </TableRow>
               </TableHeader>
@@ -594,14 +646,35 @@ export default function AdminFinances() {
                         <Badge variant="outline"><Building2 className="h-3 w-3 mr-1" />Empresa</Badge>
                       )}
                     </TableCell>
+                    <TableCell>
+                      {balance.country_code && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <div className="flex items-center gap-1">
+                                <Globe className="h-3 w-3 text-muted-foreground" />
+                                <span className="text-sm">{balance.country_code}</span>
+                                {balance.currency_code && (
+                                  <Badge variant="secondary" className="text-xs ml-1">{balance.currency_code}</Badge>
+                                )}
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              País: {balance.country_code}, Moeda preferida: {balance.currency_code || 'USD'}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                      {!balance.country_code && <span className="text-muted-foreground text-sm">—</span>}
+                    </TableCell>
                     <TableCell className="text-right font-mono">
-                      {Number(balance.credits_available).toFixed(2)}
+                      {formatMoneyFromCents(Number(balance.credits_available), "USD")}
                     </TableCell>
                     <TableCell className="text-right font-mono text-green-600">
-                      {formatMoneyFromCents(Number(balance.earnings_available), balance.currency || "BRL")}
+                      {formatMoneyFromCents(Number(balance.earnings_available), "USD")}
                     </TableCell>
                     <TableCell className="text-right font-mono text-blue-600">
-                      {formatMoneyFromCents(Number(balance.escrow_held) * 100, balance.currency || "BRL")}
+                      {formatMoneyFromCents(Number(balance.escrow_held) * 100, "USD")}
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
                       {new Date(balance.updated_at).toLocaleDateString("pt-BR")}
@@ -610,7 +683,7 @@ export default function AdminFinances() {
                 ))}
                 {filteredBalances.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       Nenhum saldo encontrado
                     </TableCell>
                   </TableRow>
@@ -642,7 +715,9 @@ export default function AdminFinances() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Freelancer</TableHead>
-                  <TableHead className="text-right">Valor</TableHead>
+                  <TableHead>País/Moeda</TableHead>
+                  <TableHead className="text-right">Valor (USD)</TableHead>
+                  <TableHead className="text-right">Valor Original</TableHead>
                   <TableHead>Método</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Data</TableHead>
@@ -658,22 +733,48 @@ export default function AdminFinances() {
                         <p className="text-sm text-muted-foreground">{withdrawal.freelancer_email}</p>
                       </div>
                     </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Globe className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-sm">{withdrawal.freelancer_country || "—"}</span>
+                        <Badge variant="secondary" className="text-xs ml-1">{withdrawal.freelancer_currency || "USD"}</Badge>
+                      </div>
+                    </TableCell>
                     <TableCell className="text-right font-mono font-bold">
-                      {formatMoneyFromCents(Number(withdrawal.amount), withdrawal.currency || "BRL")}
+                      {formatMoneyFromCents(
+                        withdrawal.amount_usd_minor || Number(withdrawal.amount), 
+                        "USD"
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {withdrawal.payment_amount_minor && withdrawal.payment_currency && withdrawal.payment_currency !== 'USD' ? (
+                        <div>
+                          <span className="font-mono text-sm">
+                            {formatMoneyFromCents(withdrawal.payment_amount_minor, withdrawal.payment_currency)}
+                          </span>
+                          {withdrawal.fx_rate_applied && (
+                            <p className="text-xs text-muted-foreground">
+                              Taxa: {withdrawal.fx_rate_applied.toFixed(4)}
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
                         {withdrawal.payout_details?.type === "pix" ? (
                           <div>
                             <p className="font-medium">PIX</p>
-                            <p className="text-muted-foreground">
+                            <p className="text-muted-foreground text-xs">
                               {withdrawal.payout_details?.pix_key_type}: {withdrawal.payout_details?.pix_key}
                             </p>
                           </div>
                         ) : (
                           <div>
                             <p className="font-medium">Banco</p>
-                            <p className="text-muted-foreground">
+                            <p className="text-muted-foreground text-xs">
                               {withdrawal.payout_details?.bank_name} - Ag {withdrawal.payout_details?.branch} / CC {withdrawal.payout_details?.account}
                             </p>
                           </div>
@@ -728,7 +829,7 @@ export default function AdminFinances() {
                 ))}
                 {withdrawals.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       Nenhum saque encontrado
                     </TableCell>
                   </TableRow>
@@ -742,15 +843,17 @@ export default function AdminFinances() {
           <Card>
             <CardHeader>
               <CardTitle>Últimas Transações</CardTitle>
-              <CardDescription>Histórico completo do ledger</CardDescription>
+              <CardDescription>Histórico completo do ledger (valores internos em USD)</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Tipo</TableHead>
+                    <TableHead>Gateway</TableHead>
                     <TableHead>Usuário</TableHead>
-                    <TableHead className="text-right">Valor</TableHead>
+                    <TableHead className="text-right">Valor USD</TableHead>
+                    <TableHead className="text-right">Original</TableHead>
                     <TableHead>Contexto</TableHead>
                     <TableHead>Data</TableHead>
                   </TableRow>
@@ -759,9 +862,49 @@ export default function AdminFinances() {
                   {transactions.map((tx) => (
                     <TableRow key={tx.id}>
                       <TableCell>{getTxTypeBadge(tx.tx_type)}</TableCell>
+                      <TableCell>
+                        {tx.gateway_provider ? (
+                          <div className="flex items-center gap-1">
+                            <Badge variant="outline" className="text-xs">
+                              {tx.gateway_provider}
+                            </Badge>
+                            {tx.payment_method && (
+                              <span className="text-xs text-muted-foreground">
+                                ({tx.payment_method})
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">—</span>
+                        )}
+                      </TableCell>
                       <TableCell className="font-mono text-xs">{tx.user_id.slice(0, 8)}...</TableCell>
-                      <TableCell className={`text-right font-mono ${Number(tx.amount) >= 0 ? "text-green-600" : "text-red-600"}`}>
-                        {Number(tx.amount) >= 0 ? "+" : ""}{formatMoneyFromCents(Number(tx.amount), tx.currency || "BRL")}
+                      <TableCell className={`text-right font-mono font-bold ${Number(tx.amount_usd_minor || tx.amount) >= 0 ? "text-green-600" : "text-red-600"}`}>
+                        {Number(tx.amount_usd_minor || tx.amount) >= 0 ? "+" : ""}
+                        {formatMoneyFromCents(Math.abs(Number(tx.amount_usd_minor || tx.amount)), "USD")}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {tx.payment_currency && tx.payment_amount_minor && tx.payment_currency !== 'USD' ? (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <span className="text-xs text-muted-foreground">
+                                  {formatMoneyFromCents(tx.payment_amount_minor, tx.payment_currency)}
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <div className="text-xs">
+                                  <p>Taxa: {tx.fx_rate_applied?.toFixed(4) || 'N/A'}</p>
+                                  {tx.fx_spread_amount_usd_minor && (
+                                    <p>Spread: {formatMoneyFromCents(tx.fx_spread_amount_usd_minor, 'USD')}</p>
+                                  )}
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">—</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm">{tx.context || "—"}</TableCell>
                       <TableCell className="text-muted-foreground text-sm">
@@ -771,7 +914,7 @@ export default function AdminFinances() {
                   ))}
                   {transactions.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                         Nenhuma transação encontrada
                       </TableCell>
                     </TableRow>
@@ -799,7 +942,11 @@ export default function AdminFinances() {
               {processingWithdrawal && (
                 <div className="mt-2 space-y-2">
                   <p><strong>Freelancer:</strong> {processingWithdrawal.freelancer_name}</p>
-                  <p><strong>Valor:</strong> {formatMoneyFromCents(Number(processingWithdrawal.amount), processingWithdrawal.currency || "BRL")}</p>
+                  <p><strong>País/Moeda:</strong> {processingWithdrawal.freelancer_country || '—'} / {processingWithdrawal.freelancer_currency || 'USD'}</p>
+                  <p><strong>Valor USD:</strong> {formatMoneyFromCents(processingWithdrawal.amount_usd_minor || Number(processingWithdrawal.amount), "USD")}</p>
+                  {processingWithdrawal.payment_amount_minor && processingWithdrawal.payment_currency && processingWithdrawal.payment_currency !== 'USD' && (
+                    <p><strong>Valor Original:</strong> {formatMoneyFromCents(processingWithdrawal.payment_amount_minor, processingWithdrawal.payment_currency)}</p>
+                  )}
                   {processingWithdrawal.payout_details?.type === "pix" ? (
                     <p><strong>PIX:</strong> {processingWithdrawal.payout_details?.pix_key}</p>
                   ) : (
