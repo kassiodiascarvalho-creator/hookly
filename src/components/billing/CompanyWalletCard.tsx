@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Wallet, Loader2, History, TrendingUp } from "lucide-react";
 import { CompanyAddFundsDialog } from "./CompanyAddFundsDialog";
 import { format } from "date-fns";
-import { formatMoney } from "@/lib/formatMoney";
+import { formatMoneyFromCents } from "@/lib/formatMoney";
 
 interface CompanyWallet {
   balance_cents: number;
@@ -114,7 +114,7 @@ export function CompanyWalletCard() {
         <CardContent>
           <div className="flex items-baseline gap-2">
             <span className="text-4xl font-bold">
-              {formatMoney(balanceCents / 100, currency)}
+              {formatMoneyFromCents(balanceCents, currency)}
             </span>
           </div>
           
@@ -195,11 +195,11 @@ export function CompanyWalletCard() {
                   <div className="text-right">
                     <p className={`font-semibold ${entry.direction === "credit" ? "text-green-600" : "text-destructive"}`}>
                       {entry.direction === "credit" ? "+" : "-"}
-                      {formatMoney(entry.amount_cents / 100, entry.currency)}
+                      {formatMoneyFromCents(entry.amount_cents, entry.currency)}
                     </p>
                     {entry.balance_after_cents !== null && (
                       <p className="text-xs text-muted-foreground">
-                        Saldo: {formatMoney(entry.balance_after_cents / 100, entry.currency)}
+                        Saldo: {formatMoneyFromCents(entry.balance_after_cents, entry.currency)}
                       </p>
                     )}
                   </div>

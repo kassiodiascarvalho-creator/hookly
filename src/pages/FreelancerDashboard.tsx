@@ -7,6 +7,7 @@ import { Search, FileText, MessageSquare, DollarSign, ArrowRight, Briefcase, Loa
 import { AchievementsCard } from "@/components/achievements";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { formatMoneyFromCents } from "@/lib/formatMoney";
 
 interface DashboardStats {
   activeProjects: number;
@@ -97,22 +98,22 @@ export default function FreelancerDashboard() {
       const pendingProposals = proposalsResult.count || 0;
       const conversations = conversationsResult.count || 0;
       
-      // All values are stored in cents
-      const earningsAvailable = Number(balanceResult.data?.earnings_available || 0) / 100;
+      // All values are stored in cents - keep in cents for proper formatting
+      const earningsAvailable = Number(balanceResult.data?.earnings_available || 0);
       const contractsEscrow = (activeContractsResult.data || [])
-        .reduce((sum, c) => sum + (c.amount_cents || 0), 0) / 100;
+        .reduce((sum, c) => sum + (c.amount_cents || 0), 0);
       const paidWithdrawals = (paidWithdrawalsResult.data || [])
-        .reduce((sum, w) => sum + (Number(w.amount) || 0), 0) / 100;
+        .reduce((sum, w) => sum + (Number(w.amount) || 0), 0);
       
-      // Total earnings = available + contracts escrow + already withdrawn
-      const totalEarnings = earningsAvailable + contractsEscrow + paidWithdrawals;
+      // Total earnings in cents = available + contracts escrow + already withdrawn
+      const totalEarningsCents = earningsAvailable + contractsEscrow + paidWithdrawals;
       const currency = balanceResult.data?.currency || "BRL";
 
       setStats({
         activeProjects,
         pendingProposals,
         conversations,
-        totalEarnings,
+        totalEarnings: totalEarningsCents, // Store in cents
         currency
       });
     } catch (error) {
@@ -122,19 +123,11 @@ export default function FreelancerDashboard() {
     }
   };
 
-  const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: 2
-    }).format(amount);
-  };
-
   const statsDisplay = [
     { label: t("freelancerDashboard.activeProjects"), value: stats.activeProjects.toString(), icon: Briefcase, color: "text-primary" },
     { label: t("freelancerDashboard.pendingProposals"), value: stats.pendingProposals.toString(), icon: FileText, color: "text-secondary" },
     { label: t("freelancerDashboard.messages"), value: stats.conversations.toString(), icon: MessageSquare, color: "text-accent-foreground" },
-    { label: t("freelancerDashboard.totalEarnings"), value: formatCurrency(stats.totalEarnings, stats.currency), icon: DollarSign, color: "text-green-500" },
+    { label: t("freelancerDashboard.totalEarnings"), value: formatMoneyFromCents(stats.totalEarnings, stats.currency), icon: DollarSign, color: "text-green-500" },
   ];
 
   const quickActions = [

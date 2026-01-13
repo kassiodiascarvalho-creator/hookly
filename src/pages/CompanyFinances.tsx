@@ -9,6 +9,7 @@ import {
   CreditCard, TrendingUp, Wallet
 } from "lucide-react";
 import { format } from "date-fns";
+import { formatMoney } from "@/lib/formatMoney";
 import {
   Table,
   TableBody,
@@ -143,7 +144,7 @@ export default function CompanyFinances() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t("finances.totalSpent")}</p>
-                <p className="text-2xl font-bold">${totals.totalSpent.toFixed(2)}</p>
+                <p className="text-2xl font-bold">{formatMoney(totals.totalSpent, "USD")}</p>
               </div>
             </div>
           </CardContent>
@@ -157,7 +158,7 @@ export default function CompanyFinances() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t("finances.inEscrow")}</p>
-                <p className="text-2xl font-bold">${totals.inEscrow.toFixed(2)}</p>
+                <p className="text-2xl font-bold">{formatMoney(totals.inEscrow, "USD")}</p>
               </div>
             </div>
           </CardContent>
@@ -171,7 +172,7 @@ export default function CompanyFinances() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t("finances.released")}</p>
-                <p className="text-2xl font-bold">${totals.released.toFixed(2)}</p>
+                <p className="text-2xl font-bold">{formatMoney(totals.released, "USD")}</p>
               </div>
             </div>
           </CardContent>
@@ -212,7 +213,7 @@ export default function CompanyFinances() {
                       {payment.freelancer?.full_name || t("finances.unknownFreelancer")}
                     </TableCell>
                     <TableCell className="font-semibold">
-                      ${Number(payment.amount).toFixed(2)} {payment.currency}
+                      {formatMoney(Number(payment.amount), payment.currency)}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
