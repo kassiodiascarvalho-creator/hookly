@@ -283,24 +283,27 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            {/* Currency Selection */}
-            {allowedCurrencies.length > 1 && (
-              <div className="space-y-2">
-                <Label>Moeda</Label>
-                <Select value={currency} onValueChange={handleCurrencyChange}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {allowedCurrencies.map((c) => (
-                      <SelectItem key={c} value={c}>
-                        {c}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+            {/* Currency Selection - Always visible */}
+            <div className="space-y-2">
+              <Label>Moeda para compra</Label>
+              <Select value={currency} onValueChange={handleCurrencyChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a moeda" />
+                </SelectTrigger>
+                <SelectContent>
+                  {allowedCurrencies.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c === "USD" ? "USD (Dólar)" : `${c} (Moeda local)`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {allowedCurrencies.length === 1 && (
+                <p className="text-xs text-muted-foreground">
+                  Apenas {allowedCurrencies[0]} disponível para o seu país
+                </p>
+              )}
+            </div>
 
             {/* Preset amounts */}
             <div className="space-y-2">
