@@ -173,14 +173,50 @@ async function fetchExchangeRate(
 
 // ================== SPREAD CONFIGURATION ==================
 
+export interface SpreadLimits {
+  min: number;
+  max: number;
+}
+
+/**
+ * Get spread limits from platform settings
+ */
+export async function getSpreadLimits(supabaseAdmin: any): Promise<SpreadLimits> {
+  const defaultLimits: SpreadLimits = { min: 0, max: 0.05 }; // 0% to 5%
+  
+  try {
+    const { data } = await supabaseAdmin
+      .from('platform_settings')
+      .select('key, value')
+      .in('key', ['fx_spread_min_percent', 'fx_spread_max_percent']);
+    
+    if (data && data.length > 0) {
+      const minSetting = data.find((s: any) => s.key === 'fx_spread_min_percent');
+      const maxSetting = data.find((s: any) => s.key === 'fx_spread_max_percent');
+      
+      return {
+        min: minSetting?.value?.value ?? defaultLimits.min,
+        max: maxSetting?.value?.value ?? defaultLimits.max,
+      };
+    }
+  } catch (error) {
+    logStep("Error fetching spread limits, using defaults", { error: String(error) });
+  }
+  
+  return defaultLimits;
+}
+
 /**
  * Get spread percentage for a specific currency
  * First checks fx_spread_configs table, then platform_settings, then default
+ * Validates against spread limits
  */
 export async function getSpreadForCurrency(
   supabaseAdmin: any, 
   currency: string
-): Promise<number> {
+): Promise<{ spread: number; valid: boolean; error?: string }> {
+  const limits = await getSpreadLimits(supabaseAdmin);
+  
   try {
     // Check currency-specific spread
     const { data: currencySpread } = await supabaseAdmin
@@ -190,16 +226,40 @@ export async function getSpreadForCurrency(
       .eq('is_enabled', true)
       .single();
     
-    if (currencySpread?.spread_percent) {
-      logStep("Using currency-specific spread", { currency, spread: currencySpread.spread_percent });
-      return Number(currencySpread.spread_percent);
+    if (currencySpread?.spread_percent !== undefined) {
+      const spread = Number(currencySpread.spread_percent);
+      
+      // Validate against limits
+      if (spread < limits.min || spread > limits.max) {
+        logStep("BLOCKING: Spread outside limits", { currency, spread, limits });
+        return {
+          spread,
+          valid: false,
+          error: `Spread ${(spread * 100).toFixed(2)}% for ${currency} is outside allowed range [${(limits.min * 100).toFixed(2)}%, ${(limits.max * 100).toFixed(2)}%]`,
+        };
+      }
+      
+      logStep("Using currency-specific spread", { currency, spread });
+      return { spread, valid: true };
     }
   } catch {
     // Currency not found, try default
   }
   
   // Fall back to platform default
-  return getPlatformSpread(supabaseAdmin);
+  const defaultSpread = await getPlatformSpread(supabaseAdmin);
+  
+  // Validate default against limits
+  if (defaultSpread < limits.min || defaultSpread > limits.max) {
+    logStep("BLOCKING: Default spread outside limits", { defaultSpread, limits });
+    return {
+      spread: defaultSpread,
+      valid: false,
+      error: `Default spread ${(defaultSpread * 100).toFixed(2)}% is outside allowed range`,
+    };
+  }
+  
+  return { spread: defaultSpread, valid: true };
 }
 
 /**
@@ -213,7 +273,7 @@ export async function getPlatformSpread(supabaseAdmin: any): Promise<number> {
       .eq('key', 'fx_spread_percent')
       .single();
     
-    if (data?.value?.value) {
+    if (data?.value?.value !== undefined) {
       return Number(data.value.value);
     }
   } catch (error) {
@@ -292,11 +352,35 @@ export async function convertToUSD(
   const rateSource = rateResult?.source ?? 'fallback';
   const provider = rateSource === 'live' ? 'exchangerate-api.com' : rateSource;
 
-  // Get spread (currency-specific or default)
+  // Get spread (currency-specific or default) with validation
   let finalSpread = spread_percent;
+  let spreadValid = true;
+  let spreadError: string | undefined;
+  
   if (finalSpread === undefined && supabaseAdmin) {
-    finalSpread = await getSpreadForCurrency(supabaseAdmin, payment_currency);
+    const spreadResult = await getSpreadForCurrency(supabaseAdmin, payment_currency);
+    finalSpread = spreadResult.spread;
+    spreadValid = spreadResult.valid;
+    spreadError = spreadResult.error;
   }
+  
+  // Block transaction if spread is invalid (outside limits)
+  if (!spreadValid && block_on_no_rate) {
+    logStep("BLOCKING: Invalid spread configuration", { payment_currency, finalSpread, spreadError });
+    return {
+      success: false,
+      amount_usd_minor: 0,
+      fx_rate_market: marketRate,
+      fx_rate_applied: 0,
+      fx_spread_percent: finalSpread ?? 0,
+      fx_spread_amount_usd_minor: 0,
+      fx_provider: provider,
+      fx_timestamp: timestamp,
+      fx_rate_source: rateSource,
+      error: spreadError || `Invalid spread configuration for ${payment_currency}. Transaction blocked.`,
+    };
+  }
+  
   finalSpread = finalSpread ?? 0.008;
 
   // Convert minor units to major units
