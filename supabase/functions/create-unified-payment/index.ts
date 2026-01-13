@@ -230,8 +230,9 @@ serve(async (req) => {
       throw new Error(`Moeda não permitida para o país selecionado. Moedas permitidas: ${allowed.join(", ")}`);
     }
 
-    // If country is Brazil, use Mercado Pago
-    if (userCountry === 'BR') {
+    // If country is Brazil AND currency is BRL, use Mercado Pago
+    // Mercado Pago Brazil only accepts BRL - for USD payments, use Stripe
+    if (userCountry === 'BR' && (paymentCurrency as string).toUpperCase() === 'BRL') {
       // Check if Mercado Pago is enabled
       const { data: mpProvider } = await supabaseAdmin
         .from('payment_providers')
