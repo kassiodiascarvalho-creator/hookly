@@ -482,17 +482,17 @@ export default function AdminFinances() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Finanças</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Finanças</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
             Gestão de créditos, ganhos e saques da plataforma (valores em USD)
           </p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4">
           <Select value={dateFilter} onValueChange={(v) => setDateFilter(v as DateFilterOption)}>
-            <SelectTrigger className="w-40">
-              <Calendar className="h-4 w-4 mr-2" />
+            <SelectTrigger className="w-32 md:w-40">
+              <Calendar className="h-4 w-4 mr-1 md:mr-2" />
               <SelectValue placeholder="Período" />
             </SelectTrigger>
             <SelectContent>
@@ -504,22 +504,22 @@ export default function AdminFinances() {
               <SelectItem value="all">Todo período</SelectItem>
             </SelectContent>
           </Select>
-          <Button onClick={fetchData} variant="outline" disabled={loading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-            Atualizar
+          <Button onClick={fetchData} variant="outline" disabled={loading} size="sm" className="md:size-default">
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            <span className="hidden md:inline ml-2">Atualizar</span>
           </Button>
         </div>
       </div>
 
       {/* Summary Cards - All in USD */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
+      <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Créditos</CardTitle>
-            <Coins className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xs md:text-sm font-medium truncate pr-1">Total Créditos</CardTitle>
+            <Coins className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatMoneyFromCents(summary.total_credits_usd, "USD")}</div>
+            <div className="text-lg md:text-2xl font-bold truncate">{formatMoneyFromCents(summary.total_credits_usd, "USD")}</div>
             <p className="text-xs text-muted-foreground">Não sacáveis</p>
           </CardContent>
         </Card>
@@ -586,18 +586,18 @@ export default function AdminFinances() {
 
       {/* Tabs */}
       <Tabs defaultValue="balances" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="balances">Saldos</TabsTrigger>
-          <TabsTrigger value="withdrawals">
+        <TabsList className="w-full flex-wrap h-auto gap-1 p-1 md:w-auto md:flex-nowrap">
+          <TabsTrigger value="balances" className="text-xs md:text-sm">Saldos</TabsTrigger>
+          <TabsTrigger value="withdrawals" className="text-xs md:text-sm">
             Saques
             {summary.pending_withdrawals > 0 && (
-              <Badge variant="destructive" className="ml-2">{summary.pending_withdrawals}</Badge>
+              <Badge variant="destructive" className="ml-1 md:ml-2 text-xs">{summary.pending_withdrawals}</Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="transactions">Transações</TabsTrigger>
-          <TabsTrigger value="fx-settings">
-            <Settings2 className="h-4 w-4 mr-1" />
-            FX & Spread
+          <TabsTrigger value="transactions" className="text-xs md:text-sm">Transações</TabsTrigger>
+          <TabsTrigger value="fx-settings" className="text-xs md:text-sm">
+            <Settings2 className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+            <span className="hidden sm:inline">FX &</span> Spread
           </TabsTrigger>
         </TabsList>
 

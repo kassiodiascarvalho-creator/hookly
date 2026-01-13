@@ -4,12 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Loader2, Trash2, Download } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileDataCard, MobileDataRow } from "@/components/admin/MobileDataCard";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,6 +40,7 @@ interface Lead {
 
 export default function AdminLeads() {
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -112,34 +115,22 @@ export default function AdminLeads() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">{t("admin.leads")}</h1>
-        <p className="text-muted-foreground">{t("admin.leadsDescription")}</p>
+        <h1 className="text-2xl md:text-3xl font-bold">{t("admin.leads")}</h1>
+        <p className="text-sm md:text-base text-muted-foreground">{t("admin.leadsDescription")}</p>
       </div>
 
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <CardTitle>{t("admin.allLeads")} ({leads.length})</CardTitle>
-            <div className="flex items-center gap-4 flex-wrap">
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder={t("admin.filterByType")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("admin.allTypes")}</SelectItem>
-                  <SelectItem value="company">{t("admin.companies")}</SelectItem>
-                  <SelectItem value="freelancer">{t("admin.freelancers")}</SelectItem>
-                  <SelectItem value="unknown">{t("admin.unknown")}</SelectItem>
-                </SelectContent>
-              </Select>
-              
+        <CardHeader className="pb-3 md:pb-6">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg md:text-xl">{t("admin.allLeads")} ({leads.length})</CardTitle>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline">
+                  <Button variant="outline" size={isMobile ? "sm" : "default"}>
                     <Download className="h-4 w-4 mr-2" />
-                    {t("admin.exportCsv")}
+                    {!isMobile && t("admin.exportCsv")}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
@@ -151,8 +142,20 @@ export default function AdminLeads() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              
-              <div className="relative w-64">
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="w-full sm:w-40">
+                  <SelectValue placeholder={t("admin.filterByType")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("admin.allTypes")}</SelectItem>
+                  <SelectItem value="company">{t("admin.companies")}</SelectItem>
+                  <SelectItem value="freelancer">{t("admin.freelancers")}</SelectItem>
+                  <SelectItem value="unknown">{t("admin.unknown")}</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder={t("admin.searchLeads")}
@@ -169,7 +172,58 @@ export default function AdminLeads() {
             <div className="flex justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
+          ) : isMobile ? (
+            // Mobile view - card layout
+            <div className="space-y-3">
+              {filteredLeads.map((lead) => (
+                <MobileDataCard key={lead.id}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="font-medium text-sm break-all flex-1">{lead.email}</div>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>{t("admin.confirmDelete")}</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            {t("admin.confirmDeleteLead")}
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => deleteLead(lead.id)}>
+                            {t("common.delete")}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {lead.source && (
+                      <Badge variant="outline">{lead.source}</Badge>
+                    )}
+                    {lead.user_type && (
+                      <Badge variant={lead.user_type === 'company' ? 'default' : 'secondary'}>
+                        {lead.user_type === 'company' ? t("admin.company") : t("admin.freelancer")}
+                      </Badge>
+                    )}
+                  </div>
+                  <MobileDataRow label={t("admin.createdAt")}>
+                    {format(new Date(lead.created_at), "PP")}
+                  </MobileDataRow>
+                </MobileDataCard>
+              ))}
+              {filteredLeads.length === 0 && (
+                <div className="text-center text-muted-foreground py-8">
+                  {t("admin.noLeadsFound")}
+                </div>
+              )}
+            </div>
           ) : (
+            // Desktop view - table
             <Table>
               <TableHeader>
                 <TableRow>

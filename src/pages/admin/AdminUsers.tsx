@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Search, Loader2 } from "lucide-react";
 import { format } from "date-fns";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileDataCard, MobileDataRow } from "@/components/admin/MobileDataCard";
 
 interface Profile {
   id: string;
@@ -20,6 +22,7 @@ interface Profile {
 
 export default function AdminUsers() {
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -51,17 +54,17 @@ export default function AdminUsers() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">{t("admin.users")}</h1>
-        <p className="text-muted-foreground">{t("admin.usersDescription")}</p>
+        <h1 className="text-2xl md:text-3xl font-bold">{t("admin.users")}</h1>
+        <p className="text-sm md:text-base text-muted-foreground">{t("admin.usersDescription")}</p>
       </div>
 
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>{t("admin.allUsers")}</CardTitle>
-            <div className="relative w-64">
+        <CardHeader className="pb-3 md:pb-6">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <CardTitle className="text-lg md:text-xl">{t("admin.allUsers")}</CardTitle>
+            <div className="relative w-full md:w-64">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder={t("admin.searchUsers")}
@@ -77,7 +80,36 @@ export default function AdminUsers() {
             <div className="flex justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
+          ) : isMobile ? (
+            // Mobile view - card layout
+            <div className="space-y-3">
+              {filteredProfiles.map((profile) => (
+                <MobileDataCard key={profile.id}>
+                  <div className="font-medium text-sm break-all">{profile.email}</div>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <Badge variant={profile.user_type === "company" ? "default" : "secondary"}>
+                      {profile.user_type || "-"}
+                    </Badge>
+                    <Badge variant={profile.role === "admin" ? "destructive" : "outline"}>
+                      {profile.role}
+                    </Badge>
+                  </div>
+                  <MobileDataRow label={t("admin.language")}>
+                    {profile.preferred_language.toUpperCase()}
+                  </MobileDataRow>
+                  <MobileDataRow label={t("admin.createdAt")}>
+                    {format(new Date(profile.created_at), "PP")}
+                  </MobileDataRow>
+                </MobileDataCard>
+              ))}
+              {filteredProfiles.length === 0 && (
+                <div className="text-center text-muted-foreground py-8">
+                  {t("admin.noUsersFound")}
+                </div>
+              )}
+            </div>
           ) : (
+            // Desktop view - table
             <Table>
               <TableHeader>
                 <TableRow>

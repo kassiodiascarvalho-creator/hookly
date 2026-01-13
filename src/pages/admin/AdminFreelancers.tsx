@@ -11,6 +11,8 @@ import { Switch } from "@/components/ui/switch";
 import { Search, Loader2, CheckCircle, XCircle, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileDataCard, MobileDataRow } from "@/components/admin/MobileDataCard";
 
 interface FreelancerProfile {
   id: string;
@@ -30,6 +32,7 @@ export default function AdminFreelancers() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [freelancers, setFreelancers] = useState<FreelancerProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -72,7 +75,6 @@ export default function AdminFreelancers() {
 
       if (error) throw error;
 
-      // Update with data from database to ensure persistence
       if (data) {
         setFreelancers((prev) =>
           prev.map((f) => (f.id === freelancer.id ? data : f))
@@ -98,17 +100,17 @@ export default function AdminFreelancers() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">{t("admin.freelancers")}</h1>
-        <p className="text-muted-foreground">{t("admin.freelancersDescription")}</p>
+        <h1 className="text-2xl md:text-3xl font-bold">{t("admin.freelancers")}</h1>
+        <p className="text-sm md:text-base text-muted-foreground">{t("admin.freelancersDescription")}</p>
       </div>
 
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>{t("admin.allFreelancers")}</CardTitle>
-            <div className="relative w-64">
+        <CardHeader className="pb-3 md:pb-6">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <CardTitle className="text-lg md:text-xl">{t("admin.allFreelancers")}</CardTitle>
+            <div className="relative w-full md:w-64">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder={t("admin.searchFreelancers")}
@@ -124,7 +126,69 @@ export default function AdminFreelancers() {
             <div className="flex justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
+          ) : isMobile ? (
+            // Mobile view - card layout
+            <div className="space-y-3">
+              {filteredFreelancers.map((freelancer) => (
+                <MobileDataCard key={freelancer.id}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="font-medium">{freelancer.full_name || "-"}</div>
+                      <div className="text-sm text-muted-foreground">{freelancer.title || "-"}</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {freelancer.verified ? (
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                      ) : (
+                        <XCircle className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {freelancer.skills?.slice(0, 3).map((skill) => (
+                      <Badge key={skill} variant="outline" className="text-xs">
+                        {skill}
+                      </Badge>
+                    ))}
+                    {freelancer.skills && freelancer.skills.length > 3 && (
+                      <Badge variant="outline" className="text-xs">
+                        +{freelancer.skills.length - 3}
+                      </Badge>
+                    )}
+                  </div>
+                  <MobileDataRow label={t("admin.hourlyRate")}>
+                    {freelancer.hourly_rate ? `$${freelancer.hourly_rate}/h` : "-"}
+                  </MobileDataRow>
+                  <MobileDataRow label={t("admin.location")}>
+                    {freelancer.location || "-"}
+                  </MobileDataRow>
+                  <div className="flex items-center justify-between pt-2 border-t mt-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">{t("admin.verified")}</span>
+                      <Switch
+                        checked={freelancer.verified || false}
+                        onCheckedChange={() => toggleVerification(freelancer)}
+                      />
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate(`/admin/freelancers/${freelancer.user_id}`)}
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      {t("admin.view")}
+                    </Button>
+                  </div>
+                </MobileDataCard>
+              ))}
+              {filteredFreelancers.length === 0 && (
+                <div className="text-center text-muted-foreground py-8">
+                  {t("admin.noFreelancersFound")}
+                </div>
+              )}
+            </div>
           ) : (
+            // Desktop view - table
             <Table>
               <TableHeader>
                 <TableRow>
