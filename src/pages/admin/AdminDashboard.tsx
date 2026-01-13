@@ -72,21 +72,21 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">{t("admin.dashboard")}</h1>
-        <p className="text-muted-foreground">{t("admin.dashboardDescription")}</p>
+        <h1 className="text-2xl md:text-3xl font-bold">{t("admin.dashboard")}</h1>
+        <p className="text-sm md:text-base text-muted-foreground">{t("admin.dashboardDescription")}</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 grid-cols-2 md:grid-cols-2 lg:grid-cols-3">
         {statCards.map((stat) => (
           <Card key={stat.title}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-              <stat.icon className={`h-5 w-5 ${stat.color}`} />
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-xs md:text-sm font-medium truncate pr-2">{stat.title}</CardTitle>
+              <stat.icon className={`h-4 w-4 md:h-5 md:w-5 ${stat.color} flex-shrink-0`} />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-xl md:text-2xl font-bold">
                 {loading ? "..." : stat.value}
               </div>
             </CardContent>

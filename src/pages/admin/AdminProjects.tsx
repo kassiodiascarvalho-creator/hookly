@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Loader2 } from "lucide-react";
 import { format } from "date-fns";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileDataCard, MobileDataRow } from "@/components/admin/MobileDataCard";
 
 interface Project {
   id: string;
@@ -30,6 +32,7 @@ const statusColors: Record<string, string> = {
 
 export default function AdminProjects() {
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -63,19 +66,19 @@ export default function AdminProjects() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">{t("admin.projects")}</h1>
-        <p className="text-muted-foreground">{t("admin.projectsDescription")}</p>
+        <h1 className="text-2xl md:text-3xl font-bold">{t("admin.projects")}</h1>
+        <p className="text-sm md:text-base text-muted-foreground">{t("admin.projectsDescription")}</p>
       </div>
 
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <CardTitle>{t("admin.allProjects")}</CardTitle>
-            <div className="flex items-center gap-4">
+        <CardHeader className="pb-3 md:pb-6">
+          <div className="flex flex-col gap-3">
+            <CardTitle className="text-lg md:text-xl">{t("admin.allProjects")}</CardTitle>
+            <div className="flex flex-col sm:flex-row gap-3">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-40">
+                <SelectTrigger className="w-full sm:w-40">
                   <SelectValue placeholder={t("admin.filterByStatus")} />
                 </SelectTrigger>
                 <SelectContent>
@@ -86,7 +89,7 @@ export default function AdminProjects() {
                   <SelectItem value="completed">{t("projects.statusCompleted")}</SelectItem>
                 </SelectContent>
               </Select>
-              <div className="relative w-64">
+              <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder={t("admin.searchProjects")}
@@ -103,7 +106,38 @@ export default function AdminProjects() {
             <div className="flex justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
+          ) : isMobile ? (
+            // Mobile view - card layout
+            <div className="space-y-3">
+              {filteredProjects.map((project) => (
+                <MobileDataCard key={project.id}>
+                  <div className="font-medium line-clamp-2">{project.title}</div>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {project.category && (
+                      <Badge variant="outline">{project.category}</Badge>
+                    )}
+                    <Badge variant={statusColors[project.status] as any || "secondary"}>
+                      {t(`projects.status${project.status.charAt(0).toUpperCase() + project.status.slice(1).replace("_", "")}`)}
+                    </Badge>
+                  </div>
+                  <MobileDataRow label={t("admin.budget")}>
+                    {project.budget_min && project.budget_max
+                      ? `$${project.budget_min.toLocaleString()} - $${project.budget_max.toLocaleString()}`
+                      : "-"}
+                  </MobileDataRow>
+                  <MobileDataRow label={t("admin.createdAt")}>
+                    {format(new Date(project.created_at), "PP")}
+                  </MobileDataRow>
+                </MobileDataCard>
+              ))}
+              {filteredProjects.length === 0 && (
+                <div className="text-center text-muted-foreground py-8">
+                  {t("admin.noProjectsFound")}
+                </div>
+              )}
+            </div>
           ) : (
+            // Desktop view - table
             <Table>
               <TableHeader>
                 <TableRow>
