@@ -75,15 +75,23 @@ serve(async (req) => {
       throw new Error("Payment not found");
     }
 
-    // Verify user is the company owner
-    if (payment.company_user_id !== user.id) {
-      throw new Error("Only the company can release payment");
+    // Check if user is admin
+    const { data: isAdminResult } = await supabaseClient.rpc('is_admin');
+    const isAdmin = isAdminResult === true;
+    logStep("Admin check", { isAdmin });
+
+    // Verify user is the company owner OR an admin
+    if (payment.company_user_id !== user.id && !isAdmin) {
+      throw new Error("Only the company or admin can release payment");
     }
 
     // Validate payment is in correct state for release
     if (payment.status !== 'paid') {
       throw new Error(`Cannot release payment with status '${payment.status}'. Payment must be in 'paid' status.`);
     }
+
+    // Track if this is an admin override release
+    const isAdminOverride = isAdmin && payment.company_user_id !== user.id;
 
     if (!payment.stripe_payment_intent_id) {
       throw new Error("No payment intent found");
@@ -99,12 +107,24 @@ serve(async (req) => {
     );
     logStep("Payment captured", { paymentIntentId: paymentIntent.id });
 
-    // Update payment status
+    // Log admin override action if applicable
+    if (isAdminOverride) {
+      await supabaseClient.from("payment_logs").insert({
+        payment_id: paymentId,
+        action: "admin_release",
+        admin_user_id: user.id,
+        details: { reason: "Admin override release" },
+      });
+      logStep("Admin override logged");
+    }
+
+    // Update payment status with admin tracking
     const { error: updateError } = await supabaseClient
       .from("payments")
       .update({ 
         status: "released", 
         released_at: new Date().toISOString(),
+        released_by_admin_id: isAdminOverride ? user.id : null,
         updated_at: new Date().toISOString() 
       })
       .eq("id", paymentId);
