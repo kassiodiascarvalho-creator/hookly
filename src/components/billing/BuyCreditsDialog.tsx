@@ -71,11 +71,12 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
     
     const { data } = await supabase
       .from("freelancer_profiles")
-      .select("country_code")
+      .select("country_code, country")
       .eq("user_id", user.id)
       .single();
 
-    const userCountry = data?.country_code || null;
+    // Use country_code first, fallback to country field
+    const userCountry = data?.country_code || data?.country || null;
     setCountry(userCountry);
     
     // Set allowed currencies based on country
