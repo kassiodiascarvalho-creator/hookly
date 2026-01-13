@@ -50,7 +50,7 @@ interface Payment {
   released_by_admin_id: string | null;
   project?: { title: string } | null;
   company?: { company_name: string } | null;
-  freelancer?: { full_name: string } | null;
+  freelancer?: { full_name: string; country_code?: string; currency_code?: string } | null;
   payout_method?: {
     type: string;
     pix_key?: string | null;
@@ -95,7 +95,7 @@ export default function AdminPayments() {
           *,
           project:projects(title),
           company:company_profiles!payments_company_user_id_fkey(company_name),
-          freelancer:freelancer_profiles!payments_freelancer_user_id_fkey(full_name)
+          freelancer:freelancer_profiles!payments_freelancer_user_id_fkey(full_name, country_code, currency_code, country)
         `)
         .order("created_at", { ascending: false });
 
@@ -176,11 +176,12 @@ export default function AdminPayments() {
     return matchesSearch && matchesStatus;
   });
 
+  // All amounts are stored in USD cents after FX conversion
   const stats = {
     total: payments.length,
-    totalAmount: payments.reduce((sum, p) => sum + Number(p.amount), 0),
-    inEscrow: payments.filter(p => p.status === "paid" && p.escrow_status === "held").reduce((sum, p) => sum + Number(p.amount), 0),
-    released: payments.filter(p => p.status === "released").reduce((sum, p) => sum + Number(p.amount), 0),
+    totalAmount: payments.reduce((sum, p) => sum + Number(p.amount) * 100, 0), // Convert to cents for display
+    inEscrow: payments.filter(p => p.status === "paid" && p.escrow_status === "held").reduce((sum, p) => sum + Number(p.amount) * 100, 0),
+    released: payments.filter(p => p.status === "released").reduce((sum, p) => sum + Number(p.amount) * 100, 0),
     pending: payments.filter(p => p.status === "pending").length,
     awaitingRelease: payments.filter(p => p.status === "paid" && p.escrow_status === "held").length
   };
@@ -196,12 +197,12 @@ export default function AdminPayments() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">{t("admin.totalVolume")}</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("admin.totalVolume")} (USD)</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
               <DollarSign className="h-4 w-4 text-muted-foreground" />
-              <span className="text-2xl font-bold">{formatMoneyFromCents(stats.totalAmount, "BRL")}</span>
+              <span className="text-2xl font-bold">{formatMoneyFromCents(stats.totalAmount, "USD")}</span>
             </div>
           </CardContent>
         </Card>
@@ -212,7 +213,7 @@ export default function AdminPayments() {
           <CardContent>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-yellow-500" />
-              <span className="text-2xl font-bold">{formatMoneyFromCents(stats.inEscrow, "BRL")}</span>
+              <span className="text-2xl font-bold">{formatMoneyFromCents(stats.inEscrow, "USD")}</span>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               {stats.awaitingRelease} {t("admin.awaitingRelease")}
@@ -226,7 +227,7 @@ export default function AdminPayments() {
           <CardContent>
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-500" />
-              <span className="text-2xl font-bold">{formatMoneyFromCents(stats.released, "BRL")}</span>
+              <span className="text-2xl font-bold">{formatMoneyFromCents(stats.released, "USD")}</span>
             </div>
           </CardContent>
         </Card>
@@ -304,7 +305,7 @@ export default function AdminPayments() {
                       {payment.freelancer?.full_name || "-"}
                     </TableCell>
                     <TableCell className="font-semibold">
-                      {formatMoneyFromCents(Number(payment.amount), payment.currency || "BRL")}
+                      {formatMoneyFromCents(Number(payment.amount) * 100, "USD")}
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-1">
@@ -357,9 +358,9 @@ export default function AdminPayments() {
               {/* Payment Info */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">{t("admin.amount")}</p>
+                  <p className="text-sm text-muted-foreground">{t("admin.amount")} (USD)</p>
                   <p className="font-semibold text-lg">
-                    {formatMoneyFromCents(Number(selectedPayment.amount), selectedPayment.currency || "BRL")}
+                    {formatMoneyFromCents(Number(selectedPayment.amount) * 100, "USD")}
                   </p>
                 </div>
                 <div>
