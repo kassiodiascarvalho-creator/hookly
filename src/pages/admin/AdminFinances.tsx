@@ -541,7 +541,7 @@ export default function AdminFinances() {
             <Lock className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{formatMoneyFromCents(summary.total_escrow_usd * 100, "USD")}</div>
+            <div className="text-2xl font-bold text-blue-600">{formatMoneyFromCents(summary.total_escrow_usd, "USD")}</div>
             <p className="text-xs text-muted-foreground">Total em contratos</p>
           </CardContent>
         </Card>
@@ -682,7 +682,7 @@ export default function AdminFinances() {
                       {formatMoneyFromCents(Number(balance.earnings_available), "USD")}
                     </TableCell>
                     <TableCell className="text-right font-mono text-blue-600">
-                      {formatMoneyFromCents(Number(balance.escrow_held) * 100, "USD")}
+                      {formatMoneyFromCents(Number(balance.escrow_held), "USD")}
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
                       {new Date(balance.updated_at).toLocaleDateString("pt-BR")}
