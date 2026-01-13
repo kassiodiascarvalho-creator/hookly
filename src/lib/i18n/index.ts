@@ -28,11 +28,26 @@ const resources = {
   de: { translation: de },
 };
 
+// Get stored language or browser preference
+const getInitialLanguage = (): string => {
+  const stored = localStorage.getItem('i18nextLng');
+  if (stored && ['en', 'pt', 'es', 'fr', 'zh', 'de'].includes(stored)) {
+    return stored;
+  }
+  
+  const browserLang = navigator.language.split('-')[0];
+  if (['en', 'pt', 'es', 'fr', 'zh', 'de'].includes(browserLang)) {
+    return browserLang;
+  }
+  
+  return 'pt'; // Default to Portuguese for Brazilian market
+};
+
 i18n
   .use(initReactI18next)
   .init({
     resources,
-    lng: 'en',
+    lng: getInitialLanguage(),
     fallbackLng: 'en',
     interpolation: {
       escapeValue: false,

@@ -82,6 +82,7 @@ export function DashboardLayout() {
       setUserType(profileData.user_type as "company" | "freelancer");
       if (profileData.preferred_language && profileData.preferred_language !== i18n.language) {
         i18n.changeLanguage(profileData.preferred_language);
+        localStorage.setItem('i18nextLng', profileData.preferred_language);
       }
     }
 
@@ -105,6 +106,7 @@ export function DashboardLayout() {
 
   const handleLanguageChange = async (lang: string) => {
     i18n.changeLanguage(lang);
+    localStorage.setItem('i18nextLng', lang);
     if (user) {
       await supabase
         .from("profiles")
