@@ -24,17 +24,17 @@ const projectSchema = z.object({
   currency: z.string().min(1, "Please select a currency"),
 });
 
-const categories = [
-  "Development",
-  "Design",
-  "Marketing",
-  "Writing",
-  "Data Science",
-  "Video & Photo",
-  "Consulting",
-  "Finance",
-  "Legal",
-  "Other",
+const categoryKeys = [
+  "development",
+  "design",
+  "marketing",
+  "writing",
+  "dataScience",
+  "videoPhoto",
+  "consulting",
+  "finance",
+  "legal",
+  "other",
 ];
 
 interface KPI {
@@ -218,8 +218,8 @@ export default function ProjectNew() {
                   <SelectValue placeholder={t("projects.selectCategory")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  {categoryKeys.map((key) => (
+                    <SelectItem key={key} value={key}>{t(`categories.${key}`)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -372,7 +372,7 @@ export default function ProjectNew() {
               
               <div>
                 <p className="text-sm text-muted-foreground">{t("projects.category")}</p>
-                <p>{formData.category}</p>
+                <p>{formData.category ? t(`categories.${formData.category}`) : "-"}</p>
               </div>
               
               <div>
