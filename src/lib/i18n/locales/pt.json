@@ -90,7 +90,8 @@
     "savings": "Poupança",
     "holderName": "Nome do Titular",
     "holderDoc": "CPF/CNPJ",
-    "setDefault": "Definir como Padrão"
+    "setDefault": "Definir como Padrão",
+    "withdrawn": "Sacado"
   },
   "nav": {
     "howItWorks": "Como funciona",

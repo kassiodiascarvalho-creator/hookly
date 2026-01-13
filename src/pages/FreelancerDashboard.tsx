@@ -45,7 +45,9 @@ export default function FreelancerDashboard() {
         contractsResult,
         proposalsResult,
         conversationsResult,
-        balanceResult
+        balanceResult,
+        activeContractsResult,
+        paidWithdrawalsResult
       ] = await Promise.all([
         // Active contracts (accepted proposals = contracts created)
         supabase
@@ -67,13 +69,27 @@ export default function FreelancerDashboard() {
           .select("id", { count: "exact" })
           .eq("freelancer_user_id", user.id),
         
-        // User balance (earnings + escrow)
+        // User balance (earnings)
         supabase
           .from("user_balances")
-          .select("earnings_available, escrow_held, currency")
+          .select("earnings_available, currency")
           .eq("user_id", user.id)
           .eq("user_type", "freelancer")
-          .maybeSingle()
+          .maybeSingle(),
+        
+        // Active contracts amount (escrow from contracts)
+        supabase
+          .from("contracts")
+          .select("amount_cents")
+          .eq("freelancer_user_id", user.id)
+          .eq("status", "active"),
+        
+        // Paid withdrawals (already received)
+        supabase
+          .from("withdrawal_requests")
+          .select("amount")
+          .eq("freelancer_user_id", user.id)
+          .eq("status", "paid")
       ]);
 
       // Calculate totals
@@ -81,18 +97,22 @@ export default function FreelancerDashboard() {
       const pendingProposals = proposalsResult.count || 0;
       const conversations = conversationsResult.count || 0;
       
-      // Total earnings = available + in escrow (values are stored in cents)
-      const earningsCents = balanceResult.data 
-        ? Number(balanceResult.data.earnings_available || 0) + Number(balanceResult.data.escrow_held || 0)
-        : 0;
-      const earnings = earningsCents / 100; // Convert from cents to currency units
+      // All values are stored in cents
+      const earningsAvailable = Number(balanceResult.data?.earnings_available || 0) / 100;
+      const contractsEscrow = (activeContractsResult.data || [])
+        .reduce((sum, c) => sum + (c.amount_cents || 0), 0) / 100;
+      const paidWithdrawals = (paidWithdrawalsResult.data || [])
+        .reduce((sum, w) => sum + (Number(w.amount) || 0), 0) / 100;
+      
+      // Total earnings = available + contracts escrow + already withdrawn
+      const totalEarnings = earningsAvailable + contractsEscrow + paidWithdrawals;
       const currency = balanceResult.data?.currency || "BRL";
 
       setStats({
         activeProjects,
         pendingProposals,
         conversations,
-        totalEarnings: earnings,
+        totalEarnings,
         currency
       });
     } catch (error) {

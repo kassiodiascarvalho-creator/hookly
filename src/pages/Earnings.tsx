@@ -73,6 +73,7 @@ export default function Earnings() {
   const [userBalance, setUserBalance] = useState({ earnings_available: 0, credits_available: 0, escrow_held: 0, currency: "USD" });
   const [contractsEscrow, setContractsEscrow] = useState(0);
   const [withdrawalRequests, setWithdrawalRequests] = useState<any[]>([]);
+  const [totalPaidWithdrawals, setTotalPaidWithdrawals] = useState(0);
   
   // Payout method form
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -214,6 +215,11 @@ export default function Earnings() {
 
     if (withdrawalsData) {
       setWithdrawalRequests(withdrawalsData);
+      // Calculate total paid withdrawals (values are stored in cents)
+      const paidWithdrawals = withdrawalsData
+        .filter(w => w.status === 'paid')
+        .reduce((sum, w) => sum + (Number(w.amount) || 0), 0);
+      setTotalPaidWithdrawals(paidWithdrawals / 100); // convert from cents
     }
 
     setLoading(false);
@@ -538,10 +544,12 @@ export default function Earnings() {
               <div>
                 <p className="text-sm text-muted-foreground">{t("earnings.totalEarnings")}</p>
                 <p className="text-2xl font-bold text-primary">
-                  {formatMoney(userBalance.earnings_available + contractsEscrow, userBalance.currency)}
+                  {formatMoney(userBalance.earnings_available + contractsEscrow + totalPaidWithdrawals, userBalance.currency)}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {t("earnings.received")}: {formatMoney(userBalance.earnings_available, userBalance.currency)} + {t("earnings.inEscrow")}: {formatMoney(contractsEscrow, userBalance.currency)}
+                  {t("earnings.received")}: {formatMoney(userBalance.earnings_available, userBalance.currency)} 
+                  {contractsEscrow > 0 && ` + ${t("earnings.inEscrow")}: ${formatMoney(contractsEscrow, userBalance.currency)}`}
+                  {totalPaidWithdrawals > 0 && ` + ${t("earnings.withdrawn")}: ${formatMoney(totalPaidWithdrawals, userBalance.currency)}`}
                 </p>
               </div>
             </div>
