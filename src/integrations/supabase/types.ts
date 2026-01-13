@@ -302,7 +302,9 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           country: string | null
+          country_code: string | null
           created_at: string
+          currency_code: string | null
           full_name: string | null
           hourly_rate: number | null
           id: string
@@ -323,7 +325,9 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           country?: string | null
+          country_code?: string | null
           created_at?: string
+          currency_code?: string | null
           full_name?: string | null
           hourly_rate?: number | null
           id?: string
@@ -344,7 +348,9 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           country?: string | null
+          country_code?: string | null
           created_at?: string
+          currency_code?: string | null
           full_name?: string | null
           hourly_rate?: number | null
           id?: string
@@ -447,6 +453,7 @@ export type Database = {
         Row: {
           amount: number
           amount_original: number | null
+          amount_usd_minor: number | null
           balance_after_credits: number | null
           balance_after_earnings: number | null
           balance_after_escrow: number | null
@@ -455,8 +462,18 @@ export type Database = {
           currency: string
           currency_original: string | null
           exchange_rate: number | null
+          fx_provider: string | null
+          fx_rate_applied: number | null
+          fx_rate_market: number | null
+          fx_spread_amount_usd_minor: number | null
+          fx_spread_percent: number | null
+          fx_timestamp: string | null
+          gateway_provider: string | null
           id: string
           metadata: Json | null
+          payment_amount_minor: number | null
+          payment_currency: string | null
+          payment_method: string | null
           related_contract_id: string | null
           related_payment_id: string | null
           related_withdrawal_id: string | null
@@ -466,6 +483,7 @@ export type Database = {
         Insert: {
           amount: number
           amount_original?: number | null
+          amount_usd_minor?: number | null
           balance_after_credits?: number | null
           balance_after_earnings?: number | null
           balance_after_escrow?: number | null
@@ -474,8 +492,18 @@ export type Database = {
           currency?: string
           currency_original?: string | null
           exchange_rate?: number | null
+          fx_provider?: string | null
+          fx_rate_applied?: number | null
+          fx_rate_market?: number | null
+          fx_spread_amount_usd_minor?: number | null
+          fx_spread_percent?: number | null
+          fx_timestamp?: string | null
+          gateway_provider?: string | null
           id?: string
           metadata?: Json | null
+          payment_amount_minor?: number | null
+          payment_currency?: string | null
+          payment_method?: string | null
           related_contract_id?: string | null
           related_payment_id?: string | null
           related_withdrawal_id?: string | null
@@ -485,6 +513,7 @@ export type Database = {
         Update: {
           amount?: number
           amount_original?: number | null
+          amount_usd_minor?: number | null
           balance_after_credits?: number | null
           balance_after_earnings?: number | null
           balance_after_escrow?: number | null
@@ -493,8 +522,18 @@ export type Database = {
           currency?: string
           currency_original?: string | null
           exchange_rate?: number | null
+          fx_provider?: string | null
+          fx_rate_applied?: number | null
+          fx_rate_market?: number | null
+          fx_spread_amount_usd_minor?: number | null
+          fx_spread_percent?: number | null
+          fx_timestamp?: string | null
+          gateway_provider?: string | null
           id?: string
           metadata?: Json | null
+          payment_amount_minor?: number | null
+          payment_currency?: string | null
+          payment_method?: string | null
           related_contract_id?: string | null
           related_payment_id?: string | null
           related_withdrawal_id?: string | null
@@ -834,6 +873,33 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_settings: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key: string
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       portfolio_items: {
         Row: {
           created_at: string
@@ -1074,14 +1140,25 @@ export type Database = {
       unified_payments: {
         Row: {
           amount_cents: number
+          amount_usd_minor: number | null
           contract_id: string | null
           created_at: string
           credits_amount: number | null
           currency: string
           external_reference: string | null
+          fx_provider: string | null
+          fx_rate_applied: number | null
+          fx_rate_market: number | null
+          fx_spread_amount_usd_minor: number | null
+          fx_spread_percent: number | null
+          fx_timestamp: string | null
+          gateway_provider: string | null
           id: string
           metadata: Json | null
           paid_at: string | null
+          payment_amount_minor: number | null
+          payment_currency: string | null
+          payment_method: string | null
           payment_type: string
           provider: string
           provider_checkout_id: string | null
@@ -1095,14 +1172,25 @@ export type Database = {
         }
         Insert: {
           amount_cents: number
+          amount_usd_minor?: number | null
           contract_id?: string | null
           created_at?: string
           credits_amount?: number | null
           currency?: string
           external_reference?: string | null
+          fx_provider?: string | null
+          fx_rate_applied?: number | null
+          fx_rate_market?: number | null
+          fx_spread_amount_usd_minor?: number | null
+          fx_spread_percent?: number | null
+          fx_timestamp?: string | null
+          gateway_provider?: string | null
           id?: string
           metadata?: Json | null
           paid_at?: string | null
+          payment_amount_minor?: number | null
+          payment_currency?: string | null
+          payment_method?: string | null
           payment_type: string
           provider: string
           provider_checkout_id?: string | null
@@ -1116,14 +1204,25 @@ export type Database = {
         }
         Update: {
           amount_cents?: number
+          amount_usd_minor?: number | null
           contract_id?: string | null
           created_at?: string
           credits_amount?: number | null
           currency?: string
           external_reference?: string | null
+          fx_provider?: string | null
+          fx_rate_applied?: number | null
+          fx_rate_market?: number | null
+          fx_spread_amount_usd_minor?: number | null
+          fx_spread_percent?: number | null
+          fx_timestamp?: string | null
+          gateway_provider?: string | null
           id?: string
           metadata?: Json | null
           paid_at?: string | null
+          payment_amount_minor?: number | null
+          payment_currency?: string | null
+          payment_method?: string | null
           payment_type?: string
           provider?: string
           provider_checkout_id?: string | null
@@ -1269,11 +1368,22 @@ export type Database = {
         Row: {
           admin_notes: string | null
           amount: number
+          amount_usd_minor: number | null
           created_at: string
           currency: string
           freelancer_user_id: string
+          fx_provider: string | null
+          fx_rate_applied: number | null
+          fx_rate_market: number | null
+          fx_spread_amount_usd_minor: number | null
+          fx_spread_percent: number | null
+          fx_timestamp: string | null
+          gateway_provider: string | null
           id: string
           paid_at: string | null
+          payment_amount_minor: number | null
+          payment_currency: string | null
+          payment_method: string | null
           payout_details: Json | null
           payout_method_id: string | null
           reviewed_at: string | null
@@ -1284,11 +1394,22 @@ export type Database = {
         Insert: {
           admin_notes?: string | null
           amount: number
+          amount_usd_minor?: number | null
           created_at?: string
           currency?: string
           freelancer_user_id: string
+          fx_provider?: string | null
+          fx_rate_applied?: number | null
+          fx_rate_market?: number | null
+          fx_spread_amount_usd_minor?: number | null
+          fx_spread_percent?: number | null
+          fx_timestamp?: string | null
+          gateway_provider?: string | null
           id?: string
           paid_at?: string | null
+          payment_amount_minor?: number | null
+          payment_currency?: string | null
+          payment_method?: string | null
           payout_details?: Json | null
           payout_method_id?: string | null
           reviewed_at?: string | null
@@ -1299,11 +1420,22 @@ export type Database = {
         Update: {
           admin_notes?: string | null
           amount?: number
+          amount_usd_minor?: number | null
           created_at?: string
           currency?: string
           freelancer_user_id?: string
+          fx_provider?: string | null
+          fx_rate_applied?: number | null
+          fx_rate_market?: number | null
+          fx_spread_amount_usd_minor?: number | null
+          fx_spread_percent?: number | null
+          fx_timestamp?: string | null
+          gateway_provider?: string | null
           id?: string
           paid_at?: string | null
+          payment_amount_minor?: number | null
+          payment_currency?: string | null
+          payment_method?: string | null
           payout_details?: Json | null
           payout_method_id?: string | null
           reviewed_at?: string | null
