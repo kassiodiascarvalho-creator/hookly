@@ -17,6 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Wallet, Building, AlertCircle, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
+import { formatMoney } from "@/lib/formatMoney";
 
 interface PayoutMethod {
   id: string;
@@ -165,7 +166,7 @@ export function WithdrawalRequestModal({
                 {t("earnings.withdrawal.availableBalance")}
               </span>
               <span className="text-xl font-bold text-green-600">
-                {currency} {earningsAvailable.toFixed(2)}
+                {formatMoney(earningsAvailable, currency)}
               </span>
             </div>
           </div>

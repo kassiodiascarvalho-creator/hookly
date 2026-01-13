@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { formatMoney } from "@/lib/formatMoney";
+import { formatMoneyFromCents } from "@/lib/formatMoney";
 import { 
   Coins, 
   Wallet, 
@@ -462,7 +462,7 @@ export default function AdminFinances() {
             <Wallet className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{formatMoney(summary.total_earnings, "BRL")}</div>
+            <div className="text-2xl font-bold text-green-600">{formatMoneyFromCents(summary.total_earnings, "BRL")}</div>
             <p className="text-xs text-muted-foreground">Sacáveis</p>
           </CardContent>
         </Card>
@@ -473,7 +473,7 @@ export default function AdminFinances() {
             <Lock className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{formatMoney(summary.total_escrow, "BRL")}</div>
+            <div className="text-2xl font-bold text-blue-600">{formatMoneyFromCents(summary.total_escrow, "BRL")}</div>
             <p className="text-xs text-muted-foreground">Total em contratos</p>
           </CardContent>
         </Card>
@@ -486,7 +486,7 @@ export default function AdminFinances() {
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">{summary.pending_withdrawals}</div>
             <p className="text-xs text-muted-foreground">
-              {formatMoney(summary.pending_withdrawal_amount, "BRL")} total
+              {formatMoneyFromCents(summary.pending_withdrawal_amount, "BRL")} total
             </p>
           </CardContent>
         </Card>
@@ -499,7 +499,7 @@ export default function AdminFinances() {
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">{summary.approved_withdrawals}</div>
             <p className="text-xs text-muted-foreground">
-              {formatMoney(summary.approved_withdrawal_amount, "BRL")} total
+              {formatMoneyFromCents(summary.approved_withdrawal_amount, "BRL")} total
             </p>
           </CardContent>
         </Card>
@@ -512,7 +512,7 @@ export default function AdminFinances() {
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{summary.paid_withdrawals}</div>
             <p className="text-xs text-muted-foreground">
-              {formatMoney(summary.paid_withdrawal_amount, "BRL")} total
+              {formatMoneyFromCents(summary.paid_withdrawal_amount, "BRL")} total
             </p>
           </CardContent>
         </Card>
@@ -598,10 +598,10 @@ export default function AdminFinances() {
                       {Number(balance.credits_available).toFixed(2)}
                     </TableCell>
                     <TableCell className="text-right font-mono text-green-600">
-                      {formatMoney(Number(balance.earnings_available), balance.currency || "BRL")}
+                      {formatMoneyFromCents(Number(balance.earnings_available), balance.currency || "BRL")}
                     </TableCell>
                     <TableCell className="text-right font-mono text-blue-600">
-                      {formatMoney(Number(balance.escrow_held), balance.currency || "BRL")}
+                      {formatMoneyFromCents(Number(balance.escrow_held), balance.currency || "BRL")}
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
                       {new Date(balance.updated_at).toLocaleDateString("pt-BR")}
@@ -659,7 +659,7 @@ export default function AdminFinances() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right font-mono font-bold">
-                      {formatMoney(Number(withdrawal.amount), withdrawal.currency || "BRL")}
+                      {formatMoneyFromCents(Number(withdrawal.amount), withdrawal.currency || "BRL")}
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
@@ -761,7 +761,7 @@ export default function AdminFinances() {
                       <TableCell>{getTxTypeBadge(tx.tx_type)}</TableCell>
                       <TableCell className="font-mono text-xs">{tx.user_id.slice(0, 8)}...</TableCell>
                       <TableCell className={`text-right font-mono ${Number(tx.amount) >= 0 ? "text-green-600" : "text-red-600"}`}>
-                        {Number(tx.amount) >= 0 ? "+" : ""}{formatMoney(Number(tx.amount), tx.currency || "BRL")}
+                        {Number(tx.amount) >= 0 ? "+" : ""}{formatMoneyFromCents(Number(tx.amount), tx.currency || "BRL")}
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm">{tx.context || "—"}</TableCell>
                       <TableCell className="text-muted-foreground text-sm">
@@ -799,7 +799,7 @@ export default function AdminFinances() {
               {processingWithdrawal && (
                 <div className="mt-2 space-y-2">
                   <p><strong>Freelancer:</strong> {processingWithdrawal.freelancer_name}</p>
-                  <p><strong>Valor:</strong> {formatMoney(Number(processingWithdrawal.amount), processingWithdrawal.currency || "BRL")}</p>
+                  <p><strong>Valor:</strong> {formatMoneyFromCents(Number(processingWithdrawal.amount), processingWithdrawal.currency || "BRL")}</p>
                   {processingWithdrawal.payout_details?.type === "pix" ? (
                     <p><strong>PIX:</strong> {processingWithdrawal.payout_details?.pix_key}</p>
                   ) : (

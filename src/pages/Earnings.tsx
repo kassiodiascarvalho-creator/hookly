@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { Separator } from "@/components/ui/separator";
 import { WithdrawalRequestModal } from "@/components/earnings/WithdrawalRequestModal";
-import { formatMoney } from "@/lib/formatMoney";
+import { formatMoney, formatMoneyFromCents } from "@/lib/formatMoney";
 interface Payment {
   id: string;
   amount: number;
@@ -184,11 +184,11 @@ export default function Earnings() {
       .maybeSingle();
 
     if (balanceData) {
-      // Values are stored in cents, convert to currency units
+      // Values are stored in cents - use formatMoneyFromCents for display
       setUserBalance({
-        earnings_available: (Number(balanceData.earnings_available) || 0) / 100,
+        earnings_available: Number(balanceData.earnings_available) || 0, // Keep in cents
         credits_available: Number(balanceData.credits_available) || 0, // credits stay as units
-        escrow_held: (Number(balanceData.escrow_held) || 0) / 100,
+        escrow_held: Number(balanceData.escrow_held) || 0, // Keep in cents
         currency: balanceData.currency || "BRL"
       });
     }
@@ -204,7 +204,7 @@ export default function Earnings() {
       (sum, c) => sum + (c.amount_cents || 0), 0
     ) || 0;
 
-    setContractsEscrow(escrowFromContracts / 100); // convert from cents
+    setContractsEscrow(escrowFromContracts); // Keep in cents
 
     // Fetch withdrawal requests
     const { data: withdrawalsData } = await supabase
@@ -219,7 +219,7 @@ export default function Earnings() {
       const paidWithdrawals = withdrawalsData
         .filter(w => w.status === 'paid')
         .reduce((sum, w) => sum + (Number(w.amount) || 0), 0);
-      setTotalPaidWithdrawals(paidWithdrawals / 100); // convert from cents
+      setTotalPaidWithdrawals(paidWithdrawals); // Keep in cents
     }
 
     setLoading(false);
@@ -352,7 +352,7 @@ export default function Earnings() {
       <WithdrawalRequestModal
         open={withdrawalModalOpen}
         onOpenChange={setWithdrawalModalOpen}
-        earningsAvailable={userBalance.earnings_available}
+        earningsAvailable={userBalance.earnings_available / 100} // Convert cents to major units for modal
         currency={userBalance.currency}
         payoutMethods={payoutMethods}
         onSuccess={fetchData}
@@ -369,13 +369,13 @@ export default function Earnings() {
               <div>
                 <p className="text-sm text-muted-foreground">{t("earnings.withdrawableBalance")}</p>
                 <p className={`text-3xl font-bold ${userBalance.earnings_available > 0 ? 'text-green-600' : 'text-muted-foreground'}`}>
-                  {userBalance.currency} {userBalance.earnings_available.toFixed(2)}
+                  {formatMoneyFromCents(userBalance.earnings_available, userBalance.currency)}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
                   {userBalance.earnings_available > 0 
                     ? t("earnings.withdrawableDesc")
                     : contractsEscrow > 0
-                      ? t("earnings.pendingFundingDesc", { amount: `${userBalance.currency} ${contractsEscrow.toFixed(2)}` })
+                      ? t("earnings.pendingFundingDesc", { amount: formatMoneyFromCents(contractsEscrow, userBalance.currency) })
                       : t("earnings.noWithdrawableBalance")
                   }
                 </p>
@@ -412,7 +412,7 @@ export default function Earnings() {
               <div>
                 <p className="text-sm text-muted-foreground">{t("earnings.received")}</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {userBalance.currency} {userBalance.earnings_available.toFixed(2)}
+                  {formatMoneyFromCents(userBalance.earnings_available, userBalance.currency)}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
                   {t("earnings.receivedDesc")}
@@ -433,7 +433,7 @@ export default function Earnings() {
                 <div>
                   <p className="text-sm text-muted-foreground">{t("earnings.inEscrow")}</p>
                   <p className="text-2xl font-bold text-blue-600">
-                    {userBalance.currency} {contractsEscrow.toFixed(2)}
+                    {formatMoneyFromCents(contractsEscrow, userBalance.currency)}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
                     {t("earnings.pendingFunding")}
@@ -461,7 +461,7 @@ export default function Earnings() {
                 <div>
                   <p className="text-sm text-muted-foreground">{t("earnings.receivable")}</p>
                   <p className={`text-2xl font-bold ${hasCompletedProjects ? "text-green-600" : "text-yellow-600"}`}>
-                    ${totals.receivable.toFixed(2)}
+                    {formatMoney(totals.receivable, "USD")}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
                     {t("earnings.clickForDetails")}
@@ -512,7 +512,7 @@ export default function Earnings() {
                       </Badge>
                     </div>
                     <p className="font-bold text-lg">
-                      ${detail.amount.toFixed(2)}
+                      {formatMoney(detail.amount, detail.currency)}
                     </p>
                   </div>
                 </div>
@@ -529,7 +529,7 @@ export default function Earnings() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t("earnings.inEscrow")}</p>
-                <p className="text-2xl font-bold">${totals.pending.toFixed(2)}</p>
+                <p className="text-2xl font-bold">{formatMoney(totals.pending, "USD")}</p>
               </div>
             </div>
           </CardContent>
@@ -544,12 +544,12 @@ export default function Earnings() {
               <div>
                 <p className="text-sm text-muted-foreground">{t("earnings.totalEarnings")}</p>
                 <p className="text-2xl font-bold text-primary">
-                  {formatMoney(userBalance.earnings_available + contractsEscrow + totalPaidWithdrawals, userBalance.currency)}
+                  {formatMoneyFromCents(userBalance.earnings_available + contractsEscrow + totalPaidWithdrawals, userBalance.currency)}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {t("earnings.received")}: {formatMoney(userBalance.earnings_available, userBalance.currency)} 
-                  {contractsEscrow > 0 && ` + ${t("earnings.inEscrow")}: ${formatMoney(contractsEscrow, userBalance.currency)}`}
-                  {totalPaidWithdrawals > 0 && ` + ${t("earnings.withdrawn")}: ${formatMoney(totalPaidWithdrawals, userBalance.currency)}`}
+                  {t("earnings.received")}: {formatMoneyFromCents(userBalance.earnings_available, userBalance.currency)} 
+                  {contractsEscrow > 0 && ` + ${t("earnings.inEscrow")}: ${formatMoneyFromCents(contractsEscrow, userBalance.currency)}`}
+                  {totalPaidWithdrawals > 0 && ` + ${t("earnings.withdrawn")}: ${formatMoneyFromCents(totalPaidWithdrawals, userBalance.currency)}`}
                 </p>
               </div>
             </div>
@@ -591,7 +591,7 @@ export default function Earnings() {
                       <div className="flex items-center gap-4">
                         {getStatusBadge(payment.status)}
                         <p className="font-semibold">
-                          ${Number(payment.amount).toFixed(2)} {payment.currency}
+                          {formatMoney(Number(payment.amount), payment.currency)}
                         </p>
                       </div>
                     </div>
@@ -646,7 +646,7 @@ export default function Earnings() {
                           {config.icon}
                           <div>
                             <p className="font-medium">
-                              {t("earnings.withdrawalRequest")} - {formatMoney(Number(withdrawal.amount), withdrawal.currency)}
+                              {t("earnings.withdrawalRequest")} - {formatMoneyFromCents(Number(withdrawal.amount), withdrawal.currency)}
                             </p>
                             <p className="text-sm text-muted-foreground">
                               {format(new Date(withdrawal.created_at), "MMM d, yyyy HH:mm")}
