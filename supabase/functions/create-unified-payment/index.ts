@@ -117,20 +117,27 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    // Authenticate user
+    // Authenticate user using getClaims for reliable verification
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    if (!authHeader?.startsWith("Bearer ")) {
       throw new Error("Missing authorization header");
     }
     
     const token = authHeader.replace("Bearer ", "");
-    const { data } = await supabaseClient.auth.getUser(token);
-    const user = data.user;
+    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
     
-    if (!user?.email) {
+    if (claimsError || !claimsData?.claims) {
+      logStep("Auth failed", { error: claimsError?.message });
+      throw new Error("User not authenticated");
+    }
+    
+    const userId = claimsData.claims.sub as string;
+    const userEmail = claimsData.claims.email as string;
+    
+    if (!userId || !userEmail) {
       throw new Error("User not authenticated or email not available");
     }
-    logStep("User authenticated", { userId: user.id });
+    logStep("User authenticated", { userId });
 
     // Parse and validate request body
     let body: unknown;
@@ -184,7 +191,7 @@ serve(async (req) => {
       const { data: companyProfile } = await supabaseClient
         .from('company_profiles')
         .select('country')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .single();
       
       userCountry = companyProfile?.country;
@@ -207,7 +214,7 @@ serve(async (req) => {
     logStep("Provider determined", { provider, userCountry });
 
     // Generate unique external reference
-    const externalReference = `${paymentType}_${user.id}_${Date.now()}`;
+    const externalReference = `${paymentType}_${userId}_${Date.now()}`;
 
     // Create payment record
     const { data: payment, error: paymentError } = await supabaseAdmin
@@ -215,7 +222,7 @@ serve(async (req) => {
       .insert({
         provider,
         payment_type: paymentType,
-        user_id: user.id,
+        user_id: userId,
         user_type: userType,
         contract_id: contractId || null,
         amount_cents: amountCents,
@@ -225,7 +232,7 @@ serve(async (req) => {
         external_reference: externalReference,
         metadata: {
           description: description || null,
-          user_email: user.email,
+          user_email: userEmail,
         },
       })
       .select()
@@ -266,7 +273,7 @@ serve(async (req) => {
         title,
         amountCents as number,
         paymentCurrency as string,
-        user.email,
+        userEmail,
         req.headers.get("origin") || "",
         mpConfig?.is_sandbox ?? true
       );
@@ -291,7 +298,7 @@ serve(async (req) => {
       });
 
       // Check if customer exists
-      const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+      const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
       let customerId: string | undefined;
       if (customers.data.length > 0) {
         customerId = customers.data[0].id;
@@ -305,7 +312,7 @@ serve(async (req) => {
 
       const session = await stripe.checkout.sessions.create({
         customer: customerId,
-        customer_email: customerId ? undefined : user.email,
+        customer_email: customerId ? undefined : userEmail,
         payment_method_types: ["card"],
         line_items: [{
           price_data: {
