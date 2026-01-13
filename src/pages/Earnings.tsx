@@ -529,7 +529,7 @@ export default function Earnings() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-primary/50 bg-primary/5">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-xl bg-primary/10">
@@ -537,8 +537,11 @@ export default function Earnings() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t("earnings.totalEarnings")}</p>
-                <p className="text-2xl font-bold">
-                  {formatMoney(userBalance.earnings_available + userBalance.escrow_held, userBalance.currency)}
+                <p className="text-2xl font-bold text-primary">
+                  {formatMoney(userBalance.earnings_available + contractsEscrow, userBalance.currency)}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {t("earnings.received")}: {formatMoney(userBalance.earnings_available, userBalance.currency)} + {t("earnings.inEscrow")}: {formatMoney(contractsEscrow, userBalance.currency)}
                 </p>
               </div>
             </div>
