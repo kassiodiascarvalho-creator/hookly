@@ -41,6 +41,24 @@ function isValidUserType(value: unknown): value is string {
   return value === 'company' || value === 'freelancer';
 }
 
+// Country to currency mapping for validation
+const COUNTRY_CURRENCY_MAP: Record<string, string> = {
+  US: "USD", BR: "BRL", CA: "CAD", MX: "MXN",
+  DE: "EUR", FR: "EUR", IT: "EUR", ES: "EUR", NL: "EUR", PT: "EUR", GB: "GBP",
+  JP: "JPY", CN: "CNY", AU: "AUD", IN: "INR",
+};
+
+function getAllowedCurrencies(countryCode: string | null): string[] {
+  if (!countryCode) return ["USD"];
+  const localCurrency = COUNTRY_CURRENCY_MAP[countryCode.toUpperCase()] || "USD";
+  return localCurrency === "USD" ? ["USD"] : [localCurrency, "USD"];
+}
+
+function isCurrencyAllowedForCountry(currency: string, countryCode: string | null): boolean {
+  const allowed = getAllowedCurrencies(countryCode);
+  return allowed.includes(currency.toUpperCase());
+}
+
 // Mercado Pago API helper
 async function createMercadoPagoPreference(
   accessToken: string,
@@ -195,6 +213,21 @@ serve(async (req) => {
         .single();
       
       userCountry = companyProfile?.country;
+    } else if (userType === 'freelancer') {
+      const { data: freelancerProfile } = await supabaseClient
+        .from('freelancer_profiles')
+        .select('country_code')
+        .eq('user_id', userId)
+        .single();
+      
+      userCountry = freelancerProfile?.country_code;
+    }
+
+    // Validate currency is allowed for user's country
+    if (!isCurrencyAllowedForCountry(paymentCurrency as string, userCountry)) {
+      const allowed = getAllowedCurrencies(userCountry);
+      logStep("Currency not allowed for country", { currency: paymentCurrency, country: userCountry, allowed });
+      throw new Error(`Moeda não permitida para o país selecionado. Moedas permitidas: ${allowed.join(", ")}`);
     }
 
     // If country is Brazil, use Mercado Pago

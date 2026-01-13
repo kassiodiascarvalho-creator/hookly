@@ -24,8 +24,8 @@ import { toast } from "sonner";
 import { formatMoney } from "@/lib/formatMoney";
 import { PixPaymentModal } from "./PixPaymentModal";
 import { CardPaymentModal } from "./CardPaymentModal";
+import { getAllowedCurrencies, getCurrencyByCountry } from "@/lib/currencyByCountry";
 
-const CURRENCIES = ["USD", "BRL", "EUR", "GBP"];
 const PRESET_AMOUNTS = [50, 100, 250, 500, 1000];
 
 type PaymentMethod = "pix" | "card";
@@ -41,7 +41,8 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState("USD");
   const [country, setCountry] = useState<string | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pix");
+  const [allowedCurrencies, setAllowedCurrencies] = useState<string[]>(["USD"]);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
 
   // PIX payment state
   const [pixModalOpen, setPixModalOpen] = useState(false);
@@ -123,19 +124,42 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
       .eq("user_id", user.id)
       .single();
 
-    if (data?.country) {
-      setCountry(data.country);
-      // Auto-select currency based on country
-      if (data.country === "BR") {
-        setCurrency("BRL");
-      }
+    const userCountry = data?.country || null;
+    setCountry(userCountry);
+    
+    // Set allowed currencies based on country
+    const allowed = getAllowedCurrencies(userCountry);
+    setAllowedCurrencies(allowed);
+    
+    // Set default currency to local currency
+    const localCurrency = getCurrencyByCountry(userCountry);
+    setCurrency(localCurrency);
+    
+    // Set payment method based on currency
+    if (localCurrency === "BRL") {
+      setPaymentMethod("pix");
+    } else {
+      setPaymentMethod("card");
     }
+    
+    console.log("[CompanyAddFundsDialog] Country:", userCountry, "Currency:", localCurrency, "Allowed:", allowed);
   };
 
+  const isBRL = currency === "BRL";
   // PIX is only available for BRL
-  const canUsePix = currency === "BRL";
+  const canUsePix = isBRL;
   // Card transparent checkout only for BRL (Mercado Pago)
-  const canUseTransparentCard = currency === "BRL" && mpPublicKey.length > 0;
+  const canUseTransparentCard = isBRL && mpPublicKey.length > 0;
+
+  const handleCurrencyChange = (newCurrency: string) => {
+    setCurrency(newCurrency);
+    // Reset payment method based on currency
+    if (newCurrency === "BRL") {
+      setPaymentMethod("pix");
+    } else {
+      setPaymentMethod("card");
+    }
+  };
 
   const handleAddFunds = async () => {
     console.log("[CompanyAddFundsDialog] === PAYMENT FLOW ===");
@@ -147,6 +171,12 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount < 1) {
       toast.error("Digite um valor válido");
+      return;
+    }
+
+    // Validate currency is allowed
+    if (!allowedCurrencies.includes(currency)) {
+      toast.error("Moeda não permitida para o seu país");
       return;
     }
 
@@ -163,6 +193,7 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
             paymentType: "company_wallet",
             userType: "company",
             amountCents: amountInCents,
+            currency,
             description: `Adicionar ${formatMoney(numAmount, currency)} na carteira`,
           },
         });
@@ -182,7 +213,7 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
         setCardAmountCents(amountInCents);
         setOpen(false);
         setCardModalOpen(true);
-      } else if (paymentMethod === "card" && currency === "BRL" && !mpPublicKey) {
+      } else if (paymentMethod === "card" && isBRL && !mpPublicKey) {
         console.warn("[CompanyAddFundsDialog] BRL card selected but mpPublicKey is missing");
         toast.error("Configure a Public Key em Admin > Payment Providers");
         return;
@@ -234,6 +265,7 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
           paymentType: "company_wallet",
           userType: "company",
           amountCents: amountInCents,
+          currency,
           description: `Adicionar ${formatMoney(numAmount, currency)} na carteira`,
         },
       });
@@ -275,6 +307,25 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
           </DialogHeader>
 
           <div className="space-y-4 py-4">
+            {/* Currency Selection */}
+            {allowedCurrencies.length > 1 && (
+              <div className="space-y-2">
+                <Label>Moeda</Label>
+                <Select value={currency} onValueChange={handleCurrencyChange}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allowedCurrencies.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             {/* Preset amounts */}
             <div className="space-y-2">
               <Label>Valores sugeridos</Label>
@@ -293,46 +344,23 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
             </div>
 
             {/* Custom amount */}
-            <div className="grid grid-cols-3 gap-4">
-              <div className="col-span-2 space-y-2">
-                <Label>Valor personalizado</Label>
-                <Input
-                  type="number"
-                  min="1"
-                  step="0.01"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="100.00"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Moeda</Label>
-                <Select value={currency} onValueChange={(v) => {
-                  setCurrency(v);
-                  // Reset to card if currency is not BRL
-                  if (v !== "BRL") {
-                    setPaymentMethod("card");
-                  }
-                }}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CURRENCIES.map((c) => (
-                      <SelectItem key={c} value={c}>
-                        {c}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="space-y-2">
+              <Label>Valor personalizado</Label>
+              <Input
+                type="number"
+                min="1"
+                step="0.01"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="100.00"
+              />
             </div>
 
-            {/* Payment Method Selection - only show if BRL */}
-            {canUsePix && (
-              <div className="space-y-3">
-                <Label>Forma de pagamento</Label>
-                <div className="grid grid-cols-2 gap-3">
+            {/* Payment Method Selection */}
+            <div className="space-y-3">
+              <Label>Forma de pagamento</Label>
+              <div className="grid grid-cols-2 gap-3">
+                {canUsePix && (
                   <button
                     onClick={() => setPaymentMethod("pix")}
                     className={`
@@ -349,25 +377,26 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
                       <p className="text-xs text-muted-foreground">Instantâneo</p>
                     </div>
                   </button>
-                  <button
-                    onClick={() => setPaymentMethod("card")}
-                    className={`
-                      p-4 rounded-lg border-2 text-left transition-all flex items-center gap-3
-                      ${paymentMethod === "card" 
-                        ? "border-primary bg-primary/5" 
-                        : "border-border hover:border-primary/50"
-                      }
-                    `}
-                  >
-                    <CreditCard className="h-6 w-6 text-primary" />
-                    <div>
-                      <p className="font-medium">Cartão</p>
-                      <p className="text-xs text-muted-foreground">Crédito/Débito</p>
-                    </div>
-                  </button>
-                </div>
+                )}
+                <button
+                  onClick={() => setPaymentMethod("card")}
+                  className={`
+                    p-4 rounded-lg border-2 text-left transition-all flex items-center gap-3
+                    ${paymentMethod === "card" 
+                      ? "border-primary bg-primary/5" 
+                      : "border-border hover:border-primary/50"
+                    }
+                    ${!canUsePix ? "col-span-2" : ""}
+                  `}
+                >
+                  <CreditCard className="h-6 w-6 text-primary" />
+                  <div>
+                    <p className="font-medium">Cartão</p>
+                    <p className="text-xs text-muted-foreground">Crédito/Débito</p>
+                  </div>
+                </button>
               </div>
-            )}
+            </div>
 
             {/* Summary */}
             {amount && parseFloat(amount) > 0 && (
@@ -378,12 +407,14 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
                     {formatMoney(parseFloat(amount), currency)}
                   </span>
                 </div>
-                {canUsePix && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Pagamento</span>
-                    <span>{paymentMethod === "pix" ? "PIX" : "Cartão"}</span>
-                  </div>
-                )}
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Moeda</span>
+                  <span>{currency}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Pagamento</span>
+                  <span>{paymentMethod === "pix" ? "PIX" : "Cartão"}</span>
+                </div>
               </div>
             )}
 
