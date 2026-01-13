@@ -369,6 +369,47 @@ export type Database = {
         }
         Relationships: []
       }
+      fx_spread_change_history: {
+        Row: {
+          change_reason: string | null
+          changed_at: string
+          changed_by_user_id: string | null
+          currency_code: string
+          fx_spread_config_id: string | null
+          id: string
+          new_spread_percent: number
+          old_spread_percent: number
+        }
+        Insert: {
+          change_reason?: string | null
+          changed_at?: string
+          changed_by_user_id?: string | null
+          currency_code: string
+          fx_spread_config_id?: string | null
+          id?: string
+          new_spread_percent: number
+          old_spread_percent: number
+        }
+        Update: {
+          change_reason?: string | null
+          changed_at?: string
+          changed_by_user_id?: string | null
+          currency_code?: string
+          fx_spread_config_id?: string | null
+          id?: string
+          new_spread_percent?: number
+          old_spread_percent?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fx_spread_change_history_fx_spread_config_id_fkey"
+            columns: ["fx_spread_config_id"]
+            isOneToOne: false
+            referencedRelation: "fx_spread_configs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fx_spread_configs: {
         Row: {
           created_at: string

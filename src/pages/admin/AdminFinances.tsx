@@ -13,6 +13,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { formatMoneyFromCents } from "@/lib/formatMoney";
+import FxSpreadSettings from "@/components/admin/FxSpreadSettings";
+import FxRevenueReport from "@/components/admin/FxRevenueReport";
+import FinancialAlertsCard from "@/components/admin/FinancialAlertsCard";
 import { 
   Coins, 
   Wallet, 
@@ -29,7 +32,8 @@ import {
   User,
   Calendar,
   Globe,
-  ArrowRightLeft
+  ArrowRightLeft,
+  Settings2
 } from "lucide-react";
 import { subDays, subMonths, subYears, startOfDay, endOfDay } from "date-fns";
 
@@ -591,6 +595,10 @@ export default function AdminFinances() {
             )}
           </TabsTrigger>
           <TabsTrigger value="transactions">Transações</TabsTrigger>
+          <TabsTrigger value="fx-settings">
+            <Settings2 className="h-4 w-4 mr-1" />
+            FX & Spread
+          </TabsTrigger>
         </TabsList>
 
         {/* Balances Tab */}
@@ -923,6 +931,13 @@ export default function AdminFinances() {
               </Table>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* FX Settings Tab */}
+        <TabsContent value="fx-settings" className="space-y-6">
+          <FinancialAlertsCard />
+          <FxSpreadSettings />
+          <FxRevenueReport />
         </TabsContent>
       </Tabs>
 
