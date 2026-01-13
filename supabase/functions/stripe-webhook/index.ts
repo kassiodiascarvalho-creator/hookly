@@ -12,7 +12,92 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
 };
 
-// Validation helpers
+// ============ Currency Conversion Logic (inline) ============
+
+const CURRENCY_DECIMALS: Record<string, number> = {
+  USD: 2, BRL: 2, EUR: 2, GBP: 2, CAD: 2, AUD: 2, 
+  MXN: 2, ARS: 2, CLP: 0, COP: 2, PEN: 2, CHF: 2, INR: 2,
+  JPY: 0, KRW: 0, VND: 0, CNY: 2,
+  KWD: 3, BHD: 3, OMR: 3,
+};
+
+const FALLBACK_RATES_TO_USD: Record<string, number> = {
+  USD: 1.0, BRL: 0.17, EUR: 1.08, GBP: 1.26, CAD: 0.74, AUD: 0.65,
+  MXN: 0.056, JPY: 0.0067, CNY: 0.14, INR: 0.012, CHF: 1.13,
+  ARS: 0.001, CLP: 0.001, COP: 0.00025, PEN: 0.27,
+};
+
+function getMinorUnitDivisor(currency: string): number {
+  return Math.pow(10, CURRENCY_DECIMALS[currency] ?? 2);
+}
+
+interface FxResult {
+  amount_usd_minor: number;
+  fx_rate_market: number;
+  fx_rate_applied: number;
+  fx_spread_percent: number;
+  fx_spread_amount_usd_minor: number;
+  fx_provider: string;
+  fx_timestamp: string;
+}
+
+async function convertToUSD(amountMinor: number, currency: string, spreadPercent = 0.008): Promise<FxResult> {
+  const timestamp = new Date().toISOString();
+  
+  if (currency === 'USD') {
+    return {
+      amount_usd_minor: amountMinor,
+      fx_rate_market: 1.0,
+      fx_rate_applied: 1.0,
+      fx_spread_percent: 0,
+      fx_spread_amount_usd_minor: 0,
+      fx_provider: 'none',
+      fx_timestamp: timestamp,
+    };
+  }
+
+  const divisor = getMinorUnitDivisor(currency);
+  const amountMajor = amountMinor / divisor;
+
+  let marketRate: number | null = null;
+  let provider = 'exchangerate-api.com';
+  
+  try {
+    const response = await fetch(`https://open.er-api.com/v6/latest/${currency}`);
+    if (response.ok) {
+      const data = await response.json();
+      if (data.rates?.USD) {
+        marketRate = data.rates.USD;
+      }
+    }
+  } catch (error) {
+    logStep("Exchange rate API error, using fallback", { error: String(error) });
+  }
+
+  if (marketRate === null) {
+    marketRate = FALLBACK_RATES_TO_USD[currency] ?? 1.0;
+    provider = 'fallback';
+    logStep("Using fallback rate", { currency, marketRate });
+  }
+
+  const appliedRate = marketRate * (1 - spreadPercent);
+  const amountUsdMajor = amountMajor * appliedRate;
+  const amountUsdMajorWithoutSpread = amountMajor * marketRate;
+  const spreadAmountUsdMajor = amountUsdMajorWithoutSpread - amountUsdMajor;
+
+  return {
+    amount_usd_minor: Math.round(amountUsdMajor * 100),
+    fx_rate_market: marketRate,
+    fx_rate_applied: appliedRate,
+    fx_spread_percent: spreadPercent,
+    fx_spread_amount_usd_minor: Math.round(spreadAmountUsdMajor * 100),
+    fx_provider: provider,
+    fx_timestamp: timestamp,
+  };
+}
+
+// ============ End Currency Conversion ============
+
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function isValidUUID(value: string | undefined | null): boolean {
@@ -46,7 +131,6 @@ serve(async (req) => {
 
     let event: Stripe.Event;
 
-    // Validate webhook signature (required)
     if (!webhookSecret || !sig) {
       logStep("Missing webhook secret or signature");
       return new Response(JSON.stringify({ error: "Missing webhook configuration" }), {
@@ -80,6 +164,7 @@ serve(async (req) => {
 
         const metadata = session.metadata || {};
         const currency = session.currency?.toUpperCase() || "USD";
+        const amountTotal = session.amount_total || 0;
         
         // Check if this is a wallet topup (legacy)
         if (metadata.type === "wallet_topup") {
@@ -101,14 +186,16 @@ serve(async (req) => {
             break;
           }
 
-          // NEW LEDGER: Use add_credits for company credits
-          logStep("Adding company credits via new ledger", { userId, amount });
+          // Convert to USD
+          const fxResult = await convertToUSD(Math.round(fiatAmount * 100), currency);
+
+          logStep("Adding company credits via new ledger", { userId, amount: fxResult.amount_usd_minor / 100 });
           
           const { data: result, error: rpcError } = await supabaseClient
             .rpc('add_credits', {
               p_user_id: userId,
               p_user_type: 'company',
-              p_amount: amount,
+              p_amount: fxResult.amount_usd_minor / 100,
               p_payment_id: session.id,
               p_context: 'wallet_topup_stripe_legacy',
               p_amount_original: fiatAmount,
@@ -134,14 +221,13 @@ serve(async (req) => {
               logStep("Wallet credited via fallback", { userId, amount });
             }
           } else {
-            logStep("Company credits added via new ledger", { userId, amount, result });
+            logStep("Company credits added via new ledger", { userId, amount: fxResult.amount_usd_minor / 100, result });
           }
           
-          // Notify user
           await supabaseClient.from("notifications").insert({
             user_id: userId,
             type: "wallet_topup",
-            message: `${amount} credits have been added to your account!`,
+            message: `USD ${(fxResult.amount_usd_minor / 100).toFixed(2)} credits have been added to your account!`,
             link: "/settings?tab=billing",
           });
           break;
@@ -154,7 +240,6 @@ serve(async (req) => {
         const companyUserId = session.client_reference_id || metadata.company_user_id;
         const contractId = metadata.contract_id;
 
-        // Validate UUIDs before proceeding
         if (projectId && !isValidUUID(projectId)) {
           logStep("Invalid project_id in metadata", { projectId });
           break;
@@ -179,7 +264,9 @@ serve(async (req) => {
             break;
           }
 
-          // Check if payment already exists
+          // Convert to USD
+          const fxResult = await convertToUSD(amountTotal, currency);
+
           const { data: existingPayment } = await supabaseClient
             .from("payments")
             .select("id")
@@ -191,15 +278,14 @@ serve(async (req) => {
             break;
           }
 
-          // Create payment record with status 'paid' and escrow_status 'held'
           const { data: payment, error: insertError } = await supabaseClient
             .from("payments")
             .insert({
               project_id: projectId,
               company_user_id: companyUserId,
               freelancer_user_id: freelancerUserId,
-              amount: amount,
-              currency: currency,
+              amount: fxResult.amount_usd_minor / 100, // Store in USD
+              currency: 'USD', // Internal currency is always USD
               status: "paid",
               escrow_status: "held",
               stripe_payment_intent_id: session.payment_intent as string,
@@ -212,58 +298,57 @@ serve(async (req) => {
           if (insertError) {
             logStep("Error creating payment record", { error: insertError.message });
           } else {
-            logStep("Payment record created", { paymentId: payment.id });
+            logStep("Payment record created with USD amount", { paymentId: payment.id, usdAmount: fxResult.amount_usd_minor / 100 });
 
-            // NEW LEDGER: If there's a contract, fund escrow via new ledger system
             if (contractId && isValidUUID(contractId) && companyUserId) {
-              logStep("Funding contract escrow via new ledger", { companyUserId, contractId, amount });
+              logStep("Funding contract escrow via new ledger", { companyUserId, contractId, amount: fxResult.amount_usd_minor / 100 });
               
               const { data: escrowResult, error: escrowError } = await supabaseClient
                 .rpc('fund_contract_escrow', {
                   p_company_user_id: companyUserId,
                   p_contract_id: contractId,
-                  p_amount: amount,
+                  p_amount: fxResult.amount_usd_minor / 100,
                   p_payment_id: payment.id,
                 });
 
               if (escrowError) {
                 logStep("Error funding escrow via new ledger", { error: escrowError });
               } else {
-                logStep("Contract escrow funded via new ledger", { contractId, amount, result: escrowResult });
+                logStep("Contract escrow funded via new ledger", { contractId, amount: fxResult.amount_usd_minor / 100, result: escrowResult });
               }
             }
 
-            // Log the payment creation
             await supabaseClient.from("payment_logs").insert({
               payment_id: payment.id,
               action: "payment_created",
               details: {
                 stripe_session_id: session.id,
                 stripe_payment_intent_id: session.payment_intent,
-                amount: amount,
-                currency: currency,
+                original_amount: amount,
+                original_currency: currency,
+                usd_amount: fxResult.amount_usd_minor / 100,
+                fx_rate: fxResult.fx_rate_applied,
+                fx_spread: fxResult.fx_spread_amount_usd_minor / 100,
                 source: "stripe_webhook",
                 ledger_system: "v2"
               }
             });
 
-            // Notify freelancer about payment held in escrow
             if (freelancerUserId) {
               await supabaseClient.from("notifications").insert({
                 user_id: freelancerUserId,
                 type: "payment_received",
-                message: `A payment of ${currency} ${amount.toFixed(2)} has been placed in escrow for your work!`,
+                message: `A payment of USD ${(fxResult.amount_usd_minor / 100).toFixed(2)} has been placed in escrow for your work!`,
                 link: "/earnings",
               });
               logStep("Freelancer notified", { freelancerUserId });
             }
 
-            // Notify company about successful payment
             if (companyUserId) {
               await supabaseClient.from("notifications").insert({
                 user_id: companyUserId,
                 type: "payment_success",
-                message: `Your payment of ${currency} ${amount.toFixed(2)} has been processed and is held in escrow.`,
+                message: `Your payment of USD ${(fxResult.amount_usd_minor / 100).toFixed(2)} has been processed and is held in escrow.`,
                 link: "/finances",
               });
               logStep("Company notified", { companyUserId });
@@ -279,7 +364,6 @@ serve(async (req) => {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
         logStep("Payment intent succeeded", { paymentIntentId: paymentIntent.id });
         
-        // Update payment if it exists
         const { error } = await supabaseClient
           .from("payments")
           .update({ 
@@ -305,7 +389,6 @@ serve(async (req) => {
           .eq("stripe_payment_intent_id", paymentIntent.id);
 
         if (!error) {
-          // Get payment to notify users
           const { data: payment } = await supabaseClient
             .from("payments")
             .select("company_user_id, freelancer_user_id")
