@@ -90,7 +90,8 @@
     "savings": "Savings",
     "holderName": "Account Holder Name",
     "holderDoc": "CPF/CNPJ",
-    "setDefault": "Set as Default"
+    "setDefault": "Set as Default",
+    "withdrawn": "Withdrawn"
   },
   "nav": {
     "howItWorks": "How it works",
