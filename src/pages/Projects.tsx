@@ -23,10 +23,10 @@ interface Project {
 }
 
 const statusConfig = {
-  draft: { label: "Draft", color: "bg-muted text-muted-foreground", icon: FileText },
-  open: { label: "Open", color: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300", icon: Briefcase },
-  in_progress: { label: "In Progress", color: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300", icon: Clock },
-  completed: { label: "Completed", color: "bg-primary/10 text-primary", icon: CheckCircle },
+  draft: { labelKey: "projects.draft", color: "bg-muted text-muted-foreground", icon: FileText },
+  open: { labelKey: "projects.open", color: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300", icon: Briefcase },
+  in_progress: { labelKey: "projects.inProgress", color: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300", icon: Clock },
+  completed: { labelKey: "projects.completed", color: "bg-primary/10 text-primary", icon: CheckCircle },
 };
 
 export default function Projects() {
@@ -140,7 +140,7 @@ export default function Projects() {
                             <h3 className="font-semibold text-lg truncate">{project.title}</h3>
                             <Badge className={config.color}>
                               <StatusIcon className="h-3 w-3 mr-1" />
-                              {config.label}
+                              {t(config.labelKey)}
                             </Badge>
                           </div>
                           
@@ -152,7 +152,7 @@ export default function Projects() {
                           
                           <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                             {project.category && (
-                              <span className="bg-muted px-2 py-1 rounded">{project.category}</span>
+                              <span className="bg-muted px-2 py-1 rounded">{t(`categories.${project.category}`, project.category)}</span>
                             )}
                             <span>{formatBudget(project.budget_min, project.budget_max)}</span>
                             <span>{format(new Date(project.created_at), "MMM d, yyyy")}</span>
