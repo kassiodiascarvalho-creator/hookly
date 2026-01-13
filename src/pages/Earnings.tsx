@@ -352,7 +352,7 @@ export default function Earnings() {
       <WithdrawalRequestModal
         open={withdrawalModalOpen}
         onOpenChange={setWithdrawalModalOpen}
-        earningsAvailable={userBalance.earnings_available / 100} // Convert cents to major units for modal
+        earningsAvailableMinor={userBalance.earnings_available} // Pass minor units directly
         currency={userBalance.currency}
         payoutMethods={payoutMethods}
         onSuccess={fetchData}

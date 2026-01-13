@@ -17,7 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Wallet, Building, AlertCircle, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
-import { formatMoney } from "@/lib/formatMoney";
+import { formatMoneyFromCents, minorToMajor, majorToMinor, getCurrencyDecimals } from "@/lib/formatMoney";
 
 interface PayoutMethod {
   id: string;
@@ -36,7 +36,8 @@ interface PayoutMethod {
 interface WithdrawalRequestModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  earningsAvailable: number;
+  /** Available earnings in MINOR UNITS (cents) */
+  earningsAvailableMinor: number;
   currency: string;
   payoutMethods: PayoutMethod[];
   onSuccess: () => void;
@@ -45,7 +46,7 @@ interface WithdrawalRequestModalProps {
 export function WithdrawalRequestModal({
   open,
   onOpenChange,
-  earningsAvailable,
+  earningsAvailableMinor,
   currency,
   payoutMethods,
   onSuccess
@@ -53,15 +54,20 @@ export function WithdrawalRequestModal({
   const { t } = useTranslation();
   const { user } = useAuth();
   
-  const [amount, setAmount] = useState("");
+  // UI displays major units (e.g., "2.00"), but we track minor units internally
+  const [amountInput, setAmountInput] = useState("");
   const [selectedMethodId, setSelectedMethodId] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Convert available balance to major units for display
+  const earningsAvailableMajor = minorToMajor(earningsAvailableMinor, currency);
+  const decimals = getCurrencyDecimals(currency);
+
   useEffect(() => {
     if (open) {
       // Reset form when opening
-      setAmount("");
+      setAmountInput("");
       setError(null);
       // Pre-select default method
       const defaultMethod = payoutMethods.find(m => m.is_default);
@@ -76,24 +82,34 @@ export function WithdrawalRequestModal({
   const handleAmountChange = (value: string) => {
     // Allow only numbers and decimal
     const sanitized = value.replace(/[^0-9.]/g, "");
-    setAmount(sanitized);
+    setAmountInput(sanitized);
     setError(null);
   };
 
   const handleSetMax = () => {
-    setAmount(earningsAvailable.toFixed(2));
+    // Set to exact major unit representation of the available minor units
+    setAmountInput(earningsAvailableMajor.toFixed(decimals));
     setError(null);
   };
 
+  // Parse input as major units and convert to minor for validation/submission
+  const getAmountMinor = (): number => {
+    const majorAmount = parseFloat(amountInput);
+    if (isNaN(majorAmount)) return 0;
+    return majorToMinor(majorAmount, currency);
+  };
+
   const validateForm = (): boolean => {
-    const numAmount = parseFloat(amount);
+    const majorAmount = parseFloat(amountInput);
+    const minorAmount = getAmountMinor();
     
-    if (!amount || isNaN(numAmount) || numAmount <= 0) {
+    if (!amountInput || isNaN(majorAmount) || majorAmount <= 0) {
       setError(t("earnings.withdrawal.invalidAmount"));
       return false;
     }
     
-    if (numAmount > earningsAvailable) {
+    // Compare in minor units to avoid floating point issues
+    if (minorAmount > earningsAvailableMinor) {
       setError(t("earnings.withdrawal.exceedsBalance"));
       return false;
     }
@@ -113,11 +129,19 @@ export function WithdrawalRequestModal({
     setError(null);
 
     try {
-      const numAmount = parseFloat(amount);
+      // Send the minor unit amount to the RPC
+      const amountMinor = getAmountMinor();
+      
+      console.log('[WithdrawalRequest] Submitting:', {
+        amountInput,
+        amountMinor,
+        earningsAvailableMinor,
+        currency
+      });
       
       const { data, error: rpcError } = await supabase.rpc("request_withdrawal", {
         p_freelancer_user_id: user.id,
-        p_amount: numAmount,
+        p_amount: amountMinor, // Send minor units to RPC
         p_payout_method_id: selectedMethodId
       });
 
@@ -142,8 +166,9 @@ export function WithdrawalRequestModal({
     return `${method.bank_name} - Ag: ${method.branch} / Cc: ${method.account}`;
   };
 
-  const numAmount = parseFloat(amount) || 0;
-  const isValid = numAmount > 0 && numAmount <= earningsAvailable && selectedMethodId;
+  const majorAmount = parseFloat(amountInput) || 0;
+  const amountMinor = getAmountMinor();
+  const isValid = amountMinor > 0 && amountMinor <= earningsAvailableMinor && selectedMethodId;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -166,7 +191,7 @@ export function WithdrawalRequestModal({
                 {t("earnings.withdrawal.availableBalance")}
               </span>
               <span className="text-xl font-bold text-green-600">
-                {formatMoney(earningsAvailable, currency)}
+                {formatMoneyFromCents(earningsAvailableMinor, currency)}
               </span>
             </div>
           </div>
@@ -183,7 +208,7 @@ export function WithdrawalRequestModal({
                   id="amount"
                   type="text"
                   inputMode="decimal"
-                  value={amount}
+                  value={amountInput}
                   onChange={(e) => handleAmountChange(e.target.value)}
                   className="pl-12"
                   placeholder="0.00"
@@ -258,13 +283,13 @@ export function WithdrawalRequestModal({
           )}
 
           {/* Summary */}
-          {numAmount > 0 && isValid && (
+          {majorAmount > 0 && isValid && (
             <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/30">
               <div className="flex items-center gap-2 text-green-700">
                 <CheckCircle className="h-4 w-4" />
                 <span className="text-sm font-medium">
                   {t("earnings.withdrawal.summary", { 
-                    amount: `${currency} ${numAmount.toFixed(2)}` 
+                    amount: formatMoneyFromCents(amountMinor, currency)
                   })}
                 </span>
               </div>
