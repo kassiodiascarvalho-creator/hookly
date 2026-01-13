@@ -1,11 +1,13 @@
 /**
- * Currency Conversion Module
+ * Currency Conversion Module v2
  * 
- * Converts any currency to USD using real-time exchange rates.
- * Applies a configurable platform spread (fee).
- * 
- * Uses Exchange Rate API (https://exchangerate-api.com) for rates.
- * Free tier: 1500 requests/month, updates daily.
+ * Features:
+ * - Converts any currency to USD using real-time exchange rates
+ * - Applies configurable platform spread (fee) per currency
+ * - Caches rates with configurable TTL
+ * - Automatic fallback to cached/hardcoded rates when API fails
+ * - Tracks rate source for auditing (live, cached, fallback)
+ * - Blocks transactions if no valid rate available
  */
 
 const logStep = (step: string, details?: unknown) => {
@@ -13,11 +15,24 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[CURRENCY-CONVERSION] ${step}${detailsStr}`);
 };
 
-// Exchange rate cache (5 min TTL)
-const rateCache = new Map<string, { rate: number; timestamp: number }>();
+// ================== CACHE CONFIGURATION ==================
+
+interface CachedRate {
+  rate: number;
+  timestamp: number;
+  source: 'live' | 'cached' | 'fallback';
+}
+
+// Primary cache: Recent API responses (5 min TTL for fresh data)
+const rateCache = new Map<string, CachedRate>();
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
-// Currency decimal places for proper conversion
+// Secondary cache: Last known good rates (1 hour TTL for fallback)
+const lastKnownRates = new Map<string, CachedRate>();
+const LAST_KNOWN_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+// ================== CURRENCY DECIMALS ==================
+
 const CURRENCY_DECIMALS: Record<string, number> = {
   USD: 2, BRL: 2, EUR: 2, GBP: 2, CAD: 2, AUD: 2, 
   MXN: 2, ARS: 2, CLP: 0, COP: 2, PEN: 2, CHF: 2, INR: 2,
@@ -33,6 +48,10 @@ function getMinorUnitDivisor(currency: string): number {
   return Math.pow(10, getDecimalPlaces(currency));
 }
 
+// ================== TYPES ==================
+
+export type FxRateSource = 'live' | 'cached' | 'fallback';
+
 export interface FxConversionResult {
   success: boolean;
   amount_usd_minor: number;
@@ -42,62 +61,23 @@ export interface FxConversionResult {
   fx_spread_amount_usd_minor: number;
   fx_provider: string;
   fx_timestamp: string;
+  fx_rate_source: FxRateSource;
   error?: string;
 }
 
 export interface ConversionParams {
   payment_amount_minor: number;
   payment_currency: string;
-  spread_percent?: number; // Default 0.008 (0.8%)
+  spread_percent?: number;
+  block_on_no_rate?: boolean; // Default true - block if no valid rate
 }
 
-/**
- * Fetch exchange rate from API
- */
-async function fetchExchangeRate(fromCurrency: string, toCurrency: string): Promise<number | null> {
-  const cacheKey = `${fromCurrency}_${toCurrency}`;
-  const cached = rateCache.get(cacheKey);
-  
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
-    logStep("Using cached rate", { cacheKey, rate: cached.rate });
-    return cached.rate;
-  }
-
-  try {
-    // Use Exchange Rate API (free tier)
-    // Alternative: Open Exchange Rates, Fixer.io
-    const response = await fetch(
-      `https://open.er-api.com/v6/latest/${fromCurrency}`
-    );
-
-    if (!response.ok) {
-      logStep("Exchange rate API error", { status: response.status });
-      return null;
-    }
-
-    const data = await response.json();
-    
-    if (!data.rates || !data.rates[toCurrency]) {
-      logStep("Rate not found in response", { fromCurrency, toCurrency });
-      return null;
-    }
-
-    const rate = data.rates[toCurrency];
-    
-    // Cache the rate
-    rateCache.set(cacheKey, { rate, timestamp: Date.now() });
-    logStep("Fetched and cached rate", { fromCurrency, toCurrency, rate });
-    
-    return rate;
-  } catch (error) {
-    logStep("Error fetching exchange rate", { error: String(error) });
-    return null;
-  }
-}
+// ================== FALLBACK RATES ==================
 
 /**
- * Fallback rates for when API is unavailable
- * Updated periodically for common currencies
+ * Hardcoded fallback rates for when API and cache are unavailable
+ * These should be periodically reviewed and updated
+ * Last updated: 2026-01-13
  */
 const FALLBACK_RATES_TO_USD: Record<string, number> = {
   USD: 1.0,
@@ -117,102 +97,113 @@ const FALLBACK_RATES_TO_USD: Record<string, number> = {
   PEN: 0.27,    // ~1 USD = 3.7 PEN
 };
 
-/**
- * Convert a payment amount to USD with spread
- * 
- * @param params - Conversion parameters
- * @returns Conversion result with all FX details
- */
-export async function convertToUSD(params: ConversionParams): Promise<FxConversionResult> {
-  const { payment_amount_minor, payment_currency, spread_percent = 0.008 } = params;
-  
-  const timestamp = new Date().toISOString();
-  
-  logStep("Starting conversion", { payment_amount_minor, payment_currency, spread_percent });
+// ================== RATE FETCHING ==================
 
-  // If already USD, no conversion needed
-  if (payment_currency === 'USD') {
-    return {
-      success: true,
-      amount_usd_minor: payment_amount_minor,
-      fx_rate_market: 1.0,
-      fx_rate_applied: 1.0,
-      fx_spread_percent: 0,
-      fx_spread_amount_usd_minor: 0,
-      fx_provider: 'none',
-      fx_timestamp: timestamp,
-    };
+/**
+ * Fetch exchange rate with multi-tier fallback:
+ * 1. Primary cache (5 min TTL)
+ * 2. Live API call
+ * 3. Last known rate (1 hour TTL)
+ * 4. Hardcoded fallback
+ */
+async function fetchExchangeRate(
+  fromCurrency: string, 
+  toCurrency: string
+): Promise<{ rate: number; source: FxRateSource } | null> {
+  const cacheKey = `${fromCurrency}_${toCurrency}`;
+  const now = Date.now();
+  
+  // Tier 1: Check primary cache (fresh rates)
+  const cached = rateCache.get(cacheKey);
+  if (cached && now - cached.timestamp < CACHE_TTL_MS) {
+    logStep("Using fresh cached rate", { cacheKey, rate: cached.rate, age: `${Math.round((now - cached.timestamp) / 1000)}s` });
+    return { rate: cached.rate, source: 'cached' };
   }
 
-  // Convert minor units to major units
-  const divisor = getMinorUnitDivisor(payment_currency);
-  const amountMajor = payment_amount_minor / divisor;
+  // Tier 2: Try live API
+  try {
+    const response = await fetch(
+      `https://open.er-api.com/v6/latest/${fromCurrency}`,
+      { signal: AbortSignal.timeout(5000) } // 5s timeout
+    );
 
-  // Get exchange rate (from source currency to USD)
-  let marketRate = await fetchExchangeRate(payment_currency, 'USD');
-  let provider = 'exchangerate-api.com';
-
-  if (marketRate === null) {
-    // Use fallback rates
-    marketRate = FALLBACK_RATES_TO_USD[payment_currency];
-    provider = 'fallback';
-    
-    if (!marketRate) {
-      logStep("No rate available for currency", { payment_currency });
-      return {
-        success: false,
-        amount_usd_minor: 0,
-        fx_rate_market: 0,
-        fx_rate_applied: 0,
-        fx_spread_percent: spread_percent,
-        fx_spread_amount_usd_minor: 0,
-        fx_provider: 'none',
-        fx_timestamp: timestamp,
-        error: `No exchange rate available for ${payment_currency}`,
-      };
+    if (response.ok) {
+      const data = await response.json();
+      
+      if (data.rates && data.rates[toCurrency]) {
+        const rate = data.rates[toCurrency];
+        
+        // Update both caches
+        const cacheEntry: CachedRate = { rate, timestamp: now, source: 'live' };
+        rateCache.set(cacheKey, cacheEntry);
+        lastKnownRates.set(cacheKey, cacheEntry);
+        
+        logStep("Fetched live rate", { fromCurrency, toCurrency, rate });
+        return { rate, source: 'live' };
+      }
     }
     
-    logStep("Using fallback rate", { payment_currency, marketRate });
+    logStep("API response invalid", { status: response.status });
+  } catch (error) {
+    logStep("API call failed", { error: String(error) });
   }
 
-  // Apply spread (platform fee)
-  // If converting TO USD, we reduce the rate (customer gets slightly less USD)
-  const appliedRate = marketRate * (1 - spread_percent);
-  
-  // Calculate USD amounts
-  const amountUsdMajor = amountMajor * appliedRate;
-  const amountUsdMajorWithoutSpread = amountMajor * marketRate;
-  
-  // Spread amount in USD (platform profit)
-  const spreadAmountUsdMajor = amountUsdMajorWithoutSpread - amountUsdMajor;
-  
-  // Convert to minor units (USD has 2 decimals)
-  const amountUsdMinor = Math.round(amountUsdMajor * 100);
-  const spreadAmountUsdMinor = Math.round(spreadAmountUsdMajor * 100);
+  // Tier 3: Check last known rate (stale but valid)
+  const lastKnown = lastKnownRates.get(cacheKey);
+  if (lastKnown && now - lastKnown.timestamp < LAST_KNOWN_TTL_MS) {
+    logStep("Using last known rate", { 
+      cacheKey, 
+      rate: lastKnown.rate, 
+      age: `${Math.round((now - lastKnown.timestamp) / 60000)}min` 
+    });
+    return { rate: lastKnown.rate, source: 'cached' };
+  }
 
-  logStep("Conversion complete", {
-    amountMajor,
-    marketRate,
-    appliedRate,
-    amountUsdMajor,
-    amountUsdMinor,
-    spreadAmountUsdMinor,
-  });
+  // Tier 4: Hardcoded fallback
+  const fallbackRate = FALLBACK_RATES_TO_USD[fromCurrency];
+  if (fallbackRate && toCurrency === 'USD') {
+    logStep("Using hardcoded fallback", { fromCurrency, fallbackRate });
+    return { rate: fallbackRate, source: 'fallback' };
+  }
 
-  return {
-    success: true,
-    amount_usd_minor: amountUsdMinor,
-    fx_rate_market: marketRate,
-    fx_rate_applied: appliedRate,
-    fx_spread_percent: spread_percent,
-    fx_spread_amount_usd_minor: spreadAmountUsdMinor,
-    fx_provider: provider,
-    fx_timestamp: timestamp,
-  };
+  // No rate available
+  logStep("No rate available", { fromCurrency, toCurrency });
+  return null;
+}
+
+// ================== SPREAD CONFIGURATION ==================
+
+/**
+ * Get spread percentage for a specific currency
+ * First checks fx_spread_configs table, then platform_settings, then default
+ */
+export async function getSpreadForCurrency(
+  supabaseAdmin: any, 
+  currency: string
+): Promise<number> {
+  try {
+    // Check currency-specific spread
+    const { data: currencySpread } = await supabaseAdmin
+      .from('fx_spread_configs')
+      .select('spread_percent, is_enabled')
+      .eq('currency_code', currency)
+      .eq('is_enabled', true)
+      .single();
+    
+    if (currencySpread?.spread_percent) {
+      logStep("Using currency-specific spread", { currency, spread: currencySpread.spread_percent });
+      return Number(currencySpread.spread_percent);
+    }
+  } catch {
+    // Currency not found, try default
+  }
+  
+  // Fall back to platform default
+  return getPlatformSpread(supabaseAdmin);
 }
 
 /**
- * Get the platform FX spread percentage from settings
+ * Get the default platform FX spread percentage from settings
  */
 export async function getPlatformSpread(supabaseAdmin: any): Promise<number> {
   try {
@@ -232,27 +223,185 @@ export async function getPlatformSpread(supabaseAdmin: any): Promise<number> {
   return 0.008; // Default 0.8%
 }
 
+// ================== MAIN CONVERSION ==================
+
+/**
+ * Convert a payment amount to USD with spread
+ * 
+ * Features:
+ * - Multi-tier rate fallback (live -> cached -> fallback)
+ * - Currency-specific spread configuration
+ * - Blocks transaction if no valid rate (configurable)
+ * - Full audit trail (rate source, timestamps)
+ */
+export async function convertToUSD(
+  params: ConversionParams,
+  supabaseAdmin?: any
+): Promise<FxConversionResult> {
+  const { 
+    payment_amount_minor, 
+    payment_currency, 
+    spread_percent,
+    block_on_no_rate = true 
+  } = params;
+  
+  const timestamp = new Date().toISOString();
+  
+  logStep("Starting conversion", { payment_amount_minor, payment_currency });
+
+  // If already USD, no conversion needed
+  if (payment_currency === 'USD') {
+    return {
+      success: true,
+      amount_usd_minor: payment_amount_minor,
+      fx_rate_market: 1.0,
+      fx_rate_applied: 1.0,
+      fx_spread_percent: 0,
+      fx_spread_amount_usd_minor: 0,
+      fx_provider: 'none',
+      fx_timestamp: timestamp,
+      fx_rate_source: 'live',
+    };
+  }
+
+  // Get exchange rate with fallback chain
+  const rateResult = await fetchExchangeRate(payment_currency, 'USD');
+  
+  if (!rateResult) {
+    if (block_on_no_rate) {
+      logStep("BLOCKING: No rate available", { payment_currency });
+      return {
+        success: false,
+        amount_usd_minor: 0,
+        fx_rate_market: 0,
+        fx_rate_applied: 0,
+        fx_spread_percent: 0,
+        fx_spread_amount_usd_minor: 0,
+        fx_provider: 'none',
+        fx_timestamp: timestamp,
+        fx_rate_source: 'fallback',
+        error: `No exchange rate available for ${payment_currency}. Transaction blocked.`,
+      };
+    }
+    
+    // Use USD 1:1 as last resort (dangerous, only for testing)
+    logStep("WARNING: Using 1:1 rate as last resort");
+  }
+
+  const marketRate = rateResult?.rate ?? 1;
+  const rateSource = rateResult?.source ?? 'fallback';
+  const provider = rateSource === 'live' ? 'exchangerate-api.com' : rateSource;
+
+  // Get spread (currency-specific or default)
+  let finalSpread = spread_percent;
+  if (finalSpread === undefined && supabaseAdmin) {
+    finalSpread = await getSpreadForCurrency(supabaseAdmin, payment_currency);
+  }
+  finalSpread = finalSpread ?? 0.008;
+
+  // Convert minor units to major units
+  const divisor = getMinorUnitDivisor(payment_currency);
+  const amountMajor = payment_amount_minor / divisor;
+
+  // Apply spread (platform fee reduces conversion rate)
+  const appliedRate = marketRate * (1 - finalSpread);
+  
+  // Calculate USD amounts
+  const amountUsdMajor = amountMajor * appliedRate;
+  const amountUsdMajorWithoutSpread = amountMajor * marketRate;
+  
+  // Spread amount in USD (platform profit)
+  const spreadAmountUsdMajor = amountUsdMajorWithoutSpread - amountUsdMajor;
+  
+  // Convert to minor units (USD has 2 decimals)
+  const amountUsdMinor = Math.round(amountUsdMajor * 100);
+  const spreadAmountUsdMinor = Math.round(spreadAmountUsdMajor * 100);
+
+  logStep("Conversion complete", {
+    amountMajor,
+    marketRate,
+    appliedRate,
+    amountUsdMinor,
+    spreadAmountUsdMinor,
+    rateSource,
+  });
+
+  return {
+    success: true,
+    amount_usd_minor: amountUsdMinor,
+    fx_rate_market: marketRate,
+    fx_rate_applied: appliedRate,
+    fx_spread_percent: finalSpread,
+    fx_spread_amount_usd_minor: spreadAmountUsdMinor,
+    fx_provider: provider,
+    fx_timestamp: timestamp,
+    fx_rate_source: rateSource,
+  };
+}
+
+// ================== VALIDATION HELPERS ==================
+
+/**
+ * Check if a rate is anomalous (potential fraud/error)
+ * Returns true if rate seems suspicious
+ */
+export function isRateAnomalous(
+  currency: string,
+  rate: number,
+  tolerancePercent: number = 0.15 // 15% tolerance from fallback
+): { anomalous: boolean; reason?: string } {
+  const expectedRate = FALLBACK_RATES_TO_USD[currency];
+  
+  if (!expectedRate) {
+    return { anomalous: false }; // Can't validate unknown currency
+  }
+
+  const lowerBound = expectedRate * (1 - tolerancePercent);
+  const upperBound = expectedRate * (1 + tolerancePercent);
+
+  if (rate < lowerBound || rate > upperBound) {
+    return {
+      anomalous: true,
+      reason: `Rate ${rate} is outside expected range [${lowerBound.toFixed(6)}, ${upperBound.toFixed(6)}] for ${currency}`,
+    };
+  }
+
+  return { anomalous: false };
+}
+
+/**
+ * Validate spread is within acceptable limits
+ */
+export function isSpreadValid(
+  spreadPercent: number,
+  minSpread: number = 0,
+  maxSpread: number = 0.05 // 5% max
+): { valid: boolean; reason?: string } {
+  if (spreadPercent < minSpread) {
+    return { valid: false, reason: `Spread ${spreadPercent} is below minimum ${minSpread}` };
+  }
+  if (spreadPercent > maxSpread) {
+    return { valid: false, reason: `Spread ${spreadPercent} exceeds maximum ${maxSpread}` };
+  }
+  return { valid: true };
+}
+
+// ================== PAYMENT METHOD EXTRACTION ==================
+
 /**
  * Extract payment method from gateway payload
  */
 export function extractPaymentMethod(provider: string, gatewayPayload: Record<string, unknown>): string {
   if (provider === 'mercadopago') {
-    // Mercado Pago payment types
     const paymentTypeId = gatewayPayload.payment_type_id as string;
     const paymentMethodId = gatewayPayload.payment_method_id as string;
     
     if (paymentTypeId === 'pix' || paymentMethodId?.toLowerCase().includes('pix')) {
       return 'pix';
     }
-    if (paymentTypeId === 'credit_card') {
-      return 'credit_card';
-    }
-    if (paymentTypeId === 'debit_card') {
-      return 'debit_card';
-    }
-    if (paymentTypeId === 'bank_transfer') {
-      return 'bank_transfer';
-    }
+    if (paymentTypeId === 'credit_card') return 'credit_card';
+    if (paymentTypeId === 'debit_card') return 'debit_card';
+    if (paymentTypeId === 'bank_transfer') return 'bank_transfer';
     if (paymentTypeId === 'ticket' || paymentMethodId?.toLowerCase().includes('boleto')) {
       return 'boleto';
     }
@@ -260,16 +409,11 @@ export function extractPaymentMethod(provider: string, gatewayPayload: Record<st
   }
   
   if (provider === 'stripe') {
-    // Stripe payment method types from PaymentIntent
     const paymentMethodTypes = gatewayPayload.payment_method_types as string[] | undefined;
     const paymentMethodType = paymentMethodTypes?.[0];
     
-    if (paymentMethodType === 'card') {
-      return 'card';
-    }
-    if (paymentMethodType === 'bank_transfer') {
-      return 'bank_transfer';
-    }
+    if (paymentMethodType === 'card') return 'card';
+    if (paymentMethodType === 'bank_transfer') return 'bank_transfer';
     return paymentMethodType || 'card';
   }
   

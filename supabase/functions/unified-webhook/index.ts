@@ -31,6 +31,8 @@ function getMinorUnitDivisor(currency: string): number {
   return Math.pow(10, CURRENCY_DECIMALS[currency] ?? 2);
 }
 
+type FxRateSource = 'live' | 'cached' | 'fallback';
+
 interface FxResult {
   amount_usd_minor: number;
   fx_rate_market: number;
@@ -39,6 +41,7 @@ interface FxResult {
   fx_spread_amount_usd_minor: number;
   fx_provider: string;
   fx_timestamp: string;
+  fx_rate_source: FxRateSource;
 }
 
 async function convertToUSD(amountMinor: number, currency: string, spreadPercent = 0.008): Promise<FxResult> {
@@ -53,6 +56,7 @@ async function convertToUSD(amountMinor: number, currency: string, spreadPercent
       fx_spread_amount_usd_minor: 0,
       fx_provider: 'none',
       fx_timestamp: timestamp,
+      fx_rate_source: 'live',
     };
   }
 
@@ -61,13 +65,17 @@ async function convertToUSD(amountMinor: number, currency: string, spreadPercent
 
   let marketRate: number | null = null;
   let provider = 'exchangerate-api.com';
+  let rateSource: FxRateSource = 'live';
   
   try {
-    const response = await fetch(`https://open.er-api.com/v6/latest/${currency}`);
+    const response = await fetch(`https://open.er-api.com/v6/latest/${currency}`, {
+      signal: AbortSignal.timeout(5000),
+    });
     if (response.ok) {
       const data = await response.json();
       if (data.rates?.USD) {
         marketRate = data.rates.USD;
+        rateSource = 'live';
       }
     }
   } catch (error) {
@@ -77,6 +85,7 @@ async function convertToUSD(amountMinor: number, currency: string, spreadPercent
   if (marketRate === null) {
     marketRate = FALLBACK_RATES_TO_USD[currency] ?? 1.0;
     provider = 'fallback';
+    rateSource = 'fallback';
     logStep("Using fallback rate", { currency, marketRate });
   }
 
@@ -93,6 +102,7 @@ async function convertToUSD(amountMinor: number, currency: string, spreadPercent
     fx_spread_amount_usd_minor: Math.round(spreadAmountUsdMajor * 100),
     fx_provider: provider,
     fx_timestamp: timestamp,
+    fx_rate_source: rateSource,
   };
 }
 
@@ -206,6 +216,7 @@ serve(async (req) => {
             fx_spread_amount_usd_minor: fxResult.fx_spread_amount_usd_minor,
             fx_provider: fxResult.fx_provider,
             fx_timestamp: fxResult.fx_timestamp,
+            fx_rate_source: fxResult.fx_rate_source,
           })
           .eq('id', paymentId);
 
