@@ -20,7 +20,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import PortfolioManager from "@/components/settings/PortfolioManager";
 import CertificationsManager from "@/components/settings/CertificationsManager";
-import { CurrencySelect } from "@/components/CurrencySelect";
+import { RestrictedCurrencySelect } from "@/components/RestrictedCurrencySelect";
 import { FreelancerCreditsCard } from "@/components/billing/FreelancerCreditsCard";
 import { CompanyWalletCard } from "@/components/billing/CompanyWalletCard";
 
@@ -496,9 +496,10 @@ export default function Settings() {
                   </div>
                   <div className="space-y-2">
                     <Label>{t("settings.preferredPayoutCurrency")}</Label>
-                    <CurrencySelect
+                    <RestrictedCurrencySelect
                       value={freelancerProfile.preferred_payout_currency || "USD"}
                       onValueChange={(v) => setFreelancerProfile({ ...freelancerProfile, preferred_payout_currency: v })}
+                      countryCode={freelancerProfile.country}
                       className="w-48"
                     />
                     <p className="text-xs text-muted-foreground">{t("settings.preferredPayoutCurrencyDesc")}</p>
