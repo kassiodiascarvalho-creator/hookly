@@ -369,6 +369,33 @@ export type Database = {
         }
         Relationships: []
       }
+      fx_spread_configs: {
+        Row: {
+          created_at: string
+          currency_code: string
+          id: string
+          is_enabled: boolean
+          spread_percent: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency_code: string
+          id?: string
+          is_enabled?: boolean
+          spread_percent?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency_code?: string
+          id?: string
+          is_enabled?: boolean
+          spread_percent?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           created_at: string
@@ -465,6 +492,7 @@ export type Database = {
           fx_provider: string | null
           fx_rate_applied: number | null
           fx_rate_market: number | null
+          fx_rate_source: string | null
           fx_spread_amount_usd_minor: number | null
           fx_spread_percent: number | null
           fx_timestamp: string | null
@@ -495,6 +523,7 @@ export type Database = {
           fx_provider?: string | null
           fx_rate_applied?: number | null
           fx_rate_market?: number | null
+          fx_rate_source?: string | null
           fx_spread_amount_usd_minor?: number | null
           fx_spread_percent?: number | null
           fx_timestamp?: string | null
@@ -525,6 +554,7 @@ export type Database = {
           fx_provider?: string | null
           fx_rate_applied?: number | null
           fx_rate_market?: number | null
+          fx_rate_source?: string | null
           fx_spread_amount_usd_minor?: number | null
           fx_spread_percent?: number | null
           fx_timestamp?: string | null
@@ -1149,6 +1179,7 @@ export type Database = {
           fx_provider: string | null
           fx_rate_applied: number | null
           fx_rate_market: number | null
+          fx_rate_source: string | null
           fx_spread_amount_usd_minor: number | null
           fx_spread_percent: number | null
           fx_timestamp: string | null
@@ -1181,6 +1212,7 @@ export type Database = {
           fx_provider?: string | null
           fx_rate_applied?: number | null
           fx_rate_market?: number | null
+          fx_rate_source?: string | null
           fx_spread_amount_usd_minor?: number | null
           fx_spread_percent?: number | null
           fx_timestamp?: string | null
@@ -1213,6 +1245,7 @@ export type Database = {
           fx_provider?: string | null
           fx_rate_applied?: number | null
           fx_rate_market?: number | null
+          fx_rate_source?: string | null
           fx_spread_amount_usd_minor?: number | null
           fx_spread_percent?: number | null
           fx_timestamp?: string | null
@@ -1375,6 +1408,7 @@ export type Database = {
           fx_provider: string | null
           fx_rate_applied: number | null
           fx_rate_market: number | null
+          fx_rate_source: string | null
           fx_spread_amount_usd_minor: number | null
           fx_spread_percent: number | null
           fx_timestamp: string | null
@@ -1401,6 +1435,7 @@ export type Database = {
           fx_provider?: string | null
           fx_rate_applied?: number | null
           fx_rate_market?: number | null
+          fx_rate_source?: string | null
           fx_spread_amount_usd_minor?: number | null
           fx_spread_percent?: number | null
           fx_timestamp?: string | null
@@ -1427,6 +1462,7 @@ export type Database = {
           fx_provider?: string | null
           fx_rate_applied?: number | null
           fx_rate_market?: number | null
+          fx_rate_source?: string | null
           fx_spread_amount_usd_minor?: number | null
           fx_spread_percent?: number | null
           fx_timestamp?: string | null
