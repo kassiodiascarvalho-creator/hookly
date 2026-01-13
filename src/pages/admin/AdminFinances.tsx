@@ -451,7 +451,7 @@ export default function AdminFinances() {
             <Coins className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{summary.total_credits.toFixed(2)}</div>
+            <div className="text-2xl font-bold">{Number(summary.total_credits).toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">Não sacáveis</p>
           </CardContent>
         </Card>

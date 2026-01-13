@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { formatMoneyFromCents } from "@/lib/formatMoney";
 import {
   Dialog,
   DialogContent,
@@ -200,7 +201,7 @@ export default function AdminPayments() {
           <CardContent>
             <div className="flex items-center gap-2">
               <DollarSign className="h-4 w-4 text-muted-foreground" />
-              <span className="text-2xl font-bold">${stats.totalAmount.toLocaleString()}</span>
+              <span className="text-2xl font-bold">{formatMoneyFromCents(stats.totalAmount, "BRL")}</span>
             </div>
           </CardContent>
         </Card>
@@ -211,7 +212,7 @@ export default function AdminPayments() {
           <CardContent>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-yellow-500" />
-              <span className="text-2xl font-bold">${stats.inEscrow.toLocaleString()}</span>
+              <span className="text-2xl font-bold">{formatMoneyFromCents(stats.inEscrow, "BRL")}</span>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               {stats.awaitingRelease} {t("admin.awaitingRelease")}
@@ -225,7 +226,7 @@ export default function AdminPayments() {
           <CardContent>
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-500" />
-              <span className="text-2xl font-bold">${stats.released.toLocaleString()}</span>
+              <span className="text-2xl font-bold">{formatMoneyFromCents(stats.released, "BRL")}</span>
             </div>
           </CardContent>
         </Card>
@@ -303,7 +304,7 @@ export default function AdminPayments() {
                       {payment.freelancer?.full_name || "-"}
                     </TableCell>
                     <TableCell className="font-semibold">
-                      ${Number(payment.amount).toLocaleString()} {payment.currency}
+                      {formatMoneyFromCents(Number(payment.amount), payment.currency || "BRL")}
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-1">
@@ -358,7 +359,7 @@ export default function AdminPayments() {
                 <div>
                   <p className="text-sm text-muted-foreground">{t("admin.amount")}</p>
                   <p className="font-semibold text-lg">
-                    ${Number(selectedPayment.amount).toFixed(2)} {selectedPayment.currency}
+                    {formatMoneyFromCents(Number(selectedPayment.amount), selectedPayment.currency || "BRL")}
                   </p>
                 </div>
                 <div>
