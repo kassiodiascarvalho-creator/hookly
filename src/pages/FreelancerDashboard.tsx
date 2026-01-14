@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Search, FileText, MessageSquare, DollarSign, ArrowRight, Briefcase, Loader2 } from "lucide-react";
 import { AchievementsCard } from "@/components/achievements";
+import { ProfileCompletionCard } from "@/components/profile/ProfileCompletionCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { formatMoneyFromCents } from "@/lib/formatMoney";
@@ -169,6 +170,9 @@ export default function FreelancerDashboard() {
           </Card>
         ))}
       </div>
+
+      {/* Profile Completion Card */}
+      <ProfileCompletionCard />
 
       {/* Achievements Card - My Evolution */}
       <AchievementsCard />

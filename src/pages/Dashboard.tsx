@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Briefcase, Users, MessageSquare, DollarSign, Plus, ArrowRight } from "lucide-react";
+import { ProfileCompletionCard } from "@/components/profile/ProfileCompletionCard";
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -46,6 +47,9 @@ export default function Dashboard() {
           </Card>
         ))}
       </div>
+
+      {/* Profile Completion Card */}
+      <ProfileCompletionCard />
 
       {/* Quick Actions */}
       <Card className="border-border/50">

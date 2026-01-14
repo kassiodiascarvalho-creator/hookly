@@ -10,11 +10,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Logo } from "@/components/Logo";
 import { toast } from "sonner";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, Mail, ArrowLeft, RefreshCw } from "lucide-react";
 import { z } from "zod";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
 const emailSchema = z.string().trim().email("Invalid email address").max(255);
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters").max(72);
+
+type AuthStep = "credentials" | "verify-email";
 
 export default function Auth() {
   const { t } = useTranslation();
@@ -22,18 +25,30 @@ export default function Auth() {
   const [searchParams] = useSearchParams();
   const { user, loading: authLoading } = useAuth();
   
+  const [step, setStep] = useState<AuthStep>(
+    searchParams.get("step") === "confirm-email" ? "verify-email" : "credentials"
+  );
   const [activeTab, setActiveTab] = useState<"login" | "signup">(
     searchParams.get("tab") === "signup" ? "signup" : "login"
   );
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(searchParams.get("email") || "");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string }>({});
+  const [resending, setResending] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string; otp?: string }>({});
 
   useEffect(() => {
     if (!authLoading && user) {
+      // Check if email is confirmed
+      if (!user.email_confirmed_at) {
+        console.log("[AUTH] user not email confirmed, showing verify step");
+        setEmail(user.email || "");
+        setStep("verify-email");
+        return;
+      }
       checkUserTypeAndRedirect();
     }
   }, [user, authLoading]);
@@ -41,13 +56,18 @@ export default function Auth() {
   const checkUserTypeAndRedirect = async () => {
     if (!user) return;
     
+    console.log("[AUTH] checking user type for redirect", { user_id: user.id });
+    
     const { data: profile } = await supabase
       .from("profiles")
-      .select("user_type")
+      .select("user_type, onboarding_completed")
       .eq("user_id", user.id)
       .single();
     
-    if (profile?.user_type === "company") {
+    if (!profile?.user_type || !profile?.onboarding_completed) {
+      console.log("[AUTH] redirecting to onboarding - no user_type or onboarding not completed");
+      navigate("/onboarding");
+    } else if (profile?.user_type === "company") {
       navigate("/dashboard");
     } else if (profile?.user_type === "freelancer") {
       navigate("/freelancer-dashboard");
@@ -88,15 +108,22 @@ export default function Auth() {
     if (!validateForm(false)) return;
     
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    console.log("[AUTH] attempting login", { email });
+    
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     
     if (error) {
+      console.log("[AUTH] login error", { error: error.message });
       if (error.message.includes("Invalid login credentials")) {
         toast.error(t("auth.invalidCredentials"));
+      } else if (error.message.includes("Email not confirmed")) {
+        toast.error(t("auth.emailNotConfirmed"));
+        setStep("verify-email");
       } else {
         toast.error(error.message);
       }
     } else {
+      console.log("[AUTH] login success", { user_id: data.user?.id });
       toast.success(t("auth.loginSuccess"));
     }
     setLoading(false);
@@ -107,32 +134,183 @@ export default function Auth() {
     if (!validateForm(true)) return;
     
     setLoading(true);
-    const redirectUrl = `${window.location.origin}/`;
+    console.log("[AUTH] signup created", { email });
     
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: redirectUrl,
+        emailRedirectTo: `${window.location.origin}/auth?step=confirm-email`,
       },
     });
     
     if (error) {
+      console.log("[AUTH] signup error", { error: error.message });
       if (error.message.includes("already registered")) {
         toast.error(t("auth.emailAlreadyRegistered"));
       } else {
         toast.error(error.message);
       }
-    } else {
-      toast.success(t("auth.signupSuccess"));
+      setLoading(false);
+      return;
     }
+    
+    console.log("[AUTH] signup success, moving to verify step");
+    toast.success(t("auth.verificationCodeSent"));
+    setStep("verify-email");
     setLoading(false);
+  };
+
+  const handleVerifyOtp = async () => {
+    if (otpCode.length !== 6) {
+      setErrors({ otp: t("auth.invalidCode") });
+      return;
+    }
+    
+    setLoading(true);
+    setErrors({});
+    console.log("[AUTH] verifying OTP", { email });
+    
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token: otpCode,
+      type: "email",
+    });
+    
+    if (error) {
+      console.log("[AUTH] OTP verification error", { error: error.message });
+      setErrors({ otp: t("auth.invalidOrExpiredCode") });
+      toast.error(t("auth.invalidOrExpiredCode"));
+      setLoading(false);
+      return;
+    }
+    
+    console.log("[AUTH] otp verified", { user_id: data.user?.id });
+    toast.success(t("auth.emailVerified"));
+    
+    // Redirect to onboarding
+    navigate("/onboarding");
+    setLoading(false);
+  };
+
+  const handleResendCode = async () => {
+    setResending(true);
+    console.log("[AUTH] resending verification code", { email });
+    
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email,
+    });
+    
+    if (error) {
+      console.log("[AUTH] resend error", { error: error.message });
+      toast.error(error.message);
+    } else {
+      toast.success(t("auth.codeSentAgain"));
+    }
+    setResending(false);
+  };
+
+  const handleBackToCredentials = () => {
+    setStep("credentials");
+    setOtpCode("");
+    setErrors({});
   };
 
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Email Verification Step
+  if (step === "verify-email") {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background via-background to-muted/30 p-4">
+        <div className="w-full max-w-md">
+          <div className="flex justify-center mb-8">
+            <Logo size="lg" onClick={() => navigate("/")} className="cursor-pointer" />
+          </div>
+          
+          <Card className="border-border/50 shadow-xl">
+            <CardHeader className="text-center pb-2">
+              <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                <Mail className="h-8 w-8 text-primary" />
+              </div>
+              <CardTitle className="text-2xl font-bold">
+                {t("auth.confirmEmail")}
+              </CardTitle>
+              <CardDescription className="space-y-2">
+                <p>{t("auth.codeSentTo")}</p>
+                <p className="font-medium text-foreground">{email}</p>
+              </CardDescription>
+            </CardHeader>
+            
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <Label className="text-center block">{t("auth.enterCode")}</Label>
+                <div className="flex justify-center">
+                  <InputOTP
+                    maxLength={6}
+                    value={otpCode}
+                    onChange={(value) => {
+                      setOtpCode(value);
+                      setErrors({});
+                    }}
+                  >
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} />
+                      <InputOTPSlot index={1} />
+                      <InputOTPSlot index={2} />
+                      <InputOTPSlot index={3} />
+                      <InputOTPSlot index={4} />
+                      <InputOTPSlot index={5} />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
+                {errors.otp && (
+                  <p className="text-sm text-destructive text-center">{errors.otp}</p>
+                )}
+              </div>
+              
+              <Button 
+                onClick={handleVerifyOtp} 
+                className="w-full" 
+                disabled={loading || otpCode.length !== 6}
+              >
+                {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                {t("auth.verifyEmail")}
+              </Button>
+              
+              <div className="flex flex-col gap-2">
+                <Button
+                  variant="ghost"
+                  className="w-full gap-2"
+                  onClick={handleResendCode}
+                  disabled={resending}
+                >
+                  {resending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4" />
+                  )}
+                  {t("auth.resendCode")}
+                </Button>
+                
+                <Button
+                  variant="link"
+                  className="w-full gap-2"
+                  onClick={handleBackToCredentials}
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  {t("auth.backToLogin")}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
