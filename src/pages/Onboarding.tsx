@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +14,35 @@ export default function Onboarding() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState<"company" | "freelancer" | null>(null);
+  const [checkingExisting, setCheckingExisting] = useState(true);
+
+  useEffect(() => {
+    // Check if user already has a type and completed onboarding
+    const checkExistingProfile = async () => {
+      if (!user) {
+        setCheckingExisting(false);
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("user_type, onboarding_completed")
+        .eq("user_id", user.id)
+        .single();
+
+      if (profile?.user_type && profile?.onboarding_completed) {
+        console.log("[ONBOARDING] user already completed onboarding, redirecting");
+        if (profile.user_type === "company") {
+          navigate("/dashboard", { replace: true });
+        } else {
+          navigate("/freelancer-dashboard", { replace: true });
+        }
+      }
+      setCheckingExisting(false);
+    };
+
+    checkExistingProfile();
+  }, [user, navigate]);
 
   const handleSelectType = async (type: "company" | "freelancer") => {
     if (!user) {
@@ -23,42 +52,65 @@ export default function Onboarding() {
     }
 
     setLoading(type);
+    console.log("[ONBOARDING] selecting type", { type, user_id: user.id });
 
     try {
-      // Update user type in profiles
+      // Update user type and mark onboarding as completed
       const { error: profileError } = await supabase
         .from("profiles")
-        .update({ user_type: type })
+        .update({ 
+          user_type: type,
+          onboarding_completed: true,
+          profile_completion_percent: 0,
+          profile_completion_updated_at: new Date().toISOString()
+        })
         .eq("user_id", user.id);
 
       if (profileError) throw profileError;
 
-      // Create the appropriate profile
+      // Create the appropriate profile using upsert for idempotency
       if (type === "company") {
         const { error: companyError } = await supabase
           .from("company_profiles")
-          .insert({ user_id: user.id });
+          .upsert(
+            { user_id: user.id },
+            { onConflict: "user_id" }
+          );
         
-        if (companyError && !companyError.message.includes("duplicate")) {
+        if (companyError) {
           throw companyError;
         }
         
+        console.log("[ONBOARDING] profile created", { user_type: "company", user_id: user.id });
         toast.success(t("onboarding.companyCreated"));
-        navigate("/dashboard");
+        navigate("/settings?tab=profile");
       } else {
         const { error: freelancerError } = await supabase
           .from("freelancer_profiles")
-          .insert({ user_id: user.id });
+          .upsert(
+            { user_id: user.id, proposal_credits: 3 },
+            { onConflict: "user_id" }
+          );
         
-        if (freelancerError && !freelancerError.message.includes("duplicate")) {
+        if (freelancerError) {
           throw freelancerError;
         }
+
+        // Initialize achievements for freelancer
+        try {
+          await supabase.rpc("initialize_freelancer_achievements", {
+            p_freelancer_user_id: user.id
+          });
+        } catch (e) {
+          console.log("[ONBOARDING] achievements init skipped (may already exist)");
+        }
         
+        console.log("[ONBOARDING] profile created", { user_type: "freelancer", user_id: user.id });
         toast.success(t("onboarding.freelancerCreated"));
-        navigate("/freelancer-dashboard");
+        navigate("/settings?tab=profile");
       }
     } catch (error: any) {
-      console.error("Onboarding error:", error);
+      console.error("[ONBOARDING] error:", error);
       toast.error(error.message || t("common.error"));
     } finally {
       setLoading(null);
@@ -77,6 +129,14 @@ export default function Onboarding() {
       t("onboarding.freelancerFeature3"),
     ],
   };
+
+  if (checkingExisting) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background via-background to-muted/30 p-4">

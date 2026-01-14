@@ -1012,7 +1012,10 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          onboarding_completed: boolean | null
           preferred_language: string
+          profile_completion_percent: number | null
+          profile_completion_updated_at: string | null
           role: Database["public"]["Enums"]["app_role"]
           stripe_customer_id: string | null
           updated_at: string
@@ -1023,7 +1026,10 @@ export type Database = {
           created_at?: string
           email: string
           id?: string
+          onboarding_completed?: boolean | null
           preferred_language?: string
+          profile_completion_percent?: number | null
+          profile_completion_updated_at?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           stripe_customer_id?: string | null
           updated_at?: string
@@ -1034,7 +1040,10 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          onboarding_completed?: boolean | null
           preferred_language?: string
+          profile_completion_percent?: number | null
+          profile_completion_updated_at?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           stripe_customer_id?: string | null
           updated_at?: string
