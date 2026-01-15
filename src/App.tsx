@@ -72,15 +72,8 @@ const App = () => (
             <Route path="/precos" element={<Pricing />} />
             <Route path="/como-funciona" element={<HowItWorks />} />
             
-            {/* Onboarding */}
-            <Route
-              path="/onboarding"
-              element={
-                <ProtectedRoute>
-                  <Onboarding />
-                </ProtectedRoute>
-              }
-            />
+            {/* Onboarding - sem ProtectedRoute para evitar loop */}
+            <Route path="/onboarding" element={<Onboarding />} />
             
             {/* Admin Routes */}
             <Route
