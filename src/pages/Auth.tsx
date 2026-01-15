@@ -10,12 +10,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Logo } from "@/components/Logo";
 import { toast } from "sonner";
-import { Eye, EyeOff, Loader2, Mail, ArrowLeft, RefreshCw } from "lucide-react";
+import { Eye, EyeOff, Loader2, Mail, ArrowLeft, RefreshCw, Check, X } from "lucide-react";
 import { z } from "zod";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
 const emailSchema = z.string().trim().email("Invalid email address").max(255);
-const passwordSchema = z.string().min(6, "Password must be at least 6 characters").max(72);
+
+const PASSWORD_MAX_LEN = 72;
+const loginPasswordSchema = z.string().min(1).max(PASSWORD_MAX_LEN);
+const signupPasswordSchema = z
+  .string()
+  .min(8)
+  .max(PASSWORD_MAX_LEN)
+  .refine((v) => /[A-Za-z]/.test(v))
+  .refine((v) => /\d/.test(v))
+  .refine((v) => /[^A-Za-z0-9]/.test(v));
 
 type AuthStep = "credentials" | "verify-email";
 
@@ -37,8 +46,25 @@ export default function Auth() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const [otpCode, setOtpCode] = useState("");
   const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string; otp?: string }>({});
+
+  const passwordChecks = {
+    minLength: password.length >= 8,
+    letter: /[A-Za-z]/.test(password),
+    number: /\d/.test(password),
+    special: /[^A-Za-z0-9]/.test(password),
+  };
+
+  const isStrongPassword = Object.values(passwordChecks).every(Boolean);
+  const isEmailValid = emailSchema.safeParse(email).success;
+  const isSignupReady =
+    activeTab === "signup" &&
+    isEmailValid &&
+    isStrongPassword &&
+    confirmPassword.length > 0 &&
+    password === confirmPassword;
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -52,6 +78,26 @@ export default function Auth() {
       checkUserTypeAndRedirect();
     }
   }, [user, authLoading]);
+
+  // Start resend cooldown whenever we enter the verify-email step
+  useEffect(() => {
+    if (step === "verify-email") {
+      setResendCooldown(60);
+    } else {
+      setResendCooldown(0);
+    }
+  }, [step]);
+
+  // Countdown for resend cooldown
+  useEffect(() => {
+    if (step !== "verify-email" || resendCooldown <= 0) return;
+
+    const interval = window.setInterval(() => {
+      setResendCooldown((s) => (s > 0 ? s - 1 : 0));
+    }, 1000);
+
+    return () => window.clearInterval(interval);
+  }, [step, resendCooldown]);
 
   const checkUserTypeAndRedirect = async () => {
     if (!user) return;
@@ -78,7 +124,7 @@ export default function Auth() {
 
   const validateForm = (isSignup: boolean): boolean => {
     const newErrors: typeof errors = {};
-    
+
     try {
       emailSchema.parse(email);
     } catch (e) {
@@ -86,19 +132,19 @@ export default function Auth() {
         newErrors.email = e.errors[0].message;
       }
     }
-    
+
     try {
-      passwordSchema.parse(password);
-    } catch (e) {
-      if (e instanceof z.ZodError) {
-        newErrors.password = e.errors[0].message;
-      }
+      (isSignup ? signupPasswordSchema : loginPasswordSchema).parse(password);
+    } catch {
+      newErrors.password = isSignup
+        ? t("auth.errors.weakPassword")
+        : t("auth.errors.invalidCredentials");
     }
-    
+
     if (isSignup && password !== confirmPassword) {
       newErrors.confirmPassword = t("auth.passwordMismatch");
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -139,9 +185,6 @@ export default function Auth() {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth?step=confirm-email`,
-      },
     });
     
     if (error) {
@@ -174,7 +217,7 @@ export default function Auth() {
     const { data, error } = await supabase.auth.verifyOtp({
       email,
       token: otpCode,
-      type: "email",
+      type: "signup",
     });
     
     if (error) {
@@ -194,19 +237,22 @@ export default function Auth() {
   };
 
   const handleResendCode = async () => {
+    if (resendCooldown > 0) return;
+
     setResending(true);
     console.log("[AUTH] resending verification code", { email });
-    
+
     const { error } = await supabase.auth.resend({
       type: "signup",
       email,
     });
-    
+
     if (error) {
       console.log("[AUTH] resend error", { error: error.message });
       toast.error(error.message);
     } else {
       toast.success(t("auth.codeSentAgain"));
+      setResendCooldown(60);
     }
     setResending(false);
   };
@@ -289,14 +335,16 @@ export default function Auth() {
                   variant="ghost"
                   className="w-full gap-2"
                   onClick={handleResendCode}
-                  disabled={resending}
+                  disabled={resending || resendCooldown > 0}
                 >
                   {resending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <RefreshCw className="h-4 w-4" />
                   )}
-                  {t("auth.resendCode")}
+                  {resendCooldown > 0
+                    ? t("auth.resendCodeIn", { seconds: resendCooldown })
+                    : t("auth.resendCode")}
                 </Button>
                 
                 <Button
@@ -429,6 +477,47 @@ export default function Auth() {
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </Button>
                     </div>
+
+                    <div className="space-y-2 rounded-md border border-border/60 bg-muted/20 p-3">
+                      <p className="text-xs text-muted-foreground">
+                        {t("auth.passwordRequirementsIntro")}
+                      </p>
+                      <ul className="space-y-1 text-xs">
+                        <li className="flex items-center gap-2">
+                          {passwordChecks.minLength ? (
+                            <Check className="h-4 w-4 text-primary" />
+                          ) : (
+                            <X className="h-4 w-4 text-muted-foreground" />
+                          )}
+                          <span>{t("auth.passwordRuleMinLength")}</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          {passwordChecks.letter ? (
+                            <Check className="h-4 w-4 text-primary" />
+                          ) : (
+                            <X className="h-4 w-4 text-muted-foreground" />
+                          )}
+                          <span>{t("auth.passwordRuleLetter")}</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          {passwordChecks.number ? (
+                            <Check className="h-4 w-4 text-primary" />
+                          ) : (
+                            <X className="h-4 w-4 text-muted-foreground" />
+                          )}
+                          <span>{t("auth.passwordRuleNumber")}</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          {passwordChecks.special ? (
+                            <Check className="h-4 w-4 text-primary" />
+                          ) : (
+                            <X className="h-4 w-4 text-muted-foreground" />
+                          )}
+                          <span>{t("auth.passwordRuleSpecial")}</span>
+                        </li>
+                      </ul>
+                    </div>
+
                     {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
                   </div>
                   
@@ -444,7 +533,7 @@ export default function Auth() {
                     {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword}</p>}
                   </div>
                   
-                  <Button type="submit" className="w-full" disabled={loading}>
+                  <Button type="submit" className="w-full" disabled={loading || !isSignupReady}>
                     {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                     {t("auth.createAccount")}
                   </Button>
