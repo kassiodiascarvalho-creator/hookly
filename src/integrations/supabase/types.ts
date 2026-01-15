@@ -241,6 +241,36 @@ export type Database = {
           },
         ]
       }
+      email_verification_codes: {
+        Row: {
+          code: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       freelancer_achievements: {
         Row: {
           achievement_key: string
