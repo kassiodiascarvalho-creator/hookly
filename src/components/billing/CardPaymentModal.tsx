@@ -1,4 +1,4 @@
-// CardPaymentModal - Updated with FX spread support
+// CardPaymentModal - Updated with FX spread support v2
 import { useState, useEffect, useCallback, useRef, forwardRef } from "react";
 import { Loader2, CreditCard, AlertTriangle, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
