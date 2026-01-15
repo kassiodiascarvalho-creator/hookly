@@ -66,7 +66,8 @@ export default function Auth() {
     password === confirmPassword;
 
   useEffect(() => {
-    if (!authLoading && user) {
+    // Só redireciona se há um usuário autenticado com sessão válida
+    if (!authLoading && user && user.id) {
       checkUserTypeAndRedirect();
     }
   }, [user, authLoading]);
@@ -92,25 +93,33 @@ export default function Auth() {
   }, [step, resendCooldown]);
 
   const checkUserTypeAndRedirect = async () => {
-    if (!user) return;
+    if (!user || !user.id) return;
     
     console.log("[AUTH] checking user type for redirect", { user_id: user.id });
     
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("user_type, onboarding_completed")
-      .eq("user_id", user.id)
-      .single();
-    
-    if (!profile?.user_type || !profile?.onboarding_completed) {
-      console.log("[AUTH] redirecting to onboarding - no user_type or onboarding not completed");
-      navigate("/onboarding");
-    } else if (profile?.user_type === "company") {
-      navigate("/dashboard");
-    } else if (profile?.user_type === "freelancer") {
-      navigate("/freelancer-dashboard");
-    } else {
-      navigate("/onboarding");
+    try {
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("user_type, onboarding_completed")
+        .eq("user_id", user.id)
+        .single();
+      
+      // Se não encontrou perfil ou houve erro, não redireciona
+      if (error || !profile) {
+        console.log("[AUTH] no profile found, staying on auth page", { error });
+        return;
+      }
+      
+      if (!profile.user_type || !profile.onboarding_completed) {
+        console.log("[AUTH] redirecting to onboarding - no user_type or onboarding not completed");
+        navigate("/onboarding", { replace: true });
+      } else if (profile.user_type === "company") {
+        navigate("/dashboard", { replace: true });
+      } else if (profile.user_type === "freelancer") {
+        navigate("/freelancer-dashboard", { replace: true });
+      }
+    } catch (err) {
+      console.error("[AUTH] error checking profile", err);
     }
   };
 
