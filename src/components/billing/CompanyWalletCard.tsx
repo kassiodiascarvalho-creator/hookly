@@ -9,8 +9,8 @@ import { format } from "date-fns";
 import { formatMoneyFromCents, formatMoney } from "@/lib/formatMoney";
 import { useLocalCurrencyDisplay } from "@/hooks/useLocalCurrencyDisplay";
 
-interface CompanyWallet {
-  balance_cents: number;
+interface UserBalance {
+  credits_available: number;
   currency: string;
 }
 
@@ -28,7 +28,7 @@ export function CompanyWalletCard() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [wallet, setWallet] = useState<CompanyWallet | null>(null);
+  const [balance, setBalance] = useState<UserBalance | null>(null);
   const [ledgerEntries, setLedgerEntries] = useState<LedgerEntry[]>([]);
   const { localCurrency, convertToLocal, loading: fxLoading } = useLocalCurrencyDisplay();
 
@@ -41,28 +41,38 @@ export function CompanyWalletCard() {
   const fetchData = async () => {
     if (!user) return;
 
-    // Fetch company wallet
-    const { data: walletData } = await supabase
-      .from("company_wallets")
-      .select("balance_cents, currency")
-      .eq("company_user_id", user.id)
-      .single();
-
-    if (walletData) {
-      setWallet(walletData);
-    }
-
-    // Fetch ledger entries
-    const { data: ledgerData } = await supabase
-      .from("ledger_entries")
-      .select("*")
+    // Fetch user balance from the new ledger system (user_balances table)
+    const { data: balanceData } = await supabase
+      .from("user_balances")
+      .select("credits_available, currency")
       .eq("user_id", user.id)
       .eq("user_type", "company")
+      .maybeSingle();
+
+    if (balanceData) {
+      setBalance(balanceData);
+    }
+
+    // Fetch ledger transactions
+    const { data: ledgerData } = await supabase
+      .from("ledger_transactions")
+      .select("*")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(10);
 
     if (ledgerData) {
-      setLedgerEntries(ledgerData);
+      // Map ledger_transactions to LedgerEntry format
+      const mappedEntries: LedgerEntry[] = ledgerData.map((tx: any) => ({
+        id: tx.id,
+        direction: tx.tx_type.includes('spend') || tx.tx_type.includes('withdrawal') ? 'debit' : 'credit',
+        amount_cents: Math.round(tx.amount * 100),
+        currency: tx.currency,
+        balance_after_cents: tx.balance_after_credits ? Math.round(tx.balance_after_credits * 100) : null,
+        reason: tx.context || tx.tx_type,
+        created_at: tx.created_at,
+      }));
+      setLedgerEntries(mappedEntries);
     }
 
     setLoading(false);
@@ -93,8 +103,10 @@ export function CompanyWalletCard() {
     );
   }
 
-  const balanceCents = wallet?.balance_cents || 0;
-  const currency = wallet?.currency || "USD";
+  // Balance is stored as a decimal in user_balances, convert to cents for display
+  const balanceUsd = balance?.credits_available || 0;
+  const balanceCents = Math.round(balanceUsd * 100);
+  const currency = balance?.currency || "USD";
 
   return (
     <div className="space-y-6">
