@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Wallet, Loader2, History, TrendingUp } from "lucide-react";
 import { CompanyAddFundsDialog } from "./CompanyAddFundsDialog";
 import { format } from "date-fns";
-import { formatMoneyFromCents } from "@/lib/formatMoney";
+import { formatMoneyFromCents, formatMoney } from "@/lib/formatMoney";
+import { useLocalCurrencyDisplay } from "@/hooks/useLocalCurrencyDisplay";
 
 interface CompanyWallet {
   balance_cents: number;
@@ -29,6 +30,7 @@ export function CompanyWalletCard() {
   const [loading, setLoading] = useState(true);
   const [wallet, setWallet] = useState<CompanyWallet | null>(null);
   const [ledgerEntries, setLedgerEntries] = useState<LedgerEntry[]>([]);
+  const { localCurrency, convertToLocal, loading: fxLoading } = useLocalCurrencyDisplay();
 
   useEffect(() => {
     if (user) {
@@ -112,10 +114,24 @@ export function CompanyWalletCard() {
           <CompanyAddFundsDialog onSuccess={fetchData} />
         </CardHeader>
         <CardContent>
-          <div className="flex items-baseline gap-2">
+          <div className="flex flex-col gap-1">
+            {/* Primary balance in USD */}
             <span className="text-4xl font-bold">
               {formatMoneyFromCents(balanceCents, currency)}
             </span>
+            
+            {/* Approximate local currency value */}
+            {localCurrency !== "USD" && !fxLoading && (
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <span className="text-sm">≈</span>
+                <span className="text-base">
+                  {formatMoney(convertToLocal(balanceCents) || 0, localCurrency)}
+                </span>
+                <span className="text-xs text-muted-foreground/70">
+                  (estimativa)
+                </span>
+              </div>
+            )}
           </div>
           
           {balanceCents === 0 && (

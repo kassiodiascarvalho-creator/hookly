@@ -20,6 +20,7 @@ import { format } from "date-fns";
 import { Separator } from "@/components/ui/separator";
 import { WithdrawalRequestModal } from "@/components/earnings/WithdrawalRequestModal";
 import { formatMoney, formatMoneyFromCents } from "@/lib/formatMoney";
+import { useLocalCurrencyDisplay } from "@/hooks/useLocalCurrencyDisplay";
 interface Payment {
   id: string;
   amount: number;
@@ -61,6 +62,7 @@ const PIX_KEY_TYPES = ["cpf", "cnpj", "email", "phone", "random"];
 export default function Earnings() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { localCurrency, convertToLocal, loading: fxLoading } = useLocalCurrencyDisplay();
   
   const [loading, setLoading] = useState(true);
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -371,6 +373,13 @@ export default function Earnings() {
                 <p className={`text-3xl font-bold ${userBalance.earnings_available > 0 ? 'text-green-600' : 'text-muted-foreground'}`}>
                   {formatMoneyFromCents(userBalance.earnings_available, userBalance.currency)}
                 </p>
+                {/* Approximate local currency value */}
+                {localCurrency !== "USD" && !fxLoading && userBalance.earnings_available > 0 && (
+                  <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
+                    <span>≈</span>
+                    <span>{formatMoney(convertToLocal(userBalance.earnings_available) || 0, localCurrency)}</span>
+                  </p>
+                )}
                 <p className="text-xs text-muted-foreground mt-1">
                   {userBalance.earnings_available > 0 
                     ? t("earnings.withdrawableDesc")
@@ -414,6 +423,13 @@ export default function Earnings() {
                 <p className="text-2xl font-bold text-green-600">
                   {formatMoneyFromCents(userBalance.earnings_available, userBalance.currency)}
                 </p>
+                {/* Approximate local currency value */}
+                {localCurrency !== "USD" && !fxLoading && userBalance.earnings_available > 0 && (
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <span>≈</span>
+                    <span>{formatMoney(convertToLocal(userBalance.earnings_available) || 0, localCurrency)}</span>
+                  </p>
+                )}
                 <p className="text-xs text-muted-foreground mt-1">
                   {t("earnings.receivedDesc")}
                 </p>
@@ -430,15 +446,22 @@ export default function Earnings() {
                 <div className="p-3 rounded-xl bg-blue-500/10">
                   <Shield className="h-6 w-6 text-blue-500" />
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">{t("earnings.inEscrow")}</p>
-                  <p className="text-2xl font-bold text-blue-600">
-                    {formatMoneyFromCents(contractsEscrow, userBalance.currency)}
+              <div>
+                <p className="text-sm text-muted-foreground">{t("earnings.inEscrow")}</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {formatMoneyFromCents(contractsEscrow, userBalance.currency)}
+                </p>
+                {/* Approximate local currency value */}
+                {localCurrency !== "USD" && !fxLoading && (
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <span>≈</span>
+                    <span>{formatMoney(convertToLocal(contractsEscrow) || 0, localCurrency)}</span>
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {t("earnings.pendingFunding")}
-                  </p>
-                </div>
+                )}
+                <p className="text-xs text-muted-foreground mt-1">
+                  {t("earnings.pendingFunding")}
+                </p>
+              </div>
               </div>
             </CardContent>
           </Card>
