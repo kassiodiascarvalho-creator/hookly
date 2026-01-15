@@ -1,3 +1,4 @@
+// CardPaymentModal - Updated with FX spread support
 import { useState, useEffect, useCallback, useRef, forwardRef } from "react";
 import { Loader2, CreditCard, AlertTriangle, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,16 +22,19 @@ declare global {
 export interface CardPaymentModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  amount: number; // in cents
+  amount: number;
   publicKey: string;
   paymentType: string;
   userType: string;
   creditsAmount?: number;
   description?: string;
   currency?: string;
-  contractId?: string; // Contract ID for contract funding payments
+  contractId?: string;
   onPaymentConfirmed?: () => void;
   onError?: (error: string) => void;
+  fxSpreadPercent?: number;
+  fxFeeAmount?: number;
+  amountToConvert?: number;
 }
 
 interface CardFormData {
@@ -63,6 +67,9 @@ export const CardPaymentModal = forwardRef<HTMLDivElement, CardPaymentModalProps
       contractId,
       onPaymentConfirmed,
       onError,
+      fxSpreadPercent,
+      fxFeeAmount,
+      amountToConvert,
     },
     ref
   ) {
@@ -258,6 +265,7 @@ export const CardPaymentModal = forwardRef<HTMLDivElement, CardPaymentModalProps
 
       try {
         console.log("[CardPaymentModal] Sending payment to backend");
+        console.log("[CardPaymentModal] FX data:", { fxSpreadPercent, fxFeeAmount, amountToConvert });
 
         const { data, error } = await supabase.functions.invoke("create-card-payment", {
           body: {
@@ -275,6 +283,12 @@ export const CardPaymentModal = forwardRef<HTMLDivElement, CardPaymentModalProps
             creditsAmount,
             description,
             contractId,
+            // Include FX data if available
+            ...(fxSpreadPercent !== undefined && {
+              fx_spread_percent: fxSpreadPercent,
+              fx_fee_amount: fxFeeAmount,
+              amount_to_convert: amountToConvert,
+            }),
           },
         });
 
@@ -348,7 +362,7 @@ export const CardPaymentModal = forwardRef<HTMLDivElement, CardPaymentModalProps
       } finally {
         setProcessing(false);
       }
-    }, [amount, paymentType, userType, creditsAmount, description, contractId, onPaymentConfirmed, onOpenChange, onError]);
+    }, [amount, paymentType, userType, creditsAmount, description, contractId, onPaymentConfirmed, onOpenChange, onError, fxSpreadPercent, fxFeeAmount, amountToConvert]);
 
     const handleFallback = async () => {
       console.log("[CardPaymentModal] User clicked fallback");
@@ -364,6 +378,12 @@ export const CardPaymentModal = forwardRef<HTMLDivElement, CardPaymentModalProps
             creditsAmount,
             description,
             contractId,
+            // Include FX data if available
+            ...(fxSpreadPercent !== undefined && {
+              fx_spread_percent: fxSpreadPercent,
+              fx_fee_amount: fxFeeAmount,
+              amount_to_convert: amountToConvert,
+            }),
           },
         });
 

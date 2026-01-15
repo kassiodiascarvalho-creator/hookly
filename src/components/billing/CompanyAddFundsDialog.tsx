@@ -24,7 +24,9 @@ import { toast } from "sonner";
 import { formatMoney } from "@/lib/formatMoney";
 import { PixPaymentModal } from "./PixPaymentModal";
 import { CardPaymentModal } from "./CardPaymentModal";
+import { FxFeeBreakdown } from "./FxFeeBreakdown";
 import { getAllowedCurrencies, getCurrencyByCountry } from "@/lib/currencyByCountry";
+import { useFxSpread, calculateFxFee } from "@/hooks/useFxSpread";
 
 const PRESET_AMOUNTS = [50, 100, 250, 500, 1000];
 
@@ -36,6 +38,7 @@ interface CompanyAddFundsDialogProps {
 
 export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps) {
   const { user } = useAuth();
+  const { spreadPercent, loading: spreadLoading } = useFxSpread();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [amount, setAmount] = useState("");
@@ -151,6 +154,15 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
   // Card transparent checkout only for BRL (Mercado Pago)
   const canUseTransparentCard = isBRL && mpPublicKey.length > 0;
 
+  const numAmount = parseFloat(amount) || 0;
+  
+  // Calculate FX fee
+  const { feeAmount, amountAfterFee, shouldApplyFee } = calculateFxFee(
+    numAmount,
+    spreadPercent,
+    currency
+  );
+
   const handleCurrencyChange = (newCurrency: string) => {
     setCurrency(newCurrency);
     // Reset payment method based on currency
@@ -167,8 +179,8 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
     console.log("[CompanyAddFundsDialog] currency:", currency);
     console.log("[CompanyAddFundsDialog] mpPublicKey present:", !!mpPublicKey, "length:", mpPublicKey?.length || 0);
     console.log("[CompanyAddFundsDialog] canUseTransparentCard:", canUseTransparentCard);
+    console.log("[CompanyAddFundsDialog] FX spread:", spreadPercent, "fee:", feeAmount, "afterFee:", amountAfterFee);
 
-    const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount < 1) {
       toast.error("Digite um valor válido");
       return;
@@ -181,6 +193,13 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
     }
 
     setLoading(true);
+
+    // Prepare FX data for backend
+    const fxData = shouldApplyFee ? {
+      fx_spread_percent: spreadPercent,
+      fx_fee_amount: Math.round(feeAmount * 100), // Convert to cents
+      amount_to_convert: Math.round(amountAfterFee * 100), // Convert to cents
+    } : {};
 
     try {
       const amountInCents = Math.round(numAmount * 100);
@@ -195,6 +214,7 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
             amountCents: amountInCents,
             currency,
             description: `Adicionar ${formatMoney(numAmount, currency)} na carteira`,
+            ...fxData,
           },
         });
 
@@ -227,6 +247,7 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
             amountCents: amountInCents,
             currency,
             description: `Adicionar ${formatMoney(numAmount, currency)} na carteira`,
+            ...fxData,
           },
         });
 
@@ -253,8 +274,13 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
   };
 
   const handleRegeneratePixPayment = async () => {
-    const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount < 1) return;
+
+    const fxData = shouldApplyFee ? {
+      fx_spread_percent: spreadPercent,
+      fx_fee_amount: Math.round(feeAmount * 100),
+      amount_to_convert: Math.round(amountAfterFee * 100),
+    } : {};
 
     setLoading(true);
     try {
@@ -267,6 +293,7 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
           amountCents: amountInCents,
           currency,
           description: `Adicionar ${formatMoney(numAmount, currency)} na carteira`,
+          ...fxData,
         },
       });
 
@@ -318,7 +345,7 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
                   <SelectContent>
                     {allowedCurrencies.map((c) => (
                       <SelectItem key={c} value={c}>
-                        {c}
+                        {c === "USD" ? "USD (Dólar)" : `${c} (Moeda local)`}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -398,29 +425,40 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
               </div>
             </div>
 
-            {/* Summary */}
-            {amount && parseFloat(amount) > 0 && (
-              <div className="rounded-lg bg-muted p-4 space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Total a adicionar</span>
-                  <span className="text-xl font-bold">
-                    {formatMoney(parseFloat(amount), currency)}
-                  </span>
+            {/* Summary - with FX breakdown for non-USD */}
+            {numAmount > 0 && (
+              shouldApplyFee ? (
+                <FxFeeBreakdown
+                  amount={numAmount}
+                  feeAmount={feeAmount}
+                  amountAfterFee={amountAfterFee}
+                  spreadPercent={spreadPercent}
+                  currency={currency}
+                  paymentMethod={paymentMethod}
+                />
+              ) : (
+                <div className="rounded-lg bg-muted p-4 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Total a adicionar</span>
+                    <span className="text-xl font-bold">
+                      {formatMoney(numAmount, currency)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Moeda</span>
+                    <span>{currency}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Pagamento</span>
+                    <span>{paymentMethod === "pix" ? "PIX" : "Cartão"}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Moeda</span>
-                  <span>{currency}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Pagamento</span>
-                  <span>{paymentMethod === "pix" ? "PIX" : "Cartão"}</span>
-                </div>
-              </div>
+              )
             )}
 
             <Button
               onClick={handleAddFunds}
-              disabled={loading || !amount || parseFloat(amount) < 1}
+              disabled={loading || !amount || numAmount < 1 || spreadLoading}
               className="w-full"
               size="lg"
             >
@@ -461,9 +499,12 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
         publicKey={mpPublicKey}
         paymentType="company_wallet"
         userType="company"
-        description={`Adicionar ${formatMoney(parseFloat(amount) || 0, currency)} na carteira`}
+        description={`Adicionar ${formatMoney(numAmount, currency)} na carteira`}
         currency={currency}
         onPaymentConfirmed={handlePaymentConfirmed}
+        fxSpreadPercent={shouldApplyFee ? spreadPercent : undefined}
+        fxFeeAmount={shouldApplyFee ? Math.round(feeAmount * 100) : undefined}
+        amountToConvert={shouldApplyFee ? Math.round(amountAfterFee * 100) : undefined}
       />
     </>
   );
