@@ -8,7 +8,8 @@ import { AchievementsCard } from "@/components/achievements";
 import { ProfileCompletionCard } from "@/components/profile/ProfileCompletionCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { formatMoneyFromCents } from "@/lib/formatMoney";
+import { formatMoney, formatMoneyFromCents } from "@/lib/formatMoney";
+import { useLocalCurrencyDisplay } from "@/hooks/useLocalCurrencyDisplay";
 
 interface DashboardStats {
   activeProjects: number;
@@ -22,6 +23,7 @@ export default function FreelancerDashboard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { localCurrency, convertToLocal, loading: fxLoading } = useLocalCurrencyDisplay();
   
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats>({
@@ -124,11 +126,29 @@ export default function FreelancerDashboard() {
     }
   };
 
+  // Helper to render earnings with local currency approximation
+  const renderEarningsValue = () => {
+    const usdValue = formatMoneyFromCents(stats.totalEarnings, stats.currency);
+    const localValue = localCurrency !== "USD" && !fxLoading && stats.totalEarnings > 0
+      ? `≈ ${formatMoney(convertToLocal(stats.totalEarnings) || 0, localCurrency)}`
+      : null;
+    
+    return { usdValue, localValue };
+  };
+
+  const earningsDisplay = renderEarningsValue();
+
   const statsDisplay = [
     { label: t("freelancerDashboard.activeProjects"), value: stats.activeProjects.toString(), icon: Briefcase, color: "text-primary" },
     { label: t("freelancerDashboard.pendingProposals"), value: stats.pendingProposals.toString(), icon: FileText, color: "text-secondary" },
     { label: t("freelancerDashboard.messages"), value: stats.conversations.toString(), icon: MessageSquare, color: "text-accent-foreground" },
-    { label: t("freelancerDashboard.totalEarnings"), value: formatMoneyFromCents(stats.totalEarnings, stats.currency), icon: DollarSign, color: "text-green-500" },
+    { 
+      label: t("freelancerDashboard.totalEarnings"), 
+      value: earningsDisplay.usdValue, 
+      subValue: earningsDisplay.localValue,
+      icon: DollarSign, 
+      color: "text-green-500" 
+    },
   ];
 
   const quickActions = [
@@ -161,6 +181,12 @@ export default function FreelancerDashboard() {
                 <div>
                   <p className="text-sm text-muted-foreground">{stat.label}</p>
                   <p className="text-3xl font-bold mt-1">{stat.value}</p>
+                  {/* Show local currency approximation for earnings */}
+                  {'subValue' in stat && stat.subValue && (
+                    <p className="text-sm text-muted-foreground mt-0.5">
+                      {stat.subValue}
+                    </p>
+                  )}
                 </div>
                 <div className={`p-3 rounded-xl bg-muted ${stat.color}`}>
                   <stat.icon className="h-6 w-6" />
