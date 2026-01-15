@@ -47,3 +47,9 @@ verify_jwt = false
 
 [functions.fund-contract-with-credits]
 verify_jwt = false
+
+[functions.send-verification-code]
+verify_jwt = false
+
+[functions.verify-code]
+verify_jwt = false

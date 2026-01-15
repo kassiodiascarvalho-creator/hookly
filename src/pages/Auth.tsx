@@ -48,6 +48,7 @@ export default function Auth() {
   const [resending, setResending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [otpCode, setOtpCode] = useState("");
+  const [pendingUserId, setPendingUserId] = useState<string | null>(null);
   const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string; otp?: string }>({});
 
   const passwordChecks = {
@@ -175,6 +176,29 @@ export default function Auth() {
     setLoading(false);
   };
 
+  const sendVerificationCode = async (userId: string, userEmail: string) => {
+    console.log("[AUTH] sending verification code via edge function", { email: userEmail, userId });
+    
+    const response = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-verification-code`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({ email: userEmail, userId }),
+      }
+    );
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to send verification code");
+    }
+    
+    return response.json();
+  };
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm(true)) return;
@@ -198,9 +222,27 @@ export default function Auth() {
       return;
     }
     
-    console.log("[AUTH] signup success, moving to verify step");
-    toast.success(t("auth.verificationCodeSent"));
-    setStep("verify-email");
+    if (!data.user) {
+      console.log("[AUTH] signup error - no user returned");
+      toast.error("Failed to create account");
+      setLoading(false);
+      return;
+    }
+    
+    // Store user ID for verification
+    setPendingUserId(data.user.id);
+    
+    // Send custom verification code via edge function
+    try {
+      await sendVerificationCode(data.user.id, email);
+      console.log("[AUTH] verification code sent, moving to verify step");
+      toast.success(t("auth.verificationCodeSent"));
+      setStep("verify-email");
+    } catch (err: any) {
+      console.error("[AUTH] failed to send verification code", err);
+      toast.error(err.message || "Failed to send verification code");
+    }
+    
     setLoading(false);
   };
 
@@ -210,50 +252,86 @@ export default function Auth() {
       return;
     }
     
-    setLoading(true);
-    setErrors({});
-    console.log("[AUTH] verifying OTP", { email });
-    
-    const { data, error } = await supabase.auth.verifyOtp({
-      email,
-      token: otpCode,
-      type: "signup",
-    });
-    
-    if (error) {
-      console.log("[AUTH] OTP verification error", { error: error.message });
-      setErrors({ otp: t("auth.invalidOrExpiredCode") });
-      toast.error(t("auth.invalidOrExpiredCode"));
-      setLoading(false);
+    if (!pendingUserId) {
+      setErrors({ otp: t("auth.invalidCode") });
+      toast.error("Session expired. Please sign up again.");
+      setStep("credentials");
       return;
     }
     
-    console.log("[AUTH] otp verified", { user_id: data.user?.id });
-    toast.success(t("auth.emailVerified"));
+    setLoading(true);
+    setErrors({});
+    console.log("[AUTH] verifying OTP via edge function", { email, userId: pendingUserId });
     
-    // Redirect to onboarding
-    navigate("/onboarding");
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-code`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({ email, code: otpCode, userId: pendingUserId }),
+        }
+      );
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        console.log("[AUTH] OTP verification error", { error: result.error });
+        if (result.error === "code_expired") {
+          setErrors({ otp: t("auth.codeExpired") });
+          toast.error(t("auth.codeExpired"));
+        } else {
+          setErrors({ otp: t("auth.invalidCode") });
+          toast.error(t("auth.invalidCode"));
+        }
+        setLoading(false);
+        return;
+      }
+      
+      console.log("[AUTH] otp verified successfully");
+      toast.success(t("auth.emailVerified"));
+      
+      // Re-authenticate to get updated session with confirmed email
+      const { error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError) {
+        console.log("[AUTH] session refresh error, user needs to login again", refreshError);
+      }
+      
+      // Redirect to onboarding
+      navigate("/onboarding");
+    } catch (err: any) {
+      console.error("[AUTH] verification error", err);
+      setErrors({ otp: t("auth.invalidCode") });
+      toast.error(err.message || "Verification failed");
+    }
+    
     setLoading(false);
   };
 
   const handleResendCode = async () => {
     if (resendCooldown > 0) return;
+    
+    if (!pendingUserId) {
+      toast.error("Session expired. Please sign up again.");
+      setStep("credentials");
+      return;
+    }
 
     setResending(true);
-    console.log("[AUTH] resending verification code", { email });
+    console.log("[AUTH] resending verification code via edge function", { email });
 
-    const { error } = await supabase.auth.resend({
-      type: "signup",
-      email,
-    });
-
-    if (error) {
-      console.log("[AUTH] resend error", { error: error.message });
-      toast.error(error.message);
-    } else {
+    try {
+      await sendVerificationCode(pendingUserId, email);
       toast.success(t("auth.codeSentAgain"));
       setResendCooldown(60);
+    } catch (err: any) {
+      console.error("[AUTH] resend error", err);
+      toast.error(err.message || "Failed to resend code");
     }
+    
     setResending(false);
   };
 
