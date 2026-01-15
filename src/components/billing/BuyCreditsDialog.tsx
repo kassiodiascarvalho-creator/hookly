@@ -23,8 +23,10 @@ import { Plus, Loader2, Coins, QrCode, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { PixPaymentModal } from "./PixPaymentModal";
 import { CardPaymentModal } from "./CardPaymentModal";
+import { FxFeeBreakdown } from "./FxFeeBreakdown";
 import { getAllowedCurrencies, getCurrencyByCountry } from "@/lib/currencyByCountry";
 import { formatMoney } from "@/lib/formatMoney";
+import { useFxSpread, calculateFxFee } from "@/hooks/useFxSpread";
 
 const PRESET_AMOUNTS = [10, 25, 50, 100];
 
@@ -36,6 +38,7 @@ interface BuyCreditsDialogProps {
 
 export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
   const { user } = useAuth();
+  const { spreadPercent, loading: spreadLoading } = useFxSpread();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [amount, setAmount] = useState<string>("10");
@@ -136,6 +139,13 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
   const amountInCents = Math.round(numAmount * 100);
   const creditsAmount = numAmount; // 1:1 ratio - 1 credit = 1 unit of currency
 
+  // Calculate FX fee
+  const { feeAmount, amountAfterFee, shouldApplyFee } = calculateFxFee(
+    numAmount,
+    spreadPercent,
+    currency
+  );
+
   const handleCurrencyChange = (newCurrency: string) => {
     setCurrency(newCurrency);
     // Reset payment method based on currency
@@ -151,6 +161,7 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
     console.log("[BuyCreditsDialog] paymentMethod:", paymentMethod);
     console.log("[BuyCreditsDialog] currency:", currency);
     console.log("[BuyCreditsDialog] amount:", numAmount, "credits:", creditsAmount);
+    console.log("[BuyCreditsDialog] FX spread:", spreadPercent, "fee:", feeAmount, "afterFee:", amountAfterFee);
 
     if (numAmount < 1) {
       toast.error("Digite um valor válido (mínimo 1)");
@@ -165,6 +176,13 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
 
     setLoading(true);
 
+    // Prepare FX data for backend
+    const fxData = shouldApplyFee ? {
+      fx_spread_percent: spreadPercent,
+      fx_fee_amount: Math.round(feeAmount * 100), // Convert to cents
+      amount_to_convert: Math.round(amountAfterFee * 100), // Convert to cents
+    } : {};
+
     try {
       if (paymentMethod === "pix" && canUsePix) {
         console.log("[BuyCreditsDialog] → Using PIX checkout");
@@ -176,6 +194,7 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
             creditsAmount: creditsAmount,
             currency,
             description: `${creditsAmount} Créditos de Proposta`,
+            ...fxData,
           },
         });
 
@@ -202,6 +221,7 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
             creditsAmount: creditsAmount,
             currency,
             description: `${creditsAmount} Créditos de Proposta`,
+            ...fxData,
           },
         });
 
@@ -234,6 +254,12 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
   const handleRegeneratePixPayment = async () => {
     if (numAmount < 1) return;
     
+    const fxData = shouldApplyFee ? {
+      fx_spread_percent: spreadPercent,
+      fx_fee_amount: Math.round(feeAmount * 100),
+      amount_to_convert: Math.round(amountAfterFee * 100),
+    } : {};
+    
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("create-pix-payment", {
@@ -244,6 +270,7 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
           creditsAmount: creditsAmount,
           currency,
           description: `${creditsAmount} Créditos de Proposta`,
+          ...fxData,
         },
       });
 
@@ -381,33 +408,44 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
               </div>
             </div>
 
-            {/* Summary */}
+            {/* Summary - with FX breakdown for non-USD */}
             {numAmount > 0 && (
-              <div className="rounded-lg bg-muted p-4 space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Créditos</span>
-                  <span className="font-medium">{numAmount} créditos</span>
+              shouldApplyFee ? (
+                <FxFeeBreakdown
+                  amount={numAmount}
+                  feeAmount={feeAmount}
+                  amountAfterFee={amountAfterFee}
+                  spreadPercent={spreadPercent}
+                  currency={currency}
+                  paymentMethod={paymentMethod}
+                />
+              ) : (
+                <div className="rounded-lg bg-muted p-4 space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Créditos</span>
+                    <span className="font-medium">{numAmount} créditos</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Moeda</span>
+                    <span className="font-medium">{currency}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Pagamento</span>
+                    <span className="font-medium">{paymentMethod === "pix" ? "PIX" : "Cartão"}</span>
+                  </div>
+                  <div className="flex justify-between border-t pt-2 mt-2">
+                    <span className="text-muted-foreground">Total</span>
+                    <span className="text-xl font-bold">
+                      {formatMoney(numAmount, currency)}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Moeda</span>
-                  <span className="font-medium">{currency}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Pagamento</span>
-                  <span className="font-medium">{paymentMethod === "pix" ? "PIX" : "Cartão"}</span>
-                </div>
-                <div className="flex justify-between border-t pt-2 mt-2">
-                  <span className="text-muted-foreground">Total</span>
-                  <span className="text-xl font-bold">
-                    {formatMoney(numAmount, currency)}
-                  </span>
-                </div>
-              </div>
+              )
             )}
 
             <Button
               onClick={handleBuyCredits}
-              disabled={loading || numAmount < 1}
+              disabled={loading || numAmount < 1 || spreadLoading}
               className="w-full"
               size="lg"
             >
@@ -447,6 +485,9 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
         description={`${creditsAmount} Créditos de Proposta`}
         currency={currency}
         onPaymentConfirmed={handlePaymentConfirmed}
+        fxSpreadPercent={shouldApplyFee ? spreadPercent : undefined}
+        fxFeeAmount={shouldApplyFee ? Math.round(feeAmount * 100) : undefined}
+        amountToConvert={shouldApplyFee ? Math.round(amountAfterFee * 100) : undefined}
       />
     </>
   );
