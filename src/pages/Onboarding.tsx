@@ -83,7 +83,7 @@ export default function Onboarding() {
         
         console.log("[ONBOARDING] profile created", { user_type: "company", user_id: user.id });
         toast.success(t("onboarding.companyCreated"));
-        navigate("/settings?tab=profile");
+        navigate("/dashboard", { replace: true });
       } else {
         const { error: freelancerError } = await supabase
           .from("freelancer_profiles")
@@ -107,7 +107,7 @@ export default function Onboarding() {
         
         console.log("[ONBOARDING] profile created", { user_type: "freelancer", user_id: user.id });
         toast.success(t("onboarding.freelancerCreated"));
-        navigate("/settings?tab=profile");
+        navigate("/freelancer-dashboard", { replace: true });
       }
     } catch (error: any) {
       console.error("[ONBOARDING] error:", error);

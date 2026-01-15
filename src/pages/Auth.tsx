@@ -34,9 +34,7 @@ export default function Auth() {
   const [searchParams] = useSearchParams();
   const { user, loading: authLoading } = useAuth();
   
-  const [step, setStep] = useState<AuthStep>(
-    searchParams.get("step") === "confirm-email" ? "verify-email" : "credentials"
-  );
+  const [step, setStep] = useState<AuthStep>("credentials");
   const [activeTab, setActiveTab] = useState<"login" | "signup">(
     searchParams.get("tab") === "signup" ? "signup" : "login"
   );
@@ -69,13 +67,6 @@ export default function Auth() {
 
   useEffect(() => {
     if (!authLoading && user) {
-      // Check if email is confirmed
-      if (!user.email_confirmed_at) {
-        console.log("[AUTH] user not email confirmed, showing verify step");
-        setEmail(user.email || "");
-        setStep("verify-email");
-        return;
-      }
       checkUserTypeAndRedirect();
     }
   }, [user, authLoading]);
@@ -165,7 +156,6 @@ export default function Auth() {
         toast.error(t("auth.invalidCredentials"));
       } else if (error.message.includes("Email not confirmed")) {
         toast.error(t("auth.emailNotConfirmed"));
-        setStep("verify-email");
       } else {
         toast.error(error.message);
       }
@@ -229,19 +219,8 @@ export default function Auth() {
       return;
     }
     
-    // Store user ID for verification
-    setPendingUserId(data.user.id);
-    
-    // Send custom verification code via edge function
-    try {
-      await sendVerificationCode(data.user.id, email);
-      console.log("[AUTH] verification code sent, moving to verify step");
-      toast.success(t("auth.verificationCodeSent"));
-      setStep("verify-email");
-    } catch (err: any) {
-      console.error("[AUTH] failed to send verification code", err);
-      toast.error(err.message || "Failed to send verification code");
-    }
+    // Sem confirmação por email/OTP: seguir direto para onboarding
+    navigate("/onboarding", { replace: true });
     
     setLoading(false);
   };
