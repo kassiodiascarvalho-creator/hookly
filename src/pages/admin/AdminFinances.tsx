@@ -16,6 +16,7 @@ import { formatMoneyFromCents } from "@/lib/formatMoney";
 import FxSpreadSettings from "@/components/admin/FxSpreadSettings";
 import FxRevenueReport from "@/components/admin/FxRevenueReport";
 import FinancialAlertsCard from "@/components/admin/FinancialAlertsCard";
+import { ActionCostsManager } from "@/components/admin/ActionCostsManager";
 import { 
   Coins, 
   Wallet, 
@@ -599,6 +600,10 @@ export default function AdminFinances() {
             <Settings2 className="h-3 w-3 md:h-4 md:w-4 mr-1" />
             <span className="hidden sm:inline">FX &</span> Spread
           </TabsTrigger>
+          <TabsTrigger value="action-costs" className="text-xs md:text-sm">
+            <Coins className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+            Custos Ações
+          </TabsTrigger>
         </TabsList>
 
         {/* Balances Tab */}
@@ -938,6 +943,11 @@ export default function AdminFinances() {
           <FinancialAlertsCard />
           <FxSpreadSettings />
           <FxRevenueReport />
+        </TabsContent>
+
+        {/* Action Costs Tab */}
+        <TabsContent value="action-costs" className="space-y-6">
+          <ActionCostsManager />
         </TabsContent>
       </Tabs>
 
