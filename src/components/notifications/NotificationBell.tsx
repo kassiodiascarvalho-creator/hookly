@@ -10,7 +10,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bell, Check, MessageSquare, FileText, DollarSign, Star } from "lucide-react";
+import { Bell, Check, MessageSquare, FileText, DollarSign, Star, Trophy, FileCheck } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +28,8 @@ const typeIcons: Record<string, React.ElementType> = {
   proposal: FileText,
   payment: DollarSign,
   review: Star,
+  achievement: Trophy,
+  contract: FileCheck,
 };
 
 export function NotificationBell() {
