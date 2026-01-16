@@ -15,16 +15,16 @@ const CREDIT_PACKAGES = [
   { credits: 50, price: 40, bonus: 10, label: "Popular", discount: "20%", popular: true },
   { credits: 100, price: 70, bonus: 30, label: "Profissional", discount: "30%" },
 ];
-interface FreelancerProfile {
-  proposal_credits: number;
+interface PlatformCredits {
+  balance: number;
 }
 
-interface LedgerEntry {
+interface CreditTransaction {
   id: string;
-  direction: string;
-  credits_amount: number | null;
-  credits_after: number | null;
-  reason: string;
+  action: string;
+  amount: number;
+  balance_after: number;
+  description: string | null;
   created_at: string;
 }
 
@@ -32,8 +32,8 @@ export function FreelancerCreditsCard() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState<FreelancerProfile | null>(null);
-  const [ledgerEntries, setLedgerEntries] = useState<LedgerEntry[]>([]);
+  const [credits, setCredits] = useState(0);
+  const [transactions, setTransactions] = useState<CreditTransaction[]>([]);
 
   useEffect(() => {
     if (user) {
@@ -44,15 +44,24 @@ export function FreelancerCreditsCard() {
   const fetchData = async () => {
     if (!user) return;
 
-    // Fetch freelancer profile with credits
-    const { data: profileData } = await supabase
-      .from("freelancer_profiles")
-      .select("proposal_credits")
+    // Fetch from platform_credits table (the correct source)
+    const { data: platformCredits } = await supabase
+      .from("platform_credits")
+      .select("balance")
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
 
-    if (profileData) {
-      setProfile(profileData);
+    if (platformCredits) {
+      setCredits(platformCredits.balance || 0);
+    } else {
+      // Fallback to freelancer_profiles for migration
+      const { data: profile } = await supabase
+        .from("freelancer_profiles")
+        .select("proposal_credits")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      
+      setCredits(profile?.proposal_credits || 0);
     }
 
     // Fetch platform credit transactions for credit history
@@ -65,17 +74,7 @@ export function FreelancerCreditsCard() {
       .limit(10);
 
     if (txData) {
-      // Map to LedgerEntry format for compatibility
-      setLedgerEntries(
-        txData.map((tx) => ({
-          id: tx.id,
-          direction: tx.amount > 0 ? "credit" : "debit",
-          credits_amount: Math.abs(tx.amount),
-          credits_after: tx.balance_after,
-          reason: tx.action,
-          created_at: tx.created_at,
-        }))
-      );
+      setTransactions(txData);
     }
 
     setLoading(false);
@@ -113,8 +112,6 @@ export function FreelancerCreditsCard() {
       </Card>
     );
   }
-
-  const credits = profile?.proposal_credits || 0;
 
   return (
     <div className="space-y-6">
@@ -215,7 +212,7 @@ export function FreelancerCreditsCard() {
       </Card>
 
       {/* Credit History */}
-      {ledgerEntries.length > 0 && (
+      {transactions.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
@@ -225,24 +222,24 @@ export function FreelancerCreditsCard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {ledgerEntries.map((entry) => (
+              {transactions.map((tx) => (
                 <div
-                  key={entry.id}
+                  key={tx.id}
                   className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
                 >
                   <div>
-                    <p className="font-medium">{getReasonLabel(entry.reason)}</p>
+                    <p className="font-medium">{getReasonLabel(tx.action)}</p>
                     <p className="text-sm text-muted-foreground">
-                      {format(new Date(entry.created_at), "dd/MM/yyyy HH:mm")}
+                      {format(new Date(tx.created_at), "dd/MM/yyyy HH:mm")}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className={`font-semibold ${entry.direction === "credit" ? "text-green-600" : "text-destructive"}`}>
-                      {entry.direction === "credit" ? "+" : "-"}{entry.credits_amount || 0}
+                    <p className={`font-semibold ${tx.amount > 0 ? "text-green-600" : "text-destructive"}`}>
+                      {tx.amount > 0 ? "+" : ""}{tx.amount}
                     </p>
-                    {entry.credits_after !== null && (
+                    {tx.balance_after !== null && (
                       <p className="text-xs text-muted-foreground">
-                        Saldo: {entry.credits_after}
+                        Saldo: {tx.balance_after}
                       </p>
                     )}
                   </div>
