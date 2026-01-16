@@ -13,8 +13,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from "sonner";
 import { 
   ArrowLeft, DollarSign, Calendar, Loader2, 
-  Check, Plus, X, Send, Building2, Coins, AlertTriangle
+  Check, Plus, X, Send, Building2, Coins, AlertTriangle, Star
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { usePlatformCredits, PLATFORM_ACTIONS } from "@/hooks/usePlatformCredits";
 import { CreditCheckModal } from "@/components/credits/CreditCheckModal";
@@ -68,10 +69,12 @@ export default function ProjectView() {
     { id: crypto.randomUUID(), title: "", amount: "", description: "" }
   ]);
   const [creditCheckOpen, setCreditCheckOpen] = useState(false);
+  const [isHighlighted, setIsHighlighted] = useState(false);
 
   // Platform credits hook
   const { balance: creditBalance, loading: creditsLoading, spendCredits, getActionCost, checkCredits } = usePlatformCredits();
   const proposalCost = getActionCost(PLATFORM_ACTIONS.SEND_PROPOSAL);
+  const highlightCost = getActionCost(PLATFORM_ACTIONS.HIGHLIGHT_PROPOSAL);
 
   useEffect(() => {
     if (id) {
@@ -168,12 +171,11 @@ export default function ProjectView() {
 
     // Check credits for new proposals (not edits)
     const isNewProposal = !myProposal;
+    const totalCreditsNeeded = (isNewProposal ? proposalCost : 0) + (isHighlighted ? highlightCost : 0);
     
-    if (isNewProposal && proposalCost > 0) {
-      if (!checkCredits(PLATFORM_ACTIONS.SEND_PROPOSAL)) {
-        setCreditCheckOpen(true);
-        return;
-      }
+    if (totalCreditsNeeded > 0 && creditBalance < totalCreditsNeeded) {
+      setCreditCheckOpen(true);
+      return;
     }
 
     setSubmitting(true);
@@ -192,6 +194,20 @@ export default function ProjectView() {
       }
     }
 
+    // Spend credits for highlighting
+    if (isHighlighted && highlightCost > 0) {
+      const { success, error } = await spendCredits(
+        PLATFORM_ACTIONS.HIGHLIGHT_PROPOSAL,
+        `Proposta destacada para: ${project.title}`
+      );
+
+      if (!success) {
+        toast.error(error || "Erro ao consumir créditos para destaque");
+        setSubmitting(false);
+        return;
+      }
+    }
+
     const proposalData = {
       project_id: project.id,
       freelancer_user_id: user.id,
@@ -202,6 +218,8 @@ export default function ProjectView() {
         description: m.description,
       })),
       status: "sent" as const,
+      is_highlighted: isHighlighted,
+      highlighted_at: isHighlighted ? new Date().toISOString() : null,
     };
 
     const { data, error } = myProposal
@@ -421,7 +439,10 @@ export default function ProjectView() {
                     submitting={submitting}
                     onSubmit={handleSubmitProposal}
                     proposalCost={proposalCost}
+                    highlightCost={highlightCost}
                     creditBalance={creditBalance}
+                    isHighlighted={isHighlighted}
+                    setIsHighlighted={setIsHighlighted}
                     t={t}
                   />
                 </Dialog>
@@ -456,7 +477,10 @@ function ProposalDialog({
   onSubmit,
   isEdit = false,
   proposalCost = 0,
+  highlightCost = 0,
   creditBalance = 0,
+  isHighlighted = false,
+  setIsHighlighted,
   t,
 }: {
   coverLetter: string;
@@ -470,10 +494,14 @@ function ProposalDialog({
   onSubmit: () => void;
   isEdit?: boolean;
   proposalCost?: number;
+  highlightCost?: number;
   creditBalance?: number;
+  isHighlighted?: boolean;
+  setIsHighlighted?: (v: boolean) => void;
   t: (key: string) => string;
 }) {
-  const insufficientCredits = !isEdit && proposalCost > 0 && creditBalance < proposalCost;
+  const totalCreditsNeeded = (isEdit ? 0 : proposalCost) + (isHighlighted ? highlightCost : 0);
+  const insufficientCredits = totalCreditsNeeded > 0 && creditBalance < totalCreditsNeeded;
   return (
     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
@@ -554,10 +582,40 @@ function ProposalDialog({
             <span className="font-medium">{t("proposals.totalAmount")}</span>
             <span className="text-xl font-bold text-primary">${totalAmount.toLocaleString()}</span>
           </div>
+
+          {/* Highlight option */}
+          {!isEdit && setIsHighlighted && highlightCost > 0 && (
+            <div 
+              className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors ${
+                isHighlighted 
+                  ? "border-amber-500 bg-amber-50 dark:bg-amber-950/20" 
+                  : "border-muted hover:border-muted-foreground/20"
+              }`}
+              onClick={() => setIsHighlighted(!isHighlighted)}
+            >
+              <Checkbox 
+                checked={isHighlighted} 
+                onCheckedChange={(checked) => setIsHighlighted(!!checked)}
+              />
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <Star className={`h-4 w-4 ${isHighlighted ? "text-amber-500 fill-amber-500" : "text-muted-foreground"}`} />
+                  <span className="font-medium">Destacar proposta</span>
+                  <Badge variant="secondary" className="gap-1">
+                    <Coins className="h-3 w-3" />
+                    {highlightCost}
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Sua proposta aparecerá no topo da lista para a empresa
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Credit cost warning for new proposals */}
-        {!isEdit && proposalCost > 0 && (
+        {/* Credit cost warning */}
+        {((!isEdit && proposalCost > 0) || isHighlighted) && (
           <div className={`flex items-start gap-2 p-3 rounded-lg ${insufficientCredits ? "bg-destructive/10 border border-destructive/20" : "bg-primary/5 border border-primary/20"}`}>
             {insufficientCredits ? (
               <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
@@ -569,13 +627,20 @@ function ProposalDialog({
                 <>
                   <p className="font-medium text-destructive">Créditos insuficientes</p>
                   <p className="text-muted-foreground">
-                    Você precisa de {proposalCost} crédito(s) mas tem apenas {creditBalance}. 
+                    Você precisa de {totalCreditsNeeded} crédito(s) mas tem apenas {creditBalance}. 
                     <a href="/settings?tab=billing" className="text-primary underline ml-1">Comprar créditos</a>
                   </p>
                 </>
               ) : (
                 <>
-                  <p className="font-medium text-primary">Custo: {proposalCost} crédito(s)</p>
+                  <p className="font-medium text-primary">
+                    Custo total: {totalCreditsNeeded} crédito(s)
+                    {isHighlighted && !isEdit && proposalCost > 0 && (
+                      <span className="font-normal text-muted-foreground ml-1">
+                        ({proposalCost} proposta + {highlightCost} destaque)
+                      </span>
+                    )}
+                  </p>
                   <p className="text-muted-foreground">Seu saldo: {creditBalance} crédito(s)</p>
                 </>
               )}
@@ -583,13 +648,14 @@ function ProposalDialog({
           </div>
         )}
 
-        <Button onClick={onSubmit} disabled={submitting || insufficientCredits} className="w-full">
-          {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+        <Button onClick={onSubmit} disabled={submitting || insufficientCredits} className="w-full gap-2">
+          {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+          {isHighlighted && <Star className="h-4 w-4 fill-current" />}
           {isEdit ? t("proposals.updateProposal") : t("proposals.sendProposal")}
-          {!isEdit && proposalCost > 0 && (
-            <Badge variant="secondary" className="ml-2 gap-1">
+          {totalCreditsNeeded > 0 && (
+            <Badge variant="secondary" className="ml-1 gap-1">
               <Coins className="h-3 w-3" />
-              {proposalCost}
+              {totalCreditsNeeded}
             </Badge>
           )}
         </Button>
