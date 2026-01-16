@@ -55,17 +55,27 @@ export function FreelancerCreditsCard() {
       setProfile(profileData);
     }
 
-    // Fetch ledger entries for credit history
-    const { data: ledgerData } = await supabase
-      .from("ledger_entries")
-      .select("*")
+    // Fetch platform credit transactions for credit history
+    const { data: txData } = await supabase
+      .from("platform_credit_transactions")
+      .select("id, action, amount, balance_after, description, created_at")
       .eq("user_id", user.id)
       .eq("user_type", "freelancer")
       .order("created_at", { ascending: false })
       .limit(10);
 
-    if (ledgerData) {
-      setLedgerEntries(ledgerData);
+    if (txData) {
+      // Map to LedgerEntry format for compatibility
+      setLedgerEntries(
+        txData.map((tx) => ({
+          id: tx.id,
+          direction: tx.amount > 0 ? "credit" : "debit",
+          credits_amount: Math.abs(tx.amount),
+          credits_after: tx.balance_after,
+          reason: tx.action,
+          created_at: tx.created_at,
+        }))
+      );
     }
 
     setLoading(false);
@@ -73,12 +83,20 @@ export function FreelancerCreditsCard() {
 
   const getReasonLabel = (reason: string) => {
     switch (reason) {
+      case "topup":
       case "credits_purchase":
       case "credits_purchase_stripe":
       case "credits_purchase_mercadopago":
         return "Compra de créditos";
+      case "send_proposal":
       case "proposal_sent":
-        return "Proposta enviada";
+        return "Envio de proposta";
+      case "view_company_data":
+        return "Ver dados da empresa";
+      case "highlight_proposal":
+        return "Destaque de proposta";
+      case "boost_profile":
+        return "Impulsionar perfil";
       case "refund":
         return "Reembolso";
       default:

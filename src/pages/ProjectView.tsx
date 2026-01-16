@@ -12,10 +12,12 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { 
-  ArrowLeft, Briefcase, DollarSign, Calendar, Loader2, 
-  Check, Plus, X, Send, Building2
+  ArrowLeft, DollarSign, Calendar, Loader2, 
+  Check, Plus, X, Send, Building2, Coins, AlertTriangle
 } from "lucide-react";
 import { format } from "date-fns";
+import { usePlatformCredits, PLATFORM_ACTIONS } from "@/hooks/usePlatformCredits";
+import { CreditCheckModal } from "@/components/credits/CreditCheckModal";
 
 interface Project {
   id: string;
@@ -65,6 +67,11 @@ export default function ProjectView() {
   const [milestones, setMilestones] = useState<Milestone[]>([
     { id: crypto.randomUUID(), title: "", amount: "", description: "" }
   ]);
+  const [creditCheckOpen, setCreditCheckOpen] = useState(false);
+
+  // Platform credits hook
+  const { balance: creditBalance, loading: creditsLoading, spendCredits, getActionCost, checkCredits } = usePlatformCredits();
+  const proposalCost = getActionCost(PLATFORM_ACTIONS.SEND_PROPOSAL);
 
   useEffect(() => {
     if (id) {
@@ -159,7 +166,31 @@ export default function ProjectView() {
       return;
     }
 
+    // Check credits for new proposals (not edits)
+    const isNewProposal = !myProposal;
+    
+    if (isNewProposal && proposalCost > 0) {
+      if (!checkCredits(PLATFORM_ACTIONS.SEND_PROPOSAL)) {
+        setCreditCheckOpen(true);
+        return;
+      }
+    }
+
     setSubmitting(true);
+
+    // Spend credits for new proposals
+    if (isNewProposal && proposalCost > 0) {
+      const { success, error } = await spendCredits(
+        PLATFORM_ACTIONS.SEND_PROPOSAL,
+        `Proposta enviada para: ${project.title}`
+      );
+
+      if (!success) {
+        toast.error(error || "Erro ao consumir créditos");
+        setSubmitting(false);
+        return;
+      }
+    }
 
     const proposalData = {
       project_id: project.id,
@@ -368,9 +399,15 @@ export default function ProjectView() {
               ) : (
                 <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button className="w-full gap-2">
+                    <Button className="w-full gap-2" disabled={creditsLoading}>
                       <Send className="h-4 w-4" />
                       {t("proposals.submitProposal")}
+                      {proposalCost > 0 && (
+                        <Badge variant="secondary" className="ml-1 gap-1">
+                          <Coins className="h-3 w-3" />
+                          {proposalCost}
+                        </Badge>
+                      )}
                     </Button>
                   </DialogTrigger>
                   <ProposalDialog 
@@ -383,6 +420,8 @@ export default function ProjectView() {
                     totalAmount={totalProposalAmount}
                     submitting={submitting}
                     onSubmit={handleSubmitProposal}
+                    proposalCost={proposalCost}
+                    creditBalance={creditBalance}
                     t={t}
                   />
                 </Dialog>
@@ -391,6 +430,15 @@ export default function ProjectView() {
           </Card>
         </div>
       </div>
+
+      {/* Credit Check Modal */}
+      <CreditCheckModal
+        open={creditCheckOpen}
+        onOpenChange={setCreditCheckOpen}
+        actionName="Enviar Proposta"
+        requiredCredits={proposalCost}
+        currentBalance={creditBalance}
+      />
     </div>
   );
 }
@@ -407,6 +455,8 @@ function ProposalDialog({
   submitting,
   onSubmit,
   isEdit = false,
+  proposalCost = 0,
+  creditBalance = 0,
   t,
 }: {
   coverLetter: string;
@@ -419,8 +469,11 @@ function ProposalDialog({
   submitting: boolean;
   onSubmit: () => void;
   isEdit?: boolean;
+  proposalCost?: number;
+  creditBalance?: number;
   t: (key: string) => string;
 }) {
+  const insufficientCredits = !isEdit && proposalCost > 0 && creditBalance < proposalCost;
   return (
     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
@@ -503,9 +556,42 @@ function ProposalDialog({
           </div>
         </div>
 
-        <Button onClick={onSubmit} disabled={submitting} className="w-full">
+        {/* Credit cost warning for new proposals */}
+        {!isEdit && proposalCost > 0 && (
+          <div className={`flex items-start gap-2 p-3 rounded-lg ${insufficientCredits ? "bg-destructive/10 border border-destructive/20" : "bg-primary/5 border border-primary/20"}`}>
+            {insufficientCredits ? (
+              <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+            ) : (
+              <Coins className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+            )}
+            <div className="text-sm">
+              {insufficientCredits ? (
+                <>
+                  <p className="font-medium text-destructive">Créditos insuficientes</p>
+                  <p className="text-muted-foreground">
+                    Você precisa de {proposalCost} crédito(s) mas tem apenas {creditBalance}. 
+                    <a href="/settings?tab=billing" className="text-primary underline ml-1">Comprar créditos</a>
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="font-medium text-primary">Custo: {proposalCost} crédito(s)</p>
+                  <p className="text-muted-foreground">Seu saldo: {creditBalance} crédito(s)</p>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        <Button onClick={onSubmit} disabled={submitting || insufficientCredits} className="w-full">
           {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
           {isEdit ? t("proposals.updateProposal") : t("proposals.sendProposal")}
+          {!isEdit && proposalCost > 0 && (
+            <Badge variant="secondary" className="ml-2 gap-1">
+              <Coins className="h-3 w-3" />
+              {proposalCost}
+            </Badge>
+          )}
         </Button>
       </div>
     </DialogContent>
