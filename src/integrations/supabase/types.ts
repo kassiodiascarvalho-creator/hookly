@@ -1283,7 +1283,9 @@ export type Database = {
           cover_letter: string | null
           created_at: string
           freelancer_user_id: string
+          highlighted_at: string | null
           id: string
+          is_highlighted: boolean
           milestones: Json | null
           project_id: string
           status: Database["public"]["Enums"]["proposal_status"]
@@ -1293,7 +1295,9 @@ export type Database = {
           cover_letter?: string | null
           created_at?: string
           freelancer_user_id: string
+          highlighted_at?: string | null
           id?: string
+          is_highlighted?: boolean
           milestones?: Json | null
           project_id: string
           status?: Database["public"]["Enums"]["proposal_status"]
@@ -1303,7 +1307,9 @@ export type Database = {
           cover_letter?: string | null
           created_at?: string
           freelancer_user_id?: string
+          highlighted_at?: string | null
           id?: string
+          is_highlighted?: boolean
           milestones?: Json | null
           project_id?: string
           status?: Database["public"]["Enums"]["proposal_status"]

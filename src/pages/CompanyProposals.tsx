@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { FileText, DollarSign, Loader2, CheckCircle, XCircle, Clock, ChevronRight } from "lucide-react";
+import { FileText, DollarSign, Loader2, CheckCircle, XCircle, Clock, ChevronRight, Star } from "lucide-react";
 import { format } from "date-fns";
 
 interface ProposalGroup {
@@ -23,6 +23,8 @@ interface ProposalGroup {
     status: "sent" | "accepted" | "rejected";
     created_at: string;
     freelancer_user_id: string;
+    is_highlighted?: boolean;
+    highlighted_at?: string | null;
     freelancer?: {
       full_name: string | null;
       avatar_url: string | null;
@@ -72,6 +74,7 @@ export default function CompanyProposals() {
         .from("proposals")
         .select("*")
         .eq("project_id", project.id)
+        .order("is_highlighted", { ascending: false })
         .order("created_at", { ascending: false });
 
       if (proposals && proposals.length > 0) {
@@ -163,21 +166,36 @@ export default function CompanyProposals() {
                     return (
                       <div 
                         key={proposal.id}
-                        className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                        className={`flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors ${
+                          proposal.is_highlighted ? "border-amber-500 bg-amber-50/50 dark:bg-amber-950/20" : ""
+                        }`}
                         onClick={() => navigate(`/projects/${group.project.id}`)}
                       >
-                        <Avatar>
-                          <AvatarImage src={proposal.freelancer?.avatar_url || undefined} />
-                          <AvatarFallback>
-                            {proposal.freelancer?.full_name?.charAt(0) || "F"}
-                          </AvatarFallback>
-                        </Avatar>
+                        <div className="relative">
+                          <Avatar>
+                            <AvatarImage src={proposal.freelancer?.avatar_url || undefined} />
+                            <AvatarFallback>
+                              {proposal.freelancer?.full_name?.charAt(0) || "F"}
+                            </AvatarFallback>
+                          </Avatar>
+                          {proposal.is_highlighted && (
+                            <div className="absolute -top-1 -right-1 w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center">
+                              <Star className="h-3 w-3 text-white fill-white" />
+                            </div>
+                          )}
+                        </div>
                         
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <p className="font-medium truncate">
                               {proposal.freelancer?.full_name || "Freelancer"}
                             </p>
+                            {proposal.is_highlighted && (
+                              <Badge variant="outline" className="border-amber-500 text-amber-600 gap-1">
+                                <Star className="h-3 w-3 fill-current" />
+                                Destacado
+                              </Badge>
+                            )}
                             <Badge className={config.color}>
                               <StatusIcon className="h-3 w-3 mr-1" />
                               {config.label}
