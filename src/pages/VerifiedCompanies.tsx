@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Building2, CheckCircle, DollarSign, Users, Loader2, TrendingUp } from "lucide-react";
-
+import { ViewCompanyDataButton } from "@/components/company/ViewCompanyDataButton";
 interface CompanyWithHistory {
   id: string;
   user_id: string;
@@ -21,12 +22,25 @@ interface CompanyWithHistory {
 
 export default function VerifiedCompanies() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [companies, setCompanies] = useState<CompanyWithHistory[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isFreelancer, setIsFreelancer] = useState(false);
 
   useEffect(() => {
     fetchCompaniesWithHistory();
-  }, []);
+    checkUserType();
+  }, [user]);
+
+  const checkUserType = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("profiles")
+      .select("user_type")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    setIsFreelancer(data?.user_type === "freelancer");
+  };
 
   const fetchCompaniesWithHistory = async () => {
     try {
@@ -163,7 +177,7 @@ export default function VerifiedCompanies() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="pt-0">
+              <CardContent className="pt-0 space-y-3">
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div className="p-2 bg-muted rounded-lg">
                     <div className="flex items-center justify-center gap-1">
@@ -193,6 +207,14 @@ export default function VerifiedCompanies() {
                     <p className="text-xs text-muted-foreground">{t("verifiedCompanies.reliability")}</p>
                   </div>
                 </div>
+                
+                {/* View Company Data Button - only for freelancers */}
+                {isFreelancer && (
+                  <ViewCompanyDataButton 
+                    companyUserId={company.user_id} 
+                    companyName={company.company_name} 
+                  />
+                )}
               </CardContent>
             </Card>
           ))}
