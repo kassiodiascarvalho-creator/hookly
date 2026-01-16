@@ -3,12 +3,18 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Coins, Loader2, History, ShoppingCart, Sparkles } from "lucide-react";
+import { Coins, Loader2, History, ShoppingCart, Sparkles, Gift, AlertCircle } from "lucide-react";
 import { BuyCreditsDialog } from "./BuyCreditsDialog";
 import { format } from "date-fns";
 
+// Same packages as BuyCreditsDialog for consistency
+const CREDIT_PACKAGES = [
+  { credits: 10, price: 10, bonus: 0, label: "Básico" },
+  { credits: 25, price: 22.5, bonus: 2.5, label: "Econômico", discount: "10%" },
+  { credits: 50, price: 40, bonus: 10, label: "Popular", discount: "20%", popular: true },
+  { credits: 100, price: 70, bonus: 30, label: "Profissional", discount: "30%" },
+];
 interface FreelancerProfile {
   proposal_credits: number;
 }
@@ -99,7 +105,7 @@ export function FreelancerCreditsCard() {
         <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/10 to-transparent rounded-bl-full" />
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2">
               <Coins className="h-5 w-5 text-primary" />
               Créditos de Proposta
             </CardTitle>
@@ -110,6 +116,15 @@ export function FreelancerCreditsCard() {
           <BuyCreditsDialog onSuccess={fetchData} />
         </CardHeader>
         <CardContent>
+          {/* Info banner */}
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20 mb-4">
+            <AlertCircle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+            <div className="text-sm">
+              <p className="font-medium text-primary">Créditos exclusivos da plataforma</p>
+              <p className="text-muted-foreground">Sem taxa de câmbio • Não sacável • Uso interno</p>
+            </div>
+          </div>
+
           <div className="flex items-baseline gap-2">
             <span className="text-5xl font-bold">{credits}</span>
             <span className="text-lg text-muted-foreground">
@@ -148,27 +163,35 @@ export function FreelancerCreditsCard() {
             <ShoppingCart className="h-4 w-4" />
             Pacotes de Créditos
           </CardTitle>
+          <CardDescription>
+            Compre em pacotes maiores e ganhe bônus de créditos
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="p-4 rounded-lg border text-center">
-              <p className="text-2xl font-bold">10</p>
-              <p className="text-sm text-muted-foreground">créditos</p>
-              <p className="text-lg font-semibold mt-1">R$ 10</p>
-            </div>
-            <div className="p-4 rounded-lg border text-center bg-primary/5 border-primary/20">
-              <Badge className="mb-2">Popular</Badge>
-              <p className="text-2xl font-bold">50</p>
-              <p className="text-sm text-muted-foreground">créditos</p>
-              <p className="text-lg font-semibold mt-1">R$ 45</p>
-              <p className="text-xs text-green-600">Economize 10%</p>
-            </div>
-            <div className="p-4 rounded-lg border text-center">
-              <p className="text-2xl font-bold">100</p>
-              <p className="text-sm text-muted-foreground">créditos</p>
-              <p className="text-lg font-semibold mt-1">R$ 80</p>
-              <p className="text-xs text-green-600">Economize 20%</p>
-            </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {CREDIT_PACKAGES.map((pkg) => (
+              <div 
+                key={pkg.credits}
+                className={`p-4 rounded-lg border text-center relative ${
+                  pkg.popular ? "bg-primary/5 border-primary/20" : ""
+                }`}
+              >
+                {pkg.popular && (
+                  <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 text-xs">Popular</Badge>
+                )}
+                <p className="text-2xl font-bold">{pkg.credits}</p>
+                <p className="text-sm text-muted-foreground">créditos</p>
+                <p className="text-lg font-semibold mt-1">R$ {pkg.price.toFixed(2).replace('.', ',')}</p>
+                {pkg.bonus > 0 && (
+                  <div className="flex items-center justify-center gap-1 mt-1">
+                    <Gift className="h-3 w-3 text-green-600" />
+                    <span className="text-xs text-green-600">
+                      +{pkg.bonus} bônus ({pkg.discount})
+                    </span>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>
