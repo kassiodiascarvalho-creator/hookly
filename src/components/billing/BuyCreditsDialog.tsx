@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -19,16 +20,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Loader2, Coins, QrCode, CreditCard } from "lucide-react";
+import { Plus, Loader2, Coins, QrCode, CreditCard, Gift, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { PixPaymentModal } from "./PixPaymentModal";
 import { CardPaymentModal } from "./CardPaymentModal";
-import { FxFeeBreakdown } from "./FxFeeBreakdown";
 import { getAllowedCurrencies, getCurrencyByCountry } from "@/lib/currencyByCountry";
 import { formatMoney } from "@/lib/formatMoney";
-import { useFxSpread, calculateFxFee } from "@/hooks/useFxSpread";
 
-const PRESET_AMOUNTS = [10, 25, 50, 100];
+// Credit packages with discounts
+const CREDIT_PACKAGES = [
+  { credits: 10, price: 10, bonus: 0, label: "Básico" },
+  { credits: 25, price: 22.5, bonus: 2.5, label: "Econômico", discount: "10%" },
+  { credits: 50, price: 40, bonus: 10, label: "Popular", discount: "20%", popular: true },
+  { credits: 100, price: 70, bonus: 30, label: "Profissional", discount: "30%" },
+];
 
 type PaymentMethod = "pix" | "card";
 
@@ -38,10 +43,11 @@ interface BuyCreditsDialogProps {
 
 export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
   const { user } = useAuth();
-  const { spreadPercent, loading: spreadLoading } = useFxSpread();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [amount, setAmount] = useState<string>("10");
+  const [selectedPackage, setSelectedPackage] = useState(CREDIT_PACKAGES[0]);
+  const [customAmount, setCustomAmount] = useState<string>("");
+  const [useCustomAmount, setUseCustomAmount] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pix");
   const [country, setCountry] = useState<string | null>(null);
   const [currency, setCurrency] = useState<string>("USD");
@@ -135,16 +141,13 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
   const canUsePix = isBRL;
   const canUseTransparentCard = isBRL && mpPublicKey.length > 0;
 
-  const numAmount = parseFloat(amount) || 0;
-  const amountInCents = Math.round(numAmount * 100);
-  const creditsAmount = numAmount; // 1:1 ratio - 1 credit = 1 unit of currency
-
-  // Calculate FX fee
-  const { feeAmount, amountAfterFee, shouldApplyFee } = calculateFxFee(
-    numAmount,
-    spreadPercent,
-    currency
-  );
+  // Calculate amounts based on package or custom
+  const customNumAmount = parseFloat(customAmount) || 0;
+  const priceToCharge = useCustomAmount ? customNumAmount : selectedPackage.price;
+  const creditsToReceive = useCustomAmount ? customNumAmount : selectedPackage.credits;
+  const bonusCredits = useCustomAmount ? 0 : selectedPackage.bonus;
+  const totalCredits = creditsToReceive + bonusCredits;
+  const amountInCents = Math.round(priceToCharge * 100);
 
   const handleCurrencyChange = (newCurrency: string) => {
     setCurrency(newCurrency);
@@ -156,15 +159,19 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
     }
   };
 
+  const handleSelectPackage = (pkg: typeof CREDIT_PACKAGES[0]) => {
+    setSelectedPackage(pkg);
+    setUseCustomAmount(false);
+  };
+
   const handleBuyCredits = async () => {
     console.log("[BuyCreditsDialog] === PAYMENT FLOW ===");
     console.log("[BuyCreditsDialog] paymentMethod:", paymentMethod);
     console.log("[BuyCreditsDialog] currency:", currency);
-    console.log("[BuyCreditsDialog] amount:", numAmount, "credits:", creditsAmount);
-    console.log("[BuyCreditsDialog] FX spread:", spreadPercent, "fee:", feeAmount, "afterFee:", amountAfterFee);
+    console.log("[BuyCreditsDialog] price:", priceToCharge, "credits:", totalCredits);
 
-    if (numAmount < 1) {
-      toast.error("Digite um valor válido (mínimo 1)");
+    if (priceToCharge < 1) {
+      toast.error("Selecione um pacote ou digite um valor válido (mínimo 1)");
       return;
     }
 
@@ -176,13 +183,7 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
 
     setLoading(true);
 
-    // Prepare FX data for backend
-    const fxData = shouldApplyFee ? {
-      fx_spread_percent: spreadPercent,
-      fx_fee_amount: Math.round(feeAmount * 100), // Convert to cents
-      amount_to_convert: Math.round(amountAfterFee * 100), // Convert to cents
-    } : {};
-
+    // NO FX FEES for platform credits - value paid = credits received
     try {
       if (paymentMethod === "pix" && canUsePix) {
         console.log("[BuyCreditsDialog] → Using PIX checkout");
@@ -191,10 +192,9 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
             paymentType: "freelancer_credits",
             userType: "freelancer",
             amountCents: amountInCents,
-            creditsAmount: creditsAmount,
+            creditsAmount: totalCredits,
             currency,
-            description: `${creditsAmount} Créditos de Proposta`,
-            ...fxData,
+            description: `${totalCredits} Créditos de Proposta`,
           },
         });
 
@@ -218,10 +218,9 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
             paymentType: "freelancer_credits",
             userType: "freelancer",
             amountCents: amountInCents,
-            creditsAmount: creditsAmount,
+            creditsAmount: totalCredits,
             currency,
-            description: `${creditsAmount} Créditos de Proposta`,
-            ...fxData,
+            description: `${totalCredits} Créditos de Proposta`,
           },
         });
 
@@ -252,13 +251,7 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
   };
 
   const handleRegeneratePixPayment = async () => {
-    if (numAmount < 1) return;
-    
-    const fxData = shouldApplyFee ? {
-      fx_spread_percent: spreadPercent,
-      fx_fee_amount: Math.round(feeAmount * 100),
-      amount_to_convert: Math.round(amountAfterFee * 100),
-    } : {};
+    if (priceToCharge < 1) return;
     
     setLoading(true);
     try {
@@ -267,10 +260,9 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
           paymentType: "freelancer_credits",
           userType: "freelancer",
           amountCents: amountInCents,
-          creditsAmount: creditsAmount,
+          creditsAmount: totalCredits,
           currency,
-          description: `${creditsAmount} Créditos de Proposta`,
-          ...fxData,
+          description: `${totalCredits} Créditos de Proposta`,
         },
       });
 
@@ -311,7 +303,16 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            {/* Currency Selection - Always visible */}
+            {/* Info banner - no FX fees */}
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
+              <AlertCircle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+              <div className="text-sm">
+                <p className="font-medium text-primary">Créditos exclusivos da plataforma</p>
+                <p className="text-muted-foreground">Sem taxa de câmbio • Não sacável • Uso interno</p>
+              </div>
+            </div>
+
+            {/* Currency Selection */}
             <div className="space-y-2">
               <Label>Moeda para compra</Label>
               <Select value={currency} onValueChange={handleCurrencyChange}>
@@ -326,43 +327,63 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
                   ))}
                 </SelectContent>
               </Select>
-              {allowedCurrencies.length === 1 && (
-                <p className="text-xs text-muted-foreground">
-                  Apenas {allowedCurrencies[0]} disponível para o seu país
-                </p>
-              )}
             </div>
 
-            {/* Preset amounts */}
+            {/* Credit Packages */}
             <div className="space-y-2">
-              <Label>Valores sugeridos</Label>
-              <div className="flex flex-wrap gap-2">
-                {PRESET_AMOUNTS.map((preset) => (
-                  <Button
-                    key={preset}
-                    variant={amount === preset.toString() ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setAmount(preset.toString())}
+              <Label>Pacotes de Créditos</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {CREDIT_PACKAGES.map((pkg) => (
+                  <button
+                    key={pkg.credits}
+                    onClick={() => handleSelectPackage(pkg)}
+                    className={`
+                      p-3 rounded-lg border-2 text-left transition-all relative
+                      ${!useCustomAmount && selectedPackage.credits === pkg.credits
+                        ? "border-primary bg-primary/5" 
+                        : "border-border hover:border-primary/50"
+                      }
+                    `}
                   >
-                    {preset} créditos
-                  </Button>
+                    {pkg.popular && (
+                      <Badge className="absolute -top-2 -right-2 text-xs">Popular</Badge>
+                    )}
+                    <div className="flex flex-col">
+                      <span className="text-lg font-bold">{pkg.credits}</span>
+                      <span className="text-xs text-muted-foreground">créditos</span>
+                      <span className="text-sm font-semibold mt-1">
+                        {formatMoney(pkg.price, currency)}
+                      </span>
+                      {pkg.bonus > 0 && (
+                        <div className="flex items-center gap-1 mt-1">
+                          <Gift className="h-3 w-3 text-green-600" />
+                          <span className="text-xs text-green-600">
+                            +{pkg.bonus} bônus ({pkg.discount} off)
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </button>
                 ))}
               </div>
             </div>
 
-            {/* Custom amount */}
+            {/* Custom amount option */}
             <div className="space-y-2">
-              <Label>Valor personalizado (quantidade de créditos)</Label>
+              <Label>Ou digite um valor personalizado</Label>
               <Input
                 type="number"
                 min="1"
                 step="1"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="10"
+                value={customAmount}
+                onChange={(e) => {
+                  setCustomAmount(e.target.value);
+                  setUseCustomAmount(e.target.value.length > 0 && parseFloat(e.target.value) > 0);
+                }}
+                placeholder="Ex: 75 créditos"
               />
               <p className="text-xs text-muted-foreground">
-                1 crédito = {formatMoney(1, currency)}
+                1 crédito = {formatMoney(1, currency)} (sem desconto)
               </p>
             </div>
 
@@ -408,44 +429,42 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
               </div>
             </div>
 
-            {/* Summary - with FX breakdown for non-USD */}
-            {numAmount > 0 && (
-              shouldApplyFee ? (
-                <FxFeeBreakdown
-                  amount={numAmount}
-                  feeAmount={feeAmount}
-                  amountAfterFee={amountAfterFee}
-                  spreadPercent={spreadPercent}
-                  currency={currency}
-                  paymentMethod={paymentMethod}
-                />
-              ) : (
-                <div className="rounded-lg bg-muted p-4 space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Créditos</span>
-                    <span className="font-medium">{numAmount} créditos</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Moeda</span>
-                    <span className="font-medium">{currency}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Pagamento</span>
-                    <span className="font-medium">{paymentMethod === "pix" ? "PIX" : "Cartão"}</span>
-                  </div>
-                  <div className="flex justify-between border-t pt-2 mt-2">
-                    <span className="text-muted-foreground">Total</span>
-                    <span className="text-xl font-bold">
-                      {formatMoney(numAmount, currency)}
-                    </span>
-                  </div>
+            {/* Summary - NO FX fees */}
+            {priceToCharge > 0 && (
+              <div className="rounded-lg bg-muted p-4 space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Créditos</span>
+                  <span className="font-medium">{creditsToReceive} créditos</span>
                 </div>
-              )
+                {bonusCredits > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span className="flex items-center gap-1">
+                      <Gift className="h-3 w-3" />
+                      Bônus
+                    </span>
+                    <span className="font-medium">+{bonusCredits} créditos</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Total de créditos</span>
+                  <span className="font-bold">{totalCredits} créditos</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Pagamento</span>
+                  <span className="font-medium">{paymentMethod === "pix" ? "PIX" : "Cartão"}</span>
+                </div>
+                <div className="flex justify-between border-t pt-2 mt-2">
+                  <span className="text-muted-foreground">Você paga</span>
+                  <span className="text-xl font-bold">
+                    {formatMoney(priceToCharge, currency)}
+                  </span>
+                </div>
+              </div>
             )}
 
             <Button
               onClick={handleBuyCredits}
-              disabled={loading || numAmount < 1 || spreadLoading}
+              disabled={loading || priceToCharge < 1}
               className="w-full"
               size="lg"
             >
@@ -481,13 +500,10 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
         publicKey={mpPublicKey}
         paymentType="freelancer_credits"
         userType="freelancer"
-        creditsAmount={creditsAmount}
-        description={`${creditsAmount} Créditos de Proposta`}
+        creditsAmount={totalCredits}
+        description={`${totalCredits} Créditos de Proposta`}
         currency={currency}
         onPaymentConfirmed={handlePaymentConfirmed}
-        fxSpreadPercent={shouldApplyFee ? spreadPercent : undefined}
-        fxFeeAmount={shouldApplyFee ? Math.round(feeAmount * 100) : undefined}
-        amountToConvert={shouldApplyFee ? Math.round(amountAfterFee * 100) : undefined}
       />
     </>
   );
