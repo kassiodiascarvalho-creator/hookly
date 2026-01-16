@@ -102,7 +102,7 @@ serve(async (req) => {
       }
     }
 
-    logStep("Request validated", { paymentType, userType, amountCents, contractId });
+    logStep("Request validated", { paymentType, userType, amountCents, creditsAmount });
 
     // Get Mercado Pago access token
     const accessToken = Deno.env.get("MERCADOPAGO_ACCESS_TOKEN");
@@ -114,6 +114,9 @@ serve(async (req) => {
     const idempotencyKey = `pix_${user.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     // Create payment record first
+    // Ensure credits_amount is an integer (round down any decimals from bonuses)
+    const creditsAmountInt = creditsAmount != null ? Math.floor(Number(creditsAmount)) : null;
+    
     const paymentInsert: Record<string, unknown> = {
       provider: 'mercadopago',
       payment_type: paymentType as string,
@@ -121,7 +124,7 @@ serve(async (req) => {
       user_type: userType as string,
       amount_cents: amountCents as number,
       currency: 'BRL',
-      credits_amount: (creditsAmount as number) || null,
+      credits_amount: creditsAmountInt,
       status: 'pending',
       external_reference: idempotencyKey,
       metadata: {

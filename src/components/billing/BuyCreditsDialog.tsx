@@ -146,7 +146,8 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
   const priceToCharge = useCustomAmount ? customNumAmount : selectedPackage.price;
   const creditsToReceive = useCustomAmount ? customNumAmount : selectedPackage.credits;
   const bonusCredits = useCustomAmount ? 0 : selectedPackage.bonus;
-  const totalCredits = creditsToReceive + bonusCredits;
+  // Ensure totalCredits is always an integer (round down bonus decimals)
+  const totalCredits = Math.floor(creditsToReceive + bonusCredits);
   const amountInCents = Math.round(priceToCharge * 100);
 
   const handleCurrencyChange = (newCurrency: string) => {
