@@ -974,6 +974,116 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_action_costs: {
+        Row: {
+          action_key: string
+          cost_credits: number
+          created_at: string
+          description: string | null
+          display_name: string
+          id: string
+          is_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          action_key: string
+          cost_credits?: number
+          created_at?: string
+          description?: string | null
+          display_name: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          action_key?: string
+          cost_credits?: number
+          created_at?: string
+          description?: string | null
+          display_name?: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      platform_credit_transactions: {
+        Row: {
+          action: string
+          amount: number
+          balance_after: number
+          created_at: string
+          description: string | null
+          id: string
+          metadata: Json | null
+          payment_id: string | null
+          user_id: string
+          user_type: string
+        }
+        Insert: {
+          action: string
+          amount: number
+          balance_after: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          payment_id?: string | null
+          user_id: string
+          user_type: string
+        }
+        Update: {
+          action?: string
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          payment_id?: string | null
+          user_id?: string
+          user_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_credit_transactions_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "unified_payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_credits: {
+        Row: {
+          balance: number
+          created_at: string
+          currency: string
+          id: string
+          updated_at: string
+          user_id: string
+          user_type: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+          user_type: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+          user_type?: string
+        }
+        Relationships: []
+      }
       platform_settings: {
         Row: {
           created_at: string
@@ -1595,6 +1705,20 @@ export type Database = {
         }
         Returns: boolean
       }
+      add_platform_credits: {
+        Args: {
+          p_amount: number
+          p_description?: string
+          p_payment_id?: string
+          p_user_id: string
+          p_user_type: string
+        }
+        Returns: boolean
+      }
+      check_platform_credits: {
+        Args: { p_action_key: string; p_user_id: string }
+        Returns: boolean
+      }
       consume_proposal_credit: {
         Args: { p_freelancer_user_id: string }
         Returns: boolean
@@ -1677,6 +1801,14 @@ export type Database = {
       }
       spend_credits: {
         Args: { p_amount: number; p_context?: string; p_user_id: string }
+        Returns: boolean
+      }
+      spend_platform_credits: {
+        Args: {
+          p_action_key: string
+          p_description?: string
+          p_user_id: string
+        }
         Returns: boolean
       }
       update_freelancer_revenue_and_achievements: {

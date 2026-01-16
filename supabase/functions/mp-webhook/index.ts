@@ -422,6 +422,25 @@ serve(async (req) => {
           logStep("Company credits added via new ledger", { userId, amount: amountUsdUnits, result });
         }
 
+      } else if (paymentType === 'platform_credits') {
+        // Platform credits - separate system, no FX fees, direct credit amount
+        logStep("Adding platform credits", { userId, amount: creditsAmount });
+        
+        const { data: result, error: rpcError } = await supabaseAdmin
+          .rpc('add_platform_credits', {
+            p_user_id: userId,
+            p_user_type: 'company',
+            p_amount: creditsAmount || Math.floor(amountUsdUnits),
+            p_payment_id: payment.id,
+            p_description: 'Compra de créditos da plataforma via Mercado Pago',
+          });
+
+        if (rpcError) {
+          logStep("Error adding platform credits", { error: rpcError });
+        } else {
+          logStep("Platform credits added", { userId, amount: creditsAmount || Math.floor(amountUsdUnits), result });
+        }
+
       } else if (paymentType === 'contract_funding') {
         const contractId = payment.contract_id;
         

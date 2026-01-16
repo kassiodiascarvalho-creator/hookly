@@ -3,24 +3,22 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Wallet, Loader2, History, TrendingUp } from "lucide-react";
+import { Wallet, Loader2, History, TrendingUp, Info } from "lucide-react";
 import { CompanyAddFundsDialog } from "./CompanyAddFundsDialog";
 import { format } from "date-fns";
-import { formatMoneyFromCents, formatMoney } from "@/lib/formatMoney";
-import { useLocalCurrencyDisplay } from "@/hooks/useLocalCurrencyDisplay";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-interface UserBalance {
-  credits_available: number;
+interface PlatformCredits {
+  balance: number;
   currency: string;
 }
 
-interface LedgerEntry {
+interface CreditTransaction {
   id: string;
-  direction: string;
-  amount_cents: number;
-  currency: string;
-  balance_after_cents: number | null;
-  reason: string;
+  amount: number;
+  balance_after: number;
+  action: string;
+  description: string | null;
   created_at: string;
 }
 
@@ -28,9 +26,8 @@ export function CompanyWalletCard() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [balance, setBalance] = useState<UserBalance | null>(null);
-  const [ledgerEntries, setLedgerEntries] = useState<LedgerEntry[]>([]);
-  const { localCurrency, convertToLocal, loading: fxLoading } = useLocalCurrencyDisplay();
+  const [credits, setCredits] = useState<PlatformCredits | null>(null);
+  const [transactions, setTransactions] = useState<CreditTransaction[]>([]);
 
   useEffect(() => {
     if (user) {
@@ -41,55 +38,48 @@ export function CompanyWalletCard() {
   const fetchData = async () => {
     if (!user) return;
 
-    // Fetch user balance from the new ledger system (user_balances table)
-    const { data: balanceData } = await supabase
-      .from("user_balances")
-      .select("credits_available, currency")
+    // Fetch platform credits balance
+    const { data: creditsData } = await supabase
+      .from("platform_credits")
+      .select("balance, currency")
       .eq("user_id", user.id)
-      .eq("user_type", "company")
       .maybeSingle();
 
-    if (balanceData) {
-      setBalance(balanceData);
+    if (creditsData) {
+      setCredits(creditsData);
+    } else {
+      setCredits({ balance: 0, currency: "USD" });
     }
 
-    // Fetch ledger transactions
-    const { data: ledgerData } = await supabase
-      .from("ledger_transactions")
+    // Fetch credit transactions
+    const { data: txData } = await supabase
+      .from("platform_credit_transactions")
       .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(10);
 
-    if (ledgerData) {
-      // Map ledger_transactions to LedgerEntry format
-      const mappedEntries: LedgerEntry[] = ledgerData.map((tx: any) => ({
-        id: tx.id,
-        direction: tx.tx_type.includes('spend') || tx.tx_type.includes('withdrawal') ? 'debit' : 'credit',
-        amount_cents: Math.round(tx.amount * 100),
-        currency: tx.currency,
-        balance_after_cents: tx.balance_after_credits ? Math.round(tx.balance_after_credits * 100) : null,
-        reason: tx.context || tx.tx_type,
-        created_at: tx.created_at,
-      }));
-      setLedgerEntries(mappedEntries);
+    if (txData) {
+      setTransactions(txData);
     }
 
     setLoading(false);
   };
 
-  const getReasonLabel = (reason: string) => {
-    switch (reason) {
-      case "wallet_topup":
-      case "wallet_topup_stripe":
-      case "wallet_topup_mercadopago":
-        return "Recarga de fundos";
-      case "premium_feature":
-        return "Funcionalidade premium";
-      case "refund":
-        return "Reembolso";
+  const getActionLabel = (action: string) => {
+    switch (action) {
+      case "topup":
+        return "Recarga de créditos";
+      case "spend_send_proposal":
+        return "Envio de proposta";
+      case "spend_view_company_data":
+        return "Visualização de dados";
+      case "spend_highlight_proposal":
+        return "Destaque de proposta";
+      case "spend_boost_profile":
+        return "Impulsionar perfil";
       default:
-        return reason;
+        return action;
     }
   };
 
@@ -103,10 +93,7 @@ export function CompanyWalletCard() {
     );
   }
 
-  // Balance is stored as a decimal in user_balances, convert to cents for display
-  const balanceUsd = balance?.credits_available || 0;
-  const balanceCents = Math.round(balanceUsd * 100);
-  const currency = balance?.currency || "USD";
+  const balance = credits?.balance || 0;
 
   return (
     <div className="space-y-6">
@@ -117,44 +104,42 @@ export function CompanyWalletCard() {
           <div>
             <CardTitle className="flex items-center gap-2">
               <Wallet className="h-5 w-5 text-primary" />
-              Carteira da Empresa
+              Créditos da Plataforma
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Info className="h-4 w-4 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    <p>Créditos exclusivos para funcionalidades internas da plataforma. Não podem ser utilizados para pagamento de freelancers ou sacados.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </CardTitle>
             <CardDescription>
-              Saldo para funcionalidades premium e recursos avançados
+              Créditos para uso exclusivo na plataforma • Não sacável
             </CardDescription>
           </div>
           <CompanyAddFundsDialog onSuccess={fetchData} />
         </CardHeader>
         <CardContent>
           <div className="flex flex-col gap-1">
-            {/* Primary balance in USD */}
-            <span className="text-4xl font-bold">
-              {formatMoneyFromCents(balanceCents, currency)}
-            </span>
-            
-            {/* Approximate local currency value */}
-            {localCurrency !== "USD" && !fxLoading && (
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                <span className="text-sm">≈</span>
-                <span className="text-base">
-                  {formatMoney(convertToLocal(balanceCents) || 0, localCurrency)}
-                </span>
-                <span className="text-xs text-muted-foreground/70">
-                  (estimativa)
-                </span>
-              </div>
-            )}
+            {/* Primary balance in credits */}
+            <div className="flex items-baseline gap-2">
+              <span className="text-4xl font-bold">{balance}</span>
+              <span className="text-lg text-muted-foreground">créditos</span>
+            </div>
           </div>
           
-          {balanceCents === 0 && (
+          {balance === 0 && (
             <div className="mt-4 p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
               <div className="flex items-start gap-3">
                 <TrendingUp className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-medium text-blue-600">Adicione fundos</p>
+                  <p className="font-medium text-blue-600">Adicione créditos</p>
                   <p className="text-sm text-muted-foreground">
-                    Use sua carteira para acessar dados detalhados de freelancers, 
-                    relatórios avançados e muito mais!
+                    Use créditos para acessar funcionalidades premium: ver dados detalhados 
+                    de freelancers, destacar suas vagas, e muito mais!
                   </p>
                 </div>
               </div>
@@ -166,40 +151,44 @@ export function CompanyWalletCard() {
       {/* Features Info */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Funcionalidades Premium</CardTitle>
+          <CardTitle className="text-lg">O que você pode fazer com créditos</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="p-3 rounded-lg border">
-              <p className="font-medium">📊 Histórico Avançado</p>
+              <p className="font-medium">📊 Ver Dados Completos</p>
               <p className="text-sm text-muted-foreground">
-                Veja histórico completo de projetos e avaliações
+                Acesse informações detalhadas de freelancers
               </p>
-            </div>
-            <div className="p-3 rounded-lg border">
-              <p className="font-medium">📈 Relatórios</p>
-              <p className="text-sm text-muted-foreground">
-                Acesse relatórios detalhados de contratações
-              </p>
+              <p className="text-xs text-primary mt-1">1 crédito</p>
             </div>
             <div className="p-3 rounded-lg border">
               <p className="font-medium">⭐ Destaque de Vagas</p>
               <p className="text-sm text-muted-foreground">
                 Coloque suas vagas em destaque
               </p>
+              <p className="text-xs text-primary mt-1">2 créditos</p>
+            </div>
+            <div className="p-3 rounded-lg border">
+              <p className="font-medium">🚀 Impulsionar Perfil</p>
+              <p className="text-sm text-muted-foreground">
+                Aumente a visibilidade da sua empresa
+              </p>
+              <p className="text-xs text-primary mt-1">5 créditos</p>
             </div>
             <div className="p-3 rounded-lg border">
               <p className="font-medium">🔍 Busca Avançada</p>
               <p className="text-sm text-muted-foreground">
                 Filtros avançados para encontrar talentos
               </p>
+              <p className="text-xs text-primary mt-1">Em breve</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Transaction History */}
-      {ledgerEntries.length > 0 && (
+      {transactions.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
@@ -209,27 +198,24 @@ export function CompanyWalletCard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {ledgerEntries.map((entry) => (
+              {transactions.map((tx) => (
                 <div
-                  key={entry.id}
+                  key={tx.id}
                   className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
                 >
                   <div>
-                    <p className="font-medium">{getReasonLabel(entry.reason)}</p>
+                    <p className="font-medium">{getActionLabel(tx.action)}</p>
                     <p className="text-sm text-muted-foreground">
-                      {format(new Date(entry.created_at), "dd/MM/yyyy HH:mm")}
+                      {format(new Date(tx.created_at), "dd/MM/yyyy HH:mm")}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className={`font-semibold ${entry.direction === "credit" ? "text-green-600" : "text-destructive"}`}>
-                      {entry.direction === "credit" ? "+" : "-"}
-                      {formatMoneyFromCents(entry.amount_cents, entry.currency)}
+                    <p className={`font-semibold ${tx.amount > 0 ? "text-green-600" : "text-destructive"}`}>
+                      {tx.amount > 0 ? "+" : ""}{tx.amount} créditos
                     </p>
-                    {entry.balance_after_cents !== null && (
-                      <p className="text-xs text-muted-foreground">
-                        Saldo: {formatMoneyFromCents(entry.balance_after_cents, entry.currency)}
-                      </p>
-                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Saldo: {tx.balance_after} créditos
+                    </p>
                   </div>
                 </div>
               ))}
