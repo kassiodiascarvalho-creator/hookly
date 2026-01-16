@@ -166,11 +166,15 @@ export type Database = {
           accepted_at: string | null
           amount_cents: number
           cancelled_at: string | null
+          company_accepted_at: string | null
           company_user_id: string
           completed_at: string | null
+          contract_terms_version: string | null
           created_at: string
           currency: string
+          deadline: string | null
           description: string | null
+          freelancer_accepted_at: string | null
           freelancer_user_id: string
           id: string
           milestones: Json | null
@@ -184,11 +188,15 @@ export type Database = {
           accepted_at?: string | null
           amount_cents?: number
           cancelled_at?: string | null
+          company_accepted_at?: string | null
           company_user_id: string
           completed_at?: string | null
+          contract_terms_version?: string | null
           created_at?: string
           currency?: string
+          deadline?: string | null
           description?: string | null
+          freelancer_accepted_at?: string | null
           freelancer_user_id: string
           id?: string
           milestones?: Json | null
@@ -202,11 +210,15 @@ export type Database = {
           accepted_at?: string | null
           amount_cents?: number
           cancelled_at?: string | null
+          company_accepted_at?: string | null
           company_user_id?: string
           completed_at?: string | null
+          contract_terms_version?: string | null
           created_at?: string
           currency?: string
+          deadline?: string | null
           description?: string | null
+          freelancer_accepted_at?: string | null
           freelancer_user_id?: string
           id?: string
           milestones?: Json | null
