@@ -50,6 +50,30 @@ export type Database = {
         }
         Relationships: []
       }
+      company_data_unlocks: {
+        Row: {
+          company_user_id: string
+          credits_spent: number
+          freelancer_user_id: string
+          id: string
+          unlocked_at: string
+        }
+        Insert: {
+          company_user_id: string
+          credits_spent?: number
+          freelancer_user_id: string
+          id?: string
+          unlocked_at?: string
+        }
+        Update: {
+          company_user_id?: string
+          credits_spent?: number
+          freelancer_user_id?: string
+          id?: string
+          unlocked_at?: string
+        }
+        Relationships: []
+      }
       company_profiles: {
         Row: {
           about: string | null
