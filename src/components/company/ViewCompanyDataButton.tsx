@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -48,6 +48,7 @@ export function ViewCompanyDataButton({ companyUserId, companyName }: ViewCompan
   const [dialogOpen, setDialogOpen] = useState(false);
   const [creditCheckOpen, setCreditCheckOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [checkingUnlock, setCheckingUnlock] = useState(true);
   const [companyData, setCompanyData] = useState<CompanyData | null>(null);
   const [companyStats, setCompanyStats] = useState<CompanyStats | null>(null);
   const [hasUnlocked, setHasUnlocked] = useState(false);
@@ -55,9 +56,103 @@ export function ViewCompanyDataButton({ companyUserId, companyName }: ViewCompan
   const { balance, spendCredits, getActionCost, loading: creditsLoading } = usePlatformCredits();
   const viewCost = getActionCost(PLATFORM_ACTIONS.VIEW_COMPANY_DATA);
 
+  // Check if already unlocked on mount
+  useEffect(() => {
+    const checkExistingUnlock = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setCheckingUnlock(false);
+          return;
+        }
+
+        const { data: unlock } = await supabase
+          .from("company_data_unlocks")
+          .select("id")
+          .eq("freelancer_user_id", user.id)
+          .eq("company_user_id", companyUserId)
+          .maybeSingle();
+
+        if (unlock) {
+          setHasUnlocked(true);
+        }
+      } catch (err) {
+        console.error("Error checking unlock:", err);
+      }
+      setCheckingUnlock(false);
+    };
+    checkExistingUnlock();
+  }, [companyUserId]);
+
+  const fetchCompanyData = async () => {
+    // Get email from profiles table
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("email")
+      .eq("user_id", companyUserId)
+      .maybeSingle();
+
+    // Get full company profile
+    const { data: companyProfile } = await supabase
+      .from("company_profiles")
+      .select("phone, website, company_name, about, industry, location, company_size, logo_url, is_verified")
+      .eq("user_id", companyUserId)
+      .maybeSingle();
+
+    setCompanyData({
+      email: profile?.email || null,
+      phone: companyProfile?.phone || null,
+      website: companyProfile?.website || null,
+      company_name: companyProfile?.company_name || null,
+      about: companyProfile?.about || null,
+      industry: companyProfile?.industry || null,
+      location: companyProfile?.location || null,
+      company_size: companyProfile?.company_size || null,
+      logo_url: companyProfile?.logo_url || null,
+      is_verified: companyProfile?.is_verified || null,
+    });
+
+    // Fetch stats: contracts
+    const { data: contracts } = await supabase
+      .from("contracts")
+      .select("id, amount_cents, freelancer_user_id")
+      .eq("company_user_id", companyUserId)
+      .in("status", ["active", "funded", "completed"]);
+
+    // Fetch reviews for this company
+    const { data: reviews } = await supabase
+      .from("reviews")
+      .select("rating")
+      .eq("company_user_id", companyUserId);
+
+    const totalPaidCents = contracts?.reduce((sum, c) => sum + (c.amount_cents || 0), 0) || 0;
+    const freelancersHired = new Set(contracts?.map(c => c.freelancer_user_id)).size;
+    const avgRating = reviews?.length 
+      ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length 
+      : 0;
+
+    setCompanyStats({
+      totalContracts: contracts?.length || 0,
+      totalPaidCents,
+      freelancersHired,
+      avgRating,
+      reviewCount: reviews?.length || 0,
+    });
+  };
+
   const handleViewData = async () => {
-    // If already unlocked, just show dialog
-    if (hasUnlocked && companyData) {
+    // If already unlocked, just fetch data and show dialog
+    if (hasUnlocked) {
+      if (!companyData) {
+        setLoading(true);
+        try {
+          await fetchCompanyData();
+        } catch (err) {
+          console.error("Error fetching company data:", err);
+          toast.error("Erro ao buscar dados da empresa");
+        }
+        setLoading(false);
+      }
       setDialogOpen(true);
       return;
     }
@@ -86,59 +181,19 @@ export function ViewCompanyDataButton({ companyUserId, companyName }: ViewCompan
 
     // Fetch company data
     try {
-      // Get email from profiles table
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("email")
-        .eq("user_id", companyUserId)
-        .maybeSingle();
+      await fetchCompanyData();
 
-      // Get full company profile
-      const { data: companyProfile } = await supabase
-        .from("company_profiles")
-        .select("phone, website, company_name, about, industry, location, company_size, logo_url, is_verified")
-        .eq("user_id", companyUserId)
-        .maybeSingle();
-
-      setCompanyData({
-        email: profile?.email || null,
-        phone: companyProfile?.phone || null,
-        website: companyProfile?.website || null,
-        company_name: companyProfile?.company_name || null,
-        about: companyProfile?.about || null,
-        industry: companyProfile?.industry || null,
-        location: companyProfile?.location || null,
-        company_size: companyProfile?.company_size || null,
-        logo_url: companyProfile?.logo_url || null,
-        is_verified: companyProfile?.is_verified || null,
-      });
-
-      // Fetch stats: contracts
-      const { data: contracts } = await supabase
-        .from("contracts")
-        .select("id, amount_cents, freelancer_user_id")
-        .eq("company_user_id", companyUserId)
-        .in("status", ["active", "funded", "completed"]);
-
-      // Fetch reviews for this company
-      const { data: reviews } = await supabase
-        .from("reviews")
-        .select("rating")
-        .eq("company_user_id", companyUserId);
-
-      const totalPaidCents = contracts?.reduce((sum, c) => sum + (c.amount_cents || 0), 0) || 0;
-      const freelancersHired = new Set(contracts?.map(c => c.freelancer_user_id)).size;
-      const avgRating = reviews?.length 
-        ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length 
-        : 0;
-
-      setCompanyStats({
-        totalContracts: contracts?.length || 0,
-        totalPaidCents,
-        freelancersHired,
-        avgRating,
-        reviewCount: reviews?.length || 0,
-      });
+      // Persist the unlock
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from("company_data_unlocks")
+          .insert({
+            freelancer_user_id: user.id,
+            company_user_id: companyUserId,
+            credits_spent: viewCost,
+          });
+      }
 
       setHasUnlocked(true);
       setDialogOpen(true);
