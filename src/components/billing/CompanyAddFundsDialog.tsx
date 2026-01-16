@@ -19,16 +19,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Loader2, Wallet, QrCode, CreditCard } from "lucide-react";
+import { Plus, Loader2, Wallet, QrCode, CreditCard, Info } from "lucide-react";
 import { toast } from "sonner";
 import { formatMoney } from "@/lib/formatMoney";
 import { PixPaymentModal } from "./PixPaymentModal";
 import { CardPaymentModal } from "./CardPaymentModal";
-import { FxFeeBreakdown } from "./FxFeeBreakdown";
 import { getAllowedCurrencies, getCurrencyByCountry } from "@/lib/currencyByCountry";
-import { useFxSpread, calculateFxFee } from "@/hooks/useFxSpread";
 
-const PRESET_AMOUNTS = [50, 100, 250, 500, 1000];
+// Each credit costs $1 USD (or equivalent in local currency)
+const CREDIT_PRICE_USD = 1;
+const PRESET_CREDITS = [10, 25, 50, 100, 200];
 
 type PaymentMethod = "pix" | "card";
 
@@ -38,10 +38,9 @@ interface CompanyAddFundsDialogProps {
 
 export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps) {
   const { user } = useAuth();
-  const { spreadPercent, loading: spreadLoading } = useFxSpread();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [amount, setAmount] = useState("");
+  const [credits, setCredits] = useState("");
   const [currency, setCurrency] = useState("USD");
   const [country, setCountry] = useState<string | null>(null);
   const [allowedCurrencies, setAllowedCurrencies] = useState<string[]>(["USD"]);
@@ -71,50 +70,18 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
 
   // Fetch MercadoPago public key on mount
   useEffect(() => {
-    console.log("[CompanyAddFundsDialog] === PUBLIC KEY CHECK ===");
-
     const envKey = import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY as string | undefined;
-    console.log("[CompanyAddFundsDialog] ENV source:", envKey ? "PRESENT" : "MISSING");
-
     if (envKey) {
-      console.log("[CompanyAddFundsDialog] mpPublicKey source: env");
-      console.log(
-        "[CompanyAddFundsDialog] mpPublicKey masked:",
-        `${envKey.substring(0, 12)}... (length: ${envKey.length})`
-      );
       setMpPublicKey(envKey);
       return;
     }
 
-    // Fallback: fetch from backend function (bypasses RLS safely)
     const fetchPublicKey = async () => {
-      console.log("[CompanyAddFundsDialog] mpPublicKey source: db (via function - fetching...)");
-      const { data, error } = await supabase.functions.invoke("get-mp-public-key");
-
-      if (error) {
-        console.error("[CompanyAddFundsDialog] Function fetch error:", error.message);
-        console.log("[CompanyAddFundsDialog] mpPublicKey source: missing");
-        return;
-      }
-
-      const publicKey = (data?.publicKey as string | undefined) ?? "";
-      const source = (data?.source as string | undefined) ?? "missing";
-
-      console.log("[CompanyAddFundsDialog] mpPublicKey source:", source);
-      console.log(
-        "[CompanyAddFundsDialog] mpPublicKey length:",
-        publicKey ? publicKey.length : 0
-      );
-
-      if (publicKey) {
-        console.log(
-          "[CompanyAddFundsDialog] mpPublicKey masked:",
-          `${publicKey.substring(0, 12)}... (length: ${publicKey.length})`
-        );
-        setMpPublicKey(publicKey);
+      const { data } = await supabase.functions.invoke("get-mp-public-key");
+      if (data?.publicKey) {
+        setMpPublicKey(data.publicKey);
       }
     };
-
     fetchPublicKey();
   }, []);
 
@@ -144,28 +111,18 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
     } else {
       setPaymentMethod("card");
     }
-    
-    console.log("[CompanyAddFundsDialog] Country:", userCountry, "Currency:", localCurrency, "Allowed:", allowed);
   };
 
   const isBRL = currency === "BRL";
-  // PIX is only available for BRL
   const canUsePix = isBRL;
-  // Card transparent checkout only for BRL (Mercado Pago)
   const canUseTransparentCard = isBRL && mpPublicKey.length > 0;
 
-  const numAmount = parseFloat(amount) || 0;
-  
-  // Calculate FX fee
-  const { feeAmount, amountAfterFee, shouldApplyFee } = calculateFxFee(
-    numAmount,
-    spreadPercent,
-    currency
-  );
+  const numCredits = parseInt(credits) || 0;
+  // Calculate price: 1 credit = $1 USD (no FX fees for platform credits)
+  const priceUsd = numCredits * CREDIT_PRICE_USD;
 
   const handleCurrencyChange = (newCurrency: string) => {
     setCurrency(newCurrency);
-    // Reset payment method based on currency
     if (newCurrency === "BRL") {
       setPaymentMethod("pix");
     } else {
@@ -173,20 +130,12 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
     }
   };
 
-  const handleAddFunds = async () => {
-    console.log("[CompanyAddFundsDialog] === PAYMENT FLOW ===");
-    console.log("[CompanyAddFundsDialog] paymentMethod:", paymentMethod);
-    console.log("[CompanyAddFundsDialog] currency:", currency);
-    console.log("[CompanyAddFundsDialog] mpPublicKey present:", !!mpPublicKey, "length:", mpPublicKey?.length || 0);
-    console.log("[CompanyAddFundsDialog] canUseTransparentCard:", canUseTransparentCard);
-    console.log("[CompanyAddFundsDialog] FX spread:", spreadPercent, "fee:", feeAmount, "afterFee:", amountAfterFee);
-
-    if (isNaN(numAmount) || numAmount < 1) {
-      toast.error("Digite um valor válido");
+  const handleAddCredits = async () => {
+    if (numCredits < 1) {
+      toast.error("Selecione pelo menos 1 crédito");
       return;
     }
 
-    // Validate currency is allowed
     if (!allowedCurrencies.includes(currency)) {
       toast.error("Moeda não permitida para o seu país");
       return;
@@ -194,27 +143,20 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
 
     setLoading(true);
 
-    // Prepare FX data for backend
-    const fxData = shouldApplyFee ? {
-      fx_spread_percent: spreadPercent,
-      fx_fee_amount: Math.round(feeAmount * 100), // Convert to cents
-      amount_to_convert: Math.round(amountAfterFee * 100), // Convert to cents
-    } : {};
-
     try {
-      const amountInCents = Math.round(numAmount * 100);
+      // Amount in cents (1 credit = $1 = 100 cents)
+      const amountCents = priceUsd * 100;
       
       if (paymentMethod === "pix" && canUsePix) {
-        console.log("[CompanyAddFundsDialog] → Using PIX checkout");
-        // Use transparent PIX checkout
+        // Use PIX checkout
         const { data, error } = await supabase.functions.invoke("create-pix-payment", {
           body: {
-            paymentType: "company_wallet",
+            paymentType: "platform_credits",
             userType: "company",
-            amountCents: amountInCents,
+            amountCents: amountCents,
             currency,
-            description: `Adicionar ${formatMoney(numAmount, currency)} na carteira`,
-            ...fxData,
+            creditsAmount: numCredits,
+            description: `Comprar ${numCredits} créditos da plataforma`,
           },
         });
 
@@ -228,26 +170,20 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
           setPixModalOpen(true);
         }
       } else if (paymentMethod === "card" && canUseTransparentCard) {
-        console.log("[CompanyAddFundsDialog] → Opening CardPaymentModal (transparent)");
-        // Open transparent card checkout modal directly - NO redirect call
-        setCardAmountCents(amountInCents);
+        // Open transparent card checkout modal
+        setCardAmountCents(amountCents);
         setOpen(false);
         setCardModalOpen(true);
-      } else if (paymentMethod === "card" && isBRL && !mpPublicKey) {
-        console.warn("[CompanyAddFundsDialog] BRL card selected but mpPublicKey is missing");
-        toast.error("Configure a Public Key em Admin > Payment Providers");
-        return;
       } else {
-        console.log("[CompanyAddFundsDialog] → Using redirect (create-unified-payment)");
-        // Use redirect checkout (for international cards via Stripe)
+        // Use redirect checkout (Stripe for international)
         const { data, error } = await supabase.functions.invoke("create-unified-payment", {
           body: {
-            paymentType: "company_wallet",
+            paymentType: "platform_credits",
             userType: "company",
-            amountCents: amountInCents,
+            amountCents: amountCents,
             currency,
-            description: `Adicionar ${formatMoney(numAmount, currency)} na carteira`,
-            ...fxData,
+            creditsAmount: numCredits,
+            description: `Comprar ${numCredits} créditos da plataforma`,
           },
         });
 
@@ -258,7 +194,7 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
         }
       }
     } catch (error) {
-      console.error("Error adding funds:", error);
+      console.error("Error adding credits:", error);
       toast.error("Erro ao processar pagamento. Tente novamente.");
     } finally {
       setLoading(false);
@@ -266,7 +202,7 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
   };
 
   const handlePaymentConfirmed = () => {
-    toast.success("Fundos adicionados com sucesso!");
+    toast.success("Créditos adicionados com sucesso!");
     setPixModalOpen(false);
     setCardModalOpen(false);
     setPixData(null);
@@ -274,26 +210,20 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
   };
 
   const handleRegeneratePixPayment = async () => {
-    if (isNaN(numAmount) || numAmount < 1) return;
-
-    const fxData = shouldApplyFee ? {
-      fx_spread_percent: spreadPercent,
-      fx_fee_amount: Math.round(feeAmount * 100),
-      amount_to_convert: Math.round(amountAfterFee * 100),
-    } : {};
+    if (numCredits < 1) return;
 
     setLoading(true);
     try {
-      const amountInCents = Math.round(numAmount * 100);
+      const amountCents = priceUsd * 100;
       
       const { data, error } = await supabase.functions.invoke("create-pix-payment", {
         body: {
-          paymentType: "company_wallet",
+          paymentType: "platform_credits",
           userType: "company",
-          amountCents: amountInCents,
+          amountCents: amountCents,
           currency,
-          description: `Adicionar ${formatMoney(numAmount, currency)} na carteira`,
-          ...fxData,
+          creditsAmount: numCredits,
+          description: `Comprar ${numCredits} créditos da plataforma`,
         },
       });
 
@@ -319,25 +249,37 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
         <DialogTrigger asChild>
           <Button className="gap-2">
             <Plus className="h-4 w-4" />
-            Adicionar Fundos
+            Comprar Créditos
           </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Wallet className="h-5 w-5 text-primary" />
-              Adicionar Fundos
+              Comprar Créditos
             </DialogTitle>
             <DialogDescription>
-              Adicione saldo à sua carteira para acessar funcionalidades premium
+              Créditos para uso exclusivo na plataforma • Não sacável
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
+            {/* Info Banner */}
+            <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 flex items-start gap-2">
+              <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+              <div className="text-sm text-blue-800">
+                <p className="font-medium">Créditos da Plataforma</p>
+                <p className="text-blue-700 mt-0.5">
+                  Usados para funcionalidades internas como ver dados de freelancers, 
+                  destacar vagas e mais. Não podem ser usados para pagar freelancers.
+                </p>
+              </div>
+            </div>
+
             {/* Currency Selection */}
             {allowedCurrencies.length > 1 && (
               <div className="space-y-2">
-                <Label>Moeda</Label>
+                <Label>Moeda de pagamento</Label>
                 <Select value={currency} onValueChange={handleCurrencyChange}>
                   <SelectTrigger>
                     <SelectValue />
@@ -353,18 +295,18 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
               </div>
             )}
 
-            {/* Preset amounts */}
+            {/* Preset credit amounts */}
             <div className="space-y-2">
-              <Label>Valores sugeridos</Label>
+              <Label>Quantidade de créditos</Label>
               <div className="flex flex-wrap gap-2">
-                {PRESET_AMOUNTS.map((preset) => (
+                {PRESET_CREDITS.map((preset) => (
                   <Button
                     key={preset}
-                    variant={amount === preset.toString() ? "default" : "outline"}
+                    variant={credits === preset.toString() ? "default" : "outline"}
                     size="sm"
-                    onClick={() => setAmount(preset.toString())}
+                    onClick={() => setCredits(preset.toString())}
                   >
-                    {formatMoney(preset, currency)}
+                    {preset} créditos
                   </Button>
                 ))}
               </div>
@@ -372,14 +314,14 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
 
             {/* Custom amount */}
             <div className="space-y-2">
-              <Label>Valor personalizado</Label>
+              <Label>Quantidade personalizada</Label>
               <Input
                 type="number"
                 min="1"
-                step="0.01"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="100.00"
+                step="1"
+                value={credits}
+                onChange={(e) => setCredits(e.target.value)}
+                placeholder="100"
               />
             </div>
 
@@ -425,40 +367,28 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
               </div>
             </div>
 
-            {/* Summary - with FX breakdown for non-USD */}
-            {numAmount > 0 && (
-              shouldApplyFee ? (
-                <FxFeeBreakdown
-                  amount={numAmount}
-                  feeAmount={feeAmount}
-                  amountAfterFee={amountAfterFee}
-                  spreadPercent={spreadPercent}
-                  currency={currency}
-                  paymentMethod={paymentMethod}
-                />
-              ) : (
-                <div className="rounded-lg bg-muted p-4 space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Total a adicionar</span>
-                    <span className="text-xl font-bold">
-                      {formatMoney(numAmount, currency)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Moeda</span>
-                    <span>{currency}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Pagamento</span>
-                    <span>{paymentMethod === "pix" ? "PIX" : "Cartão"}</span>
-                  </div>
+            {/* Summary */}
+            {numCredits > 0 && (
+              <div className="rounded-lg bg-muted p-4 space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Créditos</span>
+                  <span className="text-xl font-bold">{numCredits}</span>
                 </div>
-              )
+                <div className="flex justify-between text-sm border-t pt-2">
+                  <span className="text-muted-foreground">Valor total</span>
+                  <span className="font-semibold">
+                    {formatMoney(priceUsd, "USD")}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground text-center pt-1">
+                  1 crédito = $1.00 USD • Sem taxas adicionais
+                </p>
+              </div>
             )}
 
             <Button
-              onClick={handleAddFunds}
-              disabled={loading || !amount || numAmount < 1 || spreadLoading}
+              onClick={handleAddCredits}
+              disabled={loading || numCredits < 1}
               className="w-full"
               size="lg"
             >
@@ -497,14 +427,11 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
         onOpenChange={setCardModalOpen}
         amount={cardAmountCents}
         publicKey={mpPublicKey}
-        paymentType="company_wallet"
+        paymentType="platform_credits"
         userType="company"
-        description={`Adicionar ${formatMoney(numAmount, currency)} na carteira`}
-        currency={currency}
+        creditsAmount={numCredits}
+        description={`Comprar ${numCredits} créditos da plataforma`}
         onPaymentConfirmed={handlePaymentConfirmed}
-        fxSpreadPercent={shouldApplyFee ? spreadPercent : undefined}
-        fxFeeAmount={shouldApplyFee ? Math.round(feeAmount * 100) : undefined}
-        amountToConvert={shouldApplyFee ? Math.round(amountAfterFee * 100) : undefined}
       />
     </>
   );
