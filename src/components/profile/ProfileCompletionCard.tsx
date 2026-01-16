@@ -55,6 +55,8 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
   const [loading, setLoading] = useState(true);
   const [bonusClaimed, setBonusClaimed] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [bonusCredits, setBonusCredits] = useState(10);
+  const [bonusEnabled, setBonusEnabled] = useState(true);
 
   useEffect(() => {
     if (user) {
@@ -66,13 +68,22 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
     if (!user) return;
 
     try {
-      // Get user type and bonus status
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("user_type, profile_completion_bonus_claimed")
-        .eq("user_id", user.id)
-        .single();
+      // Get user type, bonus status, and bonus value in parallel
+      const [profileRes, bonusRes] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("user_type, profile_completion_bonus_claimed")
+          .eq("user_id", user.id)
+          .single(),
+        supabase
+          .from("platform_action_costs")
+          .select("cost_credits, is_enabled")
+          .eq("action_key", "profile_completion_bonus")
+          .single()
+      ]);
 
+      const profile = profileRes.data;
+      
       if (!profile?.user_type) {
         setLoading(false);
         return;
@@ -80,6 +91,12 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
 
       setUserType(profile.user_type);
       setBonusClaimed(profile.profile_completion_bonus_claimed || false);
+      
+      // Set bonus value from config
+      if (bonusRes.data) {
+        setBonusCredits(bonusRes.data.cost_credits);
+        setBonusEnabled(bonusRes.data.is_enabled);
+      }
 
       if (profile.user_type === "freelancer") {
         // Fetch freelancer profile
@@ -183,7 +200,7 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
         setShowCelebration(true);
         toast({
           title: "🎉 Parabéns!",
-          description: "Você completou 100% do perfil e ganhou 10 créditos!",
+          description: `Você completou 100% do perfil e ganhou ${bonusCredits} créditos!`,
         });
         
         // Hide celebration after 5 seconds
@@ -222,11 +239,11 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
             🎉 Perfil 100% Completo!
           </h3>
           <p className="text-sm text-muted-foreground mb-3">
-            Você ganhou <span className="font-bold text-primary">10 créditos</span> como recompensa!
+            Você ganhou <span className="font-bold text-primary">{bonusCredits} créditos</span> como recompensa!
           </p>
           <Badge variant="default" className="gap-1">
             <Coins className="h-3 w-3" />
-            +10 Créditos
+            +{bonusCredits} Créditos
           </Badge>
         </CardContent>
       </Card>
@@ -257,10 +274,10 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
               {completion.percent}%
             </Badge>
           </div>
-          {!bonusClaimed && (
+          {!bonusClaimed && bonusEnabled && bonusCredits > 0 && (
             <div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 mb-2 bg-amber-500/10 px-2 py-1 rounded">
               <Gift className="h-3 w-3" />
-              <span>Complete 100% e ganhe <strong>10 créditos!</strong></span>
+              <span>Complete 100% e ganhe <strong>{bonusCredits} créditos!</strong></span>
             </div>
           )}
           <div className="relative h-2 bg-muted rounded-full overflow-hidden mb-3">
@@ -300,14 +317,14 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Bonus incentive */}
-        {!bonusClaimed && (
+        {!bonusClaimed && bonusEnabled && bonusCredits > 0 && (
           <div className="flex items-center gap-2 p-3 rounded-lg bg-gradient-to-r from-amber-500/10 to-primary/10 border border-amber-500/20">
             <div className="h-10 w-10 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
               <Gift className="h-5 w-5 text-amber-500" />
             </div>
             <div className="flex-1">
               <p className="text-sm font-medium text-foreground">
-                Complete 100% e ganhe <span className="text-primary font-bold">10 créditos!</span>
+                Complete 100% e ganhe <span className="text-primary font-bold">{bonusCredits} créditos!</span>
               </p>
               <p className="text-xs text-muted-foreground">
                 Use para enviar propostas e destacar seu perfil
