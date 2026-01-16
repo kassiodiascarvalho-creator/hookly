@@ -1190,6 +1190,7 @@ export type Database = {
           id: string
           onboarding_completed: boolean | null
           preferred_language: string
+          profile_completion_bonus_claimed: boolean | null
           profile_completion_percent: number | null
           profile_completion_updated_at: string | null
           role: Database["public"]["Enums"]["app_role"]
@@ -1204,6 +1205,7 @@ export type Database = {
           id?: string
           onboarding_completed?: boolean | null
           preferred_language?: string
+          profile_completion_bonus_claimed?: boolean | null
           profile_completion_percent?: number | null
           profile_completion_updated_at?: string | null
           role?: Database["public"]["Enums"]["app_role"]
@@ -1218,6 +1220,7 @@ export type Database = {
           id?: string
           onboarding_completed?: boolean | null
           preferred_language?: string
+          profile_completion_bonus_claimed?: boolean | null
           profile_completion_percent?: number | null
           profile_completion_updated_at?: string | null
           role?: Database["public"]["Enums"]["app_role"]
@@ -1800,6 +1803,10 @@ export type Database = {
           p_contract_id: string
           p_payment_id: string
         }
+        Returns: boolean
+      }
+      grant_profile_completion_bonus: {
+        Args: { p_user_id: string; p_user_type: string }
         Returns: boolean
       }
       has_role: {

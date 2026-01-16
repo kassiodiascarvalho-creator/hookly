@@ -7,9 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 import { 
-  CheckCircle, Circle, ChevronRight, Award, 
-  Camera, User, FileText, MapPin, Briefcase, DollarSign, Folder, CreditCard
+  CheckCircle, Circle, ChevronRight, Award, Coins,
+  Camera, User, FileText, MapPin, Briefcase, DollarSign, Folder, CreditCard, Gift
 } from "lucide-react";
 import { 
   computeFreelancerCompletion, 
@@ -47,10 +48,13 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
   
   const [completion, setCompletion] = useState<ProfileCompletionResult | null>(null);
   const [userType, setUserType] = useState<'company' | 'freelancer' | null>(null);
   const [loading, setLoading] = useState(true);
+  const [bonusClaimed, setBonusClaimed] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -62,10 +66,10 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
     if (!user) return;
 
     try {
-      // Get user type
+      // Get user type and bonus status
       const { data: profile } = await supabase
         .from("profiles")
-        .select("user_type")
+        .select("user_type, profile_completion_bonus_claimed")
         .eq("user_id", user.id)
         .single();
 
@@ -75,6 +79,7 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
       }
 
       setUserType(profile.user_type);
+      setBonusClaimed(profile.profile_completion_bonus_claimed || false);
 
       if (profile.user_type === "freelancer") {
         // Fetch freelancer profile
@@ -140,7 +145,7 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
   };
 
   const updateProfileCompletion = async (percent: number) => {
-    if (!user) return;
+    if (!user || !userType) return;
     
     try {
       await supabase
@@ -152,8 +157,40 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
         .eq("user_id", user.id);
       
       console.log("[PROFILE] completion updated", { percent });
+      
+      // Check if 100% and bonus not claimed
+      if (percent >= 100 && !bonusClaimed) {
+        await claimCompletionBonus();
+      }
     } catch (error) {
       console.error("[PROFILE] Error updating completion:", error);
+    }
+  };
+
+  const claimCompletionBonus = async () => {
+    if (!user || !userType || bonusClaimed) return;
+    
+    try {
+      const { data, error } = await supabase.rpc('grant_profile_completion_bonus', {
+        p_user_id: user.id,
+        p_user_type: userType
+      });
+      
+      if (error) throw error;
+      
+      if (data === true) {
+        setBonusClaimed(true);
+        setShowCelebration(true);
+        toast({
+          title: "🎉 Parabéns!",
+          description: "Você completou 100% do perfil e ganhou 10 créditos!",
+        });
+        
+        // Hide celebration after 5 seconds
+        setTimeout(() => setShowCelebration(false), 5000);
+      }
+    } catch (error) {
+      console.error("[PROFILE] Error claiming bonus:", error);
     }
   };
 
@@ -171,7 +208,32 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
     return null;
   }
 
-  // Hide if profile is complete
+  // Show celebration card if just completed
+  if (completion.percent >= 100 && showCelebration) {
+    return (
+      <Card className="border-green-500/50 bg-gradient-to-br from-green-500/10 to-primary/5 animate-pulse">
+        <CardContent className="p-6 text-center">
+          <div className="flex justify-center mb-4">
+            <div className="h-16 w-16 rounded-full bg-green-500/20 flex items-center justify-center">
+              <Gift className="h-8 w-8 text-green-500" />
+            </div>
+          </div>
+          <h3 className="text-lg font-bold text-green-600 mb-2">
+            🎉 Perfil 100% Completo!
+          </h3>
+          <p className="text-sm text-muted-foreground mb-3">
+            Você ganhou <span className="font-bold text-primary">10 créditos</span> como recompensa!
+          </p>
+          <Badge variant="default" className="gap-1">
+            <Coins className="h-3 w-3" />
+            +10 Créditos
+          </Badge>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Hide if profile is complete and celebration ended
   if (completion.percent >= 100) {
     return null;
   }
@@ -183,8 +245,8 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
   if (compact) {
     return (
       <Card className="border-primary/20 bg-primary/5">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between mb-3">
+      <CardContent className="p-4">
+          <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <Award className="h-5 w-5 text-primary" />
               <span className="font-medium text-sm">
@@ -195,6 +257,12 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
               {completion.percent}%
             </Badge>
           </div>
+          {!bonusClaimed && (
+            <div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 mb-2 bg-amber-500/10 px-2 py-1 rounded">
+              <Gift className="h-3 w-3" />
+              <span>Complete 100% e ganhe <strong>10 créditos!</strong></span>
+            </div>
+          )}
           <div className="relative h-2 bg-muted rounded-full overflow-hidden mb-3">
             <div 
               className={`absolute left-0 top-0 h-full transition-all duration-500 ${progressColorClass}`}
@@ -202,7 +270,7 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
             />
           </div>
           <Button 
-            variant="link" 
+            variant="link"
             className="p-0 h-auto text-sm"
             onClick={() => handleCompleteNow()}
           >
@@ -231,10 +299,28 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Bonus incentive */}
+        {!bonusClaimed && (
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-gradient-to-r from-amber-500/10 to-primary/10 border border-amber-500/20">
+            <div className="h-10 w-10 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
+              <Gift className="h-5 w-5 text-amber-500" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-foreground">
+                Complete 100% e ganhe <span className="text-primary font-bold">10 créditos!</span>
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Use para enviar propostas e destacar seu perfil
+              </p>
+            </div>
+            <Coins className="h-5 w-5 text-amber-500" />
+          </div>
+        )}
+        
         {/* Progress bar */}
         <div className="space-y-2">
           <div className="relative h-3 bg-muted rounded-full overflow-hidden">
-            <div 
+            <div
               className={`absolute left-0 top-0 h-full transition-all duration-500 rounded-full ${progressColorClass}`}
               style={{ width: `${completion.percent}%` }}
             />
