@@ -19,6 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { usePlatformCredits, PLATFORM_ACTIONS } from "@/hooks/usePlatformCredits";
 import { CreditCheckModal } from "@/components/credits/CreditCheckModal";
+import { ViewCompanyDataButton } from "@/components/company/ViewCompanyDataButton";
 
 interface Project {
   id: string;
@@ -352,8 +353,8 @@ export default function ProjectView() {
             <CardHeader>
               <CardTitle className="text-base">{t("findProjects.aboutCompany")}</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-3 mb-3">
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
                   {project.company?.logo_url ? (
                     <img src={project.company.logo_url} alt="" className="w-full h-full object-cover rounded-lg" />
@@ -367,6 +368,14 @@ export default function ProjectView() {
               </div>
               {project.company?.about && (
                 <p className="text-sm text-muted-foreground line-clamp-4">{project.company.about}</p>
+              )}
+              
+              {/* View Company Data Button - Only for freelancers */}
+              {user && user.id !== project.company_user_id && (
+                <ViewCompanyDataButton 
+                  companyUserId={project.company_user_id} 
+                  companyName={project.company?.company_name}
+                />
               )}
             </CardContent>
           </Card>
