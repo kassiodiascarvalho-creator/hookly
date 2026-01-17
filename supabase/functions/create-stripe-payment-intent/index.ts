@@ -26,21 +26,32 @@ serve(async (req) => {
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    
+    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get user from auth header
+    // Get user from auth header using getClaims for reliability
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      throw new Error("Authorization header required");
+    if (!authHeader?.startsWith("Bearer ")) {
+      throw new Error("Missing authorization header");
     }
+    
     const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
-    if (userError || !userData.user) {
+    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims) {
+      logStep("Auth failed", { error: claimsError?.message });
       throw new Error("Invalid authentication");
     }
-    const userId = userData.user.id;
-    const userEmail = userData.user.email;
+    
+    const userId = claimsData.claims.sub as string;
+    const userEmail = claimsData.claims.email as string;
+    
+    if (!userId || !userEmail) {
+      throw new Error("User not authenticated or email not available");
+    }
     logStep("User authenticated", { userId });
 
     const body = await req.json();
