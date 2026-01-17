@@ -35,7 +35,7 @@ interface MilestoneFundingModalProps {
 }
 
 interface UserBalance {
-  balance_cents: number;
+  credits_available: number;
   escrow_held: number;
 }
 
@@ -87,7 +87,7 @@ export function MilestoneFundingModal({
   const isBRL = currency === "BRL";
   const canUsePix = isBRL;
   const canUseTransparentCard = isBRL && mpPublicKey.length > 0;
-  const hasEnoughCredits = userBalance && userBalance.balance_cents >= amountCents;
+  const hasEnoughCredits = userBalance && userBalance.credits_available >= amountCents;
   
   // Validation
   const isAmountValid = parsedAmount > 0 && parsedAmount <= milestoneAmount;
@@ -123,26 +123,16 @@ export function MilestoneFundingModal({
   const fetchUserData = async () => {
     if (!user) return;
 
-    // Fetch company wallet balance (not user_balances.credits_available)
-    const { data: wallet } = await supabase
-      .from("company_wallets")
-      .select("balance_cents")
-      .eq("company_user_id", user.id)
-      .single();
-
-    // Also fetch escrow from user_balances
-    const { data: userBalanceData } = await supabase
+    // Fetch user balance (internal credits)
+    const { data: balance } = await supabase
       .from("user_balances")
-      .select("escrow_held")
+      .select("credits_available, escrow_held")
       .eq("user_id", user.id)
       .eq("user_type", "company")
       .single();
 
-    if (wallet) {
-      setUserBalance({
-        balance_cents: wallet.balance_cents || 0,
-        escrow_held: userBalanceData?.escrow_held || 0,
-      });
+    if (balance) {
+      setUserBalance(balance);
     }
   };
 
@@ -487,7 +477,7 @@ export function MilestoneFundingModal({
                         <div className="flex-1">
                           <p className="font-medium">Saldo da Plataforma</p>
                           <p className="text-xs text-muted-foreground">
-                            Disponível: {formatMoney(userBalance.balance_cents / 100, currency)}
+                            Disponível: {formatMoney(userBalance.credits_available / 100, currency)}
                           </p>
                           {!hasEnoughCredits && (
                             <p className="text-xs text-destructive mt-1">
