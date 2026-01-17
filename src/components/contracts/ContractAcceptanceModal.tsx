@@ -131,12 +131,13 @@ export function ContractAcceptanceModal({
         contract_terms_version: CONTRACT_VERSION,
       };
 
+      // Only change status to 'active' when both parties accept
+      // Keep as 'draft' while waiting for the other party
       if (willBothAccept) {
         updateData.status = "active";
         updateData.accepted_at = new Date().toISOString();
-      } else if (contract.status === "draft") {
-        updateData.status = "pending_acceptance";
       }
+      // If only one party accepts, keep status as 'draft' (don't change it)
 
       const { error } = await supabase
         .from("contracts")
