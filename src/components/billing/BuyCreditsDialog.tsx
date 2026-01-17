@@ -24,6 +24,7 @@ import { Plus, Loader2, Coins, QrCode, CreditCard, Gift, AlertCircle } from "luc
 import { toast } from "sonner";
 import { PixPaymentModal } from "./PixPaymentModal";
 import { CardPaymentModal } from "./CardPaymentModal";
+import { StripeCardModal } from "./StripeCardModal";
 import { getAllowedCurrencies, getCurrencyByCountry } from "@/lib/currencyByCountry";
 import { formatMoney } from "@/lib/formatMoney";
 
@@ -64,9 +65,13 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
   const [pixPaymentId, setPixPaymentId] = useState<string>("");
   const [pixAmount, setPixAmount] = useState(0);
 
-  // Card payment state
+  // Card payment state (Mercado Pago)
   const [cardModalOpen, setCardModalOpen] = useState(false);
   const [mpPublicKey, setMpPublicKey] = useState<string>("");
+
+  // Stripe card payment state (international)
+  const [stripeModalOpen, setStripeModalOpen] = useState(false);
+  const [stripeClientSecret, setStripeClientSecret] = useState<string>("");
 
   // Fetch freelancer country on mount
   useEffect(() => {
@@ -213,8 +218,9 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
         setOpen(false);
         setCardModalOpen(true);
       } else if (paymentMethod === "card" && !isBRL) {
-        console.log("[BuyCreditsDialog] → Using Stripe redirect for non-BRL");
-        const { data, error } = await supabase.functions.invoke("create-unified-payment", {
+        // Use Stripe transparent checkout for international cards
+        console.log("[BuyCreditsDialog] → Using Stripe transparent checkout for non-BRL");
+        const { data, error } = await supabase.functions.invoke("create-stripe-payment-intent", {
           body: {
             paymentType: "freelancer_credits",
             userType: "freelancer",
@@ -227,8 +233,12 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
 
         if (error) throw error;
 
-        if (data?.url) {
-          window.location.href = data.url;
+        if (data?.clientSecret) {
+          setStripeClientSecret(data.clientSecret);
+          setOpen(false);
+          setStripeModalOpen(true);
+        } else {
+          throw new Error("Failed to get payment session");
         }
       } else {
         console.warn("[BuyCreditsDialog] BRL card selected but mpPublicKey is missing");
@@ -247,6 +257,8 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
     toast.success("Créditos adicionados com sucesso!");
     setPixModalOpen(false);
     setCardModalOpen(false);
+    setStripeModalOpen(false);
+    setStripeClientSecret("");
     setPixData(null);
     onSuccess?.();
   };
@@ -493,7 +505,7 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
         onRegeneratePayment={handleRegeneratePixPayment}
       />
 
-      {/* Card Payment Modal */}
+      {/* Card Payment Modal (Mercado Pago - BRL) */}
       <CardPaymentModal
         open={cardModalOpen}
         onOpenChange={setCardModalOpen}
@@ -506,6 +518,19 @@ export function BuyCreditsDialog({ onSuccess }: BuyCreditsDialogProps) {
         currency={currency}
         onPaymentConfirmed={handlePaymentConfirmed}
       />
+
+      {/* Stripe Card Modal (International) */}
+      {stripeClientSecret && (
+        <StripeCardModal
+          open={stripeModalOpen}
+          onOpenChange={setStripeModalOpen}
+          clientSecret={stripeClientSecret}
+          amount={amountInCents}
+          currency={currency}
+          description={`${totalCredits} Créditos de Proposta`}
+          onPaymentConfirmed={handlePaymentConfirmed}
+        />
+      )}
     </>
   );
 }
