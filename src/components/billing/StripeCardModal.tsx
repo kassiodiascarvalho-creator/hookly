@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { loadStripe, Stripe, StripeElementsOptions } from "@stripe/stripe-js";
 import {
@@ -19,38 +19,60 @@ import { Loader2, CreditCard, CheckCircle, AlertCircle, Lock } from "lucide-reac
 import { formatMoney } from "@/lib/formatMoney";
 import { supabase } from "@/integrations/supabase/client";
 
-// Stripe publishable key - can be from env or fetched from backend
+// Cache for Stripe instance
 let stripePromiseCache: Promise<Stripe | null> | null = null;
+let cachedPublishableKey: string | null = null;
+
+async function fetchPublishableKey(): Promise<string | null> {
+  // Return cached key if available
+  if (cachedPublishableKey) {
+    return cachedPublishableKey;
+  }
+
+  // Try env variable first (for local development)
+  const envKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined;
+  if (envKey && envKey.startsWith("pk_")) {
+    console.log("[StripeCardModal] Using Stripe key from env");
+    cachedPublishableKey = envKey;
+    return envKey;
+  }
+
+  // Fetch from Edge Function (for production)
+  try {
+    console.log("[StripeCardModal] Fetching Stripe key from backend...");
+    const { data, error } = await supabase.functions.invoke("get-stripe-public-key");
+    
+    if (error) {
+      console.error("[StripeCardModal] Error fetching Stripe key:", error);
+      return null;
+    }
+
+    if (data?.configured && data?.publishableKey) {
+      console.log("[StripeCardModal] Got Stripe key from backend");
+      cachedPublishableKey = data.publishableKey;
+      return data.publishableKey;
+    }
+
+    console.warn("[StripeCardModal] Stripe not configured:", data?.error);
+    return null;
+  } catch (error) {
+    console.error("[StripeCardModal] Error fetching Stripe key:", error);
+    return null;
+  }
+}
 
 async function getStripePromise(): Promise<Stripe | null> {
   if (stripePromiseCache) {
     return stripePromiseCache;
   }
 
-  // Try env variable first
-  const envKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined;
-  if (envKey && envKey.startsWith("pk_")) {
-    console.log("[StripeCardModal] Using Stripe key from env");
-    stripePromiseCache = loadStripe(envKey);
-    return stripePromiseCache;
+  const publishableKey = await fetchPublishableKey();
+  if (!publishableKey) {
+    return null;
   }
 
-  // Fallback: fetch from Supabase secrets (for keys stored as VITE_ secrets)
-  try {
-    // The publishable key might be stored differently, try to get it
-    // For now, we'll use a hardcoded test key detection
-    console.log("[StripeCardModal] No env key found, checking for configured key...");
-    
-    // Check if there's a project setting or use the key from secrets
-    // Since VITE_STRIPE_PUBLISHABLE_KEY is in secrets, we need to handle this differently
-    // The key should be added to .env for frontend access
-    
-    console.warn("[StripeCardModal] Stripe publishable key not found in environment. Please add VITE_STRIPE_PUBLISHABLE_KEY to .env");
-    return null;
-  } catch (error) {
-    console.error("[StripeCardModal] Error loading Stripe:", error);
-    return null;
-  }
+  stripePromiseCache = loadStripe(publishableKey);
+  return stripePromiseCache;
 }
 
 interface CheckoutFormProps {
