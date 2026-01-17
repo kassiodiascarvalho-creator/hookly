@@ -327,6 +327,68 @@ export type Database = {
           },
         ]
       }
+      credit_purchases: {
+        Row: {
+          amount_paid_minor: number
+          bonus_credits: number
+          confirmed_at: string | null
+          created_at: string
+          credits_granted: number
+          currency_paid: string
+          id: string
+          metadata: Json | null
+          payment_method: string | null
+          promotion_code: string | null
+          status: string
+          unified_payment_id: string | null
+          updated_at: string
+          user_id: string
+          user_type: string
+        }
+        Insert: {
+          amount_paid_minor: number
+          bonus_credits?: number
+          confirmed_at?: string | null
+          created_at?: string
+          credits_granted?: number
+          currency_paid?: string
+          id?: string
+          metadata?: Json | null
+          payment_method?: string | null
+          promotion_code?: string | null
+          status?: string
+          unified_payment_id?: string | null
+          updated_at?: string
+          user_id: string
+          user_type: string
+        }
+        Update: {
+          amount_paid_minor?: number
+          bonus_credits?: number
+          confirmed_at?: string | null
+          created_at?: string
+          credits_granted?: number
+          currency_paid?: string
+          id?: string
+          metadata?: Json | null
+          payment_method?: string | null
+          promotion_code?: string | null
+          status?: string
+          unified_payment_id?: string | null
+          updated_at?: string
+          user_id?: string
+          user_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_purchases_unified_payment_id_fkey"
+            columns: ["unified_payment_id"]
+            isOneToOne: false
+            referencedRelation: "unified_payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_verification_codes: {
         Row: {
           code: string

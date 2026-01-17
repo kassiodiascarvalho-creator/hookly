@@ -4,13 +4,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, FileText, Coins } from "lucide-react";
 import { format } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileDataCard, MobileDataRow } from "@/components/admin/MobileDataCard";
+import { UserCreditStatementModal } from "@/components/admin/UserCreditStatementModal";
+import { formatMoneyFromCents } from "@/lib/formatMoney";
 
-interface Profile {
+interface ProfileWithCredits {
   id: string;
   user_id: string;
   email: string;
@@ -18,25 +21,76 @@ interface Profile {
   role: string;
   preferred_language: string;
   created_at: string;
+  // Credit stats
+  total_paid_usd: number;
+  total_paid_by_currency: Record<string, number>;
+  total_credits_granted: number;
+  current_balance: number;
+  last_purchase_at: string | null;
 }
 
 export default function AdminUsers() {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
-  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [profiles, setProfiles] = useState<ProfileWithCredits[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [statementModalOpen, setStatementModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchProfiles = async () => {
       try {
-        const { data, error } = await supabase
+        // Fetch base profiles
+        const { data: profilesData, error } = await supabase
           .from("profiles")
           .select("*")
           .order("created_at", { ascending: false });
 
         if (error) throw error;
-        setProfiles(data || []);
+
+        // Enrich with credit data
+        const enrichedProfiles = await Promise.all(
+          (profilesData || []).map(async (profile) => {
+            // Fetch credit balance
+            const { data: creditBalance } = await supabase
+              .from("platform_credits")
+              .select("balance")
+              .eq("user_id", profile.user_id)
+              .single();
+
+            // Fetch purchase stats
+            const { data: purchases } = await supabase
+              .from("credit_purchases")
+              .select("amount_paid_minor, currency_paid, credits_granted, confirmed_at")
+              .eq("user_id", profile.user_id)
+              .eq("status", "confirmed")
+              .order("confirmed_at", { ascending: false });
+
+            const confirmedPurchases = purchases || [];
+            
+            // Calculate totals
+            const totalPaidByCurrency: Record<string, number> = {};
+            let totalCreditsGranted = 0;
+
+            confirmedPurchases.forEach((p) => {
+              const currency = p.currency_paid || "USD";
+              totalPaidByCurrency[currency] = (totalPaidByCurrency[currency] || 0) + p.amount_paid_minor;
+              totalCreditsGranted += p.credits_granted;
+            });
+
+            return {
+              ...profile,
+              total_paid_usd: totalPaidByCurrency["USD"] || 0,
+              total_paid_by_currency: totalPaidByCurrency,
+              total_credits_granted: totalCreditsGranted,
+              current_balance: creditBalance?.balance || 0,
+              last_purchase_at: confirmedPurchases[0]?.confirmed_at || null,
+            };
+          })
+        );
+
+        setProfiles(enrichedProfiles);
       } catch (error) {
         console.error("Error fetching profiles:", error);
       } finally {
@@ -52,6 +106,22 @@ export default function AdminUsers() {
       profile.email.toLowerCase().includes(search.toLowerCase()) ||
       profile.user_type?.toLowerCase().includes(search.toLowerCase())
   );
+
+  const handleViewStatement = (userId: string) => {
+    setSelectedUserId(userId);
+    setStatementModalOpen(true);
+  };
+
+  const formatTotalPaid = (profile: ProfileWithCredits) => {
+    const currencies = Object.keys(profile.total_paid_by_currency);
+    if (currencies.length === 0) return "-";
+    
+    return currencies.map((currency) => (
+      <div key={currency} className="text-xs">
+        {formatMoneyFromCents(profile.total_paid_by_currency[currency], currency)}
+      </div>
+    ));
+  };
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -94,12 +164,30 @@ export default function AdminUsers() {
                       {profile.role}
                     </Badge>
                   </div>
-                  <MobileDataRow label={t("admin.language")}>
-                    {profile.preferred_language.toUpperCase()}
+                  <MobileDataRow label="Total Pago">
+                    {formatTotalPaid(profile)}
+                  </MobileDataRow>
+                  <MobileDataRow label="Créditos Recebidos">
+                    {profile.total_credits_granted > 0 ? profile.total_credits_granted : "-"}
+                  </MobileDataRow>
+                  <MobileDataRow label="Saldo Atual">
+                    <span className="flex items-center gap-1">
+                      <Coins className="h-3 w-3" />
+                      {profile.current_balance}
+                    </span>
                   </MobileDataRow>
                   <MobileDataRow label={t("admin.createdAt")}>
                     {format(new Date(profile.created_at), "PP")}
                   </MobileDataRow>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2 w-full"
+                    onClick={() => handleViewStatement(profile.user_id)}
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Ver Extrato
+                  </Button>
                 </MobileDataCard>
               ))}
               {filteredProfiles.length === 0 && (
@@ -116,8 +204,11 @@ export default function AdminUsers() {
                   <TableHead>{t("admin.email")}</TableHead>
                   <TableHead>{t("admin.userType")}</TableHead>
                   <TableHead>{t("admin.role")}</TableHead>
-                  <TableHead>{t("admin.language")}</TableHead>
-                  <TableHead>{t("admin.createdAt")}</TableHead>
+                  <TableHead className="text-right">Total Pago</TableHead>
+                  <TableHead className="text-right">Créditos</TableHead>
+                  <TableHead className="text-right">Saldo</TableHead>
+                  <TableHead>Última Compra</TableHead>
+                  <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -134,13 +225,38 @@ export default function AdminUsers() {
                         {profile.role}
                       </Badge>
                     </TableCell>
-                    <TableCell>{profile.preferred_language.toUpperCase()}</TableCell>
-                    <TableCell>{format(new Date(profile.created_at), "PPp")}</TableCell>
+                    <TableCell className="text-right">
+                      {formatTotalPaid(profile)}
+                    </TableCell>
+                    <TableCell className="text-right font-medium">
+                      {profile.total_credits_granted > 0 ? profile.total_credits_granted : "-"}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <span className="flex items-center justify-end gap-1">
+                        <Coins className="h-3 w-3 text-muted-foreground" />
+                        {profile.current_balance}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {profile.last_purchase_at 
+                        ? format(new Date(profile.last_purchase_at), "dd/MM/yy")
+                        : "-"
+                      }
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleViewStatement(profile.user_id)}
+                      >
+                        <FileText className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
                 {filteredProfiles.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground">
                       {t("admin.noUsersFound")}
                     </TableCell>
                   </TableRow>
@@ -150,6 +266,13 @@ export default function AdminUsers() {
           )}
         </CardContent>
       </Card>
+
+      {/* Statement Modal */}
+      <UserCreditStatementModal
+        userId={selectedUserId}
+        open={statementModalOpen}
+        onOpenChange={setStatementModalOpen}
+      />
     </div>
   );
 }

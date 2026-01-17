@@ -228,6 +228,8 @@ serve(async (req) => {
         if (paymentType === 'freelancer_credits') {
           logStep("Adding freelancer credits via new ledger", { userId, amount: amountUsdUnits, creditsAmount });
           
+          const bonusCredits = creditsAmount > 0 ? Math.max(0, creditsAmount - Math.floor(amountUsdUnits)) : 0;
+          
           const { data: result, error: rpcError } = await supabaseAdmin
             .rpc('add_credits', {
               p_user_id: userId,
@@ -258,6 +260,21 @@ serve(async (req) => {
           } else {
             logStep("Freelancer credits added via new ledger", { userId, amount: creditsAmount || amountUsdUnits, result });
           }
+
+          // Record in credit_purchases table
+          await supabaseAdmin.from('credit_purchases').insert({
+            user_id: userId,
+            user_type: 'freelancer',
+            status: 'confirmed',
+            amount_paid_minor: amountTotal,
+            currency_paid: currency,
+            payment_method: 'card_international',
+            credits_granted: creditsAmount > 0 ? creditsAmount : Math.floor(amountUsdUnits),
+            bonus_credits: bonusCredits,
+            unified_payment_id: paymentId,
+            confirmed_at: new Date().toISOString(),
+          });
+          logStep("Freelancer credit purchase recorded", { userId, creditsGranted: creditsAmount });
 
         } else if (paymentType === 'company_wallet' || paymentType === 'company_credits') {
           logStep("Adding company credits via new ledger", { userId, amount: amountUsdUnits });

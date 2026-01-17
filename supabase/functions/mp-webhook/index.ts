@@ -357,6 +357,10 @@ serve(async (req) => {
       if (paymentType === 'freelancer_credits') {
         logStep("Adding credits via new ledger system", { userId, amount: amountUsdUnits, creditsAmount });
         
+        // Calculate bonus credits based on package
+        const baseCredits = creditsAmount || Math.floor(amountUsdUnits);
+        const bonusCredits = creditsAmount ? creditsAmount - Math.floor(amountUsdUnits) : 0;
+        
         const { data: result, error: rpcError } = await supabaseAdmin
           .rpc('add_credits', {
             p_user_id: userId,
@@ -387,6 +391,27 @@ serve(async (req) => {
         } else {
           logStep("Credits added via new ledger", { userId, amount: amountUsdUnits, result });
         }
+
+        // Record in credit_purchases table
+        const mapPaymentMethod = (method: string): string => {
+          if (method === 'pix') return 'pix';
+          if (method === 'credit_card' || method === 'debit_card') return 'card_br';
+          return 'card_br';
+        };
+        
+        await supabaseAdmin.from('credit_purchases').insert({
+          user_id: userId,
+          user_type: 'freelancer',
+          status: 'confirmed',
+          amount_paid_minor: transactionAmountMinor,
+          currency_paid: currencyId,
+          payment_method: mapPaymentMethod(paymentMethod),
+          credits_granted: creditsAmount || Math.floor(amountUsdUnits),
+          bonus_credits: Math.max(0, bonusCredits),
+          unified_payment_id: payment.id,
+          confirmed_at: new Date().toISOString(),
+        });
+        logStep("Credit purchase recorded", { userId, creditsGranted: creditsAmount || Math.floor(amountUsdUnits) });
 
       } else if (paymentType === 'company_wallet' || paymentType === 'company_credits') {
         logStep("Adding company credits via new ledger", { userId, amount: amountUsdUnits });
@@ -426,6 +451,10 @@ serve(async (req) => {
         // Platform credits - separate system, no FX fees, direct credit amount
         logStep("Adding platform credits", { userId, amount: creditsAmount });
         
+        // Calculate bonus credits
+        const baseCredits = creditsAmount || Math.floor(amountUsdUnits);
+        const bonusCredits = creditsAmount ? creditsAmount - Math.floor(amountUsdUnits) : 0;
+        
         const { data: result, error: rpcError } = await supabaseAdmin
           .rpc('add_platform_credits', {
             p_user_id: userId,
@@ -440,6 +469,27 @@ serve(async (req) => {
         } else {
           logStep("Platform credits added", { userId, amount: creditsAmount || Math.floor(amountUsdUnits), result });
         }
+
+        // Record in credit_purchases table
+        const mapPaymentMethod = (method: string): string => {
+          if (method === 'pix') return 'pix';
+          if (method === 'credit_card' || method === 'debit_card') return 'card_br';
+          return 'card_br';
+        };
+        
+        await supabaseAdmin.from('credit_purchases').insert({
+          user_id: userId,
+          user_type: 'company',
+          status: 'confirmed',
+          amount_paid_minor: transactionAmountMinor,
+          currency_paid: currencyId,
+          payment_method: mapPaymentMethod(paymentMethod),
+          credits_granted: creditsAmount || Math.floor(amountUsdUnits),
+          bonus_credits: Math.max(0, bonusCredits),
+          unified_payment_id: payment.id,
+          confirmed_at: new Date().toISOString(),
+        });
+        logStep("Platform credit purchase recorded", { userId, creditsGranted: creditsAmount || Math.floor(amountUsdUnits) });
 
       } else if (paymentType === 'contract_funding') {
         const contractId = payment.contract_id;
