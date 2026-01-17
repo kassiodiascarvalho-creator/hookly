@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { formatMoneyFromCents } from "@/lib/formatMoney";
+import { formatMoneyFromCents, formatMoney } from "@/lib/formatMoney";
 import FxSpreadSettings from "@/components/admin/FxSpreadSettings";
 import PaymentFeeSettings from "@/components/admin/PaymentFeeSettings";
 import FxRevenueReport from "@/components/admin/FxRevenueReport";
@@ -193,17 +193,16 @@ export default function AdminFinances() {
     
     const { data: balanceData } = await balanceQuery;
     
-    // Fetch platform credits (the actual source of credits, stored as integer units, 1 credit = $1)
+    // Fetch platform credits (the actual source of credits, stored as integer units, 1 credit = $1 USD)
     const { data: platformCreditsData } = await supabase
       .from("platform_credits")
       .select("balance");
     
-    // Sum all platform credits - balance is in credit units (1 credit = $1 = 100 cents)
-    const totalPlatformCredits = (platformCreditsData || []).reduce(
+    // Sum all platform credits - balance is in credit units (1 credit = $1 USD)
+    // Credits are always USD-equivalent regardless of purchase currency
+    const totalPlatformCreditsUsd = (platformCreditsData || []).reduce(
       (sum, pc) => sum + Number(pc.balance || 0), 0
     );
-    // Convert to cents for consistent display (1 credit = 100 cents)
-    const totalCreditsInCents = totalPlatformCredits * 100;
     
     // Fetch all withdrawal data with FX fields
     let baseWithdrawalQuery = supabase
@@ -239,7 +238,7 @@ export default function AdminFinances() {
       withdrawals.reduce((sum, w) => sum + Number(w.amount_usd_minor || w.amount), 0);
     
     setSummary({
-      total_credits_usd: totalCreditsInCents,
+      total_credits_usd: totalPlatformCreditsUsd, // In dollars (1 credit = $1), not cents
       total_earnings_usd: totals.total_earnings_usd,
       total_escrow_usd: totals.total_escrow_usd,
       pending_withdrawals: pendingWithdrawals.length,
@@ -532,7 +531,7 @@ export default function AdminFinances() {
             <Coins className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg md:text-2xl font-bold truncate">{formatMoneyFromCents(summary.total_credits_usd, "USD")}</div>
+            <div className="text-lg md:text-2xl font-bold truncate">{formatMoney(summary.total_credits_usd, "USD")}</div>
             <p className="text-xs text-muted-foreground">Não sacáveis</p>
           </CardContent>
         </Card>
