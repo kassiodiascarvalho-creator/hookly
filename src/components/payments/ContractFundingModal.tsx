@@ -87,26 +87,35 @@ export function ContractFundingModal({
     if (!paymentMethod) return null;
     
     let feePercent: number;
-    let feeLabel: string;
+    let methodName: string;
+    let percentDisplay: string;
     
     if (paymentMethod === "pix") {
       feePercent = PAYMENT_FEES.pix;
-      feeLabel = "PIX (2%)";
+      methodName = "PIX";
+      percentDisplay = "2%";
     } else if (isBRL) {
       feePercent = PAYMENT_FEES.card_br;
-      feeLabel = "Cartão BR (6%)";
+      methodName = "Cartão";
+      percentDisplay = "6%";
     } else {
       feePercent = PAYMENT_FEES.card_intl;
-      feeLabel = "Cartão Internacional (15%)";
+      methodName = "Cartão Internacional";
+      percentDisplay = "15%";
     }
     
     const feeAmount = amount * feePercent;
     const totalAmount = amount + feeAmount;
     const totalAmountCents = Math.round(totalAmount * 100);
     
+    // Format: "Taxa do método (PIX 2%)" or "Taxa do método (Cartão 6%)"
+    const feeLabel = `Taxa do método (${methodName} ${percentDisplay})`;
+    
     return {
       feePercent,
       feeLabel,
+      methodName,
+      percentDisplay,
       feeAmount,
       totalAmount,
       totalAmountCents,
@@ -374,8 +383,8 @@ export function ContractFundingModal({
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
                           <p className="font-medium">PIX</p>
-                          <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded">
-                            +2%
+                          <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                            Taxa do método: 2%
                           </span>
                         </div>
                         <p className="text-xs text-muted-foreground">
@@ -404,8 +413,8 @@ export function ContractFundingModal({
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
                           <p className="font-medium">{t("payments.card", "Cartão")}</p>
-                          <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded">
-                            +6%
+                          <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                            Taxa do método: 6%
                           </span>
                         </div>
                         <p className="text-xs text-muted-foreground">
@@ -434,8 +443,8 @@ export function ContractFundingModal({
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
                           <p className="font-medium">{t("payments.cardInternational", "Cartão Internacional")}</p>
-                          <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded">
-                            +15%
+                          <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                            Taxa do método: 15%
                           </span>
                         </div>
                         <p className="text-xs text-muted-foreground">
@@ -462,27 +471,34 @@ export function ContractFundingModal({
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Valor do contrato</span>
-                    <span>{formatMoney(amount, currency)}</span>
+                    <span className="font-medium">{formatMoney(amount, currency)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">
-                      Taxa {feeInfo.feeLabel}
+                      {feeInfo.feeLabel}
                     </span>
-                    <span className="text-amber-600">
+                    <span className="text-amber-600 font-medium">
                       +{formatMoney(feeInfo.feeAmount, currency)}
                     </span>
                   </div>
                   <Separator />
-                  <div className="flex justify-between font-semibold text-base">
+                  <div className="flex justify-between font-bold text-base pt-1">
                     <span>Total a pagar</span>
                     <span className="text-primary">
                       {formatMoney(feeInfo.totalAmount, currency)}
                     </span>
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  O freelancer receberá {formatMoney(amount, currency)} após conclusão do projeto.
-                </p>
+                
+                {/* Freelancer amount highlight */}
+                <div className="mt-3 p-3 bg-green-50 dark:bg-green-950/30 rounded-md border border-green-200 dark:border-green-800">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                    <p className="text-sm text-green-700 dark:text-green-300 font-medium">
+                      O freelancer receberá exatamente {formatMoney(amount, currency)} após a conclusão.
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
 
