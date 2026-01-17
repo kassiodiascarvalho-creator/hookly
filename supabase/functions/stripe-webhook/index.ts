@@ -374,16 +374,17 @@ serve(async (req) => {
           .eq("stripe_payment_intent_id", paymentIntent.id)
           .eq("status", "pending");
         
-        // Check unified_payments for contract_funding
+        // Check unified_payments
         const { data: unifiedPayment } = await supabaseClient
           .from("unified_payments")
           .select("*")
           .eq("provider_payment_id", paymentIntent.id)
           .maybeSingle();
         
-        if (unifiedPayment && unifiedPayment.payment_type === 'contract_funding') {
-          logStep("Processing contract_funding via PaymentIntent", { 
+        if (unifiedPayment) {
+          logStep("Processing unified payment", { 
             paymentId: unifiedPayment.id, 
+            paymentType: unifiedPayment.payment_type,
             contractId: unifiedPayment.contract_id 
           });
           
@@ -396,73 +397,115 @@ serve(async (req) => {
             })
             .eq("id", unifiedPayment.id);
           
-          // Fund escrow
-          if (unifiedPayment.contract_id) {
-            const metadata = unifiedPayment.metadata as Record<string, unknown> | null;
-            const contractAmountCents = metadata?.contract_amount_cents as number | undefined;
-            const currency = unifiedPayment.currency;
-            const totalAmountCents = unifiedPayment.amount_cents;
-            
-            // Convert to USD for escrow
-            // Use contract_amount_cents if available (excludes fee), otherwise use total
-            const amountForEscrow = contractAmountCents && contractAmountCents > 0 
-              ? contractAmountCents 
-              : totalAmountCents;
-            
-            const fxResult = await convertToUSD(amountForEscrow, currency);
-            const escrowAmountUsd = fxResult.amount_usd_minor / 100;
-            
-            logStep("Funding contract escrow", { 
-              contractAmountCents,
-              totalAmountCents,
-              amountForEscrow,
-              escrowAmountUsd,
-              userId: unifiedPayment.user_id,
-              contractId: unifiedPayment.contract_id,
-            });
-            
-            const { data: escrowResult, error: escrowError } = await supabaseClient
-              .rpc('fund_contract_escrow', {
-                p_company_user_id: unifiedPayment.user_id,
-                p_contract_id: unifiedPayment.contract_id,
-                p_amount: escrowAmountUsd,
-                p_payment_id: unifiedPayment.id,
-              });
-
-            if (escrowError) {
-              logStep("Error funding escrow", { error: escrowError });
-            } else {
-              logStep("Contract escrow funded", { 
-                contractId: unifiedPayment.contract_id, 
-                amount: escrowAmountUsd, 
-                result: escrowResult 
+          const paymentType = unifiedPayment.payment_type;
+          const metadata = unifiedPayment.metadata as Record<string, unknown> | null;
+          const currency = unifiedPayment.currency;
+          const amountCents = unifiedPayment.amount_cents;
+          
+          // Handle different payment types
+          if (paymentType === 'contract_funding') {
+            // Fund escrow for contract funding
+            if (unifiedPayment.contract_id) {
+              const contractAmountCents = metadata?.contract_amount_cents as number | undefined;
+              
+              // Convert to USD for escrow
+              const amountForEscrow = contractAmountCents && contractAmountCents > 0 
+                ? contractAmountCents 
+                : amountCents;
+              
+              const fxResult = await convertToUSD(amountForEscrow, currency);
+              const escrowAmountUsd = fxResult.amount_usd_minor / 100;
+              
+              logStep("Funding contract escrow", { 
+                contractAmountCents,
+                amountForEscrow,
+                escrowAmountUsd,
+                userId: unifiedPayment.user_id,
+                contractId: unifiedPayment.contract_id,
               });
               
-              // Update unified_payments with FX data
-              await supabaseClient
-                .from("unified_payments")
-                .update({
-                  amount_usd_minor: fxResult.amount_usd_minor,
-                  fx_rate_market: fxResult.fx_rate_market,
-                  fx_rate_applied: fxResult.fx_rate_applied,
-                  fx_spread_percent: fxResult.fx_spread_percent,
-                  fx_spread_amount_usd_minor: fxResult.fx_spread_amount_usd_minor,
-                  fx_provider: fxResult.fx_provider,
-                  fx_timestamp: fxResult.fx_timestamp,
-                })
-                .eq("id", unifiedPayment.id);
+              const { data: escrowResult, error: escrowError } = await supabaseClient
+                .rpc('fund_contract_escrow', {
+                  p_company_user_id: unifiedPayment.user_id,
+                  p_contract_id: unifiedPayment.contract_id,
+                  p_amount: escrowAmountUsd,
+                  p_payment_id: unifiedPayment.id,
+                });
+
+              if (escrowError) {
+                logStep("Error funding escrow", { error: escrowError });
+              } else {
+                logStep("Contract escrow funded", { 
+                  contractId: unifiedPayment.contract_id, 
+                  amount: escrowAmountUsd, 
+                  result: escrowResult 
+                });
+                
+                // Update unified_payments with FX data
+                await supabaseClient
+                  .from("unified_payments")
+                  .update({
+                    amount_usd_minor: fxResult.amount_usd_minor,
+                    fx_rate_market: fxResult.fx_rate_market,
+                    fx_rate_applied: fxResult.fx_rate_applied,
+                    fx_spread_percent: fxResult.fx_spread_percent,
+                    fx_spread_amount_usd_minor: fxResult.fx_spread_amount_usd_minor,
+                    fx_provider: fxResult.fx_provider,
+                    fx_timestamp: fxResult.fx_timestamp,
+                  })
+                  .eq("id", unifiedPayment.id);
+                
+                // Send notification
+                await supabaseClient.from("notifications").insert({
+                  user_id: unifiedPayment.user_id,
+                  type: "payment_success",
+                  message: `Pagamento de USD ${escrowAmountUsd.toFixed(2)} foi depositado em garantia!`,
+                  link: "/contracts",
+                });
+              }
+            }
+          } else if (paymentType === 'freelancer_credits' || paymentType === 'platform_credits' || paymentType === 'company_credits') {
+            // Add platform credits
+            const creditsAmount = unifiedPayment.credits_amount || 
+              (metadata?.credits_amount as number | undefined) ||
+              Math.floor(amountCents / 100); // Fallback: 1 credit = $1 = 100 cents
+            
+            logStep("Adding platform credits", { 
+              userId: unifiedPayment.user_id,
+              userType: unifiedPayment.user_type,
+              creditsAmount,
+              paymentType,
+            });
+            
+            const { data: creditsResult, error: creditsError } = await supabaseClient
+              .rpc('add_platform_credits', {
+                p_user_id: unifiedPayment.user_id,
+                p_user_type: unifiedPayment.user_type,
+                p_amount: creditsAmount,
+                p_payment_id: unifiedPayment.id,
+                p_description: `Compra de ${creditsAmount} créditos via Stripe`,
+              });
+
+            if (creditsError) {
+              logStep("Error adding platform credits", { error: creditsError });
+            } else {
+              logStep("Platform credits added", { 
+                userId: unifiedPayment.user_id, 
+                credits: creditsAmount, 
+                result: creditsResult 
+              });
               
               // Send notification
               await supabaseClient.from("notifications").insert({
                 user_id: unifiedPayment.user_id,
-                type: "payment_success",
-                message: `Pagamento de USD ${escrowAmountUsd.toFixed(2)} foi depositado em garantia!`,
-                link: "/contracts",
+                type: "credits_added",
+                message: `${creditsAmount} créditos foram adicionados à sua conta!`,
+                link: "/settings?tab=billing",
               });
             }
           }
         } else {
-          logStep("Payment status updated to paid");
+          logStep("Payment status updated to paid (no unified payment found)");
         }
         break;
       }

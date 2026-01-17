@@ -12,6 +12,14 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[CREATE-STRIPE-PAYMENT-INTENT] ${step}${detailsStr}`);
 };
 
+// Valid payment types
+const VALID_PAYMENT_TYPES = [
+  "contract_funding",
+  "freelancer_credits",
+  "platform_credits",
+  "company_credits",
+];
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -62,6 +70,8 @@ serve(async (req) => {
       milestoneIndex, 
       description, 
       paymentType,
+      userType,
+      creditsAmount,
       // Contract funding fee info
       contractAmountCents,
       feePercent,
@@ -75,12 +85,23 @@ serve(async (req) => {
       throw new Error("Currency is required");
     }
 
+    // Validate payment type
+    const validatedPaymentType = paymentType || "contract_funding";
+    if (!VALID_PAYMENT_TYPES.includes(validatedPaymentType)) {
+      throw new Error(`Invalid payment type: ${validatedPaymentType}`);
+    }
+
     // Validate contract funding has contract amount
-    if (paymentType === 'contract_funding') {
+    if (validatedPaymentType === 'contract_funding') {
       if (!contractAmountCents || contractAmountCents <= 0) {
         throw new Error("Contract amount is required for contract funding");
       }
     }
+
+    // Determine user type based on payment type if not provided
+    const resolvedUserType = userType || (
+      validatedPaymentType === 'freelancer_credits' ? 'freelancer' : 'company'
+    );
 
     logStep("Payment request", { 
       amountCents, 
@@ -90,7 +111,9 @@ serve(async (req) => {
       currency, 
       contractId, 
       milestoneIndex, 
-      paymentType 
+      paymentType: validatedPaymentType,
+      userType: resolvedUserType,
+      creditsAmount,
     });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
@@ -112,13 +135,14 @@ serve(async (req) => {
       .from("unified_payments")
       .insert({
         user_id: userId,
-        user_type: "company",
-        amount_cents: amountCents, // Total amount charged (including fee)
+        user_type: resolvedUserType,
+        amount_cents: amountCents,
         currency: currency.toUpperCase(),
-        payment_type: paymentType || "contract_funding",
+        payment_type: validatedPaymentType,
         provider: "stripe",
         status: "pending",
         contract_id: contractId || null,
+        credits_amount: creditsAmount || null,
         metadata: {
           milestoneIndex,
           description,
@@ -126,6 +150,7 @@ serve(async (req) => {
           contract_amount_cents: contractAmountCents || null,
           fee_percent: feePercent || null,
           fee_amount_cents: feeAmountCents || null,
+          credits_amount: creditsAmount || null,
         },
       })
       .select()
@@ -145,11 +170,13 @@ serve(async (req) => {
       customer: customerId,
       payment_method_types: ["card"],
       metadata: {
-        type: "contract_funding",
+        type: validatedPaymentType,
         paymentId: paymentRecord.id,
         contractId: contractId || "",
         milestoneIndex: String(milestoneIndex ?? ""),
         userId,
+        userType: resolvedUserType,
+        creditsAmount: String(creditsAmount ?? ""),
       },
     });
 

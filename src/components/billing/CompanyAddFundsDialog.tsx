@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { formatMoney } from "@/lib/formatMoney";
 import { PixPaymentModal } from "./PixPaymentModal";
 import { CardPaymentModal } from "./CardPaymentModal";
+import { StripeCardModal } from "./StripeCardModal";
 import { getAllowedCurrencies, getCurrencyByCountry } from "@/lib/currencyByCountry";
 
 // Each credit costs $1 USD (or equivalent in local currency)
@@ -57,10 +58,14 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
   const [pixPaymentId, setPixPaymentId] = useState<string>("");
   const [pixAmount, setPixAmount] = useState(0);
 
-  // Card payment state
+  // Card payment state (Mercado Pago)
   const [cardModalOpen, setCardModalOpen] = useState(false);
   const [mpPublicKey, setMpPublicKey] = useState<string>("");
   const [cardAmountCents, setCardAmountCents] = useState(0);
+
+  // Stripe card payment state (international)
+  const [stripeModalOpen, setStripeModalOpen] = useState(false);
+  const [stripeClientSecret, setStripeClientSecret] = useState<string>("");
 
   useEffect(() => {
     if (user && open) {
@@ -175,22 +180,27 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
         setOpen(false);
         setCardModalOpen(true);
       } else {
-        // Use redirect checkout (Stripe for international)
-        const { data, error } = await supabase.functions.invoke("create-unified-payment", {
+        // Use Stripe transparent checkout for international cards
+        console.log("[CompanyAddFundsDialog] → Using Stripe transparent checkout");
+        const { data, error } = await supabase.functions.invoke("create-stripe-payment-intent", {
           body: {
             paymentType: "platform_credits",
             userType: "company",
             amountCents: amountCents,
-            currency,
             creditsAmount: numCredits,
+            currency,
             description: `Comprar ${numCredits} créditos da plataforma`,
           },
         });
 
         if (error) throw error;
 
-        if (data?.url) {
-          window.location.href = data.url;
+        if (data?.clientSecret) {
+          setStripeClientSecret(data.clientSecret);
+          setOpen(false);
+          setStripeModalOpen(true);
+        } else {
+          throw new Error("Failed to get payment session");
         }
       }
     } catch (error) {
@@ -205,6 +215,8 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
     toast.success("Créditos adicionados com sucesso!");
     setPixModalOpen(false);
     setCardModalOpen(false);
+    setStripeModalOpen(false);
+    setStripeClientSecret("");
     setPixData(null);
     onSuccess?.();
   };
@@ -421,7 +433,7 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
         onRegeneratePayment={handleRegeneratePixPayment}
       />
 
-      {/* Card Payment Modal */}
+      {/* Card Payment Modal (Mercado Pago - BRL) */}
       <CardPaymentModal
         open={cardModalOpen}
         onOpenChange={setCardModalOpen}
@@ -433,6 +445,19 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
         description={`Comprar ${numCredits} créditos da plataforma`}
         onPaymentConfirmed={handlePaymentConfirmed}
       />
+
+      {/* Stripe Card Modal (International) */}
+      {stripeClientSecret && (
+        <StripeCardModal
+          open={stripeModalOpen}
+          onOpenChange={setStripeModalOpen}
+          clientSecret={stripeClientSecret}
+          amount={numCredits * 100} // 1 credit = $1 = 100 cents
+          currency={currency}
+          description={`Comprar ${numCredits} créditos da plataforma`}
+          onPaymentConfirmed={handlePaymentConfirmed}
+        />
+      )}
     </>
   );
 }
