@@ -18,6 +18,7 @@ import PaymentFeeSettings from "@/components/admin/PaymentFeeSettings";
 import FxRevenueReport from "@/components/admin/FxRevenueReport";
 import FinancialAlertsCard from "@/components/admin/FinancialAlertsCard";
 import { ActionCostsManager } from "@/components/admin/ActionCostsManager";
+import { CreditRevenueCards } from "@/components/admin/CreditRevenueCards";
 import { 
   Coins, 
   Wallet, 
@@ -523,16 +524,19 @@ export default function AdminFinances() {
         </div>
       </div>
 
-      {/* Summary Cards - All in USD */}
-      <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+      {/* Credit Revenue Cards - New component for credit purchases */}
+      <CreditRevenueCards />
+
+      {/* Summary Cards - Balances in USD */}
+      <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs md:text-sm font-medium truncate pr-1">Total Créditos</CardTitle>
+            <CardTitle className="text-xs md:text-sm font-medium truncate pr-1">Saldo Créditos</CardTitle>
             <Coins className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
           <CardContent>
             <div className="text-lg md:text-2xl font-bold truncate">{formatMoney(summary.total_credits_usd, "USD")}</div>
-            <p className="text-xs text-muted-foreground">Não sacáveis</p>
+            <p className="text-xs text-muted-foreground">Em circulação</p>
           </CardContent>
         </Card>
         
