@@ -161,6 +161,56 @@ export type Database = {
         }
         Relationships: []
       }
+      contract_acceptances: {
+        Row: {
+          accepted_at: string
+          accepted_by_role: string
+          accepted_by_user_id: string
+          contract_id: string
+          contract_snapshot_hash: string
+          contract_version: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          terms_version: string
+          user_agent: string | null
+        }
+        Insert: {
+          accepted_at?: string
+          accepted_by_role: string
+          accepted_by_user_id: string
+          contract_id: string
+          contract_snapshot_hash: string
+          contract_version?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          terms_version?: string
+          user_agent?: string | null
+        }
+        Update: {
+          accepted_at?: string
+          accepted_by_role?: string
+          accepted_by_user_id?: string
+          contract_id?: string
+          contract_snapshot_hash?: string
+          contract_version?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          terms_version?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_acceptances_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contracts: {
         Row: {
           accepted_at: string | null

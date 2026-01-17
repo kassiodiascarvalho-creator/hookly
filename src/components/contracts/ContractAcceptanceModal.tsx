@@ -21,6 +21,7 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 
 const CONTRACT_VERSION = "v1.0";
+const TERMS_VERSION = "1.0";
 
 interface Milestone {
   title: string;
@@ -65,6 +66,27 @@ interface ContractAcceptanceModalProps {
   contract: ContractData;
   onAccepted?: () => void;
 }
+
+// Generate a simple hash for contract snapshot
+const generateContractHash = (contract: ContractData, companyInfo: CompanyInfo | null, freelancerInfo: FreelancerInfo | null): string => {
+  const snapshotData = {
+    id: contract.id,
+    title: contract.title,
+    description: contract.description,
+    amount_cents: contract.amount_cents,
+    currency: contract.currency,
+    milestones: contract.milestones,
+    company: companyInfo?.company_name,
+    freelancer: freelancerInfo?.full_name,
+    terms_version: TERMS_VERSION,
+    contract_version: CONTRACT_VERSION,
+  };
+  
+  const jsonString = JSON.stringify(snapshotData);
+  // Simple hash using btoa + length for integrity check
+  const hash = btoa(jsonString).substring(0, 32) + "_" + jsonString.length;
+  return hash;
+};
 
 export function ContractAcceptanceModal({
   open,
@@ -123,21 +145,54 @@ export function ContractAcceptanceModal({
     setLoading(true);
 
     try {
+      const acceptRole = isCompany ? "company" : "freelancer";
       const updateField = isCompany ? "company_accepted_at" : "freelancer_accepted_at";
       const willBothAccept = isCompany ? freelancerHasAccepted : companyHasAccepted;
+      const acceptedAt = new Date().toISOString();
       
+      // Generate contract snapshot hash for audit trail
+      const snapshotHash = generateContractHash(contract, companyInfo, freelancerInfo);
+      
+      // 1. First, record the acceptance in the audit table
+      const { error: acceptanceError } = await supabase
+        .from("contract_acceptances")
+        .insert({
+          contract_id: contract.id,
+          accepted_by_user_id: user.id,
+          accepted_by_role: acceptRole,
+          accepted_at: acceptedAt,
+          terms_version: TERMS_VERSION,
+          contract_version: CONTRACT_VERSION,
+          contract_snapshot_hash: snapshotHash,
+          user_agent: navigator.userAgent,
+        });
+
+      // If duplicate (already accepted), just ignore and show message
+      if (acceptanceError) {
+        if (acceptanceError.code === "23505") {
+          toast.info("Você já aceitou este contrato.");
+          onOpenChange(false);
+          setLoading(false);
+          return;
+        }
+        throw acceptanceError;
+      }
+
+      // 2. Update contract status
       const updateData: Record<string, unknown> = {
-        [updateField]: new Date().toISOString(),
+        [updateField]: acceptedAt,
         contract_terms_version: CONTRACT_VERSION,
       };
 
-      // Only change status to 'active' when both parties accept
-      // Keep as 'draft' while waiting for the other party
+      // Set status based on acceptance state
       if (willBothAccept) {
+        // Both parties now accepted -> active
         updateData.status = "active";
-        updateData.accepted_at = new Date().toISOString();
+        updateData.accepted_at = acceptedAt;
+      } else {
+        // Only one party accepted -> pending_acceptance
+        updateData.status = "pending_acceptance";
       }
-      // If only one party accepts, keep status as 'draft' (don't change it)
 
       const { error } = await supabase
         .from("contracts")
@@ -331,14 +386,36 @@ export function ContractAcceptanceModal({
                   <Target className="h-4 w-4 text-primary" />
                   <h4 className="font-semibold">2. Do Objeto e Escopo</h4>
                 </div>
-                <div className="p-4 rounded-lg border bg-card text-sm space-y-2">
-                  <p>
-                    O presente contrato tem por objeto a prestação de serviços de <strong>{contract.title}</strong> pelo 
-                    PRESTADOR ao CONTRATANTE, conforme especificações abaixo:
-                  </p>
-                  {contract.description && (
-                    <p className="text-muted-foreground">{contract.description}</p>
-                  )}
+                <div className="p-4 rounded-lg border bg-card text-sm space-y-4">
+                  {/* Fixed legal text */}
+                  <div className="p-3 rounded-md bg-muted/50 border-l-4 border-primary">
+                    <p className="text-foreground leading-relaxed">
+                      Este contrato tem por objeto a prestação de serviços pelo <strong>PRESTADOR</strong> ao{" "}
+                      <strong>CONTRATANTE</strong>, conforme descrito no projeto e no escopo abaixo.{" "}
+                      <span className="font-medium">
+                        O escopo é vinculante e será usado para avaliação de entregas e eventuais disputas.
+                      </span>
+                    </p>
+                  </div>
+                  
+                  {/* Dynamic project content */}
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Escopo do Projeto (conteúdo informado no projeto):
+                    </p>
+                    <div className="p-3 rounded-md border bg-background">
+                      <p className="font-medium text-base mb-2">{contract.title}</p>
+                      {contract.description ? (
+                        <p className="text-muted-foreground whitespace-pre-wrap break-words leading-relaxed">
+                          {contract.description}
+                        </p>
+                      ) : (
+                        <p className="text-muted-foreground italic">
+                          Nenhuma descrição adicional fornecida.
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </section>
 
