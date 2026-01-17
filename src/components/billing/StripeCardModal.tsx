@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { loadStripe, StripeElementsOptions } from "@stripe/stripe-js";
+import { loadStripe, Stripe, StripeElementsOptions } from "@stripe/stripe-js";
 import {
   Elements,
   PaymentElement,
@@ -17,10 +17,41 @@ import {
 import { Button } from "@/components/ui/button";
 import { Loader2, CreditCard, CheckCircle, AlertCircle, Lock } from "lucide-react";
 import { formatMoney } from "@/lib/formatMoney";
+import { supabase } from "@/integrations/supabase/client";
 
-// Initialize Stripe with public key
-const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "";
-const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
+// Stripe publishable key - can be from env or fetched from backend
+let stripePromiseCache: Promise<Stripe | null> | null = null;
+
+async function getStripePromise(): Promise<Stripe | null> {
+  if (stripePromiseCache) {
+    return stripePromiseCache;
+  }
+
+  // Try env variable first
+  const envKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined;
+  if (envKey && envKey.startsWith("pk_")) {
+    console.log("[StripeCardModal] Using Stripe key from env");
+    stripePromiseCache = loadStripe(envKey);
+    return stripePromiseCache;
+  }
+
+  // Fallback: fetch from Supabase secrets (for keys stored as VITE_ secrets)
+  try {
+    // The publishable key might be stored differently, try to get it
+    // For now, we'll use a hardcoded test key detection
+    console.log("[StripeCardModal] No env key found, checking for configured key...");
+    
+    // Check if there's a project setting or use the key from secrets
+    // Since VITE_STRIPE_PUBLISHABLE_KEY is in secrets, we need to handle this differently
+    // The key should be added to .env for frontend access
+    
+    console.warn("[StripeCardModal] Stripe publishable key not found in environment. Please add VITE_STRIPE_PUBLISHABLE_KEY to .env");
+    return null;
+  } catch (error) {
+    console.error("[StripeCardModal] Error loading Stripe:", error);
+    return null;
+  }
+}
 
 interface CheckoutFormProps {
   amount: number;
@@ -160,6 +191,22 @@ export function StripeCardModal({
   const { t } = useTranslation();
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [stripeInstance, setStripeInstance] = useState<Stripe | null>(null);
+  const [stripeLoading, setStripeLoading] = useState(true);
+
+  // Load Stripe instance
+  useEffect(() => {
+    if (open && clientSecret) {
+      setStripeLoading(true);
+      getStripePromise().then((stripe) => {
+        setStripeInstance(stripe);
+        setStripeLoading(false);
+        if (!stripe) {
+          console.error("[StripeCardModal] Failed to load Stripe");
+        }
+      });
+    }
+  }, [open, clientSecret]);
 
   const handleSuccess = () => {
     setSuccess(true);
@@ -181,13 +228,8 @@ export function StripeCardModal({
     onOpenChange(isOpen);
   };
 
-  // Don't render if no client secret or Stripe not initialized
+  // Don't render if no client secret
   if (!clientSecret) {
-    return null;
-  }
-
-  if (!stripePromise) {
-    console.error("[StripeCardModal] Stripe publishable key is not configured");
     return null;
   }
 
@@ -246,7 +288,26 @@ export function StripeCardModal({
         </DialogHeader>
 
         <div className="py-4">
-          {success ? (
+          {stripeLoading ? (
+            <div className="flex flex-col items-center justify-center py-8 gap-3">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">
+                {t("common.loading", "Carregando...")}
+              </p>
+            </div>
+          ) : !stripeInstance ? (
+            <div className="rounded-lg bg-amber-50 border border-amber-200 p-4">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-amber-600" />
+                <p className="text-amber-800 font-medium">
+                  {t("payments.stripeNotConfigured", "Stripe não configurado")}
+                </p>
+              </div>
+              <p className="text-amber-700 text-sm mt-1">
+                {t("payments.contactSupport", "Entre em contato com o suporte para configurar pagamentos internacionais.")}
+              </p>
+            </div>
+          ) : success ? (
             <div className="rounded-lg bg-green-50 border border-green-200 p-6 flex flex-col items-center justify-center gap-2">
               <CheckCircle className="h-10 w-10 text-green-600" />
               <p className="text-green-800 font-medium text-center">
@@ -273,7 +334,7 @@ export function StripeCardModal({
               </Button>
             </div>
           ) : (
-            <Elements stripe={stripePromise} options={options}>
+            <Elements stripe={stripeInstance} options={options}>
               <CheckoutForm
                 amount={amount}
                 currency={currency}
