@@ -42,6 +42,9 @@ verify_jwt = false
 [functions.get-mp-public-key]
 verify_jwt = false
 
+[functions.get-stripe-public-key]
+verify_jwt = false
+
 [functions.admin-payment-providers]
 verify_jwt = false
 
