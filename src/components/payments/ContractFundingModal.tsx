@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2, QrCode, CreditCard, Wallet, CheckCircle, AlertCircle, AlertTriangle } from "lucide-react";
+import { Loader2, QrCode, CreditCard, Wallet, CheckCircle, AlertCircle, AlertTriangle, Info } from "lucide-react";
 import { toast } from "sonner";
 import { formatMoney } from "@/lib/formatMoney";
 import { PixPaymentModal } from "@/components/billing/PixPaymentModal";
@@ -20,6 +21,13 @@ import { StripeCardModal } from "@/components/billing/StripeCardModal";
 import { isCurrencyAllowed, getAllowedCurrencies } from "@/lib/currencyByCountry";
 
 type PaymentMethod = "pix" | "card";
+
+// Payment method fees (percentage)
+const PAYMENT_FEES = {
+  pix: 0.02,           // 2% for PIX
+  card_br: 0.06,       // 6% for Brazilian card (Mercado Pago)
+  card_intl: 0.15,     // 15% for international card (Stripe)
+};
 
 interface ContractFundingModalProps {
   open: boolean;
@@ -69,11 +77,41 @@ export function ContractFundingModal({
   const [stripeClientSecret, setStripeClientSecret] = useState("");
   const [stripeLoading, setStripeLoading] = useState(false);
 
-  const amountCents = Math.round(amount * 100);
   const isBRL = currency === "BRL";
   const canUsePix = isBRL;
   const canUseMercadoPagoCard = isBRL && mpPublicKey.length > 0;
   const canUseStripeCard = !isBRL; // Stripe for international currencies
+
+  // Calculate fees based on selected payment method
+  const feeInfo = useMemo(() => {
+    if (!paymentMethod) return null;
+    
+    let feePercent: number;
+    let feeLabel: string;
+    
+    if (paymentMethod === "pix") {
+      feePercent = PAYMENT_FEES.pix;
+      feeLabel = "PIX (2%)";
+    } else if (isBRL) {
+      feePercent = PAYMENT_FEES.card_br;
+      feeLabel = "Cartão BR (6%)";
+    } else {
+      feePercent = PAYMENT_FEES.card_intl;
+      feeLabel = "Cartão Internacional (15%)";
+    }
+    
+    const feeAmount = amount * feePercent;
+    const totalAmount = amount + feeAmount;
+    const totalAmountCents = Math.round(totalAmount * 100);
+    
+    return {
+      feePercent,
+      feeLabel,
+      feeAmount,
+      totalAmount,
+      totalAmountCents,
+    };
+  }, [paymentMethod, amount, isBRL]);
 
   // Check if project currency is allowed for user's country
   const isCurrencyAllowedForUser = isCurrencyAllowed(currency, country);
@@ -124,19 +162,28 @@ export function ContractFundingModal({
   };
 
   const handlePayWithPix = async () => {
+    if (!feeInfo) return;
     setLoading(true);
 
     try {
-      console.log("[ContractFundingModal] Creating PIX payment", { contractId, amount: amountCents });
+      console.log("[ContractFundingModal] Creating PIX payment", { 
+        contractId, 
+        contractAmountCents: Math.round(amount * 100),
+        totalWithFeeCents: feeInfo.totalAmountCents,
+        feePercent: feeInfo.feePercent 
+      });
 
       const { data, error } = await supabase.functions.invoke("create-pix-payment", {
         body: {
           paymentType: "contract_funding",
           userType: "company",
-          amountCents,
+          amountCents: feeInfo.totalAmountCents, // Total including fee
+          contractAmountCents: Math.round(amount * 100), // Original contract amount
           contractId,
           freelancerUserId,
           description: `Financiar: ${description}`,
+          feePercent: feeInfo.feePercent,
+          feeAmountCents: Math.round(feeInfo.feeAmount * 100),
         },
       });
 
@@ -158,24 +205,36 @@ export function ContractFundingModal({
   };
 
   const handlePayWithCard = async () => {
+    if (!feeInfo) return;
+    
     if (isBRL && canUseMercadoPagoCard) {
       // Mercado Pago card for BRL
-      console.log("[ContractFundingModal] Opening MP card modal", { contractId, amount: amountCents });
-      setCardAmountCents(amountCents);
+      console.log("[ContractFundingModal] Opening MP card modal", { 
+        contractId, 
+        totalWithFeeCents: feeInfo.totalAmountCents 
+      });
+      setCardAmountCents(feeInfo.totalAmountCents);
       onOpenChange(false);
       setCardModalOpen(true);
     } else if (canUseStripeCard) {
       // Stripe card for international currencies
-      console.log("[ContractFundingModal] Creating Stripe PaymentIntent", { contractId, amount: amountCents, currency });
+      console.log("[ContractFundingModal] Creating Stripe PaymentIntent", { 
+        contractId, 
+        totalWithFeeCents: feeInfo.totalAmountCents, 
+        currency 
+      });
       setStripeLoading(true);
       try {
         const { data, error } = await supabase.functions.invoke("create-stripe-payment-intent", {
           body: {
-            amountCents,
+            amountCents: feeInfo.totalAmountCents, // Total including fee
+            contractAmountCents: Math.round(amount * 100), // Original contract amount
             currency,
             contractId,
             description: `Financiar: ${description}`,
             paymentType: "contract_funding",
+            feePercent: feeInfo.feePercent,
+            feeAmountCents: Math.round(feeInfo.feeAmount * 100),
           },
         });
 
@@ -208,16 +267,20 @@ export function ContractFundingModal({
   };
 
   const handleRegeneratePixPayment = async () => {
+    if (!feeInfo) return;
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("create-pix-payment", {
         body: {
           paymentType: "contract_funding",
           userType: "company",
-          amountCents,
+          amountCents: feeInfo.totalAmountCents,
+          contractAmountCents: Math.round(amount * 100),
           contractId,
           freelancerUserId,
           description: `Financiar: ${description}`,
+          feePercent: feeInfo.feePercent,
+          feeAmountCents: Math.round(feeInfo.feeAmount * 100),
         },
       });
 
@@ -309,7 +372,12 @@ export function ContractFundingModal({
                     >
                       <QrCode className="h-6 w-6 text-primary" />
                       <div className="flex-1">
-                        <p className="font-medium">PIX</p>
+                        <div className="flex items-center justify-between">
+                          <p className="font-medium">PIX</p>
+                          <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded">
+                            +2%
+                          </span>
+                        </div>
                         <p className="text-xs text-muted-foreground">
                           {t("payments.instant", "Pagamento instantâneo")}
                         </p>
@@ -320,8 +388,8 @@ export function ContractFundingModal({
                     </button>
                   )}
 
-                  {/* Card Option */}
-                  {(canUseMercadoPagoCard || canUseStripeCard) && (
+                  {/* Card Option - BRL */}
+                  {canUseMercadoPagoCard && (
                     <button
                       onClick={() => setPaymentMethod("card")}
                       className={`
@@ -334,9 +402,12 @@ export function ContractFundingModal({
                     >
                       <CreditCard className="h-6 w-6 text-primary" />
                       <div className="flex-1">
-                        <p className="font-medium">
-                          {t("payments.card", "Cartão")}
-                        </p>
+                        <div className="flex items-center justify-between">
+                          <p className="font-medium">{t("payments.card", "Cartão")}</p>
+                          <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded">
+                            +6%
+                          </span>
+                        </div>
                         <p className="text-xs text-muted-foreground">
                           {t("payments.creditDebit", "Crédito ou débito")}
                         </p>
@@ -346,7 +417,72 @@ export function ContractFundingModal({
                       )}
                     </button>
                   )}
+
+                  {/* Card Option - International */}
+                  {canUseStripeCard && (
+                    <button
+                      onClick={() => setPaymentMethod("card")}
+                      className={`
+                        p-4 rounded-lg border-2 text-left transition-all flex items-center gap-3
+                        ${paymentMethod === "card"
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/50"
+                        }
+                      `}
+                    >
+                      <CreditCard className="h-6 w-6 text-primary" />
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <p className="font-medium">{t("payments.cardInternational", "Cartão Internacional")}</p>
+                          <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded">
+                            +15%
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Visa, Mastercard, Amex
+                        </p>
+                      </div>
+                      {paymentMethod === "card" && (
+                        <CheckCircle className="h-5 w-5 text-primary" />
+                      )}
+                    </button>
+                  )}
                 </div>
+              </div>
+            )}
+
+            {/* Fee Breakdown */}
+            {isCurrencyAllowedForUser && feeInfo && paymentMethod && (
+              <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Info className="h-4 w-4 text-muted-foreground" />
+                  Resumo do Pagamento
+                </div>
+                <Separator />
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Valor do contrato</span>
+                    <span>{formatMoney(amount, currency)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">
+                      Taxa {feeInfo.feeLabel}
+                    </span>
+                    <span className="text-amber-600">
+                      +{formatMoney(feeInfo.feeAmount, currency)}
+                    </span>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between font-semibold text-base">
+                    <span>Total a pagar</span>
+                    <span className="text-primary">
+                      {formatMoney(feeInfo.totalAmount, currency)}
+                    </span>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  O freelancer receberá {formatMoney(amount, currency)} após conclusão do projeto.
+                </p>
               </div>
             )}
 

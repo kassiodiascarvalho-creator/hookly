@@ -443,22 +443,46 @@ serve(async (req) => {
 
       } else if (paymentType === 'contract_funding') {
         const contractId = payment.contract_id;
+        const metadata = payment.metadata as Record<string, unknown> | null;
         
         if (contractId) {
-          logStep("Funding contract escrow via new ledger", { userId, contractId, amount: amountUsdUnits });
+          // Use contract_amount_cents from metadata if available (excludes fee)
+          // Otherwise fall back to full amount (legacy behavior)
+          const contractAmountCents = metadata?.contract_amount_cents as number | undefined;
+          const feeAmountCents = metadata?.fee_amount_cents as number | undefined;
+          
+          // Convert contract amount to USD (not the total paid which includes fee)
+          let escrowAmountUsd: number;
+          if (contractAmountCents && contractAmountCents > 0) {
+            // Convert contract amount (without fee) to USD
+            const contractFxResult = await convertToUSD(contractAmountCents, currencyId);
+            escrowAmountUsd = contractFxResult.amount_usd_minor / 100;
+            logStep("Using contract amount for escrow (excluding fee)", { 
+              contractAmountCents, 
+              feeAmountCents,
+              escrowAmountUsd,
+              totalPaidUsd: amountUsdUnits,
+            });
+          } else {
+            // Legacy: use full amount
+            escrowAmountUsd = amountUsdUnits;
+            logStep("Using full amount for escrow (legacy)", { escrowAmountUsd });
+          }
+          
+          logStep("Funding contract escrow via new ledger", { userId, contractId, amount: escrowAmountUsd });
           
           const { data: result, error: rpcError } = await supabaseAdmin
             .rpc('fund_contract_escrow', {
               p_company_user_id: userId,
               p_contract_id: contractId,
-              p_amount: amountUsdUnits,
+              p_amount: escrowAmountUsd,
               p_payment_id: payment.id,
             });
 
           if (rpcError) {
             logStep("Error funding contract escrow", { error: rpcError });
           } else {
-            logStep("Contract escrow funded", { userId, contractId, amount: amountUsdUnits, result });
+            logStep("Contract escrow funded", { userId, contractId, amount: escrowAmountUsd, result });
           }
         } else {
           logStep("No contract_id for contract_funding payment", { paymentId: payment.id });

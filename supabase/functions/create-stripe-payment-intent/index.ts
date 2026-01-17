@@ -44,7 +44,18 @@ serve(async (req) => {
     logStep("User authenticated", { userId });
 
     const body = await req.json();
-    const { amountCents, currency, contractId, milestoneIndex, description, paymentType } = body;
+    const { 
+      amountCents, 
+      currency, 
+      contractId, 
+      milestoneIndex, 
+      description, 
+      paymentType,
+      // Contract funding fee info
+      contractAmountCents,
+      feePercent,
+      feeAmountCents,
+    } = body;
 
     if (!amountCents || amountCents <= 0) {
       throw new Error("Invalid amount");
@@ -53,7 +64,23 @@ serve(async (req) => {
       throw new Error("Currency is required");
     }
 
-    logStep("Payment request", { amountCents, currency, contractId, milestoneIndex, paymentType });
+    // Validate contract funding has contract amount
+    if (paymentType === 'contract_funding') {
+      if (!contractAmountCents || contractAmountCents <= 0) {
+        throw new Error("Contract amount is required for contract funding");
+      }
+    }
+
+    logStep("Payment request", { 
+      amountCents, 
+      contractAmountCents,
+      feePercent,
+      feeAmountCents,
+      currency, 
+      contractId, 
+      milestoneIndex, 
+      paymentType 
+    });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
@@ -75,7 +102,7 @@ serve(async (req) => {
       .insert({
         user_id: userId,
         user_type: "company",
-        amount_cents: amountCents,
+        amount_cents: amountCents, // Total amount charged (including fee)
         currency: currency.toUpperCase(),
         payment_type: paymentType || "contract_funding",
         provider: "stripe",
@@ -84,6 +111,10 @@ serve(async (req) => {
         metadata: {
           milestoneIndex,
           description,
+          // Fee tracking for contract funding
+          contract_amount_cents: contractAmountCents || null,
+          fee_percent: feePercent || null,
+          fee_amount_cents: feeAmountCents || null,
         },
       })
       .select()
