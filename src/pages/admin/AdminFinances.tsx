@@ -193,6 +193,18 @@ export default function AdminFinances() {
     
     const { data: balanceData } = await balanceQuery;
     
+    // Fetch platform credits (the actual source of credits, stored as integer units, 1 credit = $1)
+    const { data: platformCreditsData } = await supabase
+      .from("platform_credits")
+      .select("balance");
+    
+    // Sum all platform credits - balance is in credit units (1 credit = $1 = 100 cents)
+    const totalPlatformCredits = (platformCreditsData || []).reduce(
+      (sum, pc) => sum + Number(pc.balance || 0), 0
+    );
+    // Convert to cents for consistent display (1 credit = 100 cents)
+    const totalCreditsInCents = totalPlatformCredits * 100;
+    
     // Fetch all withdrawal data with FX fields
     let baseWithdrawalQuery = supabase
       .from("withdrawal_requests")
@@ -212,33 +224,32 @@ export default function AdminFinances() {
     const totalFxSpread = (allWithdrawals || []).reduce((sum, w) => 
       sum + Number(w.fx_spread_amount_usd_minor || 0), 0);
     
-    if (balanceData) {
-      // All amounts in user_balances are already in cents (or minor units)
-      const totals = balanceData.reduce(
-        (acc, b) => ({
-          total_credits_usd: acc.total_credits_usd + Number(b.credits_available || 0),
-          total_earnings_usd: acc.total_earnings_usd + Number(b.earnings_available || 0),
-          // Only count escrow from companies
-          total_escrow_usd: acc.total_escrow_usd + (b.user_type === 'company' ? Number(b.escrow_held || 0) : 0),
-        }),
-        { total_credits_usd: 0, total_earnings_usd: 0, total_escrow_usd: 0 }
-      );
-      
-      // For withdrawals, use amount_usd_minor if available, fallback to amount
-      const calcWithdrawalAmount = (withdrawals: any[]) => 
-        withdrawals.reduce((sum, w) => sum + Number(w.amount_usd_minor || w.amount), 0);
-      
-      setSummary({
-        ...totals,
-        pending_withdrawals: pendingWithdrawals.length,
-        pending_withdrawal_amount_usd: calcWithdrawalAmount(pendingWithdrawals),
-        approved_withdrawals: approvedWithdrawals.length,
-        approved_withdrawal_amount_usd: calcWithdrawalAmount(approvedWithdrawals),
-        paid_withdrawals: paidWithdrawals.length,
-        paid_withdrawal_amount_usd: calcWithdrawalAmount(paidWithdrawals),
-        total_fx_spread_usd: totalFxSpread,
-      });
-    }
+    // All amounts in user_balances are already in cents (or minor units)
+    const totals = (balanceData || []).reduce(
+      (acc, b) => ({
+        total_earnings_usd: acc.total_earnings_usd + Number(b.earnings_available || 0),
+        // Only count escrow from companies
+        total_escrow_usd: acc.total_escrow_usd + (b.user_type === 'company' ? Number(b.escrow_held || 0) : 0),
+      }),
+      { total_earnings_usd: 0, total_escrow_usd: 0 }
+    );
+    
+    // For withdrawals, use amount_usd_minor if available, fallback to amount
+    const calcWithdrawalAmount = (withdrawals: any[]) => 
+      withdrawals.reduce((sum, w) => sum + Number(w.amount_usd_minor || w.amount), 0);
+    
+    setSummary({
+      total_credits_usd: totalCreditsInCents,
+      total_earnings_usd: totals.total_earnings_usd,
+      total_escrow_usd: totals.total_escrow_usd,
+      pending_withdrawals: pendingWithdrawals.length,
+      pending_withdrawal_amount_usd: calcWithdrawalAmount(pendingWithdrawals),
+      approved_withdrawals: approvedWithdrawals.length,
+      approved_withdrawal_amount_usd: calcWithdrawalAmount(approvedWithdrawals),
+      paid_withdrawals: paidWithdrawals.length,
+      paid_withdrawal_amount_usd: calcWithdrawalAmount(paidWithdrawals),
+      total_fx_spread_usd: totalFxSpread,
+    });
   };
 
   const fetchBalances = async () => {
