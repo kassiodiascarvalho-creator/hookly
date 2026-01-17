@@ -4,12 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileDataCard, MobileDataRow } from "@/components/admin/MobileDataCard";
+import { AdminContractModal } from "@/components/admin/AdminContractModal";
 
 interface Project {
   id: string;
@@ -37,6 +39,13 @@ export default function AdminProjects() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [contractModalOpen, setContractModalOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+
+  const handleViewContract = (project: Project) => {
+    setSelectedProject(project);
+    setContractModalOpen(true);
+  };
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -128,6 +137,17 @@ export default function AdminProjects() {
                   <MobileDataRow label={t("admin.createdAt")}>
                     {format(new Date(project.created_at), "PP")}
                   </MobileDataRow>
+                  <div className="mt-3 pt-3 border-t">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleViewContract(project)}
+                      className="w-full"
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      Ver Contrato
+                    </Button>
+                  </div>
                 </MobileDataCard>
               ))}
               {filteredProjects.length === 0 && (
@@ -146,6 +166,7 @@ export default function AdminProjects() {
                   <TableHead>{t("admin.budget")}</TableHead>
                   <TableHead>{t("admin.status")}</TableHead>
                   <TableHead>{t("admin.createdAt")}</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -174,11 +195,21 @@ export default function AdminProjects() {
                     <TableCell>
                       {format(new Date(project.created_at), "PP")}
                     </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleViewContract(project)}
+                        title="Ver Contrato"
+                      >
+                        <FileText className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
                 {filteredProjects.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center text-muted-foreground">
                       {t("admin.noProjectsFound")}
                     </TableCell>
                   </TableRow>
@@ -188,6 +219,16 @@ export default function AdminProjects() {
           )}
         </CardContent>
       </Card>
+
+      {/* Contract Modal */}
+      {selectedProject && (
+        <AdminContractModal
+          open={contractModalOpen}
+          onOpenChange={setContractModalOpen}
+          projectId={selectedProject.id}
+          projectTitle={selectedProject.title}
+        />
+      )}
     </div>
   );
 }
