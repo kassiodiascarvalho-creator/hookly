@@ -364,7 +364,8 @@ serve(async (req) => {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
         logStep("Payment intent succeeded", { paymentIntentId: paymentIntent.id });
         
-        const { error } = await supabaseClient
+        // First update the payments table (legacy)
+        await supabaseClient
           .from("payments")
           .update({ 
             status: "paid",
@@ -372,8 +373,95 @@ serve(async (req) => {
           })
           .eq("stripe_payment_intent_id", paymentIntent.id)
           .eq("status", "pending");
+        
+        // Check unified_payments for contract_funding
+        const { data: unifiedPayment } = await supabaseClient
+          .from("unified_payments")
+          .select("*")
+          .eq("provider_payment_id", paymentIntent.id)
+          .maybeSingle();
+        
+        if (unifiedPayment && unifiedPayment.payment_type === 'contract_funding') {
+          logStep("Processing contract_funding via PaymentIntent", { 
+            paymentId: unifiedPayment.id, 
+            contractId: unifiedPayment.contract_id 
+          });
+          
+          // Update payment status
+          await supabaseClient
+            .from("unified_payments")
+            .update({ 
+              status: "paid",
+              paid_at: new Date().toISOString()
+            })
+            .eq("id", unifiedPayment.id);
+          
+          // Fund escrow
+          if (unifiedPayment.contract_id) {
+            const metadata = unifiedPayment.metadata as Record<string, unknown> | null;
+            const contractAmountCents = metadata?.contract_amount_cents as number | undefined;
+            const currency = unifiedPayment.currency;
+            const totalAmountCents = unifiedPayment.amount_cents;
+            
+            // Convert to USD for escrow
+            // Use contract_amount_cents if available (excludes fee), otherwise use total
+            const amountForEscrow = contractAmountCents && contractAmountCents > 0 
+              ? contractAmountCents 
+              : totalAmountCents;
+            
+            const fxResult = await convertToUSD(amountForEscrow, currency);
+            const escrowAmountUsd = fxResult.amount_usd_minor / 100;
+            
+            logStep("Funding contract escrow", { 
+              contractAmountCents,
+              totalAmountCents,
+              amountForEscrow,
+              escrowAmountUsd,
+              userId: unifiedPayment.user_id,
+              contractId: unifiedPayment.contract_id,
+            });
+            
+            const { data: escrowResult, error: escrowError } = await supabaseClient
+              .rpc('fund_contract_escrow', {
+                p_company_user_id: unifiedPayment.user_id,
+                p_contract_id: unifiedPayment.contract_id,
+                p_amount: escrowAmountUsd,
+                p_payment_id: unifiedPayment.id,
+              });
 
-        if (!error) {
+            if (escrowError) {
+              logStep("Error funding escrow", { error: escrowError });
+            } else {
+              logStep("Contract escrow funded", { 
+                contractId: unifiedPayment.contract_id, 
+                amount: escrowAmountUsd, 
+                result: escrowResult 
+              });
+              
+              // Update unified_payments with FX data
+              await supabaseClient
+                .from("unified_payments")
+                .update({
+                  amount_usd_minor: fxResult.amount_usd_minor,
+                  fx_rate_market: fxResult.fx_rate_market,
+                  fx_rate_applied: fxResult.fx_rate_applied,
+                  fx_spread_percent: fxResult.fx_spread_percent,
+                  fx_spread_amount_usd_minor: fxResult.fx_spread_amount_usd_minor,
+                  fx_provider: fxResult.fx_provider,
+                  fx_timestamp: fxResult.fx_timestamp,
+                })
+                .eq("id", unifiedPayment.id);
+              
+              // Send notification
+              await supabaseClient.from("notifications").insert({
+                user_id: unifiedPayment.user_id,
+                type: "payment_success",
+                message: `Pagamento de USD ${escrowAmountUsd.toFixed(2)} foi depositado em garantia!`,
+                link: "/contracts",
+              });
+            }
+          }
+        } else {
           logStep("Payment status updated to paid");
         }
         break;

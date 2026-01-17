@@ -82,6 +82,10 @@ serve(async (req) => {
       description,
       contractId,
       freelancerUserId,
+      // Contract funding fee info
+      contractAmountCents,
+      feePercent,
+      feeAmountCents,
     } = body as Record<string, unknown>;
 
     // Validate required fields
@@ -100,9 +104,21 @@ serve(async (req) => {
       if (typeof contractId !== 'string' || contractId.length < 10) {
         throw new Error("Contract ID is required for contract funding");
       }
+      // contractAmountCents is the actual contract value (excluding fee)
+      if (typeof contractAmountCents !== 'number' || contractAmountCents < 100) {
+        throw new Error("Contract amount is required for contract funding");
+      }
     }
 
-    logStep("Request validated", { paymentType, userType, amountCents, creditsAmount });
+    logStep("Request validated", { 
+      paymentType, 
+      userType, 
+      amountCents, 
+      contractAmountCents,
+      feePercent,
+      feeAmountCents,
+      creditsAmount 
+    });
 
     // Get Mercado Pago access token
     const accessToken = Deno.env.get("MERCADOPAGO_ACCESS_TOKEN");
@@ -122,7 +138,7 @@ serve(async (req) => {
       payment_type: paymentType as string,
       user_id: user.id,
       user_type: userType as string,
-      amount_cents: amountCents as number,
+      amount_cents: amountCents as number, // Total amount charged (including fee)
       currency: 'BRL',
       credits_amount: creditsAmountInt,
       status: 'pending',
@@ -132,6 +148,10 @@ serve(async (req) => {
         user_email: user.email,
         payment_method: 'pix',
         freelancer_user_id: freelancerUserId || null,
+        // Fee tracking for contract funding
+        contract_amount_cents: contractAmountCents || null,
+        fee_percent: feePercent || null,
+        fee_amount_cents: feeAmountCents || null,
       },
     };
 
