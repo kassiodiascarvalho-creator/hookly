@@ -554,13 +554,14 @@ export function ContractFundingModal({
       />
 
       {/* Stripe Card Modal */}
-      {stripeClientSecret && (
+      {stripeClientSecret && feeInfo && (
         <StripeCardModal
           open={stripeModalOpen}
           onOpenChange={setStripeModalOpen}
           clientSecret={stripeClientSecret}
-          amount={amount}
+          amount={feeInfo.totalAmountCents}
           currency={currency}
+          description={`Financiar: ${description}`}
           onPaymentConfirmed={handlePaymentConfirmed}
         />
       )}
