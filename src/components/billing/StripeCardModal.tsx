@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { loadStripe } from "@stripe/stripe-js";
+import { loadStripe, StripeElementsOptions } from "@stripe/stripe-js";
 import {
   Elements,
   PaymentElement,
@@ -15,11 +15,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2, CreditCard, CheckCircle, AlertCircle } from "lucide-react";
+import { Loader2, CreditCard, CheckCircle, AlertCircle, Lock } from "lucide-react";
 import { formatMoney } from "@/lib/formatMoney";
 
 // Initialize Stripe with public key
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "");
+const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "";
+const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 
 interface CheckoutFormProps {
   amount: number;
@@ -71,7 +72,8 @@ function CheckoutForm({ amount, currency, onSuccess, onError }: CheckoutFormProp
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Amount Display */}
       <div className="text-center p-4 bg-muted rounded-lg">
         <p className="text-sm text-muted-foreground mb-1">
           {t("payments.amountToPay", "Valor a pagar")}
@@ -81,14 +83,39 @@ function CheckoutForm({ amount, currency, onSuccess, onError }: CheckoutFormProp
         </p>
       </div>
 
-      <div className="border rounded-lg p-4">
+      {/* Card Form Container - Full form, not just button */}
+      <div className="border rounded-lg p-4 bg-background">
         <PaymentElement
+          id="payment-element"
           options={{
-            layout: "tabs",
+            layout: {
+              type: "accordion",
+              defaultCollapsed: false,
+              radios: false,
+              spacedAccordionItems: true,
+            },
+            fields: {
+              billingDetails: {
+                address: {
+                  country: "auto",
+                },
+              },
+            },
+            wallets: {
+              applePay: "auto",
+              googlePay: "auto",
+            },
           }}
         />
       </div>
 
+      {/* Security Badge */}
+      <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+        <Lock className="h-3 w-3" />
+        <span>{t("payments.securePayment", "Pagamento seguro via Stripe")}</span>
+      </div>
+
+      {/* Submit Button */}
       <Button
         type="submit"
         disabled={!stripe || loading}
@@ -154,19 +181,55 @@ export function StripeCardModal({
     onOpenChange(isOpen);
   };
 
+  // Don't render if no client secret or Stripe not initialized
   if (!clientSecret) {
     return null;
   }
 
-  const options = {
+  if (!stripePromise) {
+    console.error("[StripeCardModal] Stripe publishable key is not configured");
+    return null;
+  }
+
+  const options: StripeElementsOptions = {
     clientSecret,
     appearance: {
-      theme: "stripe" as const,
+      theme: "stripe",
       variables: {
         colorPrimary: "#7c3aed",
+        colorBackground: "#ffffff",
+        colorText: "#1f2937",
+        colorDanger: "#ef4444",
+        fontFamily: "Inter, system-ui, sans-serif",
+        spacingUnit: "4px",
         borderRadius: "8px",
+        fontSizeBase: "16px",
+      },
+      rules: {
+        ".Input": {
+          border: "1px solid #e5e7eb",
+          boxShadow: "none",
+          padding: "12px",
+        },
+        ".Input:focus": {
+          border: "1px solid #7c3aed",
+          boxShadow: "0 0 0 1px #7c3aed",
+        },
+        ".Label": {
+          fontWeight: "500",
+          marginBottom: "8px",
+        },
+        ".Tab": {
+          border: "1px solid #e5e7eb",
+          borderRadius: "8px",
+        },
+        ".Tab--selected": {
+          border: "2px solid #7c3aed",
+          backgroundColor: "#f5f3ff",
+        },
       },
     },
+    locale: "pt-BR",
   };
 
   return (
