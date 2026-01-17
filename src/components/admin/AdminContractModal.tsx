@@ -198,8 +198,13 @@ export function AdminContractModal({
   const milestones = contract?.milestones as Milestone[] | null;
   const contractId = contract?.id.slice(0, 8).toUpperCase() || "";
 
+  // Fallback: use contract timestamps if no audit records exist
   const companyAcceptance = getAcceptanceForRole("company");
   const freelancerAcceptance = getAcceptanceForRole("freelancer");
+  
+  // Use contract fields as fallback for legacy acceptances (before audit table)
+  const companyAcceptedAt = companyAcceptance?.accepted_at || contract?.company_accepted_at;
+  const freelancerAcceptedAt = freelancerAcceptance?.accepted_at || contract?.freelancer_accepted_at;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -298,7 +303,7 @@ export function AdminContractModal({
                     {/* Company Acceptance */}
                     <div className="p-3 rounded-lg bg-background border">
                       <div className="flex items-start gap-3">
-                        {companyAcceptance ? (
+                        {companyAcceptedAt ? (
                           <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
                         ) : (
                           <Clock className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
@@ -311,17 +316,25 @@ export function AdminContractModal({
                               <span className="text-sm text-muted-foreground">({companyInfo.company_name})</span>
                             )}
                           </div>
-                          {companyAcceptance ? (
+                          {companyAcceptedAt ? (
                             <div className="mt-1 space-y-1">
                               <p className="text-sm text-green-600">
-                                Aceito em {formatAcceptanceDate(companyAcceptance.accepted_at)}
+                                Aceito em {formatAcceptanceDate(companyAcceptedAt)}
                               </p>
-                              <p className="text-xs text-muted-foreground">
-                                User ID: {companyAcceptance.accepted_by_user_id.slice(0, 8)}...
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                Terms: {companyAcceptance.terms_version} | Contract: {companyAcceptance.contract_version}
-                              </p>
+                              {companyAcceptance ? (
+                                <>
+                                  <p className="text-xs text-muted-foreground">
+                                    User ID: {companyAcceptance.accepted_by_user_id.slice(0, 8)}...
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    Terms: {companyAcceptance.terms_version} | Contract: {companyAcceptance.contract_version}
+                                  </p>
+                                </>
+                              ) : (
+                                <p className="text-xs text-muted-foreground italic">
+                                  (Aceite anterior ao audit trail)
+                                </p>
+                              )}
                             </div>
                           ) : (
                             <p className="text-sm text-muted-foreground mt-1">Pendente</p>
@@ -333,7 +346,7 @@ export function AdminContractModal({
                     {/* Freelancer Acceptance */}
                     <div className="p-3 rounded-lg bg-background border">
                       <div className="flex items-start gap-3">
-                        {freelancerAcceptance ? (
+                        {freelancerAcceptedAt ? (
                           <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
                         ) : (
                           <Clock className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
@@ -346,17 +359,25 @@ export function AdminContractModal({
                               <span className="text-sm text-muted-foreground">({freelancerInfo.full_name})</span>
                             )}
                           </div>
-                          {freelancerAcceptance ? (
+                          {freelancerAcceptedAt ? (
                             <div className="mt-1 space-y-1">
                               <p className="text-sm text-green-600">
-                                Aceito em {formatAcceptanceDate(freelancerAcceptance.accepted_at)}
+                                Aceito em {formatAcceptanceDate(freelancerAcceptedAt)}
                               </p>
-                              <p className="text-xs text-muted-foreground">
-                                User ID: {freelancerAcceptance.accepted_by_user_id.slice(0, 8)}...
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                Terms: {freelancerAcceptance.terms_version} | Contract: {freelancerAcceptance.contract_version}
-                              </p>
+                              {freelancerAcceptance ? (
+                                <>
+                                  <p className="text-xs text-muted-foreground">
+                                    User ID: {freelancerAcceptance.accepted_by_user_id.slice(0, 8)}...
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    Terms: {freelancerAcceptance.terms_version} | Contract: {freelancerAcceptance.contract_version}
+                                  </p>
+                                </>
+                              ) : (
+                                <p className="text-xs text-muted-foreground italic">
+                                  (Aceite anterior ao audit trail)
+                                </p>
+                              )}
                             </div>
                           ) : (
                             <p className="text-sm text-muted-foreground mt-1">Pendente</p>
