@@ -37,7 +37,7 @@ interface SpreadLimits {
 export default function FxSpreadSettings() {
   const [configs, setConfigs] = useState<SpreadConfig[]>([]);
   const [history, setHistory] = useState<SpreadHistory[]>([]);
-  const [limits, setLimits] = useState<SpreadLimits>({ min: 0, max: 5, default: 0.8 });
+  const [limits, setLimits] = useState<SpreadLimits>({ min: 0, max: 20, default: 0.8 });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editedConfigs, setEditedConfigs] = useState<Record<string, Partial<SpreadConfig>>>({});

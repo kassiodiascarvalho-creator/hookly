@@ -19,15 +19,9 @@ import { PixPaymentModal } from "@/components/billing/PixPaymentModal";
 import { CardPaymentModal } from "@/components/billing/CardPaymentModal";
 import { StripeCardModal } from "@/components/billing/StripeCardModal";
 import { isCurrencyAllowed, getAllowedCurrencies } from "@/lib/currencyByCountry";
+import { usePaymentFees, FEE_KEYS, calculatePaymentFee, getPaymentFeeKey } from "@/hooks/usePaymentFees";
 
 type PaymentMethod = "pix" | "card";
-
-// Payment method fees (percentage)
-const PAYMENT_FEES = {
-  pix: 0.02,           // 2% for PIX
-  card_br: 0.06,       // 6% for Brazilian card (Mercado Pago)
-  card_intl: 0.15,     // 15% for international card (Stripe)
-};
 
 interface ContractFundingModalProps {
   open: boolean;
@@ -52,6 +46,7 @@ export function ContractFundingModal({
 }: ContractFundingModalProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { getFeePercent, getDisplayPercent, loading: feesLoading } = usePaymentFees();
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
   const [country, setCountry] = useState<string | null>(null);
@@ -82,31 +77,25 @@ export function ContractFundingModal({
   const canUseMercadoPagoCard = isBRL && mpPublicKey.length > 0;
   const canUseStripeCard = !isBRL; // Stripe for international currencies
 
-  // Calculate fees based on selected payment method
+  // Calculate fees based on selected payment method - using dynamic fees from DB
   const feeInfo = useMemo(() => {
     if (!paymentMethod) return null;
     
-    let feePercent: number;
-    let methodName: string;
-    let percentDisplay: string;
+    // Get the appropriate fee key based on currency and payment method
+    const feeKey = getPaymentFeeKey(currency, paymentMethod);
+    const feePercent = getFeePercent(feeKey);
+    const percentDisplay = getDisplayPercent(feeKey);
     
+    let methodName: string;
     if (paymentMethod === "pix") {
-      feePercent = PAYMENT_FEES.pix;
       methodName = "PIX";
-      percentDisplay = "2%";
     } else if (isBRL) {
-      feePercent = PAYMENT_FEES.card_br;
       methodName = "Cartão";
-      percentDisplay = "6%";
     } else {
-      feePercent = PAYMENT_FEES.card_intl;
       methodName = "Cartão Internacional";
-      percentDisplay = "15%";
     }
     
-    const feeAmount = amount * feePercent;
-    const totalAmount = amount + feeAmount;
-    const totalAmountCents = Math.round(totalAmount * 100);
+    const { feeAmount, totalAmount, totalAmountCents } = calculatePaymentFee(amount, feePercent);
     
     // Format: "Taxa do método (PIX 2%)" or "Taxa do método (Cartão 6%)"
     const feeLabel = `Taxa do método (${methodName} ${percentDisplay})`;
@@ -120,7 +109,7 @@ export function ContractFundingModal({
       totalAmount,
       totalAmountCents,
     };
-  }, [paymentMethod, amount, isBRL]);
+  }, [paymentMethod, amount, currency, isBRL, getFeePercent, getDisplayPercent]);
 
   // Check if project currency is allowed for user's country
   const isCurrencyAllowedForUser = isCurrencyAllowed(currency, country);
@@ -384,7 +373,7 @@ export function ContractFundingModal({
                         <div className="flex items-center justify-between">
                           <p className="font-medium">PIX</p>
                           <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                            Taxa do método: 2%
+                            Taxa do método: {getDisplayPercent(FEE_KEYS.BRL_PIX)}
                           </span>
                         </div>
                         <p className="text-xs text-muted-foreground">
@@ -414,7 +403,7 @@ export function ContractFundingModal({
                         <div className="flex items-center justify-between">
                           <p className="font-medium">{t("payments.card", "Cartão")}</p>
                           <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                            Taxa do método: 6%
+                            Taxa do método: {getDisplayPercent(FEE_KEYS.BRL_CARD)}
                           </span>
                         </div>
                         <p className="text-xs text-muted-foreground">
@@ -444,7 +433,7 @@ export function ContractFundingModal({
                         <div className="flex items-center justify-between">
                           <p className="font-medium">{t("payments.cardInternational", "Cartão Internacional")}</p>
                           <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                            Taxa do método: 15%
+                            Taxa do método: {getDisplayPercent(FEE_KEYS.INTERNATIONAL_CARD)}
                           </span>
                         </div>
                         <p className="text-xs text-muted-foreground">

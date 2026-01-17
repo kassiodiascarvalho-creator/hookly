@@ -14,6 +14,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { toast } from "sonner";
 import { formatMoneyFromCents } from "@/lib/formatMoney";
 import FxSpreadSettings from "@/components/admin/FxSpreadSettings";
+import PaymentFeeSettings from "@/components/admin/PaymentFeeSettings";
 import FxRevenueReport from "@/components/admin/FxRevenueReport";
 import FinancialAlertsCard from "@/components/admin/FinancialAlertsCard";
 import { ActionCostsManager } from "@/components/admin/ActionCostsManager";
@@ -595,10 +596,14 @@ export default function AdminFinances() {
               <Badge variant="destructive" className="ml-1 md:ml-2 text-xs">{summary.pending_withdrawals}</Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="transactions" className="text-xs md:text-sm">Transações</TabsTrigger>
+         <TabsTrigger value="transactions" className="text-xs md:text-sm">Transações</TabsTrigger>
+          <TabsTrigger value="payment-fees" className="text-xs md:text-sm">
+            <Settings2 className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+            Taxas
+          </TabsTrigger>
           <TabsTrigger value="fx-settings" className="text-xs md:text-sm">
             <Settings2 className="h-3 w-3 md:h-4 md:w-4 mr-1" />
-            <span className="hidden sm:inline">FX &</span> Spread
+            <span className="hidden sm:inline">FX</span> Spread
           </TabsTrigger>
           <TabsTrigger value="action-costs" className="text-xs md:text-sm">
             <Coins className="h-3 w-3 md:h-4 md:w-4 mr-1" />
@@ -936,6 +941,11 @@ export default function AdminFinances() {
               </Table>
             </CardContent>
           </Card>
+       </TabsContent>
+
+        {/* Payment Fees Tab */}
+        <TabsContent value="payment-fees" className="space-y-6">
+          <PaymentFeeSettings />
         </TabsContent>
 
         {/* FX Settings Tab */}

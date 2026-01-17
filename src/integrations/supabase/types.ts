@@ -834,6 +834,80 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_fee_change_history: {
+        Row: {
+          change_reason: string | null
+          changed_at: string
+          changed_by_user_id: string | null
+          fee_config_id: string | null
+          fee_key: string
+          id: string
+          new_fee_percent: number
+          old_fee_percent: number
+        }
+        Insert: {
+          change_reason?: string | null
+          changed_at?: string
+          changed_by_user_id?: string | null
+          fee_config_id?: string | null
+          fee_key: string
+          id?: string
+          new_fee_percent: number
+          old_fee_percent: number
+        }
+        Update: {
+          change_reason?: string | null
+          changed_at?: string
+          changed_by_user_id?: string | null
+          fee_config_id?: string | null
+          fee_key?: string
+          id?: string
+          new_fee_percent?: number
+          old_fee_percent?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_fee_change_history_fee_config_id_fkey"
+            columns: ["fee_config_id"]
+            isOneToOne: false
+            referencedRelation: "payment_fee_configs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_fee_configs: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_name: string
+          fee_key: string
+          fee_percent: number
+          id: string
+          is_enabled: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_name: string
+          fee_key: string
+          fee_percent?: number
+          id?: string
+          is_enabled?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_name?: string
+          fee_key?: string
+          fee_percent?: number
+          id?: string
+          is_enabled?: boolean | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       payment_logs: {
         Row: {
           action: string
