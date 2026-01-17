@@ -7,7 +7,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   FileText, Building2, User, Calendar, 
   CheckCircle, Clock, Loader2, Lock, Shield, Scale,
@@ -208,7 +207,7 @@ export function AdminContractModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="p-0 gap-0 max-w-3xl w-[95vw] max-h-[90vh] flex flex-col overflow-hidden">
+      <DialogContent className="p-0 gap-0 max-w-3xl w-[95vw] h-[90vh] flex flex-col">
         {/* FIXED HEADER */}
         <div className="flex-shrink-0 border-b bg-background px-4 py-3 sm:px-6 sm:py-4">
           <div className="flex items-start justify-between gap-3">
@@ -232,7 +231,7 @@ export function AdminContractModal({
         </div>
 
         {/* SCROLLABLE BODY */}
-        <ScrollArea className="flex-1">
+        <div className="flex-1 overflow-y-auto min-h-0">
           <div className="px-4 py-4 sm:px-6 sm:py-6">
             {loading ? (
               <div className="flex justify-center py-12">
@@ -664,7 +663,7 @@ export function AdminContractModal({
               </div>
             )}
           </div>
-        </ScrollArea>
+        </div>
 
         {/* FIXED FOOTER */}
         <div className="flex-shrink-0 border-t bg-background px-4 py-3 sm:px-6">
