@@ -33,7 +33,7 @@ function isValidCurrency(value: unknown): value is string {
 }
 
 function isValidPaymentType(value: unknown): value is string {
-  const validTypes = ["freelancer_credits", "company_wallet", "contract_funding", "contract_payment"];
+  const validTypes = ["freelancer_credits", "company_wallet", "contract_funding", "contract_payment", "platform_credits", "company_credits"];
   return typeof value === 'string' && validTypes.includes(value);
 }
 
@@ -340,8 +340,10 @@ serve(async (req) => {
 
       const productName = paymentType === 'freelancer_credits' 
         ? `${creditsAmount} Créditos de Proposta`
-        : paymentType === 'company_wallet'
+        : paymentType === 'company_wallet' || paymentType === 'company_credits'
         ? `Adicionar Fundos na Carteira`
+        : paymentType === 'platform_credits'
+        ? `${creditsAmount} Créditos da Plataforma`
         : String(description) || "Pagamento Hookly";
 
       const session = await stripe.checkout.sessions.create({
