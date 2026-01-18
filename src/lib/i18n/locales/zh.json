@@ -6,7 +6,22 @@
     "pricing": "定价",
     "login": "登录",
     "signup": "开始使用",
-    "dashboard": "控制台"
+    "dashboard": "控制台",
+    "projects": "项目",
+    "proposals": "提案",
+    "talentPool": "人才库",
+    "messages": "消息",
+    "finances": "财务",
+    "settings": "设置",
+    "findProjects": "寻找项目",
+    "myProposals": "我的提案",
+    "earnings": "收入",
+    "certifications": "证书",
+    "invites": "邀请",
+    "verifiedCompanies": "认证企业",
+    "adminPanel": "管理面板",
+    "contracts": "合同",
+    "aiHelp": "AI助手"
   },
   "hero": {
     "badge": "最佳评级",
@@ -1087,5 +1102,20 @@
     "viewAll": "查看全部",
     "next": "下一步",
     "back": "返回"
+  },
+  "aiHelp": {
+    "title": "AI助手",
+    "subtitle": "问我任何关于HOOKLY的问题",
+    "welcomeMessage": "你好！👋 我是HOOKLY的虚拟助手。我在这里帮助您导航平台。我能帮您什么？",
+    "quickActionsLabel": "常见问题：",
+    "inputPlaceholder": "输入您的问题...",
+    "quickActions": {
+      "whereProjects": "我的项目在哪里？",
+      "howCreateProject": "如何创建项目？",
+      "whereProposals": "在哪里查看提案？",
+      "whereFinances": "我的财务在哪里？",
+      "howSendProposal": "如何发送提案？",
+      "whereEarnings": "我的收入在哪里？"
+    }
   }
 }

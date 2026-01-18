@@ -37,6 +37,7 @@ import {
   UserPlus,
   Shield,
   Building2,
+  HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
@@ -128,6 +129,7 @@ export function DashboardLayout() {
     { icon: MessageSquare, label: t("nav.messages"), path: "/messages" },
     { icon: FileText, label: t("nav.contracts"), path: "/contracts" },
     { icon: DollarSign, label: t("nav.finances"), path: "/finances" },
+    { icon: HelpCircle, label: t("nav.aiHelp"), path: "/help" },
     { icon: Settings, label: t("nav.settings"), path: "/settings" },
   ];
 
@@ -141,6 +143,7 @@ export function DashboardLayout() {
     { icon: DollarSign, label: t("nav.earnings"), path: "/earnings" },
     { icon: Building2, label: t("nav.verifiedCompanies"), path: "/verified-companies" },
     { icon: Award, label: t("nav.certifications"), path: "/certifications" },
+    { icon: HelpCircle, label: t("nav.aiHelp"), path: "/help" },
     { icon: Settings, label: t("nav.settings"), path: "/settings" },
   ];
 

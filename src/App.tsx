@@ -35,7 +35,7 @@ import ForCompanies from "./pages/ForCompanies";
 import ForFreelancers from "./pages/ForFreelancers";
 import Pricing from "./pages/Pricing";
 import HowItWorks from "./pages/HowItWorks";
-
+import AIHelp from "./pages/AIHelp";
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
@@ -145,6 +145,7 @@ const App = () => (
               <Route path="/settings" element={<Settings />} />
               <Route path="/contracts" element={<Contracts />} />
               <Route path="/companies/:userId" element={<CompanyProfile />} />
+              <Route path="/help" element={<AIHelp />} />
             </Route>
             
             {/* Catch-all */}
