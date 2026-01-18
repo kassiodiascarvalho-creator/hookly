@@ -76,7 +76,7 @@ export function CreditRevenueCards() {
       {/* Cards */}
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
         {/* Cash-in (Revenue) - values in CENTS, use formatMoneyFromCents */}
-        <Card className="border-green-200 bg-green-50/50 dark:border-green-900 dark:bg-green-950/20">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Receita (Cash-in)</CardTitle>
             <DollarSign className="h-4 w-4 text-green-600" />
@@ -124,7 +124,7 @@ export function CreditRevenueCards() {
         </Card>
 
         {/* Bonus Credits - INTEGER value, display as number */}
-        <Card className="border-purple-200 bg-purple-50/50 dark:border-purple-900 dark:bg-purple-950/20">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Bônus Concedidos</CardTitle>
             <Gift className="h-4 w-4 text-purple-600" />
