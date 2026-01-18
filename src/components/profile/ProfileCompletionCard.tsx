@@ -199,8 +199,8 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
         setBonusClaimed(true);
         setShowCelebration(true);
         toast({
-          title: "🎉 Parabéns!",
-          description: `Você completou 100% do perfil e ganhou ${bonusCredits} créditos!`,
+          title: t("profileCompletion.bonusClaimedTitle", "🎉 Parabéns!"),
+          description: t("profileCompletion.bonusClaimedDesc", { credits: bonusCredits }),
         });
         
         // Hide celebration after 5 seconds
@@ -236,14 +236,14 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
             </div>
           </div>
           <h3 className="text-lg font-bold text-green-600 mb-2">
-            🎉 Perfil 100% Completo!
+            {t("profileCompletion.celebrationTitle", "🎉 Perfil 100% Completo!")}
           </h3>
           <p className="text-sm text-muted-foreground mb-3">
-            Você ganhou <span className="font-bold text-primary">{bonusCredits} créditos</span> como recompensa!
+            {t("profileCompletion.celebrationDesc", { credits: bonusCredits })}
           </p>
           <Badge variant="default" className="gap-1">
             <Coins className="h-3 w-3" />
-            +{bonusCredits} Créditos
+            +{bonusCredits} {t("profileCompletion.credits", "Créditos")}
           </Badge>
         </CardContent>
       </Card>
@@ -277,7 +277,7 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
           {!bonusClaimed && bonusEnabled && bonusCredits > 0 && (
             <div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 mb-2 bg-amber-500/10 px-2 py-1 rounded">
               <Gift className="h-3 w-3" />
-              <span>Complete 100% e ganhe <strong>{bonusCredits} créditos!</strong></span>
+              <span>{t("profileCompletion.bonusIncentiveShort", { credits: bonusCredits })}</span>
             </div>
           )}
           <div className="relative h-2 bg-muted rounded-full overflow-hidden mb-3">
@@ -324,10 +324,10 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
             </div>
             <div className="flex-1">
               <p className="text-sm font-medium text-foreground">
-                Complete 100% e ganhe <span className="text-primary font-bold">{bonusCredits} créditos!</span>
+                {t("profileCompletion.bonusIncentive", { credits: bonusCredits })}
               </p>
               <p className="text-xs text-muted-foreground">
-                Use para enviar propostas e destacar seu perfil
+                {t("profileCompletion.bonusIncentiveDesc")}
               </p>
             </div>
             <Coins className="h-5 w-5 text-amber-500" />

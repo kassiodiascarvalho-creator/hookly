@@ -1002,5 +1002,74 @@
     "ctaTitle": "Prêt à Commencer ?",
     "ctaSubtitle": "Rejoignez des milliers d'entreprises et de freelances à succès",
     "ctaButton": "Créer un Compte Gratuit"
+  },
+  "dashboard": {
+    "companySubtitle": "Gérez vos projets et embauches",
+    "unreadMessages": "Messages",
+    "recentActivity": "Activité Récente",
+    "noActivity": "Aucune activité récente",
+    "createFirstProject": "Créer votre premier projet",
+    "company": {
+      "title": "Tableau de Bord Entreprise",
+      "welcome": "Bienvenue",
+      "stats": {
+        "activeProjects": "Projets Actifs",
+        "totalSpent": "Total Dépensé",
+        "hiredTalents": "Talents Embauchés",
+        "pendingProposals": "Propositions en Attente"
+      },
+      "quickActions": {
+        "title": "Actions Rapides",
+        "newProject": "Nouveau Projet",
+        "findTalent": "Trouver un Talent",
+        "viewMessages": "Voir les Messages"
+      }
+    },
+    "freelancer": {
+      "title": "Tableau de Bord Freelance",
+      "welcome": "Bienvenue",
+      "stats": {
+        "activeProjects": "Projets Actifs",
+        "totalEarned": "Total Gagné",
+        "proposalsSent": "Propositions Envoyées",
+        "profileViews": "Vues du Profil"
+      },
+      "quickActions": {
+        "title": "Actions Rapides",
+        "findProjects": "Trouver des Projets",
+        "myProposals": "Mes Propositions",
+        "viewMessages": "Voir les Messages"
+      }
+    }
+  },
+  "projects": {
+    "validation": {
+      "titleMin": "Le titre doit contenir au moins 5 caractères",
+      "descriptionMin": "La description doit contenir au moins 20 caractères",
+      "categoryRequired": "Veuillez sélectionner une catégorie",
+      "budgetMinMax": "Le budget minimum ne peut pas être supérieur au maximum"
+    }
+  },
+  "profileCompletion": {
+    "title": "Complétez Votre Profil",
+    "complete": "Complet",
+    "completeNow": "Compléter Maintenant",
+    "almostThere": "Presque là ! Vous êtes très proche de compléter votre profil.",
+    "keepGoing": "Continuez à compléter votre profil pour augmenter vos chances.",
+    "nextSteps": "Prochaines étapes",
+    "completed": "Complétés",
+    "bonusClaimedTitle": "🎉 Félicitations !",
+    "bonusClaimedDesc": "Vous avez complété 100% de votre profil et gagné {{credits}} crédits !",
+    "celebrationTitle": "🎉 Profil 100% Complet !",
+    "celebrationDesc": "Vous avez gagné {{credits}} crédits en récompense !",
+    "credits": "Crédits",
+    "bonusIncentiveShort": "Complétez 100% et gagnez {{credits}} crédits !",
+    "bonusIncentive": "Complétez 100% et gagnez {{credits}} crédits !",
+    "bonusIncentiveDesc": "Utilisez pour envoyer des propositions et mettre en valeur votre profil"
+  },
+  "common": {
+    "viewAll": "Voir Tout",
+    "next": "Suivant",
+    "back": "Retour"
   }
 }

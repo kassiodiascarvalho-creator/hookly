@@ -15,14 +15,7 @@ import { z } from "zod";
 import { CurrencySelect } from "@/components/CurrencySelect";
 import { getCurrencySymbol } from "@/lib/formatMoney";
 
-const projectSchema = z.object({
-  title: z.string().min(5, "Title must be at least 5 characters").max(100),
-  description: z.string().min(20, "Description must be at least 20 characters").max(5000),
-  category: z.string().min(1, "Please select a category"),
-  budget_min: z.number().min(0).optional(),
-  budget_max: z.number().min(0).optional(),
-  currency: z.string().min(1, "Please select a currency"),
-});
+// Schema defined but validation done manually with i18n messages below
 
 const categoryKeys = [
   "development",
@@ -90,13 +83,13 @@ export default function ProjectNew() {
     const newErrors: Record<string, string> = {};
     
     if (formData.title.length < 5) {
-      newErrors.title = "Title must be at least 5 characters";
+      newErrors.title = t("projects.validation.titleMin");
     }
     if (formData.description.length < 20) {
-      newErrors.description = "Description must be at least 20 characters";
+      newErrors.description = t("projects.validation.descriptionMin");
     }
     if (!formData.category) {
-      newErrors.category = "Please select a category";
+      newErrors.category = t("projects.validation.categoryRequired");
     }
     
     setErrors(newErrors);
@@ -108,7 +101,7 @@ export default function ProjectNew() {
     const max = formData.budget_max ? parseFloat(formData.budget_max) : undefined;
     
     if (min && max && min > max) {
-      setErrors({ budget: "Minimum budget cannot be greater than maximum" });
+      setErrors({ budget: t("projects.validation.budgetMinMax") });
       return false;
     }
     
