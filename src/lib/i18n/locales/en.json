@@ -163,7 +163,13 @@
     "notFound": "Project not found",
     "markComplete": "Mark as Complete",
     "completed": "Project marked as completed!",
-    "currency": "Currency"
+    "currency": "Currency",
+    "validation": {
+      "titleMin": "Title must be at least 5 characters",
+      "descriptionMin": "Description must be at least 20 characters",
+      "categoryRequired": "Please select a category",
+      "budgetMinMax": "Minimum budget cannot be greater than maximum"
+    }
   },
   "proposals": {
     "received": "Proposals Received",
@@ -554,17 +560,42 @@
   "dashboard": {
     "welcome": "Welcome Back!",
     "companySubtitle": "Manage your projects and find the best talent",
-    "activeProjects": "Active Projects",
-    "proposals": "Proposals Received",
-    "messages": "Unread Messages",
-    "totalSpent": "Total Spent",
-    "quickActions": "Quick Actions",
-    "postProject": "Post New Project",
-    "browseTalent": "Browse Talent",
-    "viewMessages": "View Messages",
+    "unreadMessages": "Messages",
     "recentActivity": "Recent Activity",
     "noActivity": "No recent activity yet",
-    "createFirstProject": "Create your first project"
+    "createFirstProject": "Create your first project",
+    "company": {
+      "title": "Company Dashboard",
+      "welcome": "Welcome Back",
+      "stats": {
+        "activeProjects": "Active Projects",
+        "totalSpent": "Total Spent",
+        "hiredTalents": "Hired Talents",
+        "pendingProposals": "Pending Proposals"
+      },
+      "quickActions": {
+        "title": "Quick Actions",
+        "newProject": "New Project",
+        "findTalent": "Find Talent",
+        "viewMessages": "View Messages"
+      }
+    },
+    "freelancer": {
+      "title": "Freelancer Dashboard",
+      "welcome": "Welcome Back",
+      "stats": {
+        "activeProjects": "Active Projects",
+        "totalEarned": "Total Earned",
+        "proposalsSent": "Proposals Sent",
+        "profileViews": "Profile Views"
+      },
+      "quickActions": {
+        "title": "Quick Actions",
+        "findProjects": "Find Projects",
+        "myProposals": "My Proposals",
+        "viewMessages": "View Messages"
+      }
+    }
   },
   "freelancerDashboard": {
     "welcome": "Welcome Back!",
@@ -1270,5 +1301,38 @@
     "ctaTitle": "Ready to Get Started?",
     "ctaSubtitle": "Join thousands of successful companies and freelancers",
     "ctaButton": "Create Free Account"
+  },
+  "profileCompletion": {
+    "title": "Complete Your Profile",
+    "complete": "Complete",
+    "completeNow": "Complete Now",
+    "almostThere": "Almost there! You're very close to completing your profile.",
+    "keepGoing": "Keep completing your profile to increase your chances.",
+    "nextSteps": "Next steps",
+    "completed": "Completed",
+    "bonusClaimedTitle": "🎉 Congratulations!",
+    "bonusClaimedDesc": "You completed 100% of your profile and earned {{credits}} credits!",
+    "celebrationTitle": "🎉 Profile 100% Complete!",
+    "celebrationDesc": "You earned {{credits}} credits as a reward!",
+    "credits": "Credits",
+    "bonusIncentiveShort": "Complete 100% and earn {{credits}} credits!",
+    "bonusIncentive": "Complete 100% and earn {{credits}} credits!",
+    "bonusIncentiveDesc": "Use to send proposals and highlight your profile",
+    "addAvatar": "Add profile picture",
+    "addName": "Add your name",
+    "addTitle": "Add your professional title",
+    "addBio": "Add a bio",
+    "addLocation": "Add your location",
+    "addSkills": "Add your skills",
+    "addHourlyRate": "Set your hourly rate",
+    "addPortfolio": "Add portfolio items",
+    "addPayoutMethod": "Configure payout method",
+    "addLogo": "Add company logo",
+    "addCompanyName": "Add company name",
+    "addAbout": "Add about company",
+    "addWebsite": "Add website",
+    "addCompanySize": "Add company size",
+    "addIndustry": "Add industry",
+    "addPaymentMethod": "Add payment method"
   }
 }

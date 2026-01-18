@@ -1002,5 +1002,74 @@
     "ctaTitle": "Bereit Loszulegen?",
     "ctaSubtitle": "Schließen Sie sich Tausenden von erfolgreichen Unternehmen und Freelancern an",
     "ctaButton": "Kostenloses Konto Erstellen"
+  },
+  "dashboard": {
+    "companySubtitle": "Verwalten Sie Ihre Projekte und Einstellungen",
+    "unreadMessages": "Nachrichten",
+    "recentActivity": "Letzte Aktivität",
+    "noActivity": "Keine aktuelle Aktivität",
+    "createFirstProject": "Erstellen Sie Ihr erstes Projekt",
+    "company": {
+      "title": "Unternehmens-Dashboard",
+      "welcome": "Willkommen zurück",
+      "stats": {
+        "activeProjects": "Aktive Projekte",
+        "totalSpent": "Gesamtausgaben",
+        "hiredTalents": "Eingestellte Talente",
+        "pendingProposals": "Ausstehende Vorschläge"
+      },
+      "quickActions": {
+        "title": "Schnellaktionen",
+        "newProject": "Neues Projekt",
+        "findTalent": "Talent Finden",
+        "viewMessages": "Nachrichten Anzeigen"
+      }
+    },
+    "freelancer": {
+      "title": "Freelancer-Dashboard",
+      "welcome": "Willkommen zurück",
+      "stats": {
+        "activeProjects": "Aktive Projekte",
+        "totalEarned": "Gesamtverdienst",
+        "proposalsSent": "Gesendete Vorschläge",
+        "profileViews": "Profilaufrufe"
+      },
+      "quickActions": {
+        "title": "Schnellaktionen",
+        "findProjects": "Projekte Finden",
+        "myProposals": "Meine Vorschläge",
+        "viewMessages": "Nachrichten Anzeigen"
+      }
+    }
+  },
+  "projects": {
+    "validation": {
+      "titleMin": "Der Titel muss mindestens 5 Zeichen haben",
+      "descriptionMin": "Die Beschreibung muss mindestens 20 Zeichen haben",
+      "categoryRequired": "Bitte wählen Sie eine Kategorie",
+      "budgetMinMax": "Das Mindestbudget kann nicht größer als das Maximum sein"
+    }
+  },
+  "profileCompletion": {
+    "title": "Vervollständigen Sie Ihr Profil",
+    "complete": "Vollständig",
+    "completeNow": "Jetzt Vervollständigen",
+    "almostThere": "Fast geschafft! Sie sind sehr nah daran, Ihr Profil zu vervollständigen.",
+    "keepGoing": "Vervollständigen Sie Ihr Profil, um Ihre Chancen zu erhöhen.",
+    "nextSteps": "Nächste Schritte",
+    "completed": "Abgeschlossen",
+    "bonusClaimedTitle": "🎉 Herzlichen Glückwunsch!",
+    "bonusClaimedDesc": "Sie haben 100% Ihres Profils vervollständigt und {{credits}} Credits verdient!",
+    "celebrationTitle": "🎉 Profil 100% Vollständig!",
+    "celebrationDesc": "Sie haben {{credits}} Credits als Belohnung verdient!",
+    "credits": "Credits",
+    "bonusIncentiveShort": "Vervollständigen Sie 100% und verdienen Sie {{credits}} Credits!",
+    "bonusIncentive": "Vervollständigen Sie 100% und verdienen Sie {{credits}} Credits!",
+    "bonusIncentiveDesc": "Nutzen Sie sie, um Vorschläge zu senden und Ihr Profil hervorzuheben"
+  },
+  "common": {
+    "viewAll": "Alle Anzeigen",
+    "next": "Weiter",
+    "back": "Zurück"
   }
 }

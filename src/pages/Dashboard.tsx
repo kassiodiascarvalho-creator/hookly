@@ -10,23 +10,23 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   const stats = [
-    { label: t("dashboard.activeProjects"), value: "0", icon: Briefcase, color: "text-primary" },
-    { label: t("dashboard.proposals"), value: "0", icon: Users, color: "text-secondary" },
-    { label: t("dashboard.messages"), value: "0", icon: MessageSquare, color: "text-accent-foreground" },
-    { label: t("dashboard.totalSpent"), value: "$0", icon: DollarSign, color: "text-green-500" },
+    { label: t("dashboard.company.stats.activeProjects"), value: "0", icon: Briefcase, color: "text-primary" },
+    { label: t("dashboard.company.stats.pendingProposals"), value: "0", icon: Users, color: "text-secondary" },
+    { label: t("dashboard.unreadMessages", "Mensagens"), value: "0", icon: MessageSquare, color: "text-accent-foreground" },
+    { label: t("dashboard.company.stats.totalSpent"), value: "$0", icon: DollarSign, color: "text-green-500" },
   ];
 
   const quickActions = [
-    { label: t("dashboard.postProject"), icon: Plus, path: "/projects/new", primary: true },
-    { label: t("dashboard.browseTalent"), icon: Users, path: "/talent-pool" },
-    { label: t("dashboard.viewMessages"), icon: MessageSquare, path: "/messages" },
+    { label: t("dashboard.company.quickActions.newProject"), icon: Plus, path: "/projects/new", primary: true },
+    { label: t("dashboard.company.quickActions.findTalent"), icon: Users, path: "/talent-pool" },
+    { label: t("dashboard.company.quickActions.viewMessages"), icon: MessageSquare, path: "/messages" },
   ];
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">{t("dashboard.welcome")}</h1>
-        <p className="text-muted-foreground mt-1">{t("dashboard.companySubtitle")}</p>
+        <h1 className="text-3xl font-bold text-foreground">{t("dashboard.company.welcome")}</h1>
+        <p className="text-muted-foreground mt-1">{t("dashboard.companySubtitle", "Gerencie seus projetos e contratações")}</p>
       </div>
 
       {/* Stats Grid */}
@@ -54,7 +54,7 @@ export default function Dashboard() {
       {/* Quick Actions */}
       <Card className="border-border/50">
         <CardHeader>
-          <CardTitle>{t("dashboard.quickActions")}</CardTitle>
+          <CardTitle>{t("dashboard.company.quickActions.title")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-3">
@@ -76,7 +76,7 @@ export default function Dashboard() {
       {/* Recent Activity */}
       <Card className="border-border/50">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>{t("dashboard.recentActivity")}</CardTitle>
+          <CardTitle>{t("dashboard.recentActivity", "Atividade Recente")}</CardTitle>
           <Button variant="ghost" size="sm" className="gap-1">
             {t("common.viewAll")}
             <ArrowRight className="h-4 w-4" />
@@ -85,9 +85,9 @@ export default function Dashboard() {
         <CardContent>
           <div className="text-center py-8 text-muted-foreground">
             <Briefcase className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p>{t("dashboard.noActivity")}</p>
+            <p>{t("dashboard.noActivity", "Nenhuma atividade recente")}</p>
             <Button variant="link" onClick={() => navigate("/projects/new")} className="mt-2">
-              {t("dashboard.createFirstProject")}
+              {t("dashboard.createFirstProject", "Criar seu primeiro projeto")}
             </Button>
           </div>
         </CardContent>

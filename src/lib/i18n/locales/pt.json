@@ -510,6 +510,11 @@
     }
   },
   "dashboard": {
+    "companySubtitle": "Gerencie seus projetos e contratações",
+    "unreadMessages": "Mensagens",
+    "recentActivity": "Atividade Recente",
+    "noActivity": "Nenhuma atividade recente",
+    "createFirstProject": "Criar seu primeiro projeto",
     "company": {
       "title": "Painel da Empresa",
       "welcome": "Bem-vindo de volta",
@@ -616,6 +621,12 @@
       "publish": "Publicar Projeto",
       "next": "Próximo",
       "back": "Voltar"
+    },
+    "validation": {
+      "titleMin": "O título deve ter pelo menos 5 caracteres",
+      "descriptionMin": "A descrição deve ter pelo menos 20 caracteres",
+      "categoryRequired": "Por favor, selecione uma categoria",
+      "budgetMinMax": "O orçamento mínimo não pode ser maior que o máximo"
     }
   },
   "proposals": {
@@ -1294,5 +1305,38 @@
     "ctaTitle": "Pronto para Começar?",
     "ctaSubtitle": "Junte-se a milhares de empresas e freelancers de sucesso",
     "ctaButton": "Criar Conta Grátis"
+  },
+  "profileCompletion": {
+    "title": "Complete seu Perfil",
+    "complete": "Completo",
+    "completeNow": "Completar Agora",
+    "almostThere": "Quase lá! Você está muito perto de completar seu perfil.",
+    "keepGoing": "Continue completando seu perfil para aumentar suas chances.",
+    "nextSteps": "Próximos passos",
+    "completed": "Concluídos",
+    "bonusClaimedTitle": "🎉 Parabéns!",
+    "bonusClaimedDesc": "Você completou 100% do perfil e ganhou {{credits}} créditos!",
+    "celebrationTitle": "🎉 Perfil 100% Completo!",
+    "celebrationDesc": "Você ganhou {{credits}} créditos como recompensa!",
+    "credits": "Créditos",
+    "bonusIncentiveShort": "Complete 100% e ganhe {{credits}} créditos!",
+    "bonusIncentive": "Complete 100% e ganhe {{credits}} créditos!",
+    "bonusIncentiveDesc": "Use para enviar propostas e destacar seu perfil",
+    "addAvatar": "Adicionar foto de perfil",
+    "addName": "Adicionar seu nome",
+    "addTitle": "Adicionar seu título profissional",
+    "addBio": "Adicionar uma biografia",
+    "addLocation": "Adicionar sua localização",
+    "addSkills": "Adicionar suas habilidades",
+    "addHourlyRate": "Definir sua taxa por hora",
+    "addPortfolio": "Adicionar itens ao portfólio",
+    "addPayoutMethod": "Configurar método de saque",
+    "addLogo": "Adicionar logo da empresa",
+    "addCompanyName": "Adicionar nome da empresa",
+    "addAbout": "Adicionar sobre a empresa",
+    "addWebsite": "Adicionar website",
+    "addCompanySize": "Adicionar tamanho da empresa",
+    "addIndustry": "Adicionar setor",
+    "addPaymentMethod": "Adicionar método de pagamento"
   }
 }
