@@ -35,37 +35,14 @@ export function usePlatformCredits(): PlatformCreditsData {
 
     setLoading(true);
 
-    // Fetch balance from platform_credits table (the correct source)
+    // platform_credits is the SINGLE source of truth for platform credits
     const { data: platformCredits } = await supabase
       .from("platform_credits")
       .select("balance")
       .eq("user_id", user.id)
       .maybeSingle();
 
-    // If no record exists, also check freelancer_profiles as fallback
-    // and ensure we create a platform_credits record
-    if (platformCredits) {
-      setBalance(platformCredits.balance || 0);
-    } else {
-      // Fallback: check freelancer_profiles for proposal_credits
-      const { data: profile } = await supabase
-        .from("freelancer_profiles")
-        .select("proposal_credits")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      const creditsFromProfile = profile?.proposal_credits || 0;
-      setBalance(creditsFromProfile);
-
-      // Create platform_credits record if user has credits in profile
-      if (creditsFromProfile > 0) {
-        await supabase.from("platform_credits").upsert({
-          user_id: user.id,
-          user_type: "freelancer",
-          balance: creditsFromProfile,
-        }, { onConflict: "user_id" });
-      }
-    }
+    setBalance(platformCredits?.balance || 0);
 
     // Fetch action costs
     const { data: costs } = await supabase
