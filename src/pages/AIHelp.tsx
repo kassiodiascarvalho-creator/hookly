@@ -227,17 +227,22 @@ export default function AIHelp() {
         { label: t("aiHelp.quickActions.whereEarnings"), question: "Onde estão meus ganhos?" },
       ];
 
-  // Parse markdown links in messages and render as beautiful buttons
+  // Parse markdown links and remove asterisks from messages
   const parseMessageContent = (content: string) => {
+    // First, remove markdown bold/italic asterisks
+    let cleanContent = content
+      .replace(/\*\*([^*]+)\*\*/g, '$1') // Remove **bold**
+      .replace(/\*([^*]+)\*/g, '$1');    // Remove *italic*
+    
     const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
     const parts: (string | JSX.Element)[] = [];
     let lastIndex = 0;
     let match;
 
-    while ((match = linkRegex.exec(content)) !== null) {
+    while ((match = linkRegex.exec(cleanContent)) !== null) {
       // Add text before the link
       if (match.index > lastIndex) {
-        parts.push(content.slice(lastIndex, match.index));
+        parts.push(cleanContent.slice(lastIndex, match.index));
       }
       
       // Add a beautiful button-style link
@@ -254,11 +259,11 @@ export default function AIHelp() {
       lastIndex = match.index + match[0].length;
     }
 
-    if (lastIndex < content.length) {
-      parts.push(content.slice(lastIndex));
+    if (lastIndex < cleanContent.length) {
+      parts.push(cleanContent.slice(lastIndex));
     }
 
-    return parts.length > 0 ? parts : content;
+    return parts.length > 0 ? parts : cleanContent;
   };
 
   const handleBack = () => {
