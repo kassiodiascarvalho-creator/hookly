@@ -82,15 +82,20 @@ export function CreditRevenueCards() {
             <DollarSign className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {formatMoneyFromCents(summary.total_revenue_by_currency[primaryCurrency] || 0, primaryCurrency)}
-            </div>
-            {currencies.length > 1 && (
-              <div className="flex flex-wrap gap-1.5 mt-1">
-                {currencies.filter(c => c !== primaryCurrency).map((currency) => (
-                  <Badge key={currency} variant="secondary" className="text-xs font-medium">
+            {currencies.length === 0 ? (
+              <div className="text-2xl font-bold text-green-600">
+                {formatMoneyFromCents(0, "USD")}
+              </div>
+            ) : currencies.length === 1 ? (
+              <div className="text-2xl font-bold text-green-600">
+                {formatMoneyFromCents(summary.total_revenue_by_currency[primaryCurrency] || 0, primaryCurrency)}
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {currencies.map((currency) => (
+                  <div key={currency} className="text-lg font-bold text-green-600">
                     {formatMoneyFromCents(summary.total_revenue_by_currency[currency], currency)}
-                  </Badge>
+                  </div>
                 ))}
               </div>
             )}
@@ -141,15 +146,20 @@ export function CreditRevenueCards() {
             <TrendingUp className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
-              {formatMoneyFromCents(summary.average_ticket_by_currency[primaryCurrency] || 0, primaryCurrency)}
-            </div>
-            {currencies.length > 1 && (
-              <div className="flex flex-wrap gap-1.5 mt-1">
-                {currencies.filter(c => c !== primaryCurrency).map((currency) => (
-                  <Badge key={currency} variant="secondary" className="text-xs font-medium">
+            {currencies.length === 0 ? (
+              <div className="text-2xl font-bold text-orange-600">
+                {formatMoneyFromCents(0, "USD")}
+              </div>
+            ) : currencies.length === 1 ? (
+              <div className="text-2xl font-bold text-orange-600">
+                {formatMoneyFromCents(summary.average_ticket_by_currency[primaryCurrency] || 0, primaryCurrency)}
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {currencies.map((currency) => (
+                  <div key={currency} className="text-lg font-bold text-orange-600">
                     {formatMoneyFromCents(summary.average_ticket_by_currency[currency], currency)}
-                  </Badge>
+                  </div>
                 ))}
               </div>
             )}
