@@ -163,7 +163,13 @@
     "notFound": "Projeto não encontrado",
     "markComplete": "Marcar como Concluído",
     "completed": "Projeto marcado como concluído!",
-    "currency": "Moeda"
+    "currency": "Moeda",
+    "validation": {
+      "titleMin": "O título deve ter pelo menos 5 caracteres",
+      "descriptionMin": "A descrição deve ter pelo menos 20 caracteres",
+      "categoryRequired": "Por favor, selecione uma categoria",
+      "budgetMinMax": "O orçamento mínimo não pode ser maior que o máximo"
+    }
   },
   "proposals": {
     "received": "Propostas Recebidas",
@@ -593,40 +599,6 @@
       "payments": "Pagamentos",
       "leads": "Leads",
       "viewSite": "Ver Site"
-    }
-  },
-  "projects": {
-    "title": "Projetos",
-    "new": "Novo Projeto",
-    "filters": {
-      "all": "Todos",
-      "draft": "Rascunho",
-      "open": "Aberto",
-      "inProgress": "Em Andamento",
-      "completed": "Concluído"
-    },
-    "create": {
-      "title": "Criar Novo Projeto",
-      "step1": "Info Básica",
-      "step2": "Orçamento & KPIs",
-      "step3": "Visualização",
-      "projectTitle": "Título do Projeto",
-      "description": "Descrição",
-      "category": "Categoria",
-      "budgetMin": "Orçamento Mínimo",
-      "budgetMax": "Orçamento Máximo",
-      "kpis": "Indicadores de Performance",
-      "addKpi": "Adicionar KPI",
-      "saveDraft": "Salvar Rascunho",
-      "publish": "Publicar Projeto",
-      "next": "Próximo",
-      "back": "Voltar"
-    },
-    "validation": {
-      "titleMin": "O título deve ter pelo menos 5 caracteres",
-      "descriptionMin": "A descrição deve ter pelo menos 20 caracteres",
-      "categoryRequired": "Por favor, selecione uma categoria",
-      "budgetMinMax": "O orçamento mínimo não pode ser maior que o máximo"
     }
   },
   "proposals": {

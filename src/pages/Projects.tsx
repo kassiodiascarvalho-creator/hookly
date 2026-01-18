@@ -8,7 +8,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Briefcase, Clock, CheckCircle, FileText, Loader2 } from "lucide-react";
-import { format } from "date-fns";
+import { format, Locale } from "date-fns";
+import { ptBR, enUS, es, fr, de, zhCN } from "date-fns/locale";
+
+const dateLocales: Record<string, Locale> = {
+  pt: ptBR,
+  en: enUS,
+  es: es,
+  fr: fr,
+  de: de,
+  zh: zhCN,
+};
 
 interface Project {
   id: string;
@@ -30,12 +40,14 @@ const statusConfig = {
 };
 
 export default function Projects() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<string>("all");
+  
+  const currentLocale = dateLocales[i18n.language] || enUS;
 
   useEffect(() => {
     if (user) fetchProjects();
@@ -155,7 +167,7 @@ export default function Projects() {
                               <span className="bg-muted px-2 py-1 rounded">{t(`categories.${project.category}`, project.category)}</span>
                             )}
                             <span>{formatBudget(project.budget_min, project.budget_max)}</span>
-                            <span>{format(new Date(project.created_at), "MMM d, yyyy")}</span>
+                            <span>{format(new Date(project.created_at), "d MMM yyyy", { locale: currentLocale })}</span>
                           </div>
                         </div>
                         
