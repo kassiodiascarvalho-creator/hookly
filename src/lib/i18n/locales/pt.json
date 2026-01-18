@@ -114,7 +114,8 @@
     "invites": "Convites",
     "verifiedCompanies": "Empresas Verificadas",
     "adminPanel": "Painel Admin",
-    "contracts": "Contratos"
+    "contracts": "Contratos",
+    "aiHelp": "Ajuda IA"
   },
   "projects": {
     "title": "Projetos",
@@ -1310,5 +1311,20 @@
     "addCompanySize": "Adicionar tamanho da empresa",
     "addIndustry": "Adicionar setor",
     "addPaymentMethod": "Adicionar método de pagamento"
+  },
+  "aiHelp": {
+    "title": "Ajuda IA",
+    "subtitle": "Pergunte-me qualquer coisa sobre a HOOKLY",
+    "welcomeMessage": "Olá! 👋 Sou o assistente virtual da HOOKLY. Estou aqui para ajudar você a navegar na plataforma, tirar dúvidas e encontrar o que precisa. Como posso ajudar?",
+    "quickActionsLabel": "Perguntas frequentes:",
+    "inputPlaceholder": "Digite sua pergunta...",
+    "quickActions": {
+      "whereProjects": "Onde estão meus projetos?",
+      "howCreateProject": "Como criar um projeto?",
+      "whereProposals": "Onde vejo as propostas?",
+      "whereFinances": "Onde estão minhas finanças?",
+      "howSendProposal": "Como enviar uma proposta?",
+      "whereEarnings": "Onde estão meus ganhos?"
+    }
   }
 }

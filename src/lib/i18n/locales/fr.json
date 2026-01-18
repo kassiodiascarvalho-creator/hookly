@@ -6,7 +6,22 @@
     "pricing": "Tarifs",
     "login": "Connexion",
     "signup": "Commencer",
-    "dashboard": "Tableau de bord"
+    "dashboard": "Tableau de bord",
+    "projects": "Projets",
+    "proposals": "Propositions",
+    "talentPool": "Talents",
+    "messages": "Messages",
+    "finances": "Finances",
+    "settings": "Paramètres",
+    "findProjects": "Trouver des Projets",
+    "myProposals": "Mes Propositions",
+    "earnings": "Revenus",
+    "certifications": "Certifications",
+    "invites": "Invitations",
+    "verifiedCompanies": "Entreprises Vérifiées",
+    "adminPanel": "Panneau Admin",
+    "contracts": "Contrats",
+    "aiHelp": "Aide IA"
   },
   "hero": {
     "badge": "Meilleur Noté",
@@ -1071,5 +1086,20 @@
     "viewAll": "Voir Tout",
     "next": "Suivant",
     "back": "Retour"
+  },
+  "aiHelp": {
+    "title": "Aide IA",
+    "subtitle": "Posez-moi des questions sur HOOKLY",
+    "welcomeMessage": "Bonjour! 👋 Je suis l'assistant virtuel de HOOKLY. Je suis là pour vous aider à naviguer sur la plateforme. Comment puis-je vous aider?",
+    "quickActionsLabel": "Questions fréquentes:",
+    "inputPlaceholder": "Tapez votre question...",
+    "quickActions": {
+      "whereProjects": "Où sont mes projets?",
+      "howCreateProject": "Comment créer un projet?",
+      "whereProposals": "Où voir les propositions?",
+      "whereFinances": "Où sont mes finances?",
+      "howSendProposal": "Comment envoyer une proposition?",
+      "whereEarnings": "Où sont mes revenus?"
+    }
   }
 }
