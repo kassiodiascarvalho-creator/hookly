@@ -299,12 +299,41 @@ export async function fetchUserCreditStats(userId: string): Promise<UserCreditSt
     name = data?.company_name || data?.contact_name || "";
   }
 
-  // Fetch current balance from platform_credits (1 credit = $1 USD)
-  const { data: creditBalance } = await supabase
+  // Fetch current balance (INTEGER credits: 1 credit = $1 USD)
+  // Primary: platform_credits.balance
+  // Fallback (legacy): freelancer_profiles.proposal_credits (when platform_credits row doesn't exist yet)
+  // This matches the user-facing balance logic in usePlatformCredits.
+  let currentBalance = 0;
+
+  const { data: platformCredits } = await supabase
     .from("platform_credits")
     .select("balance")
     .eq("user_id", userId)
-    .single();
+    .maybeSingle();
+
+  if (platformCredits) {
+    currentBalance = platformCredits.balance || 0;
+  } else if (profile.user_type === "freelancer") {
+    const { data: freelancerProfile } = await supabase
+      .from("freelancer_profiles")
+      .select("proposal_credits")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    currentBalance = freelancerProfile?.proposal_credits || 0;
+
+    // Normalize: create platform_credits row when we find legacy credits
+    if (currentBalance > 0) {
+      await supabase.from("platform_credits").upsert(
+        {
+          user_id: userId,
+          user_type: "freelancer",
+          balance: currentBalance,
+        },
+        { onConflict: "user_id" }
+      );
+    }
+  }
 
   // Try credit_purchases first
   const { data: creditPurchases } = await supabase
@@ -340,7 +369,7 @@ export async function fetchUserCreditStats(userId: string): Promise<UserCreditSt
       total_paid_usd: totalPaidUsd,
       total_paid_by_currency: totalPaidByCurrency,
       total_credits_granted: totalCreditsGranted,
-      current_balance: creditBalance?.balance || 0,
+      current_balance: currentBalance,
       last_purchase_at: confirmedPurchases[0]?.confirmed_at || null,
       purchases: confirmedPurchases,
       is_fallback: false,
@@ -396,7 +425,7 @@ export async function fetchUserCreditStats(userId: string): Promise<UserCreditSt
     total_paid_usd: totalPaidUsd,
     total_paid_by_currency: totalPaidByCurrency,
     total_credits_granted: totalCreditsGranted,
-    current_balance: creditBalance?.balance || 0,
+    current_balance: currentBalance,
     last_purchase_at: payments[0]?.paid_at || null,
     purchases: mappedPurchases,
     is_fallback: true,
