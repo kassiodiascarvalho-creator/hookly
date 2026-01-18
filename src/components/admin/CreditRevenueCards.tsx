@@ -1,11 +1,20 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DollarSign, Coins, Gift, Receipt, TrendingUp } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { DollarSign, Coins, Gift, TrendingUp, AlertCircle } from "lucide-react";
 import { formatMoneyFromCents } from "@/lib/formatMoney";
-import { useCreditPurchases, CreditPurchaseSummary } from "@/hooks/useCreditPurchases";
+import { useCreditPurchases } from "@/hooks/useCreditPurchases";
 import { useState } from "react";
+
+/**
+ * MONETARY UNITS USED IN THIS COMPONENT:
+ * 
+ * - total_revenue_by_currency: values in CENTS (minor units) → use formatMoneyFromCents
+ * - average_ticket_by_currency: values in CENTS (minor units) → use formatMoneyFromCents
+ * - total_credits_granted: INTEGER (1 credit = $1 USD) → display as number
+ * - total_bonus_credits: INTEGER (1 credit = $1 USD) → display as number
+ */
 
 type DateFilter = "7days" | "30days" | "all";
 
@@ -15,12 +24,6 @@ export function CreditRevenueCards() {
 
   const currencies = Object.keys(summary.total_revenue_by_currency);
   const primaryCurrency = currencies.includes("USD") ? "USD" : currencies[0] || "USD";
-
-  const dateFilterLabels = {
-    "7days": "7 dias",
-    "30days": "30 dias",
-    "all": "Todo período",
-  };
 
   if (loading) {
     return (
@@ -47,9 +50,17 @@ export function CreditRevenueCards() {
 
   return (
     <div className="space-y-4">
-      {/* Header with date filter */}
+      {/* Header with date filter and fallback indicator */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <h3 className="text-lg font-semibold">Receita com Créditos (Compras)</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-lg font-semibold">Receita com Créditos (Compras)</h3>
+          {summary.is_fallback && (
+            <Badge variant="outline" className="text-xs gap-1">
+              <AlertCircle className="h-3 w-3" />
+              Dados de unified_payments
+            </Badge>
+          )}
+        </div>
         <Select value={dateFilter} onValueChange={(v) => setDateFilter(v as DateFilter)}>
           <SelectTrigger className="w-32">
             <SelectValue />
@@ -64,14 +75,18 @@ export function CreditRevenueCards() {
 
       {/* Cards */}
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-        {/* Cash-in (Revenue) */}
+        {/* Cash-in (Revenue) - values in CENTS, use formatMoneyFromCents */}
         <Card className="border-green-200 bg-green-50/50 dark:border-green-900 dark:bg-green-950/20">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Receita (Cash-in)</CardTitle>
             <DollarSign className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            {currencies.length <= 1 ? (
+            {currencies.length === 0 ? (
+              <div className="text-2xl font-bold text-green-600">
+                {formatMoneyFromCents(0, "USD")}
+              </div>
+            ) : currencies.length === 1 ? (
               <div className="text-2xl font-bold text-green-600">
                 {formatMoneyFromCents(summary.total_revenue_by_currency[primaryCurrency] || 0, primaryCurrency)}
               </div>
@@ -90,7 +105,7 @@ export function CreditRevenueCards() {
           </CardContent>
         </Card>
 
-        {/* Credits Granted */}
+        {/* Credits Granted - INTEGER value, display as number */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Créditos Concedidos</CardTitle>
@@ -98,15 +113,17 @@ export function CreditRevenueCards() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
-              {summary.total_credits_granted.toLocaleString()}
+              {summary.is_fallback && summary.total_credits_granted === 0 
+                ? "—" 
+                : summary.total_credits_granted.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Unidades (base + bônus)
+              {summary.is_fallback ? "Não disponível no fallback" : "Unidades (base + bônus)"}
             </p>
           </CardContent>
         </Card>
 
-        {/* Bonus Credits */}
+        {/* Bonus Credits - INTEGER value, display as number */}
         <Card className="border-purple-200 bg-purple-50/50 dark:border-purple-900 dark:bg-purple-950/20">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Bônus Concedidos</CardTitle>
@@ -114,22 +131,26 @@ export function CreditRevenueCards() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-600">
-              {summary.total_bonus_credits.toLocaleString()}
+              {summary.is_fallback ? "—" : summary.total_bonus_credits.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Créditos extras gratuitos
+              {summary.is_fallback ? "Não disponível no fallback" : "Créditos extras gratuitos"}
             </p>
           </CardContent>
         </Card>
 
-        {/* Average Ticket */}
+        {/* Average Ticket - values in CENTS, use formatMoneyFromCents */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Ticket Médio</CardTitle>
             <TrendingUp className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
-            {currencies.length <= 1 ? (
+            {currencies.length === 0 ? (
+              <div className="text-2xl font-bold text-orange-600">
+                {formatMoneyFromCents(0, "USD")}
+              </div>
+            ) : currencies.length === 1 ? (
               <div className="text-2xl font-bold text-orange-600">
                 {formatMoneyFromCents(summary.average_ticket_by_currency[primaryCurrency] || 0, primaryCurrency)}
               </div>
