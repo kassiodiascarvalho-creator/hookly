@@ -21,7 +21,7 @@ function isValidAmount(value: unknown): value is number {
 }
 
 function isValidPaymentType(value: unknown): value is string {
-  const validTypes = ["freelancer_credits", "company_wallet", "contract_funding"];
+  const validTypes = ["freelancer_credits", "company_wallet", "contract_funding", "platform_credits", "company_credits"];
   return typeof value === 'string' && validTypes.includes(value);
 }
 
@@ -180,6 +180,8 @@ serve(async (req) => {
       ? `Fundos na Carteira - Hookly`
       : paymentType === 'contract_funding'
       ? String(description) || "Financiamento de Contrato - Hookly"
+      : (paymentType === 'platform_credits' || paymentType === 'company_credits')
+      ? `${creditsAmount} Créditos da Plataforma - Hookly`
       : String(description) || "Pagamento Hookly";
 
     // Get payer info (CPF is required for PIX)
