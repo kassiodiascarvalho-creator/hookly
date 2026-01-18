@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -19,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Loader2, Wallet, QrCode, CreditCard, Info } from "lucide-react";
+import { Plus, Loader2, Wallet, QrCode, CreditCard, Info, Gift, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { formatMoney } from "@/lib/formatMoney";
 import { PixPaymentModal } from "./PixPaymentModal";
@@ -27,9 +28,13 @@ import { CardPaymentModal } from "./CardPaymentModal";
 import { StripeCardModal } from "./StripeCardModal";
 import { getAllowedCurrencies, getCurrencyByCountry } from "@/lib/currencyByCountry";
 
-// Each credit costs $1 USD (or equivalent in local currency)
-const CREDIT_PRICE_USD = 1;
-const PRESET_CREDITS = [10, 25, 50, 100, 200];
+// Credit packages with discounts (same as freelancer)
+const CREDIT_PACKAGES = [
+  { credits: 10, price: 10, bonus: 0, label: "Básico" },
+  { credits: 25, price: 22.5, bonus: 2.5, label: "Econômico", discount: "10%" },
+  { credits: 50, price: 40, bonus: 10, label: "Popular", discount: "20%", popular: true },
+  { credits: 100, price: 70, bonus: 30, label: "Profissional", discount: "30%" },
+];
 
 type PaymentMethod = "pix" | "card";
 
@@ -41,7 +46,9 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [credits, setCredits] = useState("");
+  const [selectedPackage, setSelectedPackage] = useState(CREDIT_PACKAGES[0]);
+  const [customAmount, setCustomAmount] = useState<string>("");
+  const [useCustomAmount, setUseCustomAmount] = useState(false);
   const [currency, setCurrency] = useState("USD");
   const [country, setCountry] = useState<string | null>(null);
   const [allowedCurrencies, setAllowedCurrencies] = useState<string[]>(["USD"]);
@@ -122,9 +129,14 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
   const canUsePix = isBRL;
   const canUseTransparentCard = isBRL && mpPublicKey.length > 0;
 
-  const numCredits = parseInt(credits) || 0;
-  // Calculate price: 1 credit = $1 USD (no FX fees for platform credits)
-  const priceUsd = numCredits * CREDIT_PRICE_USD;
+  // Calculate amounts based on package or custom
+  const customNumAmount = parseFloat(customAmount) || 0;
+  const priceToCharge = useCustomAmount ? customNumAmount : selectedPackage.price;
+  const creditsToReceive = useCustomAmount ? customNumAmount : selectedPackage.credits;
+  const bonusCredits = useCustomAmount ? 0 : selectedPackage.bonus;
+  // Ensure totalCredits is always an integer (round down bonus decimals)
+  const totalCredits = Math.floor(creditsToReceive + bonusCredits);
+  const amountInCents = Math.round(priceToCharge * 100);
 
   const handleCurrencyChange = (newCurrency: string) => {
     setCurrency(newCurrency);
@@ -135,9 +147,14 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
     }
   };
 
+  const handleSelectPackage = (pkg: typeof CREDIT_PACKAGES[0]) => {
+    setSelectedPackage(pkg);
+    setUseCustomAmount(false);
+  };
+
   const handleAddCredits = async () => {
-    if (numCredits < 1) {
-      toast.error("Selecione pelo menos 1 crédito");
+    if (priceToCharge < 1) {
+      toast.error("Selecione um pacote ou digite um valor válido (mínimo 1)");
       return;
     }
 
@@ -149,19 +166,16 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
     setLoading(true);
 
     try {
-      // Amount in cents (1 credit = $1 = 100 cents)
-      const amountCents = priceUsd * 100;
-      
       if (paymentMethod === "pix" && canUsePix) {
         // Use PIX checkout
         const { data, error } = await supabase.functions.invoke("create-pix-payment", {
           body: {
             paymentType: "platform_credits",
             userType: "company",
-            amountCents: amountCents,
+            amountCents: amountInCents,
             currency,
-            creditsAmount: numCredits,
-            description: `Comprar ${numCredits} créditos da plataforma`,
+            creditsAmount: totalCredits,
+            description: `${totalCredits} Créditos da Plataforma`,
           },
         });
 
@@ -176,7 +190,7 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
         }
       } else if (paymentMethod === "card" && canUseTransparentCard) {
         // Open transparent card checkout modal
-        setCardAmountCents(amountCents);
+        setCardAmountCents(amountInCents);
         setOpen(false);
         setCardModalOpen(true);
       } else {
@@ -186,10 +200,10 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
           body: {
             paymentType: "platform_credits",
             userType: "company",
-            amountCents: amountCents,
-            creditsAmount: numCredits,
+            amountCents: amountInCents,
+            creditsAmount: totalCredits,
             currency,
-            description: `Comprar ${numCredits} créditos da plataforma`,
+            description: `${totalCredits} Créditos da Plataforma`,
           },
         });
 
@@ -222,20 +236,18 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
   };
 
   const handleRegeneratePixPayment = async () => {
-    if (numCredits < 1) return;
+    if (priceToCharge < 1) return;
 
     setLoading(true);
     try {
-      const amountCents = priceUsd * 100;
-      
       const { data, error } = await supabase.functions.invoke("create-pix-payment", {
         body: {
           paymentType: "platform_credits",
           userType: "company",
-          amountCents: amountCents,
+          amountCents: amountInCents,
           currency,
-          creditsAmount: numCredits,
-          description: `Comprar ${numCredits} créditos da plataforma`,
+          creditsAmount: totalCredits,
+          description: `${totalCredits} Créditos da Plataforma`,
         },
       });
 
@@ -271,30 +283,27 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
               Comprar Créditos
             </DialogTitle>
             <DialogDescription>
-              Créditos para uso exclusivo na plataforma • Não sacável
+              Escolha a quantidade de créditos para usar na plataforma
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            {/* Info Banner */}
-            <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 flex items-start gap-2">
-              <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-              <div className="text-sm text-blue-800">
-                <p className="font-medium">Créditos da Plataforma</p>
-                <p className="text-blue-700 mt-0.5">
-                  Usados para funcionalidades internas como ver dados de freelancers, 
-                  destacar vagas e mais. Não podem ser usados para pagar freelancers.
-                </p>
+            {/* Info banner - no FX fees */}
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
+              <AlertCircle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+              <div className="text-sm">
+                <p className="font-medium text-primary">Créditos exclusivos da plataforma</p>
+                <p className="text-muted-foreground">Sem taxa de câmbio • Não sacável • Uso interno</p>
               </div>
             </div>
 
             {/* Currency Selection */}
             {allowedCurrencies.length > 1 && (
               <div className="space-y-2">
-                <Label>Moeda de pagamento</Label>
+                <Label>Moeda para compra</Label>
                 <Select value={currency} onValueChange={handleCurrencyChange}>
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Selecione a moeda" />
                   </SelectTrigger>
                   <SelectContent>
                     {allowedCurrencies.map((c) => (
@@ -307,34 +316,62 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
               </div>
             )}
 
-            {/* Preset credit amounts */}
+            {/* Credit Packages */}
             <div className="space-y-2">
-              <Label>Quantidade de créditos</Label>
-              <div className="flex flex-wrap gap-2">
-                {PRESET_CREDITS.map((preset) => (
-                  <Button
-                    key={preset}
-                    variant={credits === preset.toString() ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setCredits(preset.toString())}
+              <Label>Pacotes de Créditos</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {CREDIT_PACKAGES.map((pkg) => (
+                  <button
+                    key={pkg.credits}
+                    onClick={() => handleSelectPackage(pkg)}
+                    className={`
+                      p-3 rounded-lg border-2 text-left transition-all relative
+                      ${!useCustomAmount && selectedPackage.credits === pkg.credits
+                        ? "border-primary bg-primary/5" 
+                        : "border-border hover:border-primary/50"
+                      }
+                    `}
                   >
-                    {preset} créditos
-                  </Button>
+                    {pkg.popular && (
+                      <Badge className="absolute -top-2 -right-2 text-xs">Popular</Badge>
+                    )}
+                    <div className="flex flex-col">
+                      <span className="text-lg font-bold">{pkg.credits}</span>
+                      <span className="text-xs text-muted-foreground">créditos</span>
+                      <span className="text-sm font-semibold mt-1">
+                        {formatMoney(pkg.price, currency)}
+                      </span>
+                      {pkg.bonus > 0 && (
+                        <div className="flex items-center gap-1 mt-1">
+                          <Gift className="h-3 w-3 text-green-600" />
+                          <span className="text-xs text-green-600">
+                            +{pkg.bonus} bônus ({pkg.discount} off)
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </button>
                 ))}
               </div>
             </div>
 
-            {/* Custom amount */}
+            {/* Custom amount option */}
             <div className="space-y-2">
-              <Label>Quantidade personalizada</Label>
+              <Label>Ou digite um valor personalizado</Label>
               <Input
                 type="number"
                 min="1"
                 step="1"
-                value={credits}
-                onChange={(e) => setCredits(e.target.value)}
-                placeholder="100"
+                value={customAmount}
+                onChange={(e) => {
+                  setCustomAmount(e.target.value);
+                  setUseCustomAmount(e.target.value.length > 0 && parseFloat(e.target.value) > 0);
+                }}
+                placeholder="Ex: 75 créditos"
               />
+              <p className="text-xs text-muted-foreground">
+                1 crédito = {formatMoney(1, currency)} (sem desconto)
+              </p>
             </div>
 
             {/* Payment Method Selection */}
@@ -379,28 +416,42 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
               </div>
             </div>
 
-            {/* Summary */}
-            {numCredits > 0 && (
+            {/* Summary - NO FX fees */}
+            {priceToCharge > 0 && (
               <div className="rounded-lg bg-muted p-4 space-y-2">
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between">
                   <span className="text-muted-foreground">Créditos</span>
-                  <span className="text-xl font-bold">{numCredits}</span>
+                  <span className="font-medium">{creditsToReceive} créditos</span>
                 </div>
-                <div className="flex justify-between text-sm border-t pt-2">
-                  <span className="text-muted-foreground">Valor total</span>
-                  <span className="font-semibold">
-                    {formatMoney(priceUsd, "USD")}
+                {bonusCredits > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span className="flex items-center gap-1">
+                      <Gift className="h-3 w-3" />
+                      Bônus
+                    </span>
+                    <span className="font-medium">+{bonusCredits} créditos</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Total de créditos</span>
+                  <span className="font-bold">{totalCredits} créditos</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Pagamento</span>
+                  <span className="font-medium">{paymentMethod === "pix" ? "PIX" : "Cartão"}</span>
+                </div>
+                <div className="border-t pt-2 mt-2 flex justify-between">
+                  <span className="font-semibold">Você paga</span>
+                  <span className="text-xl font-bold text-primary">
+                    {formatMoney(priceToCharge, currency)}
                   </span>
                 </div>
-                <p className="text-xs text-muted-foreground text-center pt-1">
-                  1 crédito = $1.00 USD • Sem taxas adicionais
-                </p>
               </div>
             )}
 
             <Button
               onClick={handleAddCredits}
-              disabled={loading || numCredits < 1}
+              disabled={loading || priceToCharge < 1}
               className="w-full"
               size="lg"
             >
@@ -441,8 +492,8 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
         publicKey={mpPublicKey}
         paymentType="platform_credits"
         userType="company"
-        creditsAmount={numCredits}
-        description={`Comprar ${numCredits} créditos da plataforma`}
+        creditsAmount={totalCredits}
+        description={`${totalCredits} Créditos da Plataforma`}
         onPaymentConfirmed={handlePaymentConfirmed}
       />
 
@@ -452,9 +503,9 @@ export function CompanyAddFundsDialog({ onSuccess }: CompanyAddFundsDialogProps)
           open={stripeModalOpen}
           onOpenChange={setStripeModalOpen}
           clientSecret={stripeClientSecret}
-          amount={numCredits * 100} // 1 credit = $1 = 100 cents
+          amount={amountInCents}
           currency={currency}
-          description={`Comprar ${numCredits} créditos da plataforma`}
+          description={`${totalCredits} Créditos da Plataforma`}
           onPaymentConfirmed={handlePaymentConfirmed}
         />
       )}
