@@ -114,21 +114,23 @@ export function FreelancerCreditsCard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-8">
       {/* Credits Balance Card */}
       <Card className="relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/10 to-transparent rounded-bl-full" />
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-          <CardTitle className="flex items-center gap-2">
-              <Coins className="h-5 w-5 text-primary" />
-              Créditos de Proposta
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="min-w-0">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Coins className="h-5 w-5 text-primary shrink-0" />
+              <span className="truncate">Créditos de Proposta</span>
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="mt-1">
               Use créditos para enviar propostas aos projetos
             </CardDescription>
           </div>
-          <BuyCreditsDialog onSuccess={fetchData} />
+          <div className="w-full sm:w-auto shrink-0">
+            <BuyCreditsDialog onSuccess={fetchData} />
+          </div>
         </CardHeader>
         <CardContent>
           {/* Info banner */}
@@ -140,9 +142,9 @@ export function FreelancerCreditsCard() {
             </div>
           </div>
 
-          <div className="flex items-baseline gap-2">
-            <span className="text-5xl font-bold">{credits}</span>
-            <span className="text-lg text-muted-foreground">
+          <div className="flex flex-wrap items-baseline gap-2">
+            <span className="text-4xl sm:text-5xl font-bold">{credits}</span>
+            <span className="text-base sm:text-lg text-muted-foreground">
               créditos disponíveis
             </span>
           </div>
@@ -183,25 +185,25 @@ export function FreelancerCreditsCard() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
             {CREDIT_PACKAGES.map((pkg) => (
               <div 
                 key={pkg.credits}
-                className={`p-4 rounded-lg border text-center relative ${
+                className={`p-3 sm:p-4 rounded-lg border text-center relative ${
                   pkg.popular ? "bg-primary/5 border-primary/20" : ""
                 }`}
               >
                 {pkg.popular && (
-                  <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 text-xs">Popular</Badge>
+                  <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] sm:text-xs px-1.5">Popular</Badge>
                 )}
-                <p className="text-2xl font-bold">{pkg.credits}</p>
-                <p className="text-sm text-muted-foreground">créditos</p>
-                <p className="text-lg font-semibold mt-1">R$ {pkg.price.toFixed(2).replace('.', ',')}</p>
+                <p className="text-xl sm:text-2xl font-bold">{pkg.credits}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">créditos</p>
+                <p className="text-sm sm:text-lg font-semibold mt-1">R$ {pkg.price.toFixed(2).replace('.', ',')}</p>
                 {pkg.bonus > 0 && (
                   <div className="flex items-center justify-center gap-1 mt-1">
                     <Gift className="h-3 w-3 text-green-600" />
-                    <span className="text-xs text-green-600">
-                      +{pkg.bonus} bônus ({pkg.discount})
+                    <span className="text-[10px] sm:text-xs text-green-600">
+                      +{pkg.bonus} ({pkg.discount})
                     </span>
                   </div>
                 )}
@@ -221,24 +223,24 @@ export function FreelancerCreditsCard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {transactions.map((tx) => (
                 <div
                   key={tx.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
+                  className="flex items-center justify-between p-2 sm:p-3 rounded-lg bg-muted/50 gap-2"
                 >
-                  <div>
-                    <p className="font-medium">{getReasonLabel(tx.action)}</p>
-                    <p className="text-sm text-muted-foreground">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-sm sm:text-base truncate">{getReasonLabel(tx.action)}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       {format(new Date(tx.created_at), "dd/MM/yyyy HH:mm")}
                     </p>
                   </div>
-                  <div className="text-right">
-                    <p className={`font-semibold ${tx.amount > 0 ? "text-green-600" : "text-destructive"}`}>
+                  <div className="text-right shrink-0">
+                    <p className={`font-semibold text-sm sm:text-base ${tx.amount > 0 ? "text-green-600" : "text-destructive"}`}>
                       {tx.amount > 0 ? "+" : ""}{tx.amount}
                     </p>
                     {tx.balance_after !== null && (
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">
                         Saldo: {tx.balance_after}
                       </p>
                     )}
