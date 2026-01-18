@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Loader2, MessageCircle, User, Sparkles } from "lucide-react";
+import { Send, Loader2, MessageCircle, User, Sparkles, ArrowLeft, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 interface Message {
@@ -227,7 +227,7 @@ export default function AIHelp() {
         { label: t("aiHelp.quickActions.whereEarnings"), question: "Onde estão meus ganhos?" },
       ];
 
-  // Parse markdown links in messages
+  // Parse markdown links in messages and render as beautiful buttons
   const parseMessageContent = (content: string) => {
     const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
     const parts: (string | JSX.Element)[] = [];
@@ -235,16 +235,20 @@ export default function AIHelp() {
     let match;
 
     while ((match = linkRegex.exec(content)) !== null) {
+      // Add text before the link
       if (match.index > lastIndex) {
         parts.push(content.slice(lastIndex, match.index));
       }
+      
+      // Add a beautiful button-style link
       parts.push(
         <Link 
           key={match.index} 
           to={match[2]} 
-          className="text-primary underline hover:text-primary/80 font-medium"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 my-1 mx-0.5 bg-primary text-primary-foreground rounded-full text-xs font-medium hover:bg-primary/90 transition-colors shadow-sm"
         >
           {match[1]}
+          <ExternalLink className="h-3 w-3" />
         </Link>
       );
       lastIndex = match.index + match[0].length;
@@ -257,11 +261,23 @@ export default function AIHelp() {
     return parts.length > 0 ? parts : content;
   };
 
+  const handleBack = () => {
+    navigate(-1);
+  };
+
   return (
     <div className="flex flex-col h-screen bg-background">
       {/* Header */}
       <header className="flex-shrink-0 border-b bg-card px-4 py-3">
         <div className="flex items-center gap-3">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={handleBack}
+            className="shrink-0"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
           <Logo size="sm" />
           <div className="flex-1">
             <h1 className="font-semibold text-foreground flex items-center gap-2">
