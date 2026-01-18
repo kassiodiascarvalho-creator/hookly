@@ -300,40 +300,14 @@ export async function fetchUserCreditStats(userId: string): Promise<UserCreditSt
   }
 
   // Fetch current balance (INTEGER credits: 1 credit = $1 USD)
-  // Primary: platform_credits.balance
-  // Fallback (legacy): freelancer_profiles.proposal_credits (when platform_credits row doesn't exist yet)
-  // This matches the user-facing balance logic in usePlatformCredits.
-  let currentBalance = 0;
-
+  // platform_credits is the SINGLE source of truth for platform credits
   const { data: platformCredits } = await supabase
     .from("platform_credits")
     .select("balance")
     .eq("user_id", userId)
     .maybeSingle();
 
-  if (platformCredits) {
-    currentBalance = platformCredits.balance || 0;
-  } else if (profile.user_type === "freelancer") {
-    const { data: freelancerProfile } = await supabase
-      .from("freelancer_profiles")
-      .select("proposal_credits")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    currentBalance = freelancerProfile?.proposal_credits || 0;
-
-    // Normalize: create platform_credits row when we find legacy credits
-    if (currentBalance > 0) {
-      await supabase.from("platform_credits").upsert(
-        {
-          user_id: userId,
-          user_type: "freelancer",
-          balance: currentBalance,
-        },
-        { onConflict: "user_id" }
-      );
-    }
-  }
+  const currentBalance = platformCredits?.balance || 0;
 
   // Try credit_purchases first
   const { data: creditPurchases } = await supabase
