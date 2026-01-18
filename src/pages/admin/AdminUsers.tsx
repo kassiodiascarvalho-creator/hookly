@@ -49,17 +49,25 @@ export default function AdminUsers() {
 
         if (error) throw error;
 
+        // Credit payment types for fallback query
+        const CREDIT_PAYMENT_TYPES = [
+          "freelancer_credits",
+          "company_credits", 
+          "platform_credits",
+          "company_wallet"
+        ];
+
         // Enrich with credit data
         const enrichedProfiles = await Promise.all(
           (profilesData || []).map(async (profile) => {
-            // Fetch credit balance
+            // Fetch credit balance from platform_credits (1 credit = $1 USD)
             const { data: creditBalance } = await supabase
               .from("platform_credits")
               .select("balance")
               .eq("user_id", profile.user_id)
               .single();
 
-            // Fetch purchase stats
+            // Try credit_purchases first (primary source)
             const { data: purchases } = await supabase
               .from("credit_purchases")
               .select("amount_paid_minor, currency_paid, credits_granted, confirmed_at")
@@ -69,15 +77,37 @@ export default function AdminUsers() {
 
             const confirmedPurchases = purchases || [];
             
-            // Calculate totals
-            const totalPaidByCurrency: Record<string, number> = {};
+            // Calculate totals from credit_purchases or fallback to unified_payments
+            let totalPaidByCurrency: Record<string, number> = {};
             let totalCreditsGranted = 0;
+            let lastPurchaseAt: string | null = null;
 
-            confirmedPurchases.forEach((p) => {
-              const currency = p.currency_paid || "USD";
-              totalPaidByCurrency[currency] = (totalPaidByCurrency[currency] || 0) + p.amount_paid_minor;
-              totalCreditsGranted += p.credits_granted;
-            });
+            if (confirmedPurchases.length > 0) {
+              // Use credit_purchases data
+              confirmedPurchases.forEach((p) => {
+                const currency = p.currency_paid || "USD";
+                totalPaidByCurrency[currency] = (totalPaidByCurrency[currency] || 0) + p.amount_paid_minor;
+                totalCreditsGranted += p.credits_granted;
+              });
+              lastPurchaseAt = confirmedPurchases[0]?.confirmed_at || null;
+            } else {
+              // Fallback: use unified_payments
+              const { data: unifiedPayments } = await supabase
+                .from("unified_payments")
+                .select("payment_amount_minor, amount_cents, payment_currency, currency, credits_amount, paid_at")
+                .eq("user_id", profile.user_id)
+                .eq("status", "paid")
+                .in("payment_type", CREDIT_PAYMENT_TYPES)
+                .order("paid_at", { ascending: false });
+
+              (unifiedPayments || []).forEach((p) => {
+                const amount = p.payment_amount_minor ?? p.amount_cents;
+                const currency = p.payment_currency || p.currency || "USD";
+                totalPaidByCurrency[currency] = (totalPaidByCurrency[currency] || 0) + amount;
+                totalCreditsGranted += p.credits_amount || 0;
+              });
+              lastPurchaseAt = unifiedPayments?.[0]?.paid_at || null;
+            }
 
             return {
               ...profile,
@@ -85,7 +115,7 @@ export default function AdminUsers() {
               total_paid_by_currency: totalPaidByCurrency,
               total_credits_granted: totalCreditsGranted,
               current_balance: creditBalance?.balance || 0,
-              last_purchase_at: confirmedPurchases[0]?.confirmed_at || null,
+              last_purchase_at: lastPurchaseAt,
             };
           })
         );
