@@ -327,6 +327,48 @@ export type Database = {
           },
         ]
       }
+      credit_packages: {
+        Row: {
+          badge_text: string | null
+          bonus_credits: number
+          created_at: string | null
+          credits_amount: number
+          currency: string
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          price_cents: number
+          updated_at: string | null
+        }
+        Insert: {
+          badge_text?: string | null
+          bonus_credits?: number
+          created_at?: string | null
+          credits_amount: number
+          currency?: string
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          price_cents: number
+          updated_at?: string | null
+        }
+        Update: {
+          badge_text?: string | null
+          bonus_credits?: number
+          created_at?: string | null
+          credits_amount?: number
+          currency?: string
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          price_cents?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       credit_purchases: {
         Row: {
           amount_paid_minor: number
@@ -491,6 +533,7 @@ export type Database = {
           preferred_payout_currency: string | null
           proposal_credits: number
           skills: string[] | null
+          tier: string | null
           title: string | null
           total_revenue: number | null
           updated_at: string
@@ -514,6 +557,7 @@ export type Database = {
           preferred_payout_currency?: string | null
           proposal_credits?: number
           skills?: string[] | null
+          tier?: string | null
           title?: string | null
           total_revenue?: number | null
           updated_at?: string
@@ -537,6 +581,7 @@ export type Database = {
           preferred_payout_currency?: string | null
           proposal_credits?: number
           skills?: string[] | null
+          tier?: string | null
           title?: string | null
           total_revenue?: number | null
           updated_at?: string
@@ -1587,6 +1632,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tier_fee_overrides: {
+        Row: {
+          created_at: string | null
+          fee_key: string
+          fee_percent_override: number
+          id: string
+          tier: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          fee_key: string
+          fee_percent_override: number
+          id?: string
+          tier: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          fee_key?: string
+          fee_percent_override?: number
+          id?: string
+          tier?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       unified_payments: {
         Row: {
