@@ -3,13 +3,14 @@ import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Search, FileText, MessageSquare, DollarSign, ArrowRight, Briefcase, Loader2 } from "lucide-react";
+import { Search, FileText, MessageSquare, DollarSign, ArrowRight, Briefcase, Loader2, Rocket, Star, Sparkles, TrendingUp } from "lucide-react";
 import { AchievementsCard } from "@/components/achievements";
 import { ProfileCompletionCard } from "@/components/profile/ProfileCompletionCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { formatMoney, formatMoneyFromCents } from "@/lib/formatMoney";
 import { useLocalCurrencyDisplay } from "@/hooks/useLocalCurrencyDisplay";
+import { TrustMessage } from "@/components/trust/TrustBadge";
 
 interface DashboardStats {
   activeProjects: number;
@@ -17,6 +18,7 @@ interface DashboardStats {
   conversations: number;
   totalEarnings: number;
   currency: string;
+  profileCompletion: number;
 }
 
 export default function FreelancerDashboard() {
@@ -31,7 +33,8 @@ export default function FreelancerDashboard() {
     pendingProposals: 0,
     conversations: 0,
     totalEarnings: 0,
-    currency: "USD"
+    currency: "USD",
+    profileCompletion: 0
   });
 
   useEffect(() => {
@@ -51,7 +54,8 @@ export default function FreelancerDashboard() {
         conversationsResult,
         balanceResult,
         activeContractsResult,
-        paidWithdrawalsResult
+        paidWithdrawalsResult,
+        profileResult
       ] = await Promise.all([
         // Active contracts (accepted proposals = contracts created)
         supabase
@@ -93,7 +97,14 @@ export default function FreelancerDashboard() {
           .from("withdrawal_requests")
           .select("amount")
           .eq("freelancer_user_id", user.id)
-          .eq("status", "paid")
+          .eq("status", "paid"),
+        
+        // Profile completion
+        supabase
+          .from("profiles")
+          .select("profile_completion_percent")
+          .eq("user_id", user.id)
+          .maybeSingle()
       ]);
 
       // Calculate totals
@@ -111,13 +122,15 @@ export default function FreelancerDashboard() {
       // Total earnings in cents = available + contracts escrow + already withdrawn
       const totalEarningsCents = earningsAvailable + contractsEscrow + paidWithdrawals;
       const currency = balanceResult.data?.currency || "BRL";
+      const profileCompletion = profileResult.data?.profile_completion_percent || 0;
 
       setStats({
         activeProjects,
         pendingProposals,
         conversations,
         totalEarnings: totalEarningsCents, // Store in cents
-        currency
+        currency,
+        profileCompletion
       });
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
@@ -128,6 +141,9 @@ export default function FreelancerDashboard() {
 
   // Helper to render earnings with local currency approximation
   const renderEarningsValue = () => {
+    if (stats.totalEarnings === 0) {
+      return { usdValue: "—", localValue: null };
+    }
     const usdValue = formatMoneyFromCents(stats.totalEarnings, stats.currency);
     const localValue = localCurrency !== "USD" && !fxLoading && stats.totalEarnings > 0
       ? `≈ ${formatMoney(convertToLocal(stats.totalEarnings) || 0, localCurrency)}`
@@ -152,10 +168,44 @@ export default function FreelancerDashboard() {
   ];
 
   const quickActions = [
-    { label: t("freelancerDashboard.findProjects"), icon: Search, path: "/find-projects", primary: true },
-    { label: t("freelancerDashboard.myProposals"), icon: FileText, path: "/my-proposals" },
-    { label: t("freelancerDashboard.viewMessages"), icon: MessageSquare, path: "/messages" },
+    { label: t("dashboard.freelancer.quickActions.findProjects"), icon: Search, path: "/find-projects", primary: true },
+    { label: t("dashboard.freelancer.quickActions.myProposals"), icon: FileText, path: "/my-proposals" },
+    { label: t("dashboard.freelancer.quickActions.viewMessages"), icon: MessageSquare, path: "/messages" },
   ];
+
+  // Smart CTA based on user state
+  const getSmartCTA = () => {
+    if (stats.profileCompletion < 100) {
+      return {
+        message: t("dashboard.freelancer.emptyState.profileIncomplete"),
+        cta: t("dashboard.freelancer.emptyState.profileIncompleteCta"),
+        action: () => navigate("/settings"),
+        icon: Star,
+        variant: "warning" as const,
+      };
+    }
+    if (stats.pendingProposals === 0 && stats.activeProjects === 0) {
+      return {
+        message: t("dashboard.freelancer.emptyState.noProposals"),
+        cta: t("dashboard.freelancer.emptyState.noProposalsCta"),
+        action: () => navigate("/find-projects"),
+        icon: Rocket,
+        variant: "primary" as const,
+      };
+    }
+    if (stats.activeProjects > 0) {
+      return {
+        message: `${stats.activeProjects} projeto${stats.activeProjects > 1 ? 's' : ''} em andamento`,
+        cta: t("contracts.title", "Ver Contratos"),
+        action: () => navigate("/contracts"),
+        icon: TrendingUp,
+        variant: "success" as const,
+      };
+    }
+    return null;
+  };
+
+  const smartCTA = getSmartCTA();
 
   if (loading) {
     return (
@@ -200,13 +250,69 @@ export default function FreelancerDashboard() {
       {/* Profile Completion Card */}
       <ProfileCompletionCard />
 
+      {/* Smart CTA based on user state */}
+      {smartCTA && (
+        <Card className={`border-primary/20 ${
+          smartCTA.variant === 'warning' 
+            ? 'bg-gradient-to-r from-amber-500/5 to-orange-500/10 border-amber-500/20' 
+            : smartCTA.variant === 'success'
+            ? 'bg-gradient-to-r from-emerald-500/5 to-green-500/10 border-emerald-500/20'
+            : 'bg-gradient-to-r from-primary/5 to-primary/10'
+        }`}>
+          <CardContent className="py-6">
+            <div className="flex items-center gap-4">
+              <div className={`p-3 rounded-xl ${
+                smartCTA.variant === 'warning' ? 'bg-amber-500/10' : 
+                smartCTA.variant === 'success' ? 'bg-emerald-500/10' : 'bg-primary/10'
+              }`}>
+                <smartCTA.icon className={`h-6 w-6 ${
+                  smartCTA.variant === 'warning' ? 'text-amber-600' : 
+                  smartCTA.variant === 'success' ? 'text-emerald-600' : 'text-primary'
+                }`} />
+              </div>
+              <div className="flex-1">
+                <p className="font-medium text-foreground">{smartCTA.message}</p>
+                <p className="text-sm text-muted-foreground">{smartCTA.cta}</p>
+              </div>
+              <Button onClick={smartCTA.action} className="gap-2">
+                <Sparkles className="h-4 w-4" />
+                {smartCTA.cta}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Tier Upgrade Prompt (when profile is complete) */}
+      {stats.profileCompletion === 100 && (
+        <Card className="border-amber-500/20 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20">
+          <CardContent className="py-4">
+            <div className="flex items-center gap-4">
+              <div className="p-2 rounded-lg bg-amber-500/10">
+                <Star className="h-5 w-5 text-amber-600" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                    {t("dashboard.freelancer.tierUpgrade.currentTier")}
+                  </span>
+                </div>
+                <p className="text-xs text-amber-700/70 dark:text-amber-300/70">
+                  {t("dashboard.freelancer.tierUpgrade.upgradeHint")}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Achievements Card - My Evolution */}
       <AchievementsCard />
 
       {/* Quick Actions */}
       <Card className="border-border/50">
         <CardHeader>
-          <CardTitle>{t("freelancerDashboard.quickActions")}</CardTitle>
+          <CardTitle>{t("dashboard.freelancer.quickActions.title")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-3">
@@ -224,6 +330,11 @@ export default function FreelancerDashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Trust Message */}
+      <div className="flex justify-center">
+        <TrustMessage messageKey="releaseOnApproval" />
+      </div>
 
       {/* Available Projects Preview */}
       <Card className="border-border/50">
