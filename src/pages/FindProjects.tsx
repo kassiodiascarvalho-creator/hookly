@@ -8,8 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Briefcase, DollarSign, Calendar, Loader2, Filter } from "lucide-react";
-import { format } from "date-fns";
+import { Search, Briefcase, DollarSign, Calendar, Loader2, Filter, Rocket } from "lucide-react";
+import { format, isAfter } from "date-fns";
+import { BoostedBadge } from "@/components/projects/BoostedBadge";
 
 interface Project {
   id: string;
@@ -20,6 +21,7 @@ interface Project {
   budget_max: number | null;
   created_at: string;
   company_user_id: string;
+  boosted_until: string | null;
   company?: {
     company_name: string | null;
     logo_url: string | null;
@@ -94,16 +96,29 @@ export default function FindProjects() {
     }
   };
 
-  const filteredProjects = projects.filter((project) => {
-    const matchesSearch = searchQuery === "" || 
-      project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      project.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesCategory = selectedCategory === "All Categories" || 
-      project.category === selectedCategory;
-    
-    return matchesSearch && matchesCategory;
-  });
+  // Filter and sort: boosted projects first
+  const filteredProjects = projects
+    .filter((project) => {
+      const matchesSearch = searchQuery === "" || 
+        project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        project.description?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesCategory = selectedCategory === "All Categories" || 
+        project.category === selectedCategory;
+      
+      return matchesSearch && matchesCategory;
+    })
+    .sort((a, b) => {
+      const aIsBoosted = a.boosted_until && isAfter(new Date(a.boosted_until), new Date());
+      const bIsBoosted = b.boosted_until && isAfter(new Date(b.boosted_until), new Date());
+      
+      // Boosted projects come first
+      if (aIsBoosted && !bIsBoosted) return -1;
+      if (!aIsBoosted && bIsBoosted) return 1;
+      
+      // Then sort by created_at
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
 
   const formatBudget = (min: number | null, max: number | null) => {
     if (!min && !max) return t("projects.budgetNegotiable");
@@ -169,18 +184,22 @@ export default function FindProjects() {
           <div className="grid gap-4">
             {filteredProjects.map((project) => {
               const hasProposal = myProposalIds.has(project.id);
+              const isBoosted = project.boosted_until && isAfter(new Date(project.boosted_until), new Date());
               
               return (
                 <Card 
                   key={project.id} 
-                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  className={`cursor-pointer hover:shadow-md transition-shadow ${
+                    isBoosted ? "border-primary/30 bg-primary/5 ring-1 ring-primary/20" : ""
+                  }`}
                   onClick={() => navigate(`/project/${project.id}`)}
                 >
                   <CardContent className="p-6">
                     <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-3 mb-2">
+                        <div className="flex items-center gap-3 mb-2 flex-wrap">
                           <h3 className="font-semibold text-lg">{project.title}</h3>
+                          {isBoosted && <BoostedBadge />}
                           {hasProposal && (
                             <Badge variant="secondary">{t("findProjects.proposalSent")}</Badge>
                           )}

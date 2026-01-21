@@ -383,6 +383,22 @@
       "publish": "Publier le Projet",
       "next": "Suivant",
       "back": "Retour"
+    },
+    "boost": {
+      "title": "Projet en Vedette",
+      "label": "En Vedette",
+      "description": "Ce projet a été promu par l'entreprise avec des crédits Hookly.",
+      "tooltip": "Mettre le projet en haut de la liste pendant 7 jours",
+      "cta": "Mettre en vedette avec 10 crédits",
+      "confirmation": "Confirmer l'utilisation de {{credits}} crédits pour mettre ce projet en vedette pendant 7 jours ?",
+      "expired": "Mise en vedette expirée",
+      "activeUntil": "En vedette jusqu'au {{date}}",
+      "extend": "Prolonger la mise en vedette",
+      "cost": "Coût",
+      "duration": "Durée",
+      "success": "Projet mis en vedette avec succès !",
+      "error": "Erreur lors de la mise en vedette",
+      "insufficientCredits": "Crédits insuffisants"
     }
   },
   "proposals": {
@@ -453,8 +469,10 @@
     "back": "Retour",
     "next": "Suivant",
     "submit": "Soumettre",
-    "logout": "Déconnexion"
+    "logout": "Déconnexion",
+    "days": "jours"
   },
+  "credits": "crédits",
   "earnings": {
     "title": "Mes Revenus",
     "subtitle": "Gérez vos paiements et retraits",

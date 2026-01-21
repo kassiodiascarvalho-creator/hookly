@@ -383,6 +383,22 @@
       "publish": "Projekt Veröffentlichen",
       "next": "Weiter",
       "back": "Zurück"
+    },
+    "boost": {
+      "title": "Hervorgehobenes Projekt",
+      "label": "Hervorgehoben",
+      "description": "Dieses Projekt wurde vom Unternehmen mit Hookly-Credits beworben.",
+      "tooltip": "Projekt für 7 Tage an die Spitze der Liste setzen",
+      "cta": "Mit 10 Credits hervorheben",
+      "confirmation": "{{credits}} Credits verwenden, um dieses Projekt für 7 Tage hervorzuheben?",
+      "expired": "Hervorhebung abgelaufen",
+      "activeUntil": "Hervorgehoben bis {{date}}",
+      "extend": "Hervorhebung verlängern",
+      "cost": "Kosten",
+      "duration": "Dauer",
+      "success": "Projekt erfolgreich hervorgehoben!",
+      "error": "Fehler beim Hervorheben des Projekts",
+      "insufficientCredits": "Nicht genügend Credits"
     }
   },
   "proposals": {
@@ -453,8 +469,10 @@
     "back": "Zurück",
     "next": "Weiter",
     "submit": "Absenden",
-    "logout": "Abmelden"
+    "logout": "Abmelden",
+    "days": "Tage"
   },
+  "credits": "Credits",
   "earnings": {
     "title": "Meine Einnahmen",
     "subtitle": "Verwalten Sie Ihre Zahlungen und Auszahlungen",

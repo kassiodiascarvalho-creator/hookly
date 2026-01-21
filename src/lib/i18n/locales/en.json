@@ -208,6 +208,22 @@
       "descriptionMin": "Description must be at least 20 characters",
       "categoryRequired": "Please select a category",
       "budgetMinMax": "Minimum budget cannot be greater than maximum"
+    },
+    "boost": {
+      "title": "Boosted Project",
+      "label": "Boosted",
+      "description": "This project was promoted by the company using Hookly credits.",
+      "tooltip": "Boost project to the top of listings for 7 days",
+      "cta": "Boost with 10 credits",
+      "confirmation": "Confirm using {{credits}} credits to boost this project for 7 days?",
+      "expired": "Boost expired",
+      "activeUntil": "Boosted until {{date}}",
+      "extend": "Extend boost",
+      "cost": "Cost",
+      "duration": "Duration",
+      "success": "Project boosted successfully!",
+      "error": "Error boosting project",
+      "insufficientCredits": "Insufficient credits"
     }
   },
   "proposals": {
@@ -1009,8 +1025,10 @@
     "logout": "Log out",
     "goBack": "Go Back",
     "signOut": "Sign Out",
-    "comingSoon": "Coming soon"
+    "comingSoon": "Coming soon",
+    "days": "days"
   },
+  "credits": "credits",
   "admin": {
     "dashboard": "Admin Dashboard",
     "dashboardDescription": "Overview of platform statistics and management",
