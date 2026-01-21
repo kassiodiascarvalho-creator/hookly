@@ -383,6 +383,22 @@
       "publish": "Publicar Proyecto",
       "next": "Siguiente",
       "back": "Atrás"
+    },
+    "boost": {
+      "title": "Proyecto Destacado",
+      "label": "Destacado",
+      "description": "Este proyecto fue promovido por la empresa con créditos Hookly.",
+      "tooltip": "Destacar proyecto en la cima de la lista por 7 días",
+      "cta": "Destacar con 10 créditos",
+      "confirmation": "¿Confirmar uso de {{credits}} créditos para destacar este proyecto por 7 días?",
+      "expired": "Destaque expirado",
+      "activeUntil": "Destacado hasta {{date}}",
+      "extend": "Extender destaque",
+      "cost": "Costo",
+      "duration": "Duración",
+      "success": "¡Proyecto destacado con éxito!",
+      "error": "Error al destacar proyecto",
+      "insufficientCredits": "Créditos insuficientes"
     }
   },
   "proposals": {
@@ -453,8 +469,10 @@
     "back": "Atrás",
     "next": "Siguiente",
     "submit": "Enviar",
-    "logout": "Cerrar sesión"
+    "logout": "Cerrar sesión",
+    "days": "días"
   },
+  "credits": "créditos",
   "earnings": {
     "title": "Mis Ganancias",
     "subtitle": "Gestiona tus pagos y retiros",

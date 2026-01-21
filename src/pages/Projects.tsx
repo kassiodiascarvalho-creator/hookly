@@ -7,9 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Briefcase, Clock, CheckCircle, FileText, Loader2 } from "lucide-react";
-import { format, Locale } from "date-fns";
+import { Plus, Briefcase, Clock, CheckCircle, FileText, Loader2, Rocket } from "lucide-react";
+import { format, Locale, isAfter } from "date-fns";
 import { ptBR, enUS, es, fr, de, zhCN } from "date-fns/locale";
+import { ProjectBoostButton } from "@/components/projects/ProjectBoostButton";
+import { BoostedBadge } from "@/components/projects/BoostedBadge";
 
 const dateLocales: Record<string, Locale> = {
   pt: ptBR,
@@ -29,6 +31,7 @@ interface Project {
   budget_min: number | null;
   budget_max: number | null;
   created_at: string;
+  boosted_until: string | null;
   _count?: { proposals: number };
 }
 
@@ -138,22 +141,26 @@ export default function Projects() {
               {filteredProjects.map((project) => {
                 const config = statusConfig[project.status];
                 const StatusIcon = config.icon;
+                const isBoosted = project.boosted_until && isAfter(new Date(project.boosted_until), new Date());
                 
                 return (
                   <Card 
                     key={project.id} 
-                    className="cursor-pointer hover:shadow-md transition-shadow"
+                    className={`cursor-pointer hover:shadow-md transition-shadow ${
+                      isBoosted ? "border-primary/30 bg-primary/5" : ""
+                    }`}
                     onClick={() => navigate(`/projects/${project.id}`)}
                   >
                     <CardContent className="p-6">
                       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-3 mb-2">
+                          <div className="flex items-center gap-3 mb-2 flex-wrap">
                             <h3 className="font-semibold text-lg truncate">{project.title}</h3>
                             <Badge className={config.color}>
                               <StatusIcon className="h-3 w-3 mr-1" />
                               {t(config.labelKey)}
                             </Badge>
+                            {isBoosted && <BoostedBadge />}
                           </div>
                           
                           {project.description && (
@@ -168,6 +175,14 @@ export default function Projects() {
                             )}
                             <span>{formatBudget(project.budget_min, project.budget_max)}</span>
                             <span>{format(new Date(project.created_at), "d MMM yyyy", { locale: currentLocale })}</span>
+                            {isBoosted && project.boosted_until && (
+                              <span className="text-primary flex items-center gap-1">
+                                <Rocket className="h-3 w-3" />
+                                {t("projects.boost.activeUntil", { 
+                                  date: format(new Date(project.boosted_until), "dd/MM/yyyy") 
+                                })}
+                              </span>
+                            )}
                           </div>
                         </div>
                         
@@ -176,6 +191,15 @@ export default function Projects() {
                             <p className="text-2xl font-bold text-primary">{project._count?.proposals || 0}</p>
                             <p className="text-xs text-muted-foreground">{t("projects.proposals")}</p>
                           </div>
+                          {project.status === "open" && (
+                            <ProjectBoostButton
+                              projectId={project.id}
+                              projectStatus={project.status}
+                              boostedUntil={project.boosted_until}
+                              onBoostSuccess={fetchProjects}
+                              variant="compact"
+                            />
+                          )}
                         </div>
                       </div>
                     </CardContent>

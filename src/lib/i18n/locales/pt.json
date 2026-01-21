@@ -232,6 +232,22 @@
       "descriptionMin": "A descrição deve ter pelo menos 20 caracteres",
       "categoryRequired": "Por favor, selecione uma categoria",
       "budgetMinMax": "O orçamento mínimo não pode ser maior que o máximo"
+    },
+    "boost": {
+      "title": "Projeto Destacado",
+      "label": "Destacado",
+      "description": "Este projeto foi promovido pela empresa com créditos Hookly.",
+      "tooltip": "Destacar projeto no topo da listagem por 7 dias",
+      "cta": "Destacar com 10 créditos",
+      "confirmation": "Confirmar uso de {{credits}} créditos para destacar este projeto por 7 dias?",
+      "expired": "Destaque expirado",
+      "activeUntil": "Destacado até {{date}}",
+      "extend": "Estender destaque",
+      "cost": "Custo",
+      "duration": "Duração",
+      "success": "Projeto destacado com sucesso!",
+      "error": "Erro ao destacar projeto",
+      "insufficientCredits": "Créditos insuficientes"
     }
   },
   "proposals": {
@@ -1072,8 +1088,10 @@
     "logout": "Sair",
     "goBack": "Voltar",
     "signOut": "Sair",
-    "comingSoon": "Em breve"
+    "comingSoon": "Em breve",
+    "days": "dias"
   },
+  "credits": "créditos",
   "admin": {
     "dashboard": "Painel Admin",
     "dashboardDescription": "Visão geral das estatísticas e gerenciamento da plataforma",

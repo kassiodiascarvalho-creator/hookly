@@ -131,6 +131,7 @@ export const PLATFORM_ACTIONS = {
   VIEW_COMPANY_DATA: "view_company_data",
   HIGHLIGHT_PROPOSAL: "highlight_proposal",
   BOOST_PROFILE: "boost_profile",
+  BOOST_PROJECT: "boost_project",
 } as const;
 
 export type PlatformActionKey = typeof PLATFORM_ACTIONS[keyof typeof PLATFORM_ACTIONS];

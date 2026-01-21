@@ -1462,6 +1462,44 @@ export type Database = {
         }
         Relationships: []
       }
+      project_actions_log: {
+        Row: {
+          action: string
+          created_at: string
+          credits_used: number | null
+          id: string
+          metadata: Json | null
+          project_id: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          credits_used?: number | null
+          id?: string
+          metadata?: Json | null
+          project_id: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          credits_used?: number | null
+          id?: string
+          metadata?: Json | null
+          project_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_actions_log_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_invites: {
         Row: {
           company_user_id: string
@@ -1505,6 +1543,7 @@ export type Database = {
       }
       projects: {
         Row: {
+          boosted_until: string | null
           budget_max: number | null
           budget_min: number | null
           category: string | null
@@ -1519,6 +1558,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          boosted_until?: string | null
           budget_max?: number | null
           budget_min?: number | null
           category?: string | null
@@ -1533,6 +1573,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          boosted_until?: string | null
           budget_max?: number | null
           budget_min?: number | null
           category?: string | null
