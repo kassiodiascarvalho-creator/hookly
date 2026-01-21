@@ -1,5 +1,6 @@
 import { formatMoney } from "@/lib/formatMoney";
 import { useTranslation } from "react-i18next";
+import { Shield } from "lucide-react";
 
 interface FxFeeBreakdownProps {
   amount: number;
@@ -30,21 +31,22 @@ export function FxFeeBreakdown({
     <div className="rounded-lg bg-muted p-4 space-y-2">
       {/* Amount being sent */}
       <div className="flex justify-between">
-        <span className="text-muted-foreground">Você envia</span>
+        <span className="text-muted-foreground">{t("payments.breakdown.youSend")}</span>
         <span className="font-medium">{formatMoney(amount, currency)}</span>
       </div>
 
-      {/* Conversion fee */}
+      {/* Conversion fee - using strategic terminology */}
       <div className="flex justify-between text-sm">
-        <span className="text-muted-foreground">
-          Taxa de conversão ({spreadPercentDisplay}%)
+        <span className="text-muted-foreground flex items-center gap-1.5">
+          <Shield className="h-3.5 w-3.5 text-emerald-500" />
+          {t("payments.breakdown.currencyProtection", { percent: spreadPercentDisplay })}
         </span>
-        <span className="text-destructive">- {formatMoney(feeAmount, currency)}</span>
+        <span className="text-muted-foreground">- {formatMoney(feeAmount, currency)}</span>
       </div>
 
       {/* Amount after fee */}
       <div className="flex justify-between border-t pt-2 mt-2">
-        <span className="text-muted-foreground">Valor que será convertido</span>
+        <span className="text-muted-foreground">{t("payments.breakdown.convertedAmount")}</span>
         <span className="text-lg font-bold text-primary">
           {formatMoney(amountAfterFee, currency)}
         </span>
@@ -52,12 +54,18 @@ export function FxFeeBreakdown({
 
       {/* Currency and payment method */}
       <div className="flex justify-between text-sm pt-1">
-        <span className="text-muted-foreground">Moeda</span>
+        <span className="text-muted-foreground">{t("payments.breakdown.currency")}</span>
         <span>{currency}</span>
       </div>
       <div className="flex justify-between text-sm">
-        <span className="text-muted-foreground">Pagamento</span>
-        <span>{paymentMethod === "pix" ? "PIX" : "Cartão"}</span>
+        <span className="text-muted-foreground">{t("payments.breakdown.paymentMethod")}</span>
+        <span>{paymentMethod === "pix" ? "PIX" : t("payments.breakdown.card")}</span>
+      </div>
+
+      {/* Trust message */}
+      <div className="flex items-center gap-2 pt-2 text-xs text-emerald-600 dark:text-emerald-400">
+        <Shield className="h-3.5 w-3.5" />
+        <span>{t("trust.messages.secureTransaction")}</span>
       </div>
     </div>
   );

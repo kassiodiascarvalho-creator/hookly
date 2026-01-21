@@ -1,17 +1,41 @@
 {
+  "trust": {
+    "badges": {
+      "escrow": "Pagamento Protegido",
+      "protection": "Transação Segura",
+      "secure": "Verificado",
+      "verified": "Perfil Verificado",
+      "boost": "Destaque",
+      "premium": "Premium",
+      "control": "Controle Total"
+    },
+    "messages": {
+      "escrowProtection": "Proteção Hookly: Receba apenas quando o trabalho for entregue.",
+      "releaseOnApproval": "Seu dinheiro seguro até o aceite final.",
+      "fundsSecure": "Liberação apenas com sua confirmação.",
+      "creditsFlexible": "Créditos não usados podem ser transferidos ou usados em outro projeto.",
+      "verifiedTalent": "Freelancer verificado pela Hookly",
+      "secureTransaction": "Transação protegida pela Hookly"
+    },
+    "banners": {
+      "escrowActive": "Pagamento protegido — você só paga quando aprovar o trabalho",
+      "fundsSecure": "Seus fundos estão seguros até a aprovação final",
+      "verifiedFreelancer": "Freelancer verificado — mais confiança para seu projeto"
+    }
+  },
   "earnings": {
     "title": "Meus Ganhos",
-    "subtitle": "Gerencie seus pagamentos e saques",
+    "subtitle": "Acompanhe seus pagamentos e transferências",
     "received": "Recebido",
     "receivedDesc": "Valor financiado pela empresa",
     "receivable": "A Receber",
-    "inEscrow": "Em Garantia",
-    "escrowDesc": "Projetos aceitos aguardando financiamento",
-    "pendingFunding": "Aguardando empresa financiar",
+    "inEscrow": "Protegido",
+    "escrowDesc": "Projetos aceitos com pagamento garantido",
+    "pendingFunding": "Aguardando empresa garantir",
     "pendingFundingDesc": "Você tem {{amount}} em projetos aceitos aguardando a empresa finalizar o pagamento",
     "totalEarnings": "Total de Ganhos",
     "paymentHistory": "Histórico de Pagamentos",
-    "payoutMethods": "Métodos de Saque",
+    "payoutMethods": "Métodos de Recebimento",
     "payoutMethodsDesc": "Configure como você deseja receber seus pagamentos",
     "noPayments": "Nenhum pagamento ainda",
     "noPaymentsDesc": "Os pagamentos dos seus projetos aparecerão aqui",
@@ -22,54 +46,54 @@
     "receivableDetailsDesc": "Pagamentos liberados aguardando transferência",
     "projectCompleted": "Projeto Concluído",
     "projectInProgress": "Projeto em Andamento",
-    "payoutMethodAdded": "Método de saque adicionado",
-    "payoutMethodDeleted": "Método de saque removido",
+    "payoutMethodAdded": "Método de recebimento adicionado",
+    "payoutMethodDeleted": "Método de recebimento removido",
     "defaultUpdated": "Método padrão atualizado",
     "default": "Padrão",
     "addPayoutMethod": "Adicionar Método",
-    "requestWithdrawal": "Solicitar Saque",
-    "withdrawableBalance": "Saldo Disponível para Saque",
-    "withdrawableDesc": "Este valor pode ser sacado a qualquer momento",
-    "escrowPendingDesc": "Você tem {{amount}} em garantia aguardando aprovação",
-    "noWithdrawableBalance": "Complete projetos para ganhar saldo sacável",
-    "configurePayoutFirst": "Configure um método de saque na aba 'Métodos de Saque' primeiro",
-    "withdrawalHistory": "Histórico de Saques",
-    "noWithdrawals": "Nenhuma solicitação de saque",
-    "noWithdrawalsDesc": "Suas solicitações de saque aparecerão aqui",
-    "withdrawalRequest": "Solicitação de Saque",
+    "requestWithdrawal": "Solicitar Transferência",
+    "withdrawableBalance": "Disponível para Transferência",
+    "withdrawableDesc": "Este valor pode ser transferido a qualquer momento",
+    "escrowPendingDesc": "Você tem {{amount}} protegido aguardando aprovação",
+    "noWithdrawableBalance": "Complete projetos para acumular ganhos",
+    "configurePayoutFirst": "Configure um método de recebimento na aba 'Métodos de Recebimento' primeiro",
+    "withdrawalHistory": "Histórico de Transferências",
+    "noWithdrawals": "Nenhuma transferência ainda",
+    "noWithdrawalsDesc": "Suas transferências bancárias aparecerão aqui",
+    "withdrawalRequest": "Solicitação de Transferência",
     "adminNotes": "Observação",
     "paidAt": "Pago em",
     "withdrawalStatus": {
       "pending_review": "Em Análise",
       "approved": "Aprovado",
-      "paid": "Pago",
-      "rejected": "Rejeitado"
+      "paid": "Concluído",
+      "rejected": "Não Aprovado"
     },
     "status": {
-      "pending": "Pendente",
-      "paid": "Pago",
+      "pending": "Em Processamento",
+      "paid": "Concluído",
       "released": "Liberado",
-      "failed": "Falhou"
+      "failed": "Não Processado"
     },
     "withdrawal": {
-      "title": "Solicitar Saque",
+      "title": "Solicitar Transferência",
       "description": "Informe o valor e método de recebimento",
-      "availableBalance": "Saldo Disponível",
-      "amount": "Valor do Saque",
+      "availableBalance": "Disponível",
+      "amount": "Valor da Transferência",
       "max": "Máx",
       "payoutMethod": "Método de Recebimento",
-      "noMethods": "Configure um método de saque primeiro",
+      "noMethods": "Configure um método de recebimento primeiro",
       "invalidAmount": "Informe um valor válido",
-      "exceedsBalance": "Valor excede o saldo disponível",
-      "selectMethod": "Selecione um método de saque",
-      "summary": "Você receberá {{amount}} após aprovação",
-      "submit": "Solicitar Saque",
-      "success": "Solicitação de saque enviada com sucesso",
-      "error": "Erro ao solicitar saque"
+      "exceedsBalance": "Valor excede o disponível",
+      "selectMethod": "Selecione um método de recebimento",
+      "summary": "Você receberá {{amount}} após confirmação",
+      "submit": "Solicitar Transferência",
+      "success": "Solicitação de transferência enviada com sucesso",
+      "error": "Erro ao solicitar transferência"
     },
-    "available": "Saldo Disponível",
+    "available": "Disponível",
     "addPayoutMethodDesc": "Configure como você quer receber pagamentos",
-    "noPayoutMethods": "Nenhum método de saque configurado",
+    "noPayoutMethods": "Nenhum método de recebimento configurado",
     "bankAccount": "Conta Bancária",
     "pixKeyType": "Tipo de Chave PIX",
     "pixKey": "Chave PIX",
@@ -91,7 +115,7 @@
     "holderName": "Nome do Titular",
     "holderDoc": "CPF/CNPJ",
     "setDefault": "Definir como Padrão",
-    "withdrawn": "Sacado"
+    "withdrawn": "Transferido"
   },
   "nav": {
     "howItWorks": "Como funciona",
@@ -527,15 +551,21 @@
       "welcome": "Bem-vindo de volta",
       "stats": {
         "activeProjects": "Projetos Ativos",
-        "totalSpent": "Total Gasto",
+        "totalSpent": "Investido",
         "hiredTalents": "Talentos Contratados",
         "pendingProposals": "Propostas Pendentes"
       },
       "quickActions": {
-        "title": "Ações Rápidas",
+        "title": "Próximos Passos",
         "newProject": "Novo Projeto",
         "findTalent": "Encontrar Talentos",
         "viewMessages": "Ver Mensagens"
+      },
+      "emptyState": {
+        "noProjects": "Você ainda não tem projetos em andamento",
+        "noProjectsCta": "Que tal explorar novas oportunidades?",
+        "noProposals": "Você ainda não recebeu propostas",
+        "noProposalsCta": "Publique um projeto para atrair talentos"
       }
     },
     "freelancer": {
@@ -548,10 +578,25 @@
         "profileViews": "Visualizações do Perfil"
       },
       "quickActions": {
-        "title": "Ações Rápidas",
-        "findProjects": "Encontrar Projetos",
+        "title": "Próximos Passos",
+        "findProjects": "Explorar Projetos",
         "myProposals": "Minhas Propostas",
         "viewMessages": "Ver Mensagens"
+      },
+      "emptyState": {
+        "noProjects": "Você ainda não tem projetos em andamento",
+        "noProjectsCta": "Que tal explorar novas oportunidades?",
+        "noProposals": "Você ainda não enviou nenhuma proposta",
+        "noProposalsCta": "Explorar Projetos",
+        "noEarnings": "Comece a trabalhar para acumular ganhos",
+        "profileIncomplete": "Falta só 1 passo para impulsionar seu perfil",
+        "profileIncompleteCta": "Completar Perfil"
+      },
+      "tierUpgrade": {
+        "title": "Ganhe mais visibilidade",
+        "currentTier": "Perfil Standard",
+        "upgradeHint": "Complete perfil e ative recursos premium para aparecer mais nos resultados e ter benefícios exclusivos",
+        "upgradeCta": "Ver Benefícios"
       }
     }
   },
@@ -780,25 +825,25 @@
     "expires": "Expira"
   },
   "billing": {
-    "addFunds": "Adicionar Fundos",
-    "addFundsDescription": "Adicione crédito à sua carteira usando sua moeda preferida",
+    "addFunds": "Adicionar Créditos",
+    "addFundsDescription": "Adicione créditos à sua conta usando sua moeda preferida",
     "quickSelect": "Seleção Rápida",
     "amount": "Valor",
     "currency": "Moeda",
     "youWillReceive": "Você receberá",
     "contracts": "Contratos",
     "contract": "Contrato",
-    "exchangeRate": "Taxa de câmbio",
+    "exchangeRate": "Cotação aplicada",
     "proceedToPayment": "Continuar para Pagamento",
     "invalidAmount": "Por favor insira um valor válido",
-    "walletBalance": "Saldo da Carteira",
-    "walletDescription": "Seu saldo de crédito interno para transações na plataforma",
+    "walletBalance": "Créditos Disponíveis",
+    "walletDescription": "Seu crédito interno para transações na plataforma",
     "transactionHistory": "Histórico de Transações",
-    "topup": "Fundos Adicionados",
+    "topup": "Créditos Adicionados",
     "debit": "Débito",
     "credit": "Crédito",
-    "refund": "Reembolso",
-    "fundsAddedSuccess": "Fundos adicionados com sucesso!",
+    "refund": "Estorno",
+    "fundsAddedSuccess": "Créditos adicionados com sucesso!",
     "paymentCanceled": "Pagamento foi cancelado"
   },
   "contracts": {
@@ -889,36 +934,52 @@
     "expired": "Expirado"
   },
   "payments": {
-    "milestones": "Pagamentos por Milestone",
-    "milestonesDescCompany": "Financie milestones para manter o pagamento em garantia. Libere quando o trabalho for aprovado.",
-    "milestonesDescFreelancer": "Acompanhe seus pagamentos por milestone e status de garantia.",
+    "milestones": "Entregas e Pagamentos",
+    "milestonesDescCompany": "Financie entregas para garantir segurança. Libere quando aprovar o trabalho.",
+    "milestonesDescFreelancer": "Acompanhe suas entregas e valores protegidos pela Hookly.",
     "totalValue": "Valor Total",
-    "inEscrow": "Em Garantia",
+    "inEscrow": "Protegido",
     "released": "Liberado",
-    "pending": "Pendente",
-    "milestone": "Milestone",
-    "fund": "Financiar",
+    "pending": "Aguardando",
+    "milestone": "Entrega",
+    "fund": "Garantir",
     "release": "Liberar",
-    "confirmRelease": "Confirmar Liberação de Pagamento",
-    "confirmReleaseDesc": "Isso liberará os fundos em garantia para o freelancer. Esta ação não pode ser desfeita.",
-    "confirmReleaseBtn": "Liberar Pagamento",
+    "confirmRelease": "Confirmar Liberação",
+    "confirmReleaseDesc": "Isso liberará o valor protegido para o freelancer. Esta ação não pode ser desfeita.",
+    "confirmReleaseBtn": "Confirmar Liberação",
     "checkoutOpened": "Checkout aberto em nova aba",
     "checkoutError": "Falha ao criar sessão de checkout",
     "releaseError": "Falha ao liberar pagamento",
     "success": "Pagamento realizado com sucesso!",
     "cancelled": "Pagamento foi cancelado",
-    "fundContract": "Financiar Contrato",
-    "amountToFund": "Valor a financiar",
+    "fundContract": "Garantir Contrato",
+    "amountToFund": "Valor a garantir",
     "paymentMethod": "Forma de pagamento",
-    "useCredits": "Créditos em conta",
-    "availableBalance": "Saldo disponível",
-    "insufficientBalance": "Saldo insuficiente",
+    "useCredits": "Créditos disponíveis",
+    "availableBalance": "Créditos disponíveis",
+    "insufficientBalance": "Créditos insuficientes",
     "instant": "Pagamento instantâneo",
     "card": "Cartão",
     "creditDebit": "Crédito ou débito",
-    "payWithCredits": "Pagar com Créditos",
+    "payWithCredits": "Usar Créditos",
     "generatePix": "Gerar QR Code PIX",
-    "payWithCard": "Pagar com Cartão"
+    "payWithCard": "Pagar com Cartão",
+    "feeLabels": {
+      "international_card": "Cartão Internacional",
+      "brl_pix": "PIX Instantâneo",
+      "brl_card": "Cartão Brasil",
+      "processingFee": "Proteção da Transação",
+      "conversionFee": "Proteção Cambial",
+      "transactionSecurity": "Segurança da Transação"
+    },
+    "breakdown": {
+      "youSend": "Você envia",
+      "currencyProtection": "Proteção cambial ({{percent}}%)",
+      "convertedAmount": "Valor convertido",
+      "currency": "Moeda",
+      "paymentMethod": "Pagamento",
+      "card": "Cartão"
+    }
   },
   "notifications": {
     "title": "Notificações",
