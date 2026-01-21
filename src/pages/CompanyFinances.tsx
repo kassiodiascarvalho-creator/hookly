@@ -4,9 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { 
-  DollarSign, Loader2, Clock, CheckCircle, AlertCircle,
-  CreditCard, TrendingUp, Wallet
+  Loader2, Clock, CheckCircle, AlertCircle,
+  CreditCard, Ticket, Landmark, ArrowDownToLine, Info, Sparkles
 } from "lucide-react";
 import { format } from "date-fns";
 import { formatMoney } from "@/lib/formatMoney";
@@ -18,6 +19,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { CompanyAddFundsDialog } from "@/components/billing/CompanyAddFundsDialog";
 
 interface Payment {
   id: string;
@@ -32,12 +40,18 @@ interface Payment {
   freelancer?: { full_name: string } | null;
 }
 
+interface PlatformCredits {
+  balance: number;
+  currency: string;
+}
+
 export default function CompanyFinances() {
   const { t } = useTranslation();
   const { user } = useAuth();
   
   const [loading, setLoading] = useState(true);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [credits, setCredits] = useState<PlatformCredits | null>(null);
   const [totals, setTotals] = useState({ 
     totalSpent: 0, 
     inEscrow: 0, 
@@ -46,14 +60,15 @@ export default function CompanyFinances() {
 
   useEffect(() => {
     if (user) {
-      fetchPayments();
+      fetchData();
     }
   }, [user]);
 
-  const fetchPayments = async () => {
+  const fetchData = async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
+    // Fetch payments
+    const { data: paymentsData, error } = await supabase
       .from("payments")
       .select(`
         *,
@@ -65,12 +80,23 @@ export default function CompanyFinances() {
 
     if (error) {
       console.error("Error fetching payments:", error);
-      setLoading(false);
-      return;
     }
 
-    if (data) {
-      const mapped = data.map(p => ({
+    // Fetch platform credits
+    const { data: creditsData } = await supabase
+      .from("platform_credits")
+      .select("balance, currency")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (creditsData) {
+      setCredits(creditsData);
+    } else {
+      setCredits({ balance: 0, currency: "USD" });
+    }
+
+    if (paymentsData) {
+      const mapped = paymentsData.map(p => ({
         ...p,
         project: p.project as { title: string } | undefined,
         freelancer: Array.isArray(p.freelancer) ? p.freelancer[0] : p.freelancer
@@ -119,6 +145,12 @@ export default function CompanyFinances() {
     return <Badge variant="outline">{payment.status}</Badge>;
   };
 
+  // Safe display for zero/empty values
+  const formatSafeValue = (value: number, currency: string) => {
+    if (value === 0) return t("finances.noData");
+    return formatMoney(value, currency);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -127,6 +159,8 @@ export default function CompanyFinances() {
     );
   }
 
+  const creditBalance = credits?.balance || 0;
+
   return (
     <div className="space-y-6">
       <div>
@@ -134,50 +168,124 @@ export default function CompanyFinances() {
         <p className="text-muted-foreground">{t("finances.subtitle")}</p>
       </div>
 
-      {/* Summary Cards */}
+      {/* Summary Cards - Separated Credits vs Escrow */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
+        {/* Credits Card - Internal currency */}
+        <Card className="relative overflow-hidden border-primary/20">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-primary/10 to-transparent rounded-bl-full" />
           <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
+            <div className="flex items-start gap-4">
               <div className="p-3 rounded-xl bg-primary/10">
-                <TrendingUp className="h-6 w-6 text-primary" />
+                <Ticket className="h-6 w-6 text-primary" />
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{t("finances.totalSpent")}</p>
-                <p className="text-2xl font-bold">{formatMoney(totals.totalSpent, "USD")}</p>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm text-muted-foreground font-medium">
+                    {t("finances.credits.title")}
+                  </p>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <p>{t("finances.credits.tooltip")}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                <p className="text-2xl font-bold mt-1">
+                  {creditBalance > 0 ? `${creditBalance} créditos` : t("finances.noData")}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {t("finances.credits.description")}
+                </p>
               </div>
+            </div>
+            <div className="mt-4">
+              <CompanyAddFundsDialog onSuccess={fetchData} />
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        {/* Escrow Card - Real money */}
+        <Card className="border-yellow-500/20">
           <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
+            <div className="flex items-start gap-4">
               <div className="p-3 rounded-xl bg-yellow-500/10">
-                <Wallet className="h-6 w-6 text-yellow-500" />
+                <Landmark className="h-6 w-6 text-yellow-600" />
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{t("finances.inEscrow")}</p>
-                <p className="text-2xl font-bold">{formatMoney(totals.inEscrow, "USD")}</p>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm text-muted-foreground font-medium">
+                    {t("finances.escrow.title")}
+                  </p>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <p>{t("finances.escrow.tooltip")}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                <p className="text-2xl font-bold mt-1">
+                  {formatSafeValue(totals.inEscrow, "USD")}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {t("finances.escrow.description")}
+                </p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        {/* Released Card - Completed payments */}
+        <Card className="border-green-500/20">
           <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
+            <div className="flex items-start gap-4">
               <div className="p-3 rounded-xl bg-green-500/10">
-                <CheckCircle className="h-6 w-6 text-green-500" />
+                <ArrowDownToLine className="h-6 w-6 text-green-600" />
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{t("finances.released")}</p>
-                <p className="text-2xl font-bold">{formatMoney(totals.released, "USD")}</p>
+              <div className="flex-1">
+                <p className="text-sm text-muted-foreground font-medium">
+                  {t("finances.released.title")}
+                </p>
+                <p className="text-2xl font-bold mt-1">
+                  {formatSafeValue(totals.released, "USD")}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {t("finances.released.description")}
+                </p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* CTA for Credits - Strategic Visibility */}
+      {creditBalance === 0 && (
+        <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
+          <CardContent className="py-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-xl bg-primary/10">
+                <Sparkles className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1">
+                <p className="font-medium text-foreground">
+                  {t("finances.credits.useCases.boost")}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {t("finances.credits.useCases.visibility")}
+                </p>
+              </div>
+              <CompanyAddFundsDialog onSuccess={fetchData} />
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Payment History */}
       <Card>

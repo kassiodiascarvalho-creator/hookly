@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Wallet, Loader2, History, TrendingUp, Info } from "lucide-react";
+import { Ticket, Loader2, History, TrendingUp, Info } from "lucide-react";
 import { CompanyAddFundsDialog } from "./CompanyAddFundsDialog";
 import { format } from "date-fns";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -69,17 +69,17 @@ export function CompanyWalletCard() {
   const getActionLabel = (action: string) => {
     switch (action) {
       case "topup":
-        return "Recarga de créditos";
+        return t("billing.topup", "Créditos Adicionados");
       case "spend_send_proposal":
-        return "Envio de proposta";
+        return t("billing.actions.sendProposal", "Envio de proposta");
       case "spend_view_company_data":
-        return "Visualização de dados";
+        return t("billing.actions.viewData", "Visualização de dados");
       case "spend_highlight_proposal":
-        return "Destaque de proposta";
+        return t("billing.actions.highlightProposal", "Destaque de proposta");
       case "spend_boost_profile":
-        return "Impulsionar perfil";
+        return t("billing.actions.boostProfile", "Impulsionar perfil");
       default:
-        return action;
+        return t("billing.actions.unknown", "Ação na plataforma");
     }
   };
 
@@ -103,21 +103,21 @@ export function CompanyWalletCard() {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Wallet className="h-5 w-5 text-primary" />
-              Créditos da Plataforma
+              <Ticket className="h-5 w-5 text-primary" />
+              {t("finances.credits.title", "Créditos Hookly")}
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger>
                     <Info className="h-4 w-4 text-muted-foreground" />
                   </TooltipTrigger>
                   <TooltipContent className="max-w-xs">
-                    <p>Créditos exclusivos para funcionalidades internas da plataforma. Não podem ser utilizados para pagamento de freelancers ou sacados.</p>
+                    <p>{t("finances.credits.tooltip", "Créditos exclusivos para funcionalidades internas da plataforma. Não podem ser utilizados para pagamento de freelancers ou sacados.")}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </CardTitle>
             <CardDescription>
-              Créditos para uso exclusivo na plataforma • Não sacável
+              {t("finances.credits.description", "Créditos para visibilidade e funcionalidades premium")} • {t("billing.nonWithdrawable", "Não sacável")}
             </CardDescription>
           </div>
           <CompanyAddFundsDialog onSuccess={fetchData} />
@@ -127,19 +127,18 @@ export function CompanyWalletCard() {
             {/* Primary balance in credits */}
             <div className="flex items-baseline gap-2">
               <span className="text-4xl font-bold">{balance}</span>
-              <span className="text-lg text-muted-foreground">créditos</span>
+              <span className="text-lg text-muted-foreground">{t("billing.credits", "créditos")}</span>
             </div>
           </div>
           
           {balance === 0 && (
-            <div className="mt-4 p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
+            <div className="mt-4 p-4 rounded-lg bg-primary/5 border border-primary/20">
               <div className="flex items-start gap-3">
-                <TrendingUp className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+                <TrendingUp className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-medium text-blue-600">Adicione créditos</p>
+                  <p className="font-medium text-primary">{t("finances.credits.addCredits", "Adicione créditos")}</p>
                   <p className="text-sm text-muted-foreground">
-                    Use créditos para acessar funcionalidades premium: ver dados detalhados 
-                    de freelancers, destacar suas vagas, e muito mais!
+                    {t("finances.credits.useCases.boost", "Use créditos para impulsionar visibilidade")}
                   </p>
                 </div>
               </div>
@@ -151,37 +150,37 @@ export function CompanyWalletCard() {
       {/* Features Info */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">O que você pode fazer com créditos</CardTitle>
+          <CardTitle className="text-lg">{t("billing.whatCanYouDo", "O que você pode fazer com créditos")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="p-3 rounded-lg border">
-              <p className="font-medium">📊 Ver Dados Completos</p>
+              <p className="font-medium">📊 {t("billing.features.viewData", "Ver Dados Completos")}</p>
               <p className="text-sm text-muted-foreground">
-                Acesse informações detalhadas de freelancers
+                {t("billing.features.viewDataDesc", "Acesse informações detalhadas de freelancers")}
               </p>
-              <p className="text-xs text-primary mt-1">1 crédito</p>
+              <p className="text-xs text-primary mt-1">1 {t("billing.credit", "crédito")}</p>
             </div>
             <div className="p-3 rounded-lg border">
-              <p className="font-medium">⭐ Destaque de Vagas</p>
+              <p className="font-medium">⭐ {t("billing.features.highlight", "Destaque de Vagas")}</p>
               <p className="text-sm text-muted-foreground">
-                Coloque suas vagas em destaque
+                {t("billing.features.highlightDesc", "Coloque suas vagas em destaque")}
               </p>
-              <p className="text-xs text-primary mt-1">2 créditos</p>
+              <p className="text-xs text-primary mt-1">2 {t("billing.credits", "créditos")}</p>
             </div>
             <div className="p-3 rounded-lg border">
-              <p className="font-medium">🚀 Impulsionar Perfil</p>
+              <p className="font-medium">🚀 {t("billing.features.boost", "Impulsionar Perfil")}</p>
               <p className="text-sm text-muted-foreground">
-                Aumente a visibilidade da sua empresa
+                {t("billing.features.boostDesc", "Aumente a visibilidade da sua empresa")}
               </p>
-              <p className="text-xs text-primary mt-1">5 créditos</p>
+              <p className="text-xs text-primary mt-1">5 {t("billing.credits", "créditos")}</p>
             </div>
             <div className="p-3 rounded-lg border">
-              <p className="font-medium">🔍 Busca Avançada</p>
+              <p className="font-medium">🔍 {t("billing.features.advancedSearch", "Busca Avançada")}</p>
               <p className="text-sm text-muted-foreground">
-                Filtros avançados para encontrar talentos
+                {t("billing.features.advancedSearchDesc", "Filtros avançados para encontrar talentos")}
               </p>
-              <p className="text-xs text-primary mt-1">Em breve</p>
+              <p className="text-xs text-primary mt-1">{t("common.comingSoon", "Em breve")}</p>
             </div>
           </div>
         </CardContent>
@@ -193,7 +192,7 @@ export function CompanyWalletCard() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <History className="h-4 w-4" />
-              Histórico de Transações
+              {t("billing.transactionHistory", "Histórico de Transações")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -210,11 +209,11 @@ export function CompanyWalletCard() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className={`font-semibold ${tx.amount > 0 ? "text-green-600" : "text-destructive"}`}>
-                      {tx.amount > 0 ? "+" : ""}{tx.amount} créditos
+                    <p className={`font-semibold ${tx.amount > 0 ? "text-primary" : "text-destructive"}`}>
+                      {tx.amount > 0 ? "+" : ""}{tx.amount} {t("billing.credits", "créditos")}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Saldo: {tx.balance_after} créditos
+                      {t("billing.balance", "Saldo")}: {tx.balance_after} {t("billing.credits", "créditos")}
                     </p>
                   </div>
                 </div>

@@ -816,8 +816,8 @@
     "expires": "Expires"
   },
   "billing": {
-    "addFunds": "Add Funds",
-    "addFundsDescription": "Add credit to your wallet using your preferred currency",
+    "addFunds": "Add Credits",
+    "addFundsDescription": "Add credits to your account using your preferred currency",
     "quickSelect": "Quick Select",
     "amount": "Amount",
     "currency": "Currency",
@@ -827,15 +827,40 @@
     "exchangeRate": "Exchange rate",
     "proceedToPayment": "Proceed to Payment",
     "invalidAmount": "Please enter a valid amount",
-    "walletBalance": "Wallet Balance",
-    "walletDescription": "Your internal credit balance for platform transactions",
+    "walletBalance": "Available Credits",
+    "walletDescription": "Your internal credit balance for platform features",
     "transactionHistory": "Transaction History",
-    "topup": "Funds Added",
+    "topup": "Credits Added",
     "debit": "Debit",
     "credit": "Credit",
+    "credits": "credits",
     "refund": "Refund",
-    "fundsAddedSuccess": "Funds added successfully!",
-    "paymentCanceled": "Payment was canceled"
+    "fundsAddedSuccess": "Credits added successfully!",
+    "paymentCanceled": "Payment was canceled",
+    "nonWithdrawable": "Non-withdrawable",
+    "balance": "Balance",
+    "whatCanYouDo": "What you can do with credits",
+    "actions": {
+      "sendProposal": "Send proposal",
+      "viewData": "View data",
+      "highlightProposal": "Highlight proposal",
+      "boostProfile": "Boost profile",
+      "unknown": "Platform action"
+    },
+    "features": {
+      "viewData": "View Complete Data",
+      "viewDataDesc": "Access detailed freelancer information",
+      "highlight": "Job Highlight",
+      "highlightDesc": "Put your jobs in the spotlight",
+      "boost": "Boost Profile",
+      "boostDesc": "Increase your company visibility",
+      "advancedSearch": "Advanced Search",
+      "advancedSearchDesc": "Advanced filters to find talent"
+    },
+    "warning": {
+      "creditsNotForPayment": "Credits cannot be used to pay freelancers",
+      "useRealPayment": "For project payments, use PIX or card"
+    }
   },
   "contracts": {
     "title": "Contracts",
@@ -983,7 +1008,8 @@
     "submit": "Submit",
     "logout": "Log out",
     "goBack": "Go Back",
-    "signOut": "Sign Out"
+    "signOut": "Sign Out",
+    "comingSoon": "Coming soon"
   },
   "admin": {
     "dashboard": "Admin Dashboard",
@@ -1126,9 +1152,28 @@
   "finances": {
     "title": "Finances",
     "subtitle": "Track your payments and financial history",
-    "totalSpent": "Total Spent",
-    "inEscrow": "In Escrow",
-    "released": "Released",
+    "credits": {
+      "title": "Hookly Credits",
+      "description": "Credits for visibility and premium features",
+      "tooltip": "Credits to boost projects and access exclusive features. Cannot be used for freelancer payments.",
+      "addCredits": "Add Credits",
+      "addCreditsLong": "Add Credits to Boost Your Projects",
+      "empty": "—",
+      "useCases": {
+        "boost": "Use credits to boost visibility",
+        "visibility": "Credits mean more visibility and more responses",
+        "highlight": "Your project will be highlighted immediately"
+      }
+    },
+    "escrow": {
+      "title": "Reserved Budget",
+      "description": "Active contract values held in escrow",
+      "tooltip": "Real money reserved for freelancer payments. Released only after delivery approval."
+    },
+    "released": {
+      "title": "Completed Transfers",
+      "description": "Total released to freelancers after approved delivery"
+    },
     "paymentHistory": "Payment History",
     "paymentHistoryDesc": "View all your payments to freelancers",
     "noPayments": "No payments yet",
@@ -1142,7 +1187,9 @@
     "unknownFreelancer": "Unknown Freelancer",
     "pending": "Pending",
     "failed": "Failed",
-    "releasedToFreelancer": "Released to Freelancer"
+    "releasedToFreelancer": "Released to Freelancer",
+    "inEscrow": "In Escrow",
+    "noData": "—"
   },
   "currency": {
     "select": "Select currency",

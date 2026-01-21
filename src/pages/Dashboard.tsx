@@ -3,11 +3,12 @@ import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Briefcase, Users, MessageSquare, DollarSign, Plus, ArrowRight, Sparkles, Rocket, TrendingUp } from "lucide-react";
+import { Briefcase, Users, MessageSquare, DollarSign, Plus, ArrowRight, Sparkles, Rocket, TrendingUp, Ticket } from "lucide-react";
 import { ProfileCompletionCard } from "@/components/profile/ProfileCompletionCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { TrustMessage } from "@/components/trust/TrustBadge";
+import { CompanyAddFundsDialog } from "@/components/billing/CompanyAddFundsDialog";
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -19,6 +20,7 @@ export default function Dashboard() {
     pendingProposals: 0,
     unreadMessages: 0,
     totalSpent: 0,
+    creditBalance: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -34,6 +36,7 @@ export default function Dashboard() {
         { count: projectsCount },
         { count: proposalsCount },
         { count: messagesCount },
+        { data: creditsData },
       ] = await Promise.all([
         supabase
           .from("projects")
@@ -50,6 +53,11 @@ export default function Dashboard() {
           .select("*, conversations!inner(company_user_id)", { count: "exact", head: true })
           .eq("conversations.company_user_id", user?.id)
           .is("read_at", null),
+        supabase
+          .from("platform_credits")
+          .select("balance")
+          .eq("user_id", user?.id)
+          .maybeSingle(),
       ]);
 
       setStats({
@@ -57,6 +65,7 @@ export default function Dashboard() {
         pendingProposals: proposalsCount || 0,
         unreadMessages: messagesCount || 0,
         totalSpent: 0,
+        creditBalance: creditsData?.balance || 0,
       });
     } catch (error) {
       console.error("Error fetching stats:", error);
@@ -129,6 +138,28 @@ export default function Dashboard() {
 
       {/* Profile Completion Card */}
       <ProfileCompletionCard />
+
+      {/* Credits CTA - Strategic visibility boost */}
+      {stats.creditBalance === 0 && (
+        <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
+          <CardContent className="py-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-xl bg-primary/10">
+                <Ticket className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1">
+                <p className="font-medium text-foreground">
+                  {t("finances.credits.addCreditsLong", "Adicione Créditos para Impulsionar Projetos")}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {t("finances.credits.useCases.visibility", "Créditos valem mais visibilidade e mais respostas")}
+                </p>
+              </div>
+              <CompanyAddFundsDialog />
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Smart CTA based on user state */}
       {smartCTA && (

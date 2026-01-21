@@ -880,9 +880,34 @@
     "topup": "Créditos Adicionados",
     "debit": "Débito",
     "credit": "Crédito",
+    "credits": "créditos",
     "refund": "Estorno",
     "fundsAddedSuccess": "Créditos adicionados com sucesso!",
-    "paymentCanceled": "Pagamento foi cancelado"
+    "paymentCanceled": "Pagamento foi cancelado",
+    "nonWithdrawable": "Não sacável",
+    "balance": "Saldo",
+    "whatCanYouDo": "O que você pode fazer com créditos",
+    "actions": {
+      "sendProposal": "Envio de proposta",
+      "viewData": "Visualização de dados",
+      "highlightProposal": "Destaque de proposta",
+      "boostProfile": "Impulsionar perfil",
+      "unknown": "Ação na plataforma"
+    },
+    "features": {
+      "viewData": "Ver Dados Completos",
+      "viewDataDesc": "Acesse informações detalhadas de freelancers",
+      "highlight": "Destaque de Vagas",
+      "highlightDesc": "Coloque suas vagas em destaque",
+      "boost": "Impulsionar Perfil",
+      "boostDesc": "Aumente a visibilidade da sua empresa",
+      "advancedSearch": "Busca Avançada",
+      "advancedSearchDesc": "Filtros avançados para encontrar talentos"
+    },
+    "warning": {
+      "creditsNotForPayment": "Créditos não podem ser usados para pagar freelancers",
+      "useRealPayment": "Para pagamentos de projetos, use PIX ou cartão"
+    }
   },
   "contracts": {
     "title": "Contratos",
@@ -1046,7 +1071,8 @@
     "submit": "Enviar",
     "logout": "Sair",
     "goBack": "Voltar",
-    "signOut": "Sair"
+    "signOut": "Sair",
+    "comingSoon": "Em breve"
   },
   "admin": {
     "dashboard": "Painel Admin",
@@ -1164,9 +1190,28 @@
   "finances": {
     "title": "Finanças",
     "subtitle": "Acompanhe seus pagamentos e histórico financeiro",
-    "totalSpent": "Total Gasto",
-    "inEscrow": "Em Custódia",
-    "released": "Liberado",
+    "credits": {
+      "title": "Créditos Hookly",
+      "description": "Créditos para visibilidade e funcionalidades premium",
+      "tooltip": "Créditos para impulsionar projetos e acessar recursos exclusivos. Não podem ser usados para pagamento de freelancers.",
+      "addCredits": "Adicionar Créditos",
+      "addCreditsLong": "Adicione Créditos para Impulsionar Projetos",
+      "empty": "—",
+      "useCases": {
+        "boost": "Use créditos para impulsionar visibilidade",
+        "visibility": "Créditos valem mais visibilidade e mais respostas",
+        "highlight": "Seu projeto terá destaque imediato"
+      }
+    },
+    "escrow": {
+      "title": "Orçamento Reservado",
+      "description": "Valores de contratos ativos protegidos em garantia",
+      "tooltip": "Dinheiro real reservado para pagamento de freelancers. Liberado apenas após aprovação da entrega."
+    },
+    "released": {
+      "title": "Transferências Efetuadas",
+      "description": "Total liberado aos freelancers após entrega aprovada"
+    },
     "paymentHistory": "Histórico de Pagamentos",
     "paymentHistoryDesc": "Visualize todos os seus pagamentos para freelancers",
     "noPayments": "Nenhum pagamento ainda",
@@ -1180,7 +1225,9 @@
     "unknownFreelancer": "Freelancer Desconhecido",
     "pending": "Pendente",
     "failed": "Falhou",
-    "releasedToFreelancer": "Liberado ao Freelancer"
+    "releasedToFreelancer": "Liberado ao Freelancer",
+    "inEscrow": "Em Garantia",
+    "noData": "—"
   },
   "currency": {
     "select": "Selecionar moeda",
