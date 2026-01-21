@@ -1,4 +1,42 @@
 {
+  "payments": {
+    "fees": {
+      "international_card": "International Card",
+      "brl_pix": "PIX",
+      "brl_card": "Brazil Card",
+      "unknown": "Service Fee"
+    },
+    "feeLabels": {
+      "methodFee": "Payment protection",
+      "conversionFee": "Currency protection",
+      "total": "Total",
+      "processingFee": "Service Fee",
+      "contractValue": "Contract value",
+      "paymentSummary": "Payment Summary",
+      "freelancerReceives": "The freelancer will receive exactly {{amount}} upon completion."
+    },
+    "breakdown": {
+      "youSend": "You send",
+      "currencyProtection": "Currency protection ({{percent}}%)",
+      "convertedAmount": "Converted amount",
+      "currency": "Currency",
+      "paymentMethod": "Payment method",
+      "card": "Card"
+    },
+    "fundContract": "Fund Contract",
+    "amountToFund": "Amount to fund",
+    "currencyNotAllowed": "Currency not allowed",
+    "currencyRestrictionMessage": "Currency {{currency}} is not allowed for your country. Allowed currencies: {{allowed}}.",
+    "paymentMethod": "Payment method",
+    "instant": "Instant payment",
+    "card": "Card",
+    "creditDebit": "Credit or debit",
+    "cardInternational": "International Card",
+    "processing": "Processing...",
+    "generatePix": "Generate PIX QR Code",
+    "payWithCard": "Pay with Card",
+    "protectionFee": "Payment protection"
+  },
   "earnings": {
     "title": "My Earnings",
     "subtitle": "Manage your payments and withdrawals",

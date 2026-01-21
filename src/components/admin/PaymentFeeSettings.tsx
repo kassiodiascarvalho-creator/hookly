@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -10,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { Save, RefreshCw, Percent, History, Settings2, AlertTriangle, CreditCard } from "lucide-react";
+import { getPaymentFeeLabel } from "@/lib/getPaymentFeeLabel";
 
 interface FeeConfig {
   id: string;
@@ -37,6 +39,7 @@ const FEE_LIMITS = {
 };
 
 export default function PaymentFeeSettings() {
+  const { t } = useTranslation();
   const [configs, setConfigs] = useState<FeeConfig[]>([]);
   const [history, setHistory] = useState<FeeHistory[]>([]);
   const [loading, setLoading] = useState(true);
@@ -192,17 +195,9 @@ export default function PaymentFeeSettings() {
     return "";
   };
 
-  const getFeeKeyLabel = (feeKey: string): string => {
-    switch (feeKey) {
-      case "international_card":
-        return "Internacional";
-      case "brl_pix":
-        return "PIX";
-      case "brl_card":
-        return "Cartão BR";
-      default:
-        return feeKey;
-    }
+  // Use i18n with safe fallback - never expose fee_key to users
+  const getFeeKeyLabel = (feeKey: string, displayName?: string): string => {
+    return getPaymentFeeLabel(feeKey, t, displayName);
   };
 
   const getFeeKeyVariant = (feeKey: string): "default" | "secondary" | "outline" => {
@@ -282,10 +277,10 @@ export default function PaymentFeeSettings() {
                       <TableCell>
                         <div className="flex flex-col gap-1">
                           <Badge variant={getFeeKeyVariant(config.fee_key)}>
-                            {getFeeKeyLabel(config.fee_key)}
+                            {getFeeKeyLabel(config.fee_key, config.display_name)}
                           </Badge>
                           <span className="text-xs text-muted-foreground">
-                            {config.display_name}
+                            {config.description || config.display_name}
                           </span>
                         </div>
                       </TableCell>
