@@ -20,6 +20,7 @@ import { CardPaymentModal } from "@/components/billing/CardPaymentModal";
 import { StripeCardModal } from "@/components/billing/StripeCardModal";
 import { isCurrencyAllowed, getAllowedCurrencies } from "@/lib/currencyByCountry";
 import { usePaymentFees, FEE_KEYS, calculatePaymentFee, getPaymentFeeKey } from "@/hooks/usePaymentFees";
+import { getPaymentFeeLabel } from "@/lib/getPaymentFeeLabel";
 
 type PaymentMethod = "pix" | "card";
 
@@ -86,21 +87,23 @@ export function ContractFundingModal({
     const feePercent = getFeePercent(feeKey);
     const percentDisplay = getDisplayPercent(feeKey);
     
+    // Use i18n for method names - never expose fee_key
     let methodName: string;
     if (paymentMethod === "pix") {
-      methodName = "PIX";
+      methodName = t("payments.fees.brl_pix", "PIX");
     } else if (isBRL) {
-      methodName = "Cartão";
+      methodName = t("payments.fees.brl_card", "Cartão");
     } else {
-      methodName = "Cartão Internacional";
+      methodName = t("payments.fees.international_card", "Cartão Internacional");
     }
     
     const { feeAmount, totalAmount, totalAmountCents } = calculatePaymentFee(amount, feePercent);
     
-    // Format: "Taxa do método (PIX 2%)" or "Taxa do método (Cartão 6%)"
-    const feeLabel = `Taxa do método (${methodName} ${percentDisplay})`;
+    // Use strategic terminology - "protection" instead of "fee"
+    const feeLabel = `${t("payments.feeLabels.methodFee", "Proteção")} (${methodName} ${percentDisplay})`;
     
     return {
+      feeKey,
       feePercent,
       feeLabel,
       methodName,
@@ -109,7 +112,7 @@ export function ContractFundingModal({
       totalAmount,
       totalAmountCents,
     };
-  }, [paymentMethod, amount, currency, isBRL, getFeePercent, getDisplayPercent]);
+  }, [paymentMethod, amount, currency, isBRL, getFeePercent, getDisplayPercent, t]);
 
   // Check if project currency is allowed for user's country
   const isCurrencyAllowedForUser = isCurrencyAllowed(currency, country);
@@ -371,13 +374,13 @@ export function ContractFundingModal({
                       <QrCode className="h-6 w-6 text-primary" />
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
-                          <p className="font-medium">PIX</p>
+                          <p className="font-medium">{t("payments.fees.brl_pix", "PIX")}</p>
                           <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                            Taxa do método: {getDisplayPercent(FEE_KEYS.BRL_PIX)}
+                            {t("payments.protectionFee", "Proteção")}: {getDisplayPercent(FEE_KEYS.BRL_PIX)}
                           </span>
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          {t("payments.instant", "Pagamento instantâneo")}
+                          {t("payments.instant")}
                         </p>
                       </div>
                       {paymentMethod === "pix" && (
@@ -401,13 +404,13 @@ export function ContractFundingModal({
                       <CreditCard className="h-6 w-6 text-primary" />
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
-                          <p className="font-medium">{t("payments.card", "Cartão")}</p>
+                          <p className="font-medium">{t("payments.fees.brl_card", "Cartão")}</p>
                           <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                            Taxa do método: {getDisplayPercent(FEE_KEYS.BRL_CARD)}
+                            {t("payments.protectionFee", "Proteção")}: {getDisplayPercent(FEE_KEYS.BRL_CARD)}
                           </span>
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          {t("payments.creditDebit", "Crédito ou débito")}
+                          {t("payments.creditDebit")}
                         </p>
                       </div>
                       {paymentMethod === "card" && (
@@ -431,9 +434,9 @@ export function ContractFundingModal({
                       <CreditCard className="h-6 w-6 text-primary" />
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
-                          <p className="font-medium">{t("payments.cardInternational", "Cartão Internacional")}</p>
+                          <p className="font-medium">{t("payments.fees.international_card", "Cartão Internacional")}</p>
                           <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                            Taxa do método: {getDisplayPercent(FEE_KEYS.INTERNATIONAL_CARD)}
+                            {t("payments.protectionFee", "Proteção")}: {getDisplayPercent(FEE_KEYS.INTERNATIONAL_CARD)}
                           </span>
                         </div>
                         <p className="text-xs text-muted-foreground">
@@ -454,12 +457,12 @@ export function ContractFundingModal({
               <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
                 <div className="flex items-center gap-2 text-sm font-medium">
                   <Info className="h-4 w-4 text-muted-foreground" />
-                  Resumo do Pagamento
+                  {t("payments.feeLabels.paymentSummary", "Resumo do Pagamento")}
                 </div>
                 <Separator />
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Valor do contrato</span>
+                    <span className="text-muted-foreground">{t("payments.feeLabels.contractValue", "Valor do contrato")}</span>
                     <span className="font-medium">{formatMoney(amount, currency)}</span>
                   </div>
                   <div className="flex justify-between">
@@ -472,7 +475,7 @@ export function ContractFundingModal({
                   </div>
                   <Separator />
                   <div className="flex justify-between font-bold text-base pt-1">
-                    <span>Total a pagar</span>
+                    <span>{t("payments.feeLabels.total", "Total")}</span>
                     <span className="text-primary">
                       {formatMoney(feeInfo.totalAmount, currency)}
                     </span>
@@ -484,7 +487,7 @@ export function ContractFundingModal({
                   <div className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
                     <p className="text-sm text-green-700 dark:text-green-300 font-medium">
-                      O freelancer receberá exatamente {formatMoney(amount, currency)} após a conclusão.
+                      {t("payments.feeLabels.freelancerReceives", { amount: formatMoney(amount, currency) })}
                     </p>
                   </div>
                 </div>

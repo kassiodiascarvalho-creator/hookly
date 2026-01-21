@@ -1,4 +1,42 @@
 {
+  "payments": {
+    "fees": {
+      "international_card": "Cartão Internacional",
+      "brl_pix": "PIX",
+      "brl_card": "Cartão Brasil",
+      "unknown": "Taxa de Serviço"
+    },
+    "feeLabels": {
+      "methodFee": "Serviço de proteção",
+      "conversionFee": "Proteção cambial",
+      "total": "Total",
+      "processingFee": "Taxa de Serviço",
+      "contractValue": "Valor do contrato",
+      "paymentSummary": "Resumo do Pagamento",
+      "freelancerReceives": "O freelancer receberá exatamente {{amount}} após a conclusão."
+    },
+    "breakdown": {
+      "youSend": "Você envia",
+      "currencyProtection": "Proteção cambial ({{percent}}%)",
+      "convertedAmount": "Valor convertido",
+      "currency": "Moeda",
+      "paymentMethod": "Método de pagamento",
+      "card": "Cartão"
+    },
+    "fundContract": "Financiar Contrato",
+    "amountToFund": "Valor a financiar",
+    "currencyNotAllowed": "Moeda não permitida",
+    "currencyRestrictionMessage": "A moeda {{currency}} não é permitida para seu país. Moedas permitidas: {{allowed}}.",
+    "paymentMethod": "Forma de pagamento",
+    "instant": "Pagamento instantâneo",
+    "card": "Cartão",
+    "creditDebit": "Crédito ou débito",
+    "cardInternational": "Cartão Internacional",
+    "processing": "Processando...",
+    "generatePix": "Gerar QR Code PIX",
+    "payWithCard": "Pagar com Cartão",
+    "protectionFee": "Proteção do pagamento"
+  },
   "trust": {
     "badges": {
       "escrow": "Pagamento Protegido",
