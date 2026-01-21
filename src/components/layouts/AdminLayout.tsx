@@ -15,6 +15,7 @@ import {
   UserCheck,
   Wallet,
   Menu,
+  Star,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ReactNode, useState, useEffect } from "react";
@@ -28,6 +29,7 @@ const navItems = [
   { path: "/admin/projects", icon: FolderOpen, labelKey: "admin.projects" },
   { path: "/admin/payments", icon: CreditCard, labelKey: "admin.payments" },
   { path: "/admin/finances", icon: Wallet, labelKey: "admin.finances" },
+  { path: "/admin/tiers", icon: Star, labelKey: "admin.tiers" },
   { path: "/admin/payment-providers", icon: CreditCard, labelKey: "admin.paymentProviders" },
   { path: "/admin/leads", icon: Mail, labelKey: "admin.leads" },
 ];

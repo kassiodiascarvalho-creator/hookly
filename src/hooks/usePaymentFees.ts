@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 export interface PaymentFeeConfig {
   id: string;
@@ -11,13 +12,23 @@ export interface PaymentFeeConfig {
   updated_at: string;
 }
 
+export interface TierFeeOverride {
+  tier: string;
+  fee_key: string;
+  fee_percent_override: number;
+}
+
 interface PaymentFeesData {
   fees: Record<string, PaymentFeeConfig>;
+  tierOverrides: Record<string, number>; // fee_key -> override percent for current user's tier
+  userTier: "standard" | "pro" | "top_rated";
   loading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
   getFeePercent: (feeKey: string) => number;
   getDisplayPercent: (feeKey: string) => string;
+  getBaseFeePercent: (feeKey: string) => number;
+  hasTierDiscount: (feeKey: string) => boolean;
 }
 
 // Fee keys - match the DB keys
@@ -36,10 +47,13 @@ const DEFAULT_FEES: Record<string, number> = {
 
 /**
  * Central hook to fetch payment fee configurations from the database.
- * Provides dynamic fee values that sync with Admin settings.
+ * Now includes tier-based fee overrides for pro/top_rated users.
  */
 export function usePaymentFees(): PaymentFeesData {
+  const { user } = useAuth();
   const [fees, setFees] = useState<Record<string, PaymentFeeConfig>>({});
+  const [tierOverrides, setTierOverrides] = useState<Record<string, number>>({});
+  const [userTier, setUserTier] = useState<"standard" | "pro" | "top_rated">("standard");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,27 +62,56 @@ export function usePaymentFees(): PaymentFeesData {
       setLoading(true);
       setError(null);
 
-      const { data, error: fetchError } = await supabase
+      // Fetch base fees
+      const { data: feesData, error: feesError } = await supabase
         .from("payment_fee_configs")
         .select("*")
         .eq("is_enabled", true);
 
-      if (fetchError) {
-        console.error("[usePaymentFees] Error fetching fees:", fetchError);
-        setError(fetchError.message);
+      if (feesError) {
+        console.error("[usePaymentFees] Error fetching fees:", feesError);
+        setError(feesError.message);
         return;
       }
 
       // Convert array to object keyed by fee_key
       const feesMap: Record<string, PaymentFeeConfig> = {};
-      (data || []).forEach((config) => {
+      (feesData || []).forEach((config) => {
         feesMap[config.fee_key] = {
           ...config,
           fee_percent: Number(config.fee_percent),
         };
       });
-
       setFees(feesMap);
+
+      // Fetch user's tier if logged in
+      if (user) {
+        const { data: profileData } = await supabase
+          .from("freelancer_profiles")
+          .select("tier")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        const tier = (profileData?.tier as "standard" | "pro" | "top_rated") || "standard";
+        setUserTier(tier);
+
+        // Fetch tier overrides if user has a special tier
+        if (tier !== "standard") {
+          const { data: overridesData } = await supabase
+            .from("tier_fee_overrides")
+            .select("fee_key, fee_percent_override")
+            .eq("tier", tier);
+
+          const overridesMap: Record<string, number> = {};
+          (overridesData || []).forEach((override) => {
+            overridesMap[override.fee_key] = Number(override.fee_percent_override);
+          });
+          setTierOverrides(overridesMap);
+        } else {
+          setTierOverrides({});
+        }
+      }
+
       console.log("[usePaymentFees] Fees loaded:", feesMap);
     } catch (err) {
       console.error("[usePaymentFees] Error:", err);
@@ -76,17 +119,16 @@ export function usePaymentFees(): PaymentFeesData {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     fetchFees();
   }, [fetchFees]);
 
   /**
-   * Get fee percent as decimal (e.g., 0.15 for 15%)
-   * Falls back to default values if not found in DB
+   * Get BASE fee percent (without tier discount)
    */
-  const getFeePercent = useCallback(
+  const getBaseFeePercent = useCallback(
     (feeKey: string): number => {
       const config = fees[feeKey];
       if (config && config.is_enabled) {
@@ -95,6 +137,31 @@ export function usePaymentFees(): PaymentFeesData {
       return DEFAULT_FEES[feeKey] ?? 0;
     },
     [fees]
+  );
+
+  /**
+   * Get EFFECTIVE fee percent (with tier discount applied if applicable)
+   */
+  const getFeePercent = useCallback(
+    (feeKey: string): number => {
+      // Check for tier override first
+      if (tierOverrides[feeKey] !== undefined) {
+        return tierOverrides[feeKey];
+      }
+      return getBaseFeePercent(feeKey);
+    },
+    [tierOverrides, getBaseFeePercent]
+  );
+
+  /**
+   * Check if user has a tier discount for this fee
+   */
+  const hasTierDiscount = useCallback(
+    (feeKey: string): boolean => {
+      return tierOverrides[feeKey] !== undefined && 
+             tierOverrides[feeKey] < getBaseFeePercent(feeKey);
+    },
+    [tierOverrides, getBaseFeePercent]
   );
 
   /**
@@ -111,11 +178,15 @@ export function usePaymentFees(): PaymentFeesData {
 
   return {
     fees,
+    tierOverrides,
+    userTier,
     loading,
     error,
     refetch: fetchFees,
     getFeePercent,
     getDisplayPercent,
+    getBaseFeePercent,
+    hasTierDiscount,
   };
 }
 

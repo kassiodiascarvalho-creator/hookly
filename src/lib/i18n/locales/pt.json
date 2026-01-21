@@ -1016,6 +1016,7 @@
     "adminPanel": "Painel Admin",
     "paymentProviders": "Provedores de Pagamento",
     "finances": "Finanças",
+    "tiers": "Tiers",
     "users": "Usuários",
     "usersDescription": "Gerenciar todos os usuários cadastrados",
     "allUsers": "Todos os Usuários",
@@ -1387,5 +1388,71 @@
       "howSendProposal": "Como enviar uma proposta?",
       "whereEarnings": "Onde estão meus ganhos?"
     }
+  },
+  "tiers": {
+    "standard": "Standard",
+    "pro": "Pro",
+    "top_rated": "Top Rated",
+    "benefits": {
+      "standard": {
+        "title": "Perfil Standard",
+        "description": "Acesso básico à plataforma"
+      },
+      "pro": {
+        "title": "Perfil Pro",
+        "description": "Benefícios exclusivos para profissionais",
+        "list": [
+          "Taxas reduzidas em pagamentos",
+          "Destaque nos resultados de busca",
+          "Badge Pro no perfil"
+        ]
+      },
+      "top_rated": {
+        "title": "Top Rated",
+        "description": "O melhor da plataforma",
+        "list": [
+          "Taxas mínimas em pagamentos",
+          "Prioridade máxima nos resultados",
+          "Badge Top Rated exclusivo",
+          "Acesso antecipado a projetos premium"
+        ]
+      }
+    },
+    "upgrade": {
+      "title": "Evolua seu Perfil",
+      "description": "Desbloqueie benefícios exclusivos",
+      "currentTier": "Seu nível atual",
+      "nextTier": "Próximo nível",
+      "requirements": "Requisitos para avançar"
+    }
+  },
+  "billing": {
+    "addFunds": "Adicionar Créditos",
+    "addFundsDescription": "Adicione créditos à sua conta usando sua moeda preferida",
+    "quickSelect": "Seleção Rápida",
+    "amount": "Valor",
+    "currency": "Moeda",
+    "youWillReceive": "Você receberá",
+    "contracts": "Contratos",
+    "contract": "Contrato",
+    "exchangeRate": "Cotação aplicada",
+    "proceedToPayment": "Continuar para Pagamento",
+    "invalidAmount": "Por favor insira um valor válido",
+    "walletBalance": "Créditos Disponíveis",
+    "walletDescription": "Seu crédito interno para transações na plataforma",
+    "transactionHistory": "Histórico de Transações",
+    "topup": "Créditos Adicionados",
+    "debit": "Débito",
+    "credit": "Crédito",
+    "refund": "Estorno",
+    "fundsAddedSuccess": "Créditos adicionados com sucesso!",
+    "paymentCanceled": "Pagamento foi cancelado",
+    "credits": "créditos",
+    "bonusCredits": "bônus",
+    "perCredit": "crédito",
+    "noPackages": "Nenhum pacote disponível",
+    "selectPackage": "Selecione um pacote",
+    "buyCredits": "Comprar Créditos",
+    "tierDiscount": "Desconto {{tier}}"
   }
 }
