@@ -49,13 +49,13 @@ const FREELANCER_FIELDS: { key: keyof FreelancerProfileData; label: string; weig
   { key: 'hourly_rate', label: 'profileCompletion.addHourlyRate', weight: 10, section: 'profile' },
 ];
 
-// Company completion rules with weights (total = 100)
+// Company completion rules with weights (total = 100, payment method NOT required)
 const COMPANY_FIELDS: { key: keyof CompanyProfileData; label: string; weight: number; section?: string }[] = [
-  { key: 'logo_url', label: 'profileCompletion.addLogo', weight: 10, section: 'profile' },
-  { key: 'company_name', label: 'profileCompletion.addCompanyName', weight: 15, section: 'profile' },
-  { key: 'website', label: 'profileCompletion.addWebsite', weight: 10, section: 'profile' },
-  { key: 'company_size', label: 'profileCompletion.addCompanySize', weight: 10, section: 'profile' },
-  { key: 'about', label: 'profileCompletion.addAbout', weight: 15, section: 'profile' },
+  { key: 'logo_url', label: 'profileCompletion.addLogo', weight: 12, section: 'profile' },
+  { key: 'company_name', label: 'profileCompletion.addCompanyName', weight: 18, section: 'profile' },
+  { key: 'website', label: 'profileCompletion.addWebsite', weight: 12, section: 'profile' },
+  { key: 'company_size', label: 'profileCompletion.addCompanySize', weight: 12, section: 'profile' },
+  { key: 'about', label: 'profileCompletion.addAbout', weight: 16, section: 'profile' },
   { key: 'industry', label: 'profileCompletion.addIndustry', weight: 10, section: 'profile' },
   { key: 'location', label: 'profileCompletion.addLocation', weight: 10, section: 'profile' },
   { key: 'country', label: 'profileCompletion.addCountry', weight: 10, section: 'profile' },
@@ -113,12 +113,11 @@ export function computeFreelancerCompletion(
 }
 
 export function computeCompanyCompletion(
-  profile: CompanyProfileData,
-  hasPaymentMethod: boolean = false
+  profile: CompanyProfileData
 ): ProfileCompletionResult {
   const items: CompletionItem[] = [];
   
-  // Add base profile fields
+  // Add base profile fields (payment method is NOT required for profile completion)
   for (const field of COMPANY_FIELDS) {
     items.push({
       key: field.key,
@@ -128,15 +127,6 @@ export function computeCompanyCompletion(
       section: field.section,
     });
   }
-  
-  // Add payment method check (10% weight)
-  items.push({
-    key: 'payment_method',
-    label: 'profileCompletion.addPaymentMethod',
-    completed: hasPaymentMethod,
-    weight: 10,
-    section: 'billing',
-  });
   
   const completedItems = items.filter(item => item.completed);
   const missingItems = items.filter(item => !item.completed);
