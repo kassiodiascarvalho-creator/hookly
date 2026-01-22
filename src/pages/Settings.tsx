@@ -361,6 +361,26 @@ export default function Settings() {
                     />
                   </div>
                   <div className="space-y-2">
+                    <Label>{t("settings.companySize")}</Label>
+                    <Select
+                      value={companyProfile.company_size || ""}
+                      onValueChange={(value) => setCompanyProfile({ ...companyProfile, company_size: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={t("settings.selectCompanySize")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">1 {t("settings.employee")}</SelectItem>
+                        <SelectItem value="2-10">2-10 {t("settings.employees")}</SelectItem>
+                        <SelectItem value="11-50">11-50 {t("settings.employees")}</SelectItem>
+                        <SelectItem value="51-200">51-200 {t("settings.employees")}</SelectItem>
+                        <SelectItem value="201-500">201-500 {t("settings.employees")}</SelectItem>
+                        <SelectItem value="501-1000">501-1000 {t("settings.employees")}</SelectItem>
+                        <SelectItem value="1000+">1000+ {t("settings.employees")}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
                     <Label>{t("settings.country")}</Label>
                     <Select
                       value={companyProfile.country || ""}

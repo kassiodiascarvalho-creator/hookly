@@ -137,17 +137,14 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
           .eq("user_id", user.id)
           .single();
 
-        // Check for payment methods
-        const { count: paymentMethodCount } = await supabase
-          .from("payment_method_tokens")
-          .select("*", { count: "exact", head: true })
-          .eq("user_id", user.id);
+        // Check for payment methods (not used for completion, but kept for future reference)
+        // const { count: paymentMethodCount } = await supabase
+        //   .from("payment_method_tokens")
+        //   .select("*", { count: "exact", head: true })
+        //   .eq("user_id", user.id);
 
         if (companyProfile) {
-          const result = computeCompanyCompletion(
-            companyProfile,
-            (paymentMethodCount || 0) > 0
-          );
+          const result = computeCompanyCompletion(companyProfile);
           setCompletion(result);
           
           // Update profile completion percent
