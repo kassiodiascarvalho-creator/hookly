@@ -1231,7 +1231,23 @@
     "totalCompanies": "Total de Empresas",
     "totalFreelancers": "Total de Freelancers",
     "totalProjects": "Total de Projetos",
-    "totalLeads": "Total de Leads"
+    "totalLeads": "Total de Leads",
+    "plans": {
+      "plan": "Plano",
+      "priceUsd": "Preço (USD)",
+      "monthlyBonus": "Bônus Mensal",
+      "monthlyBonusLabel": "Bônus Mensal (créditos)",
+      "monthlyBonusDesc": "Créditos adicionados automaticamente a cada 30 dias (apenas com perfil 100% completo)",
+      "projectsLimit": "Limite Projetos",
+      "proposalsLimit": "Limite Propostas",
+      "features": "Recursos",
+      "status": "Status",
+      "actions": "Ações",
+      "month": "mês",
+      "unlimited": "Ilimitado",
+      "active": "Ativo",
+      "inactive": "Inativo"
+    }
   },
   "finances": {
     "title": "Finanças",
