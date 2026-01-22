@@ -23,6 +23,7 @@ import CertificationsManager from "@/components/settings/CertificationsManager";
 import { RestrictedCurrencySelect } from "@/components/RestrictedCurrencySelect";
 import { FreelancerCreditsCard } from "@/components/billing/FreelancerCreditsCard";
 import { CompanyWalletCard } from "@/components/billing/CompanyWalletCard";
+import { CompanyPlanCard } from "@/components/billing/CompanyPlanCard";
 
 interface Profile {
   email: string;
@@ -665,6 +666,7 @@ export default function Settings() {
 
         {/* Billing Tab */}
         <TabsContent value="billing" className="space-y-6">
+          {isCompany && <CompanyPlanCard />}
           {isCompany ? <CompanyWalletCard /> : <FreelancerCreditsCard />}
         </TabsContent>
       </Tabs>
