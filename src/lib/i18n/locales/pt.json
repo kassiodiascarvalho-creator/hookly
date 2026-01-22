@@ -364,7 +364,8 @@
     "noProposals": "Nenhuma proposta ainda",
     "noProposalsDesc": "Comece a navegar por projetos para enviar sua primeira proposta",
     "browseProjects": "Ver Projetos",
-    "yourBid": "Sua Proposta"
+    "yourBid": "Sua Proposta",
+    "untitledProject": "Projeto sem título"
   },
   "companyProposals": {
     "title": "Propostas",

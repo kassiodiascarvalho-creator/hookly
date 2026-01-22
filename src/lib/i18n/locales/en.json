@@ -340,7 +340,8 @@
     "noProposals": "No proposals yet",
     "noProposalsDesc": "Start browsing projects to submit your first proposal",
     "browseProjects": "Browse Projects",
-    "yourBid": "Your Bid"
+    "yourBid": "Your Bid",
+    "untitledProject": "Untitled Project"
   },
   "companyProposals": {
     "title": "Proposals",

@@ -133,8 +133,8 @@ export default function MyProposals() {
                       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-3 mb-2">
-                            <h3 className="font-semibold text-lg truncate">
-                              {proposal.project?.title || "Project"}
+                        <h3 className="font-semibold text-lg truncate">
+                              {proposal.project?.title || t("myProposals.untitledProject")}
                             </h3>
                             <Badge className={config.color}>
                               <StatusIcon className="h-3 w-3 mr-1" />
