@@ -19,6 +19,7 @@ import { ProfileGateAlert } from "@/components/profile/ProfileGateAlert";
 import { ProfileGateModal } from "@/components/profile/ProfileGateModal";
 import { usePublishProject } from "@/hooks/usePublishProject";
 import { BudgetSuggestion } from "@/components/projects/BudgetSuggestion";
+import { BudgetRangeInput } from "@/components/projects/BudgetRangeInput";
 import { KpiSuggestion } from "@/components/projects/KpiSuggestion";
 
 const categoryKeys = [
@@ -68,6 +69,7 @@ export default function ProjectNew() {
     description: "",
     category: "",
     budget_min: "",
+    budget_ideal: "",
     budget_max: "",
     currency: "USD",
   });
@@ -116,15 +118,25 @@ export default function ProjectNew() {
 
   const validateStep2 = (): boolean => {
     const min = formData.budget_min ? parseFloat(formData.budget_min) : undefined;
+    const ideal = formData.budget_ideal ? parseFloat(formData.budget_ideal) : undefined;
     const max = formData.budget_max ? parseFloat(formData.budget_max) : undefined;
     
+    const newErrors: Record<string, string> = {};
+    
     if (min && max && min > max) {
-      setErrors({ budget: t("projects.validation.budgetMinMax") });
-      return false;
+      newErrors.budget = t("projects.validation.budgetMinMax");
     }
     
-    setErrors({});
-    return true;
+    if (min && ideal && min > ideal) {
+      newErrors.budget = "O orçamento ideal deve ser maior que o mínimo";
+    }
+    
+    if (ideal && max && ideal > max) {
+      newErrors.budget = "O orçamento ideal deve ser menor que o máximo";
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const nextStep = () => {
@@ -150,6 +162,7 @@ export default function ProjectNew() {
       description: formData.description,
       category: formData.category,
       budget_min: formData.budget_min ? parseFloat(formData.budget_min) : null,
+      budget_ideal: formData.budget_ideal ? parseFloat(formData.budget_ideal) : null,
       budget_max: formData.budget_max ? parseFloat(formData.budget_max) : null,
       currency: formData.currency,
       kpis: kpis.map(({ name, target }) => ({ name, target })),
@@ -309,6 +322,7 @@ export default function ProjectNew() {
               currentMax={formData.budget_max}
               onApplySuggestion={(min, max) => {
                 handleChange("budget_min", min.toString());
+                handleChange("budget_ideal", Math.round((min + max) / 2).toString());
                 handleChange("budget_max", max.toString());
               }}
             />
@@ -322,41 +336,17 @@ export default function ProjectNew() {
               />
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="budget_min">{t("projects.budgetMin")}</Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                    {getCurrencySymbol(formData.currency)}
-                  </span>
-                  <Input
-                    id="budget_min"
-                    type="number"
-                    value={formData.budget_min}
-                    onChange={(e) => handleChange("budget_min", e.target.value)}
-                    placeholder="0"
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="budget_max">{t("projects.budgetMax")}</Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                    {getCurrencySymbol(formData.currency)}
-                  </span>
-                  <Input
-                    id="budget_max"
-                    type="number"
-                    value={formData.budget_max}
-                    onChange={(e) => handleChange("budget_max", e.target.value)}
-                    placeholder="0"
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-            </div>
-            {errors.budget && <p className="text-sm text-destructive">{errors.budget}</p>}
+            {/* Budget Range Input */}
+            <BudgetRangeInput
+              budgetMin={formData.budget_min}
+              budgetIdeal={formData.budget_ideal}
+              budgetMax={formData.budget_max}
+              currency={formData.currency}
+              onMinChange={(v) => handleChange("budget_min", v)}
+              onIdealChange={(v) => handleChange("budget_ideal", v)}
+              onMaxChange={(v) => handleChange("budget_max", v)}
+              errors={errors.budget ? { range: errors.budget } : {}}
+            />
 
             <div className="space-y-4">
               <Label>{t("projects.kpis")}</Label>
@@ -445,12 +435,25 @@ export default function ProjectNew() {
               </div>
               
               <div>
-                <p className="text-sm text-muted-foreground">{t("projects.budget")}</p>
-                <p>
-                  {formData.budget_min || formData.budget_max
-                    ? `${getCurrencySymbol(formData.currency)}${formData.budget_min || "0"} - ${getCurrencySymbol(formData.currency)}${formData.budget_max || "∞"} (${formData.currency})`
-                    : t("projects.budgetNegotiable")}
-                </p>
+                <p className="text-sm text-muted-foreground mb-2">{t("projects.budget")}</p>
+                {formData.budget_min || formData.budget_ideal || formData.budget_max ? (
+                  <div className="grid grid-cols-3 gap-4 p-3 bg-muted rounded-lg">
+                    <div className="text-center">
+                      <p className="text-xs text-muted-foreground">Mín</p>
+                      <p className="font-medium">{formData.budget_min ? `${getCurrencySymbol(formData.currency)}${parseFloat(formData.budget_min).toLocaleString()}` : "-"}</p>
+                    </div>
+                    <div className="text-center border-x border-border">
+                      <p className="text-xs text-muted-foreground">Ideal</p>
+                      <p className="font-medium text-primary">{formData.budget_ideal ? `${getCurrencySymbol(formData.currency)}${parseFloat(formData.budget_ideal).toLocaleString()}` : "-"}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-muted-foreground">Máx</p>
+                      <p className="font-medium">{formData.budget_max ? `${getCurrencySymbol(formData.currency)}${parseFloat(formData.budget_max).toLocaleString()}` : "∞"}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <p>{t("projects.budgetNegotiable")}</p>
+                )}
               </div>
               
               {kpis.length > 0 && (

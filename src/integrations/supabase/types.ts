@@ -328,6 +328,7 @@ export type Database = {
       contracts: {
         Row: {
           accepted_at: string | null
+          agreed_amount_cents: number | null
           amount_cents: number
           cancelled_at: string | null
           company_accepted_at: string | null
@@ -342,14 +343,17 @@ export type Database = {
           freelancer_user_id: string
           id: string
           milestones: Json | null
+          original_proposal_amount_cents: number | null
           project_id: string
           proposal_id: string
           status: string
           title: string
           updated_at: string
+          was_counterproposal: boolean | null
         }
         Insert: {
           accepted_at?: string | null
+          agreed_amount_cents?: number | null
           amount_cents?: number
           cancelled_at?: string | null
           company_accepted_at?: string | null
@@ -364,14 +368,17 @@ export type Database = {
           freelancer_user_id: string
           id?: string
           milestones?: Json | null
+          original_proposal_amount_cents?: number | null
           project_id: string
           proposal_id: string
           status?: string
           title: string
           updated_at?: string
+          was_counterproposal?: boolean | null
         }
         Update: {
           accepted_at?: string | null
+          agreed_amount_cents?: number | null
           amount_cents?: number
           cancelled_at?: string | null
           company_accepted_at?: string | null
@@ -386,11 +393,13 @@ export type Database = {
           freelancer_user_id?: string
           id?: string
           milestones?: Json | null
+          original_proposal_amount_cents?: number | null
           project_id?: string
           proposal_id?: string
           status?: string
           title?: string
           updated_at?: string
+          was_counterproposal?: boolean | null
         }
         Relationships: [
           {
@@ -1924,6 +1933,7 @@ export type Database = {
       projects: {
         Row: {
           boosted_until: string | null
+          budget_ideal: number | null
           budget_max: number | null
           budget_min: number | null
           category: string | null
@@ -1939,6 +1949,7 @@ export type Database = {
         }
         Insert: {
           boosted_until?: string | null
+          budget_ideal?: number | null
           budget_max?: number | null
           budget_min?: number | null
           category?: string | null
@@ -1954,6 +1965,7 @@ export type Database = {
         }
         Update: {
           boosted_until?: string | null
+          budget_ideal?: number | null
           budget_max?: number | null
           budget_min?: number | null
           category?: string | null
@@ -1971,37 +1983,52 @@ export type Database = {
       }
       proposals: {
         Row: {
+          company_response: string | null
+          company_response_at: string | null
+          counterproposal_justification: string | null
           cover_letter: string | null
           created_at: string
           freelancer_user_id: string
           highlighted_at: string | null
           id: string
+          is_counterproposal: boolean
           is_highlighted: boolean
           milestones: Json | null
+          negotiation_notes: string | null
           project_id: string
           status: Database["public"]["Enums"]["proposal_status"]
           updated_at: string
         }
         Insert: {
+          company_response?: string | null
+          company_response_at?: string | null
+          counterproposal_justification?: string | null
           cover_letter?: string | null
           created_at?: string
           freelancer_user_id: string
           highlighted_at?: string | null
           id?: string
+          is_counterproposal?: boolean
           is_highlighted?: boolean
           milestones?: Json | null
+          negotiation_notes?: string | null
           project_id: string
           status?: Database["public"]["Enums"]["proposal_status"]
           updated_at?: string
         }
         Update: {
+          company_response?: string | null
+          company_response_at?: string | null
+          counterproposal_justification?: string | null
           cover_letter?: string | null
           created_at?: string
           freelancer_user_id?: string
           highlighted_at?: string | null
           id?: string
+          is_counterproposal?: boolean
           is_highlighted?: boolean
           milestones?: Json | null
+          negotiation_notes?: string | null
           project_id?: string
           status?: Database["public"]["Enums"]["proposal_status"]
           updated_at?: string
@@ -2466,6 +2493,10 @@ export type Database = {
       consume_proposal_credit: {
         Args: { p_freelancer_user_id: string }
         Returns: boolean
+      }
+      create_contract_from_proposal: {
+        Args: { p_company_user_id: string; p_proposal_id: string }
+        Returns: Json
       }
       credit_company_wallet: {
         Args: {
