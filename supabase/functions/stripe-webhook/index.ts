@@ -553,6 +553,126 @@ serve(async (req) => {
         }
         break;
       }
+
+      case "customer.subscription.created":
+      case "customer.subscription.updated": {
+        const subscription = event.data.object as Stripe.Subscription;
+        logStep("Subscription event", { 
+          type: event.type,
+          subscriptionId: subscription.id, 
+          status: subscription.status,
+          customerId: subscription.customer,
+        });
+
+        // Only process active subscriptions
+        if (subscription.status !== 'active') {
+          logStep("Skipping non-active subscription", { status: subscription.status });
+          break;
+        }
+
+        // Get customer email to find user
+        const customerId = typeof subscription.customer === 'string' 
+          ? subscription.customer 
+          : subscription.customer.id;
+
+        const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { 
+          apiVersion: "2025-08-27.basil" 
+        });
+        const customer = await stripe.customers.retrieve(customerId);
+        
+        if (customer.deleted || !('email' in customer) || !customer.email) {
+          logStep("Customer not found or deleted", { customerId });
+          break;
+        }
+
+        // Find user by email
+        const { data: profile } = await supabaseClient
+          .from("profiles")
+          .select("user_id, user_type")
+          .eq("email", customer.email)
+          .maybeSingle();
+
+        if (!profile) {
+          logStep("User not found for email", { email: customer.email });
+          break;
+        }
+
+        // Get plan type from subscription metadata or product
+        const priceId = subscription.items.data[0]?.price?.id;
+        let planType = subscription.metadata?.plan_type;
+
+        if (!planType && priceId) {
+          // Try to find plan type from price ID in definitions
+          if (profile.user_type === 'freelancer') {
+            const { data: planDef } = await supabaseClient
+              .from("freelancer_plan_definitions")
+              .select("plan_type")
+              .eq("stripe_price_id", priceId)
+              .maybeSingle();
+            planType = planDef?.plan_type;
+          } else {
+            const { data: planDef } = await supabaseClient
+              .from("company_plan_definitions")
+              .select("plan_type")
+              .eq("stripe_price_id", priceId)
+              .maybeSingle();
+            planType = planDef?.plan_type;
+          }
+        }
+
+        if (!planType) {
+          logStep("Could not determine plan type", { priceId, metadata: subscription.metadata });
+          break;
+        }
+
+        logStep("Granting initial plan credits", { 
+          userId: profile.user_id, 
+          userType: profile.user_type,
+          planType,
+          subscriptionId: subscription.id,
+        });
+
+        // Check if this is a new subscription (created event) - grant initial credits
+        if (event.type === "customer.subscription.created") {
+          const { data: grantResult, error: grantError } = await supabaseClient
+            .rpc("grant_plan_credits", {
+              p_user_id: profile.user_id,
+              p_user_type: profile.user_type,
+              p_plan_type: planType,
+              p_subscription_id: subscription.id,
+              p_grant_type: "initial",
+            });
+
+          if (grantError) {
+            logStep("Error granting initial plan credits", { error: grantError });
+          } else {
+            logStep("Initial plan credits granted", { result: grantResult });
+
+            // Send notification
+            const grantData = grantResult as { granted: boolean; amount?: number } | null;
+            if (grantData?.granted && grantData.amount) {
+              await supabaseClient.from("notifications").insert({
+                user_id: profile.user_id,
+                type: "credits_added",
+                message: `🎉 Bem-vindo ao plano ${planType}! Você recebeu ${grantData.amount} créditos mensais!`,
+                link: "/settings?tab=billing",
+              });
+            }
+          }
+        }
+        break;
+      }
+
+      case "customer.subscription.deleted": {
+        const subscription = event.data.object as Stripe.Subscription;
+        logStep("Subscription deleted/cancelled", { 
+          subscriptionId: subscription.id,
+          customerId: subscription.customer,
+        });
+        // Credits are NOT removed - they were already granted
+        // User just won't get more renewals
+        break;
+      }
     }
 
     return new Response(JSON.stringify({ received: true }), {
