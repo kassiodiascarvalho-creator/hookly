@@ -1,23 +1,34 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-import { FileText, Building2, User, Calendar, DollarSign, CheckCircle, Clock, Loader2, Lock, Shield, Scale, MessageSquare, Globe, AlertTriangle, FileCheck, Target, Wallet, XCircle, Users, Briefcase } from "lucide-react";
+import { 
+  FileText, Building2, User, Calendar, DollarSign, 
+  CheckCircle, Clock, Loader2, Lock, Shield, Scale,
+  MessageSquare, Globe, AlertTriangle, FileCheck, Target,
+  Wallet, XCircle, Users, Briefcase
+} from "lucide-react";
 import { formatMoneyFromCents } from "@/lib/formatMoney";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+
 const CONTRACT_VERSION = "v1.0";
 const TERMS_VERSION = "1.0";
+
 interface Milestone {
   title: string;
   amount: number;
   description?: string;
 }
+
 interface ContractData {
   id: string;
   title: string;
@@ -35,17 +46,23 @@ interface ContractData {
   company_user_id: string;
   freelancer_user_id: string;
   project_id: string;
+  was_counterproposal?: boolean;
+  agreed_amount_cents?: number | null;
+  original_proposal_amount_cents?: number | null;
 }
+
 interface CompanyInfo {
   company_name: string | null;
   contact_name: string | null;
   location: string | null;
 }
+
 interface FreelancerInfo {
   full_name: string | null;
   title: string | null;
   location: string | null;
 }
+
 interface ContractAcceptanceModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -53,7 +70,7 @@ interface ContractAcceptanceModalProps {
   onAccepted?: () => void;
 }
 
-// Generate a simple hash for contract snapshot
+// Generate a simple hash for contract snapshot (Unicode-safe)
 const generateContractHash = (contract: ContractData, companyInfo: CompanyInfo | null, freelancerInfo: FreelancerInfo | null): string => {
   const snapshotData = {
     id: contract.id,
@@ -65,71 +82,102 @@ const generateContractHash = (contract: ContractData, companyInfo: CompanyInfo |
     company: companyInfo?.company_name,
     freelancer: freelancerInfo?.full_name,
     terms_version: TERMS_VERSION,
-    contract_version: CONTRACT_VERSION
+    contract_version: CONTRACT_VERSION,
   };
+  
   const jsonString = JSON.stringify(snapshotData);
-  // Simple hash using btoa + length for integrity check
-  const hash = btoa(jsonString).substring(0, 32) + "_" + jsonString.length;
-  return hash;
+  
+  // Simple hash using a checksum approach (Unicode-safe)
+  let hash = 0;
+  for (let i = 0; i < jsonString.length; i++) {
+    const char = jsonString.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  
+  // Return hex hash + length for integrity check
+  const hexHash = Math.abs(hash).toString(16).padStart(8, '0');
+  return `${hexHash}_${jsonString.length}`;
 };
+
 export function ContractAcceptanceModal({
   open,
   onOpenChange,
   contract,
-  onAccepted
+  onAccepted,
 }: ContractAcceptanceModalProps) {
-  const {
-    user
-  } = useAuth();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [loadingInfo, setLoadingInfo] = useState(true);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
   const [freelancerInfo, setFreelancerInfo] = useState<FreelancerInfo | null>(null);
+
   const isCompany = user?.id === contract.company_user_id;
   const isFreelancer = user?.id === contract.freelancer_user_id;
+  
   const companyHasAccepted = !!contract.company_accepted_at;
   const freelancerHasAccepted = !!contract.freelancer_accepted_at;
   const bothAccepted = companyHasAccepted && freelancerHasAccepted;
+  
   const userHasAccepted = isCompany ? companyHasAccepted : freelancerHasAccepted;
+
   useEffect(() => {
     if (open) {
       fetchPartyInfo();
       setTermsAccepted(false);
     }
   }, [open, contract]);
+
   const fetchPartyInfo = async () => {
     setLoadingInfo(true);
-    const [companyResult, freelancerResult] = await Promise.all([supabase.from("company_profiles").select("company_name, contact_name, location").eq("user_id", contract.company_user_id).maybeSingle(), supabase.from("freelancer_profiles").select("full_name, title, location").eq("user_id", contract.freelancer_user_id).maybeSingle()]);
+
+    const [companyResult, freelancerResult] = await Promise.all([
+      supabase
+        .from("company_profiles")
+        .select("company_name, contact_name, location")
+        .eq("user_id", contract.company_user_id)
+        .maybeSingle(),
+      supabase
+        .from("freelancer_profiles")
+        .select("full_name, title, location")
+        .eq("user_id", contract.freelancer_user_id)
+        .maybeSingle()
+    ]);
+
     if (companyResult.data) setCompanyInfo(companyResult.data);
     if (freelancerResult.data) setFreelancerInfo(freelancerResult.data);
+
     setLoadingInfo(false);
   };
+
   const handleAccept = async () => {
     if (!termsAccepted || !user) return;
+
     setLoading(true);
+
     try {
       const acceptRole = isCompany ? "company" : "freelancer";
       const updateField = isCompany ? "company_accepted_at" : "freelancer_accepted_at";
       const willBothAccept = isCompany ? freelancerHasAccepted : companyHasAccepted;
       const acceptedAt = new Date().toISOString();
-
+      
       // Generate contract snapshot hash for audit trail
       const snapshotHash = generateContractHash(contract, companyInfo, freelancerInfo);
-
+      
       // 1. First, record the acceptance in the audit table
-      const {
-        error: acceptanceError
-      } = await supabase.from("contract_acceptances").insert({
-        contract_id: contract.id,
-        accepted_by_user_id: user.id,
-        accepted_by_role: acceptRole,
-        accepted_at: acceptedAt,
-        terms_version: TERMS_VERSION,
-        contract_version: CONTRACT_VERSION,
-        contract_snapshot_hash: snapshotHash,
-        user_agent: navigator.userAgent
-      });
+      const { error: acceptanceError } = await supabase
+        .from("contract_acceptances")
+        .insert({
+          contract_id: contract.id,
+          accepted_by_user_id: user.id,
+          accepted_by_role: acceptRole,
+          accepted_at: acceptedAt,
+          terms_version: TERMS_VERSION,
+          contract_version: CONTRACT_VERSION,
+          contract_snapshot_hash: snapshotHash,
+          user_agent: navigator.userAgent,
+        });
 
       // If duplicate (already accepted), just ignore and show message
       if (acceptanceError) {
@@ -145,7 +193,7 @@ export function ContractAcceptanceModal({
       // 2. Update contract status
       const updateData: Record<string, unknown> = {
         [updateField]: acceptedAt,
-        contract_terms_version: CONTRACT_VERSION
+        contract_terms_version: CONTRACT_VERSION,
       };
 
       // Set status based on acceptance state
@@ -157,34 +205,47 @@ export function ContractAcceptanceModal({
         // Only one party accepted -> pending_acceptance
         updateData.status = "pending_acceptance";
       }
-      const {
-        error
-      } = await supabase.from("contracts").update(updateData).eq("id", contract.id);
+
+      const { error } = await supabase
+        .from("contracts")
+        .update(updateData)
+        .eq("id", contract.id);
+
       if (error) throw error;
-      toast.success(willBothAccept ? "Contrato ativado! Ambas as partes aceitaram." : "Contrato aceito! Aguardando a outra parte.");
+
+      toast.success(
+        willBothAccept 
+          ? "Contrato ativado! Ambas as partes aceitaram." 
+          : "Contrato aceito! Aguardando a outra parte."
+      );
+
       onAccepted?.();
       onOpenChange(false);
     } catch (err) {
       console.error("Error accepting contract:", err);
       toast.error("Erro ao aceitar contrato");
     }
+
     setLoading(false);
   };
+
   const milestones = contract.milestones as Milestone[] | null;
   const contractId = contract.id.slice(0, 8).toUpperCase();
+
   const formatAcceptanceDate = (dateString: string | null) => {
     if (!dateString) return null;
-    return format(new Date(dateString), "dd/MM/yyyy 'às' HH:mm", {
-      locale: ptBR
-    });
+    return format(new Date(dateString), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
   };
+
   const getStatusBadge = () => {
     if (bothAccepted) return <Badge className="bg-green-600 text-white">Ativo</Badge>;
     if (contract.status === "pending_acceptance") return <Badge variant="secondary" className="bg-amber-500/20 text-amber-600">Pendente</Badge>;
     if (contract.status === "draft") return <Badge variant="outline">Rascunho</Badge>;
     return <Badge variant="outline">{contract.status}</Badge>;
   };
-  return <Dialog open={open} onOpenChange={onOpenChange}>
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="p-0 gap-0 max-w-2xl w-[95vw] max-h-[85vh] sm:max-h-[90vh] flex flex-col overflow-hidden">
         {/* FIXED HEADER */}
         <div className="flex-shrink-0 border-b bg-background px-4 py-3 sm:px-6 sm:py-4">
@@ -210,16 +271,47 @@ export function ContractAcceptanceModal({
 
         {/* SCROLLABLE BODY */}
         <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
-          {loadingInfo ? <div className="flex justify-center py-8">
+          {loadingInfo ? (
+            <div className="flex justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin" />
-            </div> : <div className="space-y-6">
+            </div>
+          ) : (
+            <div className="space-y-6">
               {/* CONTRACT SUMMARY */}
               <section className="p-4 rounded-lg bg-muted/50 border">
-                <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground mb-3">
-                  Resumo do Contrato
-                </h3>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
+                    Resumo do Contrato
+                  </h3>
+                  {contract.was_counterproposal && (
+                    <Badge variant="outline" className="gap-1 text-amber-600 border-amber-500">
+                      <AlertTriangle className="h-3 w-3" />
+                      Contra-proposta
+                    </Badge>
+                  )}
+                </div>
                 <div className="space-y-2">
                   <p className="font-medium text-lg">{contract.title}</p>
+                  
+                  {/* Show counterproposal info if applicable */}
+                  {contract.was_counterproposal && contract.original_proposal_amount_cents ? (
+                    <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 mb-3">
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5" />
+                        <div className="text-sm">
+                          <p className="font-medium text-amber-700 dark:text-amber-400">
+                            Valor negociado via contra-proposta
+                          </p>
+                          <p className="text-muted-foreground mt-1">
+                            Orçamento original: <span className="line-through">{formatMoneyFromCents(contract.original_proposal_amount_cents, contract.currency)}</span>
+                            {" → "}
+                            Valor acordado: <span className="font-semibold text-foreground">{formatMoneyFromCents(contract.amount_cents, contract.currency)}</span>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+                  
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div>
                       <span className="text-muted-foreground">Valor: </span>
@@ -231,37 +323,59 @@ export function ContractAcceptanceModal({
                       <span className="text-muted-foreground">Moeda: </span>
                       <span className="font-semibold">{contract.currency}</span>
                     </div>
-                    {contract.deadline && <div className="col-span-2">
+                    {contract.deadline && (
+                      <div className="col-span-2">
                         <span className="text-muted-foreground">Prazo: </span>
                         <span className="font-semibold">
                           {format(new Date(contract.deadline), "dd/MM/yyyy")}
                         </span>
-                      </div>}
+                      </div>
+                    )}
                   </div>
                 </div>
               </section>
 
               {/* ACCEPTANCE STATUS */}
-              <section className={`p-4 rounded-lg border ${bothAccepted ? "bg-green-500/10 border-green-500/30" : "bg-amber-500/10 border-amber-500/30"}`}>
+              <section className={`p-4 rounded-lg border ${
+                bothAccepted 
+                  ? "bg-green-500/10 border-green-500/30" 
+                  : "bg-amber-500/10 border-amber-500/30"
+              }`}>
                 <div className="flex items-center gap-2 mb-3">
-                  {bothAccepted ? <CheckCircle className="h-5 w-5 text-green-600" /> : <Clock className="h-5 w-5 text-success" />}
+                  {bothAccepted ? (
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                  ) : (
+                    <Clock className="h-5 w-5 text-amber-600" />
+                  )}
                   <span className="font-medium">
                     {bothAccepted ? "Contrato Ativo" : "Aceites Pendentes"}
                   </span>
                 </div>
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center gap-2">
-                    {companyHasAccepted ? <CheckCircle className="h-4 w-4 text-green-600" /> : <Clock className="h-4 w-4 text-muted-foreground" />}
+                    {companyHasAccepted ? (
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                    )}
                     <span>
                       <strong>Contratante:</strong>{" "}
-                      {companyHasAccepted ? `Aceito em ${formatAcceptanceDate(contract.company_accepted_at)}` : "Pendente"}
+                      {companyHasAccepted 
+                        ? `Aceito em ${formatAcceptanceDate(contract.company_accepted_at)}` 
+                        : "Pendente"}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    {freelancerHasAccepted ? <CheckCircle className="h-4 w-4 text-green-600" /> : <Clock className="h-4 w-4 text-muted-foreground" />}
+                    {freelancerHasAccepted ? (
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                    )}
                     <span>
                       <strong>Prestador:</strong>{" "}
-                      {freelancerHasAccepted ? `Aceito em ${formatAcceptanceDate(contract.freelancer_accepted_at)}` : "Pendente"}
+                      {freelancerHasAccepted 
+                        ? `Aceito em ${formatAcceptanceDate(contract.freelancer_accepted_at)}` 
+                        : "Pendente"}
                     </span>
                   </div>
                 </div>
@@ -282,8 +396,12 @@ export function ContractAcceptanceModal({
                       <span className="text-sm font-medium text-muted-foreground">CONTRATANTE</span>
                     </div>
                     <p className="font-semibold">{companyInfo?.company_name || "Empresa"}</p>
-                    {companyInfo?.contact_name && <p className="text-sm text-muted-foreground">Representante: {companyInfo.contact_name}</p>}
-                    {companyInfo?.location && <p className="text-xs text-muted-foreground mt-1">{companyInfo.location}</p>}
+                    {companyInfo?.contact_name && (
+                      <p className="text-sm text-muted-foreground">Representante: {companyInfo.contact_name}</p>
+                    )}
+                    {companyInfo?.location && (
+                      <p className="text-xs text-muted-foreground mt-1">{companyInfo.location}</p>
+                    )}
                   </div>
 
                   <div className="p-4 rounded-lg border bg-card">
@@ -292,8 +410,12 @@ export function ContractAcceptanceModal({
                       <span className="text-sm font-medium text-muted-foreground">PRESTADOR</span>
                     </div>
                     <p className="font-semibold">{freelancerInfo?.full_name || "Freelancer"}</p>
-                    {freelancerInfo?.title && <p className="text-sm text-muted-foreground">{freelancerInfo.title}</p>}
-                    {freelancerInfo?.location && <p className="text-xs text-muted-foreground mt-1">{freelancerInfo.location}</p>}
+                    {freelancerInfo?.title && (
+                      <p className="text-sm text-muted-foreground">{freelancerInfo.title}</p>
+                    )}
+                    {freelancerInfo?.location && (
+                      <p className="text-xs text-muted-foreground mt-1">{freelancerInfo.location}</p>
+                    )}
                   </div>
                 </div>
               </section>
@@ -323,11 +445,15 @@ export function ContractAcceptanceModal({
                     </p>
                     <div className="p-3 rounded-md border bg-background">
                       <p className="font-medium text-base mb-2">{contract.title}</p>
-                      {contract.description ? <p className="text-muted-foreground whitespace-pre-wrap break-words leading-relaxed">
+                      {contract.description ? (
+                        <p className="text-muted-foreground whitespace-pre-wrap break-words leading-relaxed">
                           {contract.description}
-                        </p> : <p className="text-muted-foreground italic">
+                        </p>
+                      ) : (
+                        <p className="text-muted-foreground italic">
                           Nenhuma descrição adicional fornecida.
-                        </p>}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -340,21 +466,29 @@ export function ContractAcceptanceModal({
                   <h4 className="font-semibold">3. Das Entregas e Aceite</h4>
                 </div>
                 <div className="space-y-3">
-                  {milestones && milestones.length > 0 ? <div className="space-y-2">
-                      {milestones.map((milestone, idx) => <div key={idx} className="p-3 rounded-lg border bg-card flex justify-between items-start gap-3">
+                  {milestones && milestones.length > 0 ? (
+                    <div className="space-y-2">
+                      {milestones.map((milestone, idx) => (
+                        <div key={idx} className="p-3 rounded-lg border bg-card flex justify-between items-start gap-3">
                           <div className="min-w-0">
                             <p className="font-medium text-sm">
                               <span className="text-muted-foreground">{idx + 1}.</span> {milestone.title}
                             </p>
-                            {milestone.description && <p className="text-xs text-muted-foreground mt-1">{milestone.description}</p>}
+                            {milestone.description && (
+                              <p className="text-xs text-muted-foreground mt-1">{milestone.description}</p>
+                            )}
                           </div>
                           <Badge variant="outline" className="flex-shrink-0">
                             {formatMoneyFromCents(milestone.amount * 100, contract.currency)}
                           </Badge>
-                        </div>)}
-                    </div> : <p className="text-sm text-muted-foreground p-4 border rounded-lg bg-card">
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground p-4 border rounded-lg bg-card">
                       A entrega será realizada em parcela única, conforme acordado entre as partes.
-                    </p>}
+                    </p>
+                  )}
                   <p className="text-xs text-muted-foreground">
                     O aceite de cada entrega será realizado pelo CONTRATANTE através da plataforma.
                   </p>
@@ -520,20 +654,25 @@ export function ContractAcceptanceModal({
 
               {/* CONTRACT METADATA */}
               <section className="text-xs text-muted-foreground space-y-1">
-                <p>Contrato gerado em: {format(new Date(contract.created_at), "dd/MM/yyyy 'às' HH:mm", {
-                locale: ptBR
-              })}</p>
+                <p>Contrato gerado em: {format(new Date(contract.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
                 <p>ID do Contrato: {contract.id}</p>
                 <p>Versão dos Termos: {contract.contract_terms_version || CONTRACT_VERSION}</p>
               </section>
-            </div>}
+            </div>
+          )}
         </div>
 
         {/* FIXED FOOTER */}
         <div className="flex-shrink-0 border-t bg-background px-4 py-3 sm:px-6 sm:py-4">
-          {!userHasAccepted ? <div className="space-y-4">
+          {!userHasAccepted ? (
+            <div className="space-y-4">
               <div className="flex items-start gap-3 p-3 rounded-lg border bg-muted/50">
-                <Checkbox id="terms" checked={termsAccepted} onCheckedChange={checked => setTermsAccepted(checked as boolean)} className="mt-0.5" />
+                <Checkbox
+                  id="terms"
+                  checked={termsAccepted}
+                  onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
+                  className="mt-0.5"
+                />
                 <label htmlFor="terms" className="text-sm cursor-pointer leading-relaxed">
                   Li e aceito integralmente os termos deste contrato ({CONTRACT_VERSION}). 
                   Declaro estar ciente que a moeda ({contract.currency}) e o valor 
@@ -544,26 +683,42 @@ export function ContractAcceptanceModal({
                 <Button variant="outline" onClick={() => onOpenChange(false)}>
                   Fechar
                 </Button>
-                <Button onClick={handleAccept} disabled={!termsAccepted || loading} className="gap-2">
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
+                <Button 
+                  onClick={handleAccept} 
+                  disabled={!termsAccepted || loading}
+                  className="gap-2"
+                >
+                  {loading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <CheckCircle className="h-4 w-4" />
+                  )}
                   Aceitar Contrato
                 </Button>
               </div>
-            </div> : <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-between sm:items-center">
+            </div>
+          ) : (
+            <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-between sm:items-center">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                {bothAccepted ? <>
+                {bothAccepted ? (
+                  <>
                     <CheckCircle className="h-4 w-4 text-green-600" />
                     <span>Contrato ativo desde {formatAcceptanceDate(contract.accepted_at || contract.company_accepted_at)}</span>
-                  </> : <>
+                  </>
+                ) : (
+                  <>
                     <Clock className="h-4 w-4" />
                     <span>Aguardando aceite da outra parte</span>
-                  </>}
+                  </>
+                )}
               </div>
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Fechar
               </Button>
-            </div>}
+            </div>
+          )}
         </div>
       </DialogContent>
-    </Dialog>;
+    </Dialog>
+  );
 }
