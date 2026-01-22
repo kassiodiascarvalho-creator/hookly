@@ -1039,7 +1039,20 @@
     "goBack": "Go Back",
     "signOut": "Sign Out",
     "comingSoon": "Coming soon",
-    "days": "days"
+    "days": "days",
+    "later": "Later"
+  },
+  "profileGate": {
+    "title": "Complete Your Profile",
+    "freelancerDescription": "Complete 100% of your profile to send proposals and unlock your bonus credits.",
+    "companyDescription": "Complete 100% of your company profile to publish projects and unlock your bonus credits.",
+    "profileProgress": "Profile progress",
+    "bonusHint": "Complete your profile to unlock 10 bonus credits!",
+    "missingItems": "What's missing:",
+    "moreItems": "more items",
+    "completeNow": "Complete Profile",
+    "freelancerAlertTitle": "Complete your profile to send proposals",
+    "companyAlertTitle": "Complete your company profile to publish projects"
   },
   "credits": "credits",
   "admin": {

@@ -478,7 +478,20 @@
     "next": "Suivant",
     "submit": "Soumettre",
     "logout": "Déconnexion",
-    "days": "jours"
+    "days": "jours",
+    "later": "Plus tard"
+  },
+  "profileGate": {
+    "title": "Complétez votre Profil",
+    "freelancerDescription": "Complétez votre profil à 100% pour envoyer des propositions et débloquer vos crédits bonus.",
+    "companyDescription": "Complétez le profil de votre entreprise à 100% pour publier des projets et débloquer vos crédits bonus.",
+    "profileProgress": "Progression du profil",
+    "bonusHint": "Complétez votre profil et gagnez 10 crédits bonus !",
+    "missingItems": "Ce qui manque :",
+    "moreItems": "éléments de plus",
+    "completeNow": "Compléter le Profil",
+    "freelancerAlertTitle": "Complétez votre profil pour envoyer des propositions",
+    "companyAlertTitle": "Complétez le profil de l'entreprise pour publier des projets"
   },
   "credits": "crédits",
   "earnings": {

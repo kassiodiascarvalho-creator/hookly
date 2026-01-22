@@ -478,7 +478,20 @@
     "next": "Weiter",
     "submit": "Absenden",
     "logout": "Abmelden",
-    "days": "Tage"
+    "days": "Tage",
+    "later": "Später"
+  },
+  "profileGate": {
+    "title": "Profil Vervollständigen",
+    "freelancerDescription": "Vervollständigen Sie Ihr Profil zu 100%, um Vorschläge zu senden und Ihre Bonus-Credits freizuschalten.",
+    "companyDescription": "Vervollständigen Sie Ihr Unternehmensprofil zu 100%, um Projekte zu veröffentlichen und Ihre Bonus-Credits freizuschalten.",
+    "profileProgress": "Profilfortschritt",
+    "bonusHint": "Vervollständigen Sie Ihr Profil und erhalten Sie 10 Bonus-Credits!",
+    "missingItems": "Was fehlt:",
+    "moreItems": "weitere Elemente",
+    "completeNow": "Profil Vervollständigen",
+    "freelancerAlertTitle": "Vervollständigen Sie Ihr Profil, um Vorschläge zu senden",
+    "companyAlertTitle": "Vervollständigen Sie Ihr Unternehmensprofil, um Projekte zu veröffentlichen"
   },
   "credits": "Credits",
   "earnings": {

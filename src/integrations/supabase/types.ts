@@ -1742,6 +1742,7 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          last_monthly_credit_grant_at: string | null
           onboarding_completed: boolean | null
           preferred_language: string
           profile_completion_bonus_claimed: boolean | null
@@ -1757,6 +1758,7 @@ export type Database = {
           created_at?: string
           email: string
           id?: string
+          last_monthly_credit_grant_at?: string | null
           onboarding_completed?: boolean | null
           preferred_language?: string
           profile_completion_bonus_claimed?: boolean | null
@@ -1772,6 +1774,7 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          last_monthly_credit_grant_at?: string | null
           onboarding_completed?: boolean | null
           preferred_language?: string
           profile_completion_bonus_claimed?: boolean | null
@@ -2382,8 +2385,20 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_and_grant_monthly_credits: {
+        Args: { p_user_id: string; p_user_type: string }
+        Returns: Json
+      }
+      check_company_can_publish_project: {
+        Args: { p_company_user_id: string }
+        Returns: Json
+      }
       check_company_plan_limit: {
         Args: { p_company_user_id: string }
+        Returns: Json
+      }
+      check_freelancer_can_send_proposal: {
+        Args: { p_freelancer_user_id: string }
         Returns: Json
       }
       check_platform_credits: {
