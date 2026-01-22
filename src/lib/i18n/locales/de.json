@@ -851,6 +851,34 @@
     "expired": "Abgelaufen"
   },
   "payments": {
+    "fees": {
+      "international_card": "Internationale Karte",
+      "brl_pix": "PIX",
+      "brl_card": "Brasilien Karte",
+      "unknown": "Servicegebühr"
+    },
+    "feeLabels": {
+      "methodFee": "Zahlungsschutz",
+      "conversionFee": "Währungsschutz",
+      "total": "Gesamt",
+      "processingFee": "Servicegebühr",
+      "contractValue": "Vertragswert",
+      "paymentSummary": "Zahlungsübersicht",
+      "freelancerReceives": "Der Freelancer erhält genau {{amount}} nach Abschluss."
+    },
+    "breakdown": {
+      "youSend": "Sie senden",
+      "currencyProtection": "Währungsschutz ({{percent}}%)",
+      "convertedAmount": "Konvertierter Betrag",
+      "currency": "Währung",
+      "paymentMethod": "Zahlungsmethode",
+      "card": "Karte"
+    },
+    "protectionFee": "Zahlungsschutz",
+    "processing": "Verarbeitung...",
+    "currencyNotAllowed": "Währung nicht erlaubt",
+    "currencyRestrictionMessage": "Die Währung {{currency}} ist für Ihr Land nicht erlaubt. Erlaubte Währungen: {{allowed}}.",
+    "cardInternational": "Internationale Karte",
     "milestones": "Meilenstein-Zahlungen",
     "milestonesDescCompany": "Finanzieren Sie Meilensteine, um die Zahlung in Treuhand zu halten. Freigabe nach Genehmigung der Arbeit.",
     "milestonesDescFreelancer": "Verfolgen Sie Ihre Meilenstein-Zahlungen und den Treuhand-Status.",

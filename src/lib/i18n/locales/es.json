@@ -851,6 +851,34 @@
     "expired": "Expirada"
   },
   "payments": {
+    "fees": {
+      "international_card": "Tarjeta Internacional",
+      "brl_pix": "PIX",
+      "brl_card": "Tarjeta Brasil",
+      "unknown": "Tarifa de Servicio"
+    },
+    "feeLabels": {
+      "methodFee": "Protección de pago",
+      "conversionFee": "Protección de cambio",
+      "total": "Total",
+      "processingFee": "Tarifa de Servicio",
+      "contractValue": "Valor del contrato",
+      "paymentSummary": "Resumen del Pago",
+      "freelancerReceives": "El freelancer recibirá exactamente {{amount}} al completarse."
+    },
+    "breakdown": {
+      "youSend": "Envías",
+      "currencyProtection": "Protección de cambio ({{percent}}%)",
+      "convertedAmount": "Monto convertido",
+      "currency": "Moneda",
+      "paymentMethod": "Método de pago",
+      "card": "Tarjeta"
+    },
+    "protectionFee": "Protección del pago",
+    "processing": "Procesando...",
+    "currencyNotAllowed": "Moneda no permitida",
+    "currencyRestrictionMessage": "La moneda {{currency}} no está permitida para tu país. Monedas permitidas: {{allowed}}.",
+    "cardInternational": "Tarjeta Internacional",
     "milestones": "Pagos por Hitos",
     "milestonesDescCompany": "Financia hitos para mantener el pago en custodia. Libera cuando el trabajo sea aprobado.",
     "milestonesDescFreelancer": "Rastrea tus pagos por hitos y estado de custodia.",
