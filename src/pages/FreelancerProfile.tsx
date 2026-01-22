@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { 
   MapPin, DollarSign, Star, CheckCircle, MessageSquare, 
-  Loader2, Briefcase, Globe, Calendar, ExternalLink, Award
+  Loader2, Briefcase, Globe, Calendar, ExternalLink, Award, CreditCard
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -19,6 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
+import { FreelancerPlanCard } from "@/components/billing/FreelancerPlanCard";
 
 interface FreelancerData {
   id: string;
@@ -431,6 +432,12 @@ export default function FreelancerProfile() {
           <TabsTrigger value="portfolio">{t("freelancerProfile.portfolio")}</TabsTrigger>
           <TabsTrigger value="reviews">{t("freelancerProfile.reviewsTab")}</TabsTrigger>
           <TabsTrigger value="certifications">{t("freelancerProfile.certifications")}</TabsTrigger>
+          {user && user.id === userId && (
+            <TabsTrigger value="billing" className="gap-1">
+              <CreditCard className="h-4 w-4" />
+              {t("freelancerProfile.billing")}
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="about">
@@ -598,6 +605,15 @@ export default function FreelancerProfile() {
             </div>
           )}
         </TabsContent>
+
+        {/* Billing Tab - Only visible to profile owner */}
+        {user && user.id === userId && (
+          <TabsContent value="billing">
+            <div className="space-y-6">
+              <FreelancerPlanCard />
+            </div>
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

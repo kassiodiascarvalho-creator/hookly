@@ -880,7 +880,8 @@
     "viewProject": "Ver Projeto",
     "viewCredential": "Ver Credencial",
     "issued": "Emitido",
-    "expires": "Expira"
+    "expires": "Expira",
+    "billing": "Faturamento"
   },
   "billing": {
     "addFunds": "Adicionar Créditos",
