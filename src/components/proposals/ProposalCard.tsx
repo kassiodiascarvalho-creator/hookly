@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Check, X, Loader2, DollarSign, MapPin } from "lucide-react";
+import { Check, X, Loader2, DollarSign, MapPin, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatMoney } from "@/lib/formatMoney";
 import { 
@@ -30,6 +30,9 @@ interface Proposal {
   created_at: string;
   freelancer_user_id: string;
   freelancer?: Freelancer | null;
+  is_counterproposal?: boolean;
+  counterproposal_justification?: string | null;
+  company_response?: string | null;
 }
 
 interface ProposalCardProps {
@@ -41,6 +44,7 @@ interface ProposalCardProps {
   onReject: (proposalId: string, freelancerUserId: string) => void;
   onViewProfile: (freelancerUserId: string) => void;
   onOpenAIAnalysis?: () => void;
+  onRespondToCounterproposal?: (proposal: Proposal) => void;
 }
 
 export function ProposalCard({
@@ -52,6 +56,7 @@ export function ProposalCard({
   onReject,
   onViewProfile,
   onOpenAIAnalysis,
+  onRespondToCounterproposal,
 }: ProposalCardProps) {
   const { t } = useTranslation();
 
@@ -100,12 +105,37 @@ export function ProposalCard({
                 {t("common.verified", "Verified")}
               </Badge>
             )}
+            {proposal.is_counterproposal && (
+              <Badge variant="outline" className="border-amber-500 text-amber-600 gap-1">
+                <AlertTriangle className="h-3 w-3" />
+                {t("proposals.counterproposal", "Counter-proposal")}
+              </Badge>
+            )}
             <Badge 
               variant={proposal.status === "accepted" ? "default" : proposal.status === "rejected" ? "destructive" : "secondary"}
             >
               {proposal.status}
             </Badge>
           </div>
+
+          {/* Counter-proposal company response status */}
+          {proposal.is_counterproposal && proposal.company_response && (
+            <div className="mb-2">
+              <Badge 
+                variant="outline"
+                className={cn(
+                  "text-xs",
+                  proposal.company_response === "accepted" && "border-green-500 text-green-600",
+                  proposal.company_response === "negotiating" && "border-amber-500 text-amber-600",
+                  proposal.company_response === "rejected" && "border-red-500 text-red-600"
+                )}
+              >
+                {proposal.company_response === "accepted" && t("counterproposal.statusAccepted", "Accepted")}
+                {proposal.company_response === "negotiating" && t("counterproposal.statusNegotiating", "Negotiating")}
+                {proposal.company_response === "rejected" && t("counterproposal.statusRejected", "Rejected")}
+              </Badge>
+            </div>
+          )}
 
           {/* AI Recommendation Badge & Score */}
           {ranking && (
@@ -161,28 +191,44 @@ export function ProposalCard({
           )}
           
           {proposal.status === "sent" && (
-            <div className="flex gap-2 mt-3">
-              <Button 
-                size="sm" 
-                onClick={handleAcceptWithWarning}
-                disabled={actionLoading === proposal.id}
-              >
-                {actionLoading === proposal.id ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                ) : (
-                  <Check className="h-4 w-4 mr-1" />
-                )}
-                {t("proposals.accept")}
-              </Button>
-              <Button 
-                size="sm" 
-                variant="outline"
-                onClick={() => onReject(proposal.id, proposal.freelancer_user_id)}
-                disabled={actionLoading === proposal.id}
-              >
-                <X className="h-4 w-4 mr-1" />
-                {t("proposals.reject")}
-              </Button>
+            <div className="flex flex-wrap gap-2 mt-3">
+              {/* Show respond button for counter-proposals without response */}
+              {proposal.is_counterproposal && !proposal.company_response && onRespondToCounterproposal ? (
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  className="border-amber-500 text-amber-600 hover:bg-amber-50"
+                  onClick={() => onRespondToCounterproposal(proposal)}
+                  disabled={actionLoading === proposal.id}
+                >
+                  <AlertTriangle className="h-4 w-4 mr-1" />
+                  {t("counterproposal.respond", "Respond to Counter-proposal")}
+                </Button>
+              ) : (
+                <>
+                  <Button 
+                    size="sm" 
+                    onClick={handleAcceptWithWarning}
+                    disabled={actionLoading === proposal.id}
+                  >
+                    {actionLoading === proposal.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                    ) : (
+                      <Check className="h-4 w-4 mr-1" />
+                    )}
+                    {t("proposals.accept")}
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => onReject(proposal.id, proposal.freelancer_user_id)}
+                    disabled={actionLoading === proposal.id}
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    {t("proposals.reject")}
+                  </Button>
+                </>
+              )}
               <Button 
                 size="sm" 
                 variant="ghost"

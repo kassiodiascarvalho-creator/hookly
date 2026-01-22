@@ -4,3 +4,4 @@ export type { AIRecommendationLevel } from "./ProposalAIBadge";
 export { BudgetRangeDisplay } from "./BudgetRangeDisplay";
 export { ProposalBudgetValidation, validateProposalBudget } from "./ProposalBudgetValidation";
 export { CounterproposalJustification } from "./CounterproposalJustification";
+export { CounterproposalResponseModal } from "./CounterproposalResponseModal";
