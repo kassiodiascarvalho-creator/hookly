@@ -6,7 +6,10 @@ const corsHeaders = {
 };
 
 // Supported languages
-const SUPPORTED_LANGS = ["pt-BR", "en", "es", "fr", "de", "zh"];
+const SUPPORTED_LANGS = ["pt-BR", "pt", "en", "es", "fr", "de", "zh"];
+
+// Daily translation limit for free users
+const FREE_DAILY_LIMIT = 10;
 
 // Simple language detection based on common patterns
 function detectLanguage(text: string): string {
@@ -39,6 +42,46 @@ function detectLanguage(text: string): string {
   
   // Default to English
   return "en";
+}
+
+// Check if user has premium plan (Pro or Elite)
+async function checkUserPlan(supabase: any, userId: string, userType: string): Promise<{ isPremium: boolean; planType: string }> {
+  if (userType === "company") {
+    const { data: plan } = await supabase
+      .from("company_plans")
+      .select("plan_type, status")
+      .eq("company_user_id", userId)
+      .maybeSingle();
+    
+    const isPremium = plan && plan.status === "active" && 
+      (plan.plan_type === "pro" || plan.plan_type === "elite");
+    return { isPremium, planType: plan?.plan_type || "free" };
+  } else {
+    const { data: plan } = await supabase
+      .from("freelancer_plans")
+      .select("plan_type, status")
+      .eq("freelancer_user_id", userId)
+      .maybeSingle();
+    
+    const isPremium = plan && plan.status === "active" && 
+      (plan.plan_type === "pro" || plan.plan_type === "elite");
+    return { isPremium, planType: plan?.plan_type || "free" };
+  }
+}
+
+// Check daily translation count for free users
+async function getDailyTranslationCount(supabase: any, userId: string): Promise<number> {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const { count } = await supabase
+    .from("genius_usage_log")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("feature_type", "translate_message")
+    .gte("created_at", today.toISOString());
+  
+  return count || 0;
 }
 
 Deno.serve(async (req) => {
@@ -77,7 +120,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { message_id, target_lang } = await req.json();
+    const { message_id, target_lang, is_auto } = await req.json();
 
     if (!message_id || !target_lang) {
       return new Response(
@@ -86,9 +129,81 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`[translate-message] User ${user.id} translating message ${message_id} to ${target_lang}`);
+    console.log(`[translate-message] User ${user.id} translating message ${message_id} to ${target_lang} (auto: ${is_auto})`);
 
-    // 1) Check if translation already exists in cache
+    // 1) Get the original message first (needed for security checks)
+    const { data: message, error: msgError } = await supabase
+      .from("messages")
+      .select("id, content, conversation_id, lang_detected, sender_user_id")
+      .eq("id", message_id)
+      .single();
+
+    if (msgError || !message) {
+      console.error("Message not found:", msgError);
+      return new Response(
+        JSON.stringify({ error: "Message not found" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // SECURITY: Don't allow translating own messages (waste of resources)
+    if (message.sender_user_id === user.id) {
+      return new Response(
+        JSON.stringify({ error: "Cannot translate your own messages", code: "OWN_MESSAGE" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // 2) Verify user has access to this conversation
+    const { data: conversation } = await supabase
+      .from("conversations")
+      .select("company_user_id, freelancer_user_id")
+      .eq("id", message.conversation_id)
+      .single();
+
+    if (!conversation || 
+        (conversation.company_user_id !== user.id && conversation.freelancer_user_id !== user.id)) {
+      return new Response(
+        JSON.stringify({ error: "Access denied" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Determine user type
+    const userType = conversation.company_user_id === user.id ? "company" : "freelancer";
+
+    // 3) Check user plan for auto-translation
+    const { isPremium, planType } = await checkUserPlan(supabase, user.id, userType);
+
+    // If this is an auto-translation request, only allow for premium users
+    if (is_auto && !isPremium) {
+      return new Response(
+        JSON.stringify({ 
+          error: "Auto-translation is only available for Pro and Elite plans",
+          code: "UPGRADE_REQUIRED",
+          plan_type: planType
+        }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // 4) For free users, check daily limit
+    if (!isPremium) {
+      const dailyCount = await getDailyTranslationCount(supabase, user.id);
+      if (dailyCount >= FREE_DAILY_LIMIT) {
+        return new Response(
+          JSON.stringify({ 
+            error: `Daily translation limit reached (${FREE_DAILY_LIMIT}/day). Upgrade to Pro or Elite for unlimited translations.`,
+            code: "DAILY_LIMIT_REACHED",
+            limit: FREE_DAILY_LIMIT,
+            used: dailyCount
+          }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    // 5) Check if translation already exists in cache
     const { data: existingTranslation } = await supabase
       .from("message_translations")
       .select("*")
@@ -108,37 +223,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 2) Get the original message
-    const { data: message, error: msgError } = await supabase
-      .from("messages")
-      .select("id, content, conversation_id, lang_detected")
-      .eq("id", message_id)
-      .single();
-
-    if (msgError || !message) {
-      console.error("Message not found:", msgError);
-      return new Response(
-        JSON.stringify({ error: "Message not found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // 3) Verify user has access to this conversation
-    const { data: conversation } = await supabase
-      .from("conversations")
-      .select("company_user_id, freelancer_user_id")
-      .eq("id", message.conversation_id)
-      .single();
-
-    if (!conversation || 
-        (conversation.company_user_id !== user.id && conversation.freelancer_user_id !== user.id)) {
-      return new Response(
-        JSON.stringify({ error: "Access denied" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // 4) Detect source language if not already detected
+    // 6) Detect source language if not already detected
     let sourceLang = message.lang_detected;
     if (!sourceLang) {
       sourceLang = detectLanguage(message.content);
@@ -149,10 +234,12 @@ Deno.serve(async (req) => {
         .eq("id", message_id);
     }
 
+    // Normalize target language
+    const normalizedTarget = target_lang === "pt" ? "pt-BR" : target_lang;
+    const normalizedSource = sourceLang === "pt" ? "pt-BR" : sourceLang;
+
     // If source and target are the same, no translation needed
-    if (sourceLang === target_lang || 
-        (sourceLang === "pt-BR" && target_lang === "pt") ||
-        (sourceLang === "pt" && target_lang === "pt-BR")) {
+    if (normalizedSource === normalizedTarget) {
       return new Response(
         JSON.stringify({ 
           translation: message.content,
@@ -163,7 +250,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 5) Translate using Lovable AI (Gemini)
+    // 7) Translate using Lovable AI (Gemini)
     const aiResponse = await fetch("https://api.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -210,7 +297,7 @@ Do not add any explanations, notes, or formatting.`
 
     console.log(`[translate-message] Translated: "${message.content.substring(0, 50)}..." -> "${translatedContent.substring(0, 50)}..."`);
 
-    // 6) Cache the translation
+    // 8) Cache the translation
     await supabase
       .from("message_translations")
       .insert({
@@ -220,16 +307,16 @@ Do not add any explanations, notes, or formatting.`
         translated_content: translatedContent,
       });
 
-    // 7) Log usage
+    // 9) Log usage (for tracking and limits)
     await supabase
       .from("genius_usage_log")
       .insert({
         user_id: user.id,
-        user_type: conversation.company_user_id === user.id ? "company" : "freelancer",
+        user_type: userType,
         feature_type: "translate_message",
         model_used: "google/gemini-2.5-flash-lite",
-        input_tokens: message.content.length / 4, // Rough estimate
-        output_tokens: translatedContent.length / 4,
+        input_tokens: Math.ceil(message.content.length / 4),
+        output_tokens: Math.ceil(translatedContent.length / 4),
       });
 
     return new Response(

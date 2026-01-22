@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Languages, Loader2, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
+import { Languages, Loader2, ChevronDown, ChevronUp, AlertCircle, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -24,6 +24,7 @@ export function MessageTranslation({
   const [sourceLang, setSourceLang] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(true);
 
   const handleTranslate = async () => {
@@ -33,19 +34,42 @@ export function MessageTranslation({
       return;
     }
 
+    // Don't allow translating own messages
+    if (isOwn) {
+      toast.info("Você não pode traduzir suas próprias mensagens.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
+    setErrorCode(null);
 
     try {
       const { data, error: fnError } = await supabase.functions.invoke("translate-message", {
         body: {
           message_id: messageId,
           target_lang: userPreferredLang,
+          is_auto: false, // Manual translation
         },
       });
 
       if (fnError) {
         throw fnError;
+      }
+
+      // Handle specific error codes
+      if (data.error) {
+        if (data.code === "OWN_MESSAGE") {
+          toast.info("Você não pode traduzir suas próprias mensagens.");
+          return;
+        }
+        if (data.code === "DAILY_LIMIT_REACHED") {
+          setErrorCode("DAILY_LIMIT_REACHED");
+          setError(`Limite diário atingido (${data.limit}/dia). Faça upgrade para traduzir mais.`);
+          toast.error("Limite diário de traduções atingido.");
+          return;
+        }
+        throw new Error(data.error);
       }
 
       if (data.same_language) {
@@ -58,7 +82,16 @@ export function MessageTranslation({
       setExpanded(true);
     } catch (err: any) {
       console.error("Translation error:", err);
-      setError(err.message || "Erro ao traduzir");
+      const errorMessage = err.message || "Erro ao traduzir";
+      
+      // Check if it's a limit error from the response body
+      if (errorMessage.includes("limit") || errorMessage.includes("Limit")) {
+        setErrorCode("DAILY_LIMIT_REACHED");
+        setError("Limite diário atingido. Faça upgrade para traduzir mais.");
+      } else {
+        setError(errorMessage);
+      }
+      
       toast.error("Não foi possível traduzir a mensagem.");
     } finally {
       setLoading(false);
@@ -78,10 +111,15 @@ export function MessageTranslation({
     return labels[lang || ""] || lang || "Desconhecido";
   };
 
+  // Don't show translate button for own messages
+  if (isOwn) {
+    return null;
+  }
+
   return (
     <div className="mt-1">
       {/* Translate Button */}
-      {!translation && (
+      {!translation && !error && (
         <Button
           variant="ghost"
           size="sm"
@@ -89,9 +127,7 @@ export function MessageTranslation({
           disabled={loading}
           className={cn(
             "h-6 px-2 text-xs gap-1",
-            isOwn 
-              ? "text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10" 
-              : "text-muted-foreground hover:text-foreground hover:bg-muted"
+            "text-muted-foreground hover:text-foreground hover:bg-muted"
           )}
         >
           {loading ? (
@@ -109,12 +145,7 @@ export function MessageTranslation({
           {/* Toggle Header */}
           <button
             onClick={() => setExpanded(!expanded)}
-            className={cn(
-              "flex items-center gap-1 text-xs",
-              isOwn 
-                ? "text-primary-foreground/60 hover:text-primary-foreground/80" 
-                : "text-muted-foreground hover:text-foreground"
-            )}
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
           >
             <Languages className="h-3 w-3" />
             <span>
@@ -129,14 +160,7 @@ export function MessageTranslation({
 
           {/* Translation Content */}
           {expanded && (
-            <div
-              className={cn(
-                "mt-1 p-2 rounded-lg text-sm border-l-2",
-                isOwn 
-                  ? "bg-primary-foreground/10 border-primary-foreground/30 text-primary-foreground/90" 
-                  : "bg-muted/50 border-primary/30 text-foreground/80"
-              )}
-            >
+            <div className="mt-1 p-2 rounded-lg text-sm border-l-2 bg-muted/50 border-primary/30 text-foreground/80">
               <p className="whitespace-pre-wrap break-words italic">
                 {translation}
               </p>
@@ -147,11 +171,12 @@ export function MessageTranslation({
 
       {/* Error State */}
       {error && (
-        <div className={cn(
-          "flex items-center gap-1 mt-1 text-xs",
-          isOwn ? "text-red-200" : "text-destructive"
-        )}>
-          <AlertCircle className="h-3 w-3" />
+        <div className="flex items-center gap-1 mt-1 text-xs text-destructive">
+          {errorCode === "DAILY_LIMIT_REACHED" ? (
+            <Lock className="h-3 w-3" />
+          ) : (
+            <AlertCircle className="h-3 w-3" />
+          )}
           <span>{error}</span>
         </div>
       )}

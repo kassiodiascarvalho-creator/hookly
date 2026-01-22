@@ -17,6 +17,7 @@ import { AudioPlayer } from "./AudioPlayer";
 import { PresenceIndicator, PresenceDot } from "./PresenceIndicator";
 import { MessageTranslation } from "./MessageTranslation";
 import { TranslationToggle } from "./TranslationToggle";
+import { TranslationDisclaimer } from "./TranslationDisclaimer";
 import { usePresenceHeartbeat } from "@/hooks/useUserPresence";
 
 interface Message {
@@ -423,6 +424,9 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
           className="hidden sm:flex"
         />
       </div>
+
+      {/* Translation Disclaimer */}
+      <TranslationDisclaimer />
 
       {/* Messages */}
       <ScrollArea className="flex-1 p-4">
