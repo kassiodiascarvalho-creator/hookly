@@ -25,6 +25,8 @@ import { GeniusProposalButton } from "@/components/genius";
 import { useProfileGate } from "@/hooks/useProfileGate";
 import { ProfileGateModal } from "@/components/profile/ProfileGateModal";
 import { ProfileGateAlert } from "@/components/profile/ProfileGateAlert";
+import { BudgetRangeDisplay, ProposalBudgetValidation, CounterproposalJustification, validateProposalBudget } from "@/components/proposals";
+import { getCurrencySymbol } from "@/lib/formatMoney";
 
 interface Project {
   id: string;
@@ -32,7 +34,9 @@ interface Project {
   description: string | null;
   category: string | null;
   budget_min: number | null;
+  budget_ideal: number | null;
   budget_max: number | null;
+  currency: string;
   kpis: unknown;
   created_at: string;
   company_user_id: string;
@@ -49,6 +53,8 @@ interface Proposal {
   milestones: unknown;
   status: "sent" | "accepted" | "rejected";
   created_at: string;
+  is_counterproposal?: boolean;
+  counterproposal_justification?: string | null;
 }
 
 interface Milestone {
@@ -76,6 +82,7 @@ export default function ProjectView() {
   ]);
   const [creditCheckOpen, setCreditCheckOpen] = useState(false);
   const [isHighlighted, setIsHighlighted] = useState(false);
+  const [counterproposalJustification, setCounterproposalJustification] = useState("");
 
   // Platform credits hook
   const { balance: creditBalance, loading: creditsLoading, spendCredits, getActionCost, checkCredits } = usePlatformCredits();
@@ -186,6 +193,17 @@ export default function ProjectView() {
       return;
     }
 
+    // Calculate total and check if it's a counterproposal
+    const proposalTotal = validMilestones.reduce((sum, m) => sum + parseFloat(m.amount || "0"), 0);
+    const isCounterproposal = project.budget_max ? proposalTotal > project.budget_max : false;
+    const excessAmount = isCounterproposal && project.budget_max ? proposalTotal - project.budget_max : 0;
+
+    // Validate counterproposal justification
+    if (isCounterproposal && (!counterproposalJustification || counterproposalJustification.length < 50)) {
+      toast.error("Para enviar uma contraproposta, é necessário uma justificativa de pelo menos 50 caracteres");
+      return;
+    }
+
     // Check credits for new proposals (not edits)
     const isNewProposal = !myProposal;
     const totalCreditsNeeded = (isNewProposal ? proposalCost : 0) + (isHighlighted ? highlightCost : 0);
@@ -237,6 +255,8 @@ export default function ProjectView() {
       status: "sent" as const,
       is_highlighted: isHighlighted,
       highlighted_at: isHighlighted ? new Date().toISOString() : null,
+      is_counterproposal: isCounterproposal,
+      counterproposal_justification: isCounterproposal ? counterproposalJustification : null,
     };
 
     const { data, error } = myProposal
@@ -253,17 +273,26 @@ export default function ProjectView() {
           .single();
 
     if (error) {
-      toast.error(error.message);
+      // Handle counterproposal validation error from trigger
+      if (error.message.includes("counterproposal") || error.message.includes("justification")) {
+        toast.error("Proposta acima do orçamento máximo. Adicione uma justificativa.");
+      } else {
+        toast.error(error.message);
+      }
     } else {
       // Create notification for company
+      const notificationMessage = isCounterproposal 
+        ? `Nova contraproposta recebida para "${project.title}"`
+        : `Nova proposta recebida para "${project.title}"`;
+      
       await supabase.from("notifications").insert({
         user_id: project.company_user_id,
-        type: "new_proposal",
-        message: `New proposal received for "${project.title}"`,
+        type: isCounterproposal ? "counterproposal" : "new_proposal",
+        message: notificationMessage,
         link: `/projects/${project.id}`,
       });
 
-      toast.success(myProposal ? t("proposals.updated") : t("proposals.sent"));
+      toast.success(myProposal ? t("proposals.updated") : (isCounterproposal ? "Contraproposta enviada!" : t("proposals.sent")));
       setMyProposal(data);
       setDialogOpen(false);
     }
@@ -334,13 +363,12 @@ export default function ProjectView() {
                 <p className="whitespace-pre-wrap text-muted-foreground">{project.description}</p>
               </div>
 
-              <div className="p-4 bg-muted rounded-lg">
-                <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                  <DollarSign className="h-4 w-4" />
-                  <span className="text-sm">{t("projects.budget")}</span>
-                </div>
-                <p className="font-semibold text-lg">{formatBudget(project.budget_min, project.budget_max)}</p>
-              </div>
+              <BudgetRangeDisplay
+                budgetMin={project.budget_min}
+                budgetIdeal={project.budget_ideal}
+                budgetMax={project.budget_max}
+                currency={project.currency}
+              />
 
               {kpis.length > 0 && (
                 <div>
@@ -436,6 +464,12 @@ export default function ProjectView() {
                         isEdit
                         projectId={project.id}
                         t={t}
+                        budgetMin={project.budget_min}
+                        budgetIdeal={project.budget_ideal}
+                        budgetMax={project.budget_max}
+                        currency={project.currency}
+                        counterproposalJustification={counterproposalJustification}
+                        setCounterproposalJustification={setCounterproposalJustification}
                       />
                     </Dialog>
                   )}
@@ -486,6 +520,12 @@ export default function ProjectView() {
                     setIsHighlighted={setIsHighlighted}
                     projectId={project.id}
                     t={t}
+                    budgetMin={project.budget_min}
+                    budgetIdeal={project.budget_ideal}
+                    budgetMax={project.budget_max}
+                    currency={project.currency}
+                    counterproposalJustification={counterproposalJustification}
+                    setCounterproposalJustification={setCounterproposalJustification}
                   />
                 </Dialog>
               )}
@@ -533,6 +573,12 @@ function ProposalDialog({
   setIsHighlighted,
   projectId,
   t,
+  budgetMin = null,
+  budgetIdeal = null,
+  budgetMax = null,
+  currency = "USD",
+  counterproposalJustification = "",
+  setCounterproposalJustification,
 }: {
   coverLetter: string;
   setCoverLetter: (v: string) => void;
@@ -551,9 +597,17 @@ function ProposalDialog({
   setIsHighlighted?: (v: boolean) => void;
   projectId: string;
   t: (key: string) => string;
+  budgetMin?: number | null;
+  budgetIdeal?: number | null;
+  budgetMax?: number | null;
+  currency?: string;
+  counterproposalJustification?: string;
+  setCounterproposalJustification?: (v: string) => void;
 }) {
   const totalCreditsNeeded = (isEdit ? 0 : proposalCost) + (isHighlighted ? highlightCost : 0);
   const insufficientCredits = totalCreditsNeeded > 0 && creditBalance < totalCreditsNeeded;
+  const isCounterproposal = budgetMax ? totalAmount > budgetMax : false;
+  const excessAmount = isCounterproposal && budgetMax ? totalAmount - budgetMax : 0;
   return (
     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
@@ -657,10 +711,26 @@ function ProposalDialog({
             </div>
           ))}
 
-          <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-            <span className="font-medium">{t("proposals.totalAmount")}</span>
-            <span className="text-xl font-bold text-primary">${totalAmount.toLocaleString()}</span>
-          </div>
+          {/* Budget Validation */}
+          <ProposalBudgetValidation
+            proposalTotal={totalAmount}
+            budgetMin={budgetMin}
+            budgetMax={budgetMax}
+            budgetIdeal={budgetIdeal}
+            currency={currency}
+            isCounterproposal={isCounterproposal}
+          />
+
+          {/* Counterproposal Justification */}
+          {isCounterproposal && setCounterproposalJustification && (
+            <CounterproposalJustification
+              value={counterproposalJustification}
+              onChange={setCounterproposalJustification}
+              required={isCounterproposal}
+              excessAmount={excessAmount}
+              currency={getCurrencySymbol(currency)}
+            />
+          )}
 
           {/* Highlight option */}
           {!isEdit && setIsHighlighted && highlightCost > 0 && (
