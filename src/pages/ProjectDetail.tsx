@@ -16,7 +16,7 @@ import { format } from "date-fns";
 import MilestonePayment from "@/components/payments/MilestonePayment";
 import { formatMoney } from "@/lib/formatMoney";
 import { GeniusRankingButton } from "@/components/genius";
-import { ProposalCard } from "@/components/proposals";
+import { ProposalCard, CounterproposalResponseModal } from "@/components/proposals";
 import { useProposalRankings } from "@/hooks/useProposalRankings";
 import { useProfileGate } from "@/hooks/useProfileGate";
 import { usePublishProject } from "@/hooks/usePublishProject";
@@ -44,6 +44,9 @@ interface Proposal {
   status: "sent" | "accepted" | "rejected";
   created_at: string;
   freelancer_user_id: string;
+  is_counterproposal?: boolean;
+  counterproposal_justification?: string | null;
+  company_response?: string | null;
   freelancer?: {
     full_name: string | null;
     title: string | null;
@@ -83,6 +86,8 @@ export default function ProjectDetail() {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [showGeniusModal, setShowGeniusModal] = useState(false);
   const [showProfileGateModal, setShowProfileGateModal] = useState(false);
+  const [counterproposalModalOpen, setCounterproposalModalOpen] = useState(false);
+  const [selectedCounterproposal, setSelectedCounterproposal] = useState<Proposal | null>(null);
   
   // Profile gate for companies (to publish projects)
   const { allowed: profileAllowed, completionPercent, loading: gateLoading } = useProfileGate('company');
@@ -275,6 +280,11 @@ export default function ProjectDetail() {
       ));
     }
     setActionLoading(null);
+  };
+
+  const handleRespondToCounterproposal = (proposal: Proposal) => {
+    setSelectedCounterproposal(proposal);
+    setCounterproposalModalOpen(true);
   };
 
   const handleCompleteProject = async () => {
@@ -481,6 +491,7 @@ export default function ProjectDetail() {
                         onAccept={handleAcceptProposal}
                         onReject={handleRejectProposal}
                         onViewProfile={(userId) => navigate(`/freelancers/${userId}`)}
+                        onRespondToCounterproposal={handleRespondToCounterproposal}
                       />
                     ))}
                   </div>
@@ -523,6 +534,25 @@ export default function ProjectDetail() {
         userType="company"
         completionPercent={completionPercent}
       />
+
+      {/* Counter-proposal Response Modal */}
+      {selectedCounterproposal && (
+        <CounterproposalResponseModal
+          open={counterproposalModalOpen}
+          onOpenChange={setCounterproposalModalOpen}
+          proposal={selectedCounterproposal}
+          project={{
+            budget_min: project.budget_min,
+            budget_ideal: null,
+            budget_max: project.budget_max,
+            currency: project.currency || "USD",
+          }}
+          onResponseSubmitted={() => {
+            fetchProposals();
+            setSelectedCounterproposal(null);
+          }}
+        />
+      )}
     </div>
   );
 }
