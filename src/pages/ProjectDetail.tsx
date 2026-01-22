@@ -81,6 +81,7 @@ export default function ProjectDetail() {
   const [project, setProject] = useState<Project | null>(null);
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [agreedAmountCents, setAgreedAmountCents] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showReviewForm, setShowReviewForm] = useState(false);
@@ -106,6 +107,7 @@ export default function ProjectDetail() {
       fetchProject();
       fetchProposals();
       fetchPayments();
+      fetchContractAgreedAmount();
     }
   }, [id]);
 
@@ -167,6 +169,20 @@ export default function ProjectDetail() {
       .eq("project_id", id);
     
     if (data) setPayments(data);
+  };
+
+  const fetchContractAgreedAmount = async () => {
+    if (!id) return;
+    
+    const { data } = await supabase
+      .from("contracts")
+      .select("agreed_amount_cents")
+      .eq("project_id", id)
+      .maybeSingle();
+    
+    if (data?.agreed_amount_cents) {
+      setAgreedAmountCents(data.agreed_amount_cents);
+    }
   };
 
   const handlePublish = async () => {
@@ -421,6 +437,17 @@ export default function ProjectDetail() {
                     <span className="text-sm">{t("projects.budget")}</span>
                   </div>
                   <p className="font-semibold">{formatBudget(project.budget_min, project.budget_max, project.currency || "USD")}</p>
+                  
+                  {/* Show agreed amount when project is in progress or completed */}
+                  {agreedAmountCents && (project.status === "in_progress" || project.status === "completed") && (
+                    <div className="mt-2 pt-2 border-t border-border">
+                      <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <span className="text-sm text-green-600">{t("projects.agreedAmount", "Valor Acordado")}</span>
+                      </div>
+                      <p className="font-semibold text-green-500">{formatMoney(agreedAmountCents / 100, project.currency || "USD")}</p>
+                    </div>
+                  )}
                 </div>
                 <div className="p-4 bg-muted rounded-lg">
                   <div className="flex items-center gap-2 text-muted-foreground mb-1">

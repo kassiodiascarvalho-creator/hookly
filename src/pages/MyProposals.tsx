@@ -22,6 +22,7 @@ interface Proposal {
   counterproposal_justification?: string | null;
   company_response?: string | null;
   company_feedback?: string | null;
+  agreed_amount_cents?: number | null;
   project?: {
     title: string;
     category: string | null;
@@ -69,7 +70,7 @@ export default function MyProposals() {
       .order("created_at", { ascending: false });
 
     if (!error && data) {
-      // Fetch project info for each proposal
+      // Fetch project info and contract info for each proposal
       const proposalsWithProjects = await Promise.all(
         data.map(async (proposal) => {
           const { data: project } = await supabase
@@ -77,7 +78,19 @@ export default function MyProposals() {
             .select("title, category, budget_min, budget_max, status, currency, company_user_id")
             .eq("id", proposal.project_id)
             .maybeSingle();
-          return { ...proposal, project };
+          
+          // Fetch contract info for accepted proposals
+          let agreedAmountCents: number | null = null;
+          if (proposal.status === "accepted") {
+            const { data: contract } = await supabase
+              .from("contracts")
+              .select("agreed_amount_cents")
+              .eq("proposal_id", proposal.id)
+              .maybeSingle();
+            agreedAmountCents = contract?.agreed_amount_cents || null;
+          }
+          
+          return { ...proposal, project, agreed_amount_cents: agreedAmountCents };
         })
       );
       setProposals(proposalsWithProjects);
@@ -226,6 +239,17 @@ export default function MyProposals() {
                             {totalAmount.toLocaleString()}
                           </div>
                           <p className="text-xs text-muted-foreground">{t("myProposals.yourBid")}</p>
+                          
+                          {/* Show agreed amount for accepted counter-proposals */}
+                          {proposal.status === "accepted" && proposal.agreed_amount_cents && (
+                            <div className="mt-2 pt-2 border-t border-border">
+                              <div className="flex items-center gap-1 text-lg font-semibold text-green-500">
+                                <DollarSign className="h-4 w-4" />
+                                {(proposal.agreed_amount_cents / 100).toLocaleString()}
+                              </div>
+                              <p className="text-xs text-green-600">{t("myProposals.agreedAmount", "Valor Acordado")}</p>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </CardContent>
