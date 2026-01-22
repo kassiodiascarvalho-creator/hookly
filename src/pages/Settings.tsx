@@ -22,6 +22,7 @@ import PortfolioManager from "@/components/settings/PortfolioManager";
 import CertificationsManager from "@/components/settings/CertificationsManager";
 import { RestrictedCurrencySelect } from "@/components/RestrictedCurrencySelect";
 import { FreelancerCreditsCard } from "@/components/billing/FreelancerCreditsCard";
+import { FreelancerPlanCard } from "@/components/billing/FreelancerPlanCard";
 import { CompanyWalletCard } from "@/components/billing/CompanyWalletCard";
 import { CompanyPlanCard } from "@/components/billing/CompanyPlanCard";
 
@@ -666,8 +667,17 @@ export default function Settings() {
 
         {/* Billing Tab */}
         <TabsContent value="billing" className="space-y-6">
-          {isCompany && <CompanyPlanCard />}
-          {isCompany ? <CompanyWalletCard /> : <FreelancerCreditsCard />}
+          {isCompany ? (
+            <>
+              <CompanyPlanCard />
+              <CompanyWalletCard />
+            </>
+          ) : (
+            <>
+              <FreelancerPlanCard />
+              <FreelancerCreditsCard />
+            </>
+          )}
         </TabsContent>
       </Tabs>
     </div>
