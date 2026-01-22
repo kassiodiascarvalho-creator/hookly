@@ -906,6 +906,39 @@ export type Database = {
         }
         Relationships: []
       }
+      genius_ranking_cache: {
+        Row: {
+          analysis_result: Json
+          created_at: string
+          id: string
+          project_id: string
+          proposals_count: number
+          proposals_hash: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          analysis_result: Json
+          created_at?: string
+          id?: string
+          project_id: string
+          proposals_count?: number
+          proposals_hash: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          analysis_result?: Json
+          created_at?: string
+          id?: string
+          project_id?: string
+          proposals_count?: number
+          proposals_hash?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       genius_usage_log: {
         Row: {
           created_at: string

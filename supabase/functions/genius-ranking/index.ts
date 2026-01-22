@@ -6,23 +6,30 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface ProposalWithFreelancer {
+interface EnrichedProposal {
   id: string;
-  cover_letter: string | null;
-  created_at: string;
-  is_highlighted: boolean;
-  freelancer_user_id: string;
+  coverLetter: string;
+  isHighlighted: boolean;
+  createdAt: string;
+  proposedAmount: number;
   freelancer: {
-    full_name: string | null;
-    title: string | null;
-    skills: string[] | null;
-    tier: string | null;
-    verified: boolean | null;
-    hourly_rate: number | null;
+    userId: string;
+    name: string;
+    title: string;
+    skills: string[];
+    tier: string;
+    verified: boolean;
+    hourlyRate: number | null;
+    bio: string;
   };
-  certifications_count: number;
-  reviews_avg: number | null;
-  reviews_count: number;
+  certifications: number;
+  averageRating: number | null;
+  reviewsCount: number;
+}
+
+// Generate a hash from proposal IDs to detect changes
+function generateProposalsHash(proposalIds: string[]): string {
+  return proposalIds.sort().join(",");
 }
 
 serve(async (req) => {
@@ -31,7 +38,7 @@ serve(async (req) => {
   }
 
   try {
-    const { projectId, language = "pt" } = await req.json();
+    const { projectId, language = "pt", forceRefresh = false } = await req.json();
 
     if (!projectId) {
       return new Response(
@@ -114,17 +121,10 @@ serve(async (req) => {
       );
     }
 
-    // Fetch proposals with freelancer data
+    // Fetch current proposals
     const { data: proposals, error: proposalsError } = await supabase
       .from("proposals")
-      .select(`
-        id,
-        cover_letter,
-        created_at,
-        is_highlighted,
-        freelancer_user_id,
-        milestones
-      `)
+      .select("id, cover_letter, created_at, is_highlighted, freelancer_user_id, milestones")
       .eq("project_id", projectId)
       .eq("status", "sent");
 
@@ -136,15 +136,46 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           rankings: [],
-          summary: "Nenhuma proposta recebida ainda para este projeto.",
+          summary: language === "pt" 
+            ? "Nenhuma proposta recebida ainda para este projeto."
+            : "No proposals received yet for this project.",
           generatedAt: new Date().toISOString(),
+          fromCache: false,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    // Generate hash from current proposal IDs
+    const currentHash = generateProposalsHash(proposals.map(p => p.id));
+    const currentCount = proposals.length;
+
+    // Check for cached analysis
+    if (!forceRefresh) {
+      const { data: cachedAnalysis } = await supabase
+        .from("genius_ranking_cache")
+        .select("*")
+        .eq("project_id", projectId)
+        .single();
+
+      // Return cached result if proposals haven't changed
+      if (cachedAnalysis && cachedAnalysis.proposals_hash === currentHash) {
+        console.log("Returning cached analysis for project:", projectId);
+        return new Response(
+          JSON.stringify({
+            ...cachedAnalysis.analysis_result,
+            fromCache: true,
+            cachedAt: cachedAnalysis.updated_at,
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    console.log("Generating new analysis for project:", projectId, "Proposals:", currentCount);
+
     // Enrich proposals with freelancer data
-    const enrichedProposals = await Promise.all(
+    const enrichedProposals: EnrichedProposal[] = await Promise.all(
       proposals.map(async (proposal) => {
         const { data: freelancer } = await supabase
           .from("freelancer_profiles")
@@ -294,9 +325,37 @@ Responda em ${language === "pt" ? "português" : "inglês"}.`;
       console.error("Failed to parse AI response:", analysisContent);
       analysis = {
         rankings: [],
-        summary: "Erro ao processar análise. Tente novamente.",
+        summary: language === "pt" 
+          ? "Erro ao processar análise. Tente novamente."
+          : "Error processing analysis. Please try again.",
         topPick: null,
       };
+    }
+
+    const result = {
+      ...analysis,
+      generatedAt: new Date().toISOString(),
+      proposalsAnalyzed: enrichedProposals.length,
+    };
+
+    // Cache the analysis result (upsert)
+    const { error: cacheError } = await supabase
+      .from("genius_ranking_cache")
+      .upsert({
+        project_id: projectId,
+        user_id: user.id,
+        proposals_count: currentCount,
+        proposals_hash: currentHash,
+        analysis_result: result,
+        updated_at: new Date().toISOString(),
+      }, {
+        onConflict: "project_id",
+      });
+
+    if (cacheError) {
+      console.error("Failed to cache analysis:", cacheError);
+    } else {
+      console.log("Analysis cached for project:", projectId);
     }
 
     // Log usage
@@ -312,9 +371,8 @@ Responda em ${language === "pt" ? "português" : "inglês"}.`;
 
     return new Response(
       JSON.stringify({
-        ...analysis,
-        generatedAt: new Date().toISOString(),
-        proposalsAnalyzed: enrichedProposals.length,
+        ...result,
+        fromCache: false,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

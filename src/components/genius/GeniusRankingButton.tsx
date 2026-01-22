@@ -39,6 +39,8 @@ interface RankingResult {
   };
   generatedAt: string;
   proposalsAnalyzed: number;
+  fromCache?: boolean;
+  cachedAt?: string;
 }
 
 export function GeniusRankingButton({
@@ -160,7 +162,9 @@ export function GeniusRankingButton({
               {analyzing 
                 ? t("genius.analyzingProposals", "Analisando propostas com IA...")
                 : result 
-                ? t("genius.analysisComplete", `${result.proposalsAnalyzed} propostas analisadas`)
+                ? result.fromCache 
+                  ? t("genius.analysisFromCache", `${result.proposalsAnalyzed} propostas (análise em cache)`)
+                  : t("genius.analysisComplete", `${result.proposalsAnalyzed} propostas analisadas`)
                 : ""}
             </DialogDescription>
           </DialogHeader>
