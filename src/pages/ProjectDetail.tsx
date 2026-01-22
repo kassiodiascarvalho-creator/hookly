@@ -166,6 +166,15 @@ export default function ProjectDetail() {
 
   const handlePublish = async () => {
     if (!project) return;
+
+    // If the profile gate already says it's not allowed, don't call the publish RPC.
+    // This avoids a generic error toast when the backend function is unavailable.
+    if (gateLoading) return;
+    if (!profileAllowed) {
+      toast.info(t("profileGate.companyAlertTitle"));
+      setShowProfileGateModal(true);
+      return;
+    }
     
     // Use centralized RPC that validates profile completion server-side
     const result = await publishProject(project.id);
@@ -173,8 +182,7 @@ export default function ProjectDetail() {
     if (result.success) {
       setProject({ ...project, status: "open" });
     } else if (result.error === 'COMPANY_PROFILE_INCOMPLETE') {
-      // Show profile gate modal with user-friendly message
-      toast.info(t('profileGate.completeToPublish', 'Complete seu perfil para publicar o projeto'));
+      toast.info(t("profileGate.companyAlertTitle"));
       setShowProfileGateModal(true);
     }
   };
