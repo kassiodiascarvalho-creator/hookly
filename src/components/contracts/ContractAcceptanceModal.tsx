@@ -67,7 +67,7 @@ interface ContractAcceptanceModalProps {
   onAccepted?: () => void;
 }
 
-// Generate a simple hash for contract snapshot
+// Generate a simple hash for contract snapshot (Unicode-safe)
 const generateContractHash = (contract: ContractData, companyInfo: CompanyInfo | null, freelancerInfo: FreelancerInfo | null): string => {
   const snapshotData = {
     id: contract.id,
@@ -83,9 +83,18 @@ const generateContractHash = (contract: ContractData, companyInfo: CompanyInfo |
   };
   
   const jsonString = JSON.stringify(snapshotData);
-  // Simple hash using btoa + length for integrity check
-  const hash = btoa(jsonString).substring(0, 32) + "_" + jsonString.length;
-  return hash;
+  
+  // Simple hash using a checksum approach (Unicode-safe)
+  let hash = 0;
+  for (let i = 0; i < jsonString.length; i++) {
+    const char = jsonString.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  
+  // Return hex hash + length for integrity check
+  const hexHash = Math.abs(hash).toString(16).padStart(8, '0');
+  return `${hexHash}_${jsonString.length}`;
 };
 
 export function ContractAcceptanceModal({
