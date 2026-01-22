@@ -178,7 +178,7 @@ export default function Contracts() {
           <TabsTrigger value="pending" className="gap-1">
             Pendentes
             {contracts.filter(c => needsAction(c)).length > 0 && (
-              <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 text-xs">
+              <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 text-xs flex items-center justify-center rounded-full">
                 {contracts.filter(c => needsAction(c)).length}
               </Badge>
             )}
