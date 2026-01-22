@@ -384,6 +384,10 @@
       "next": "Suivant",
       "back": "Retour"
     },
+    "published": "Projet publié avec succès !",
+    "alreadyPublished": "Ce projet est déjà publié",
+    "savedAsDraft": "Projet enregistré en brouillon",
+    "notFound": "Projet non trouvé",
     "boost": {
       "title": "Projet en Vedette",
       "label": "En Vedette",
