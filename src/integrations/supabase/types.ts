@@ -74,6 +74,54 @@ export type Database = {
         }
         Relationships: []
       }
+      company_plans: {
+        Row: {
+          cancel_at_period_end: boolean | null
+          company_user_id: string
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          plan_type: string
+          projects_reset_at: string | null
+          projects_this_month: number | null
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean | null
+          company_user_id: string
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_type?: string
+          projects_reset_at?: string | null
+          projects_this_month?: number | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean | null
+          company_user_id?: string
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_type?: string
+          projects_reset_at?: string | null
+          projects_this_month?: number | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       company_profiles: {
         Row: {
           about: string | null
@@ -2059,6 +2107,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_company_plan_limit: {
+        Args: { p_company_user_id: string }
+        Returns: Json
+      }
       check_platform_credits: {
         Args: { p_action_key: string; p_user_id: string }
         Returns: boolean
@@ -2113,6 +2165,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      increment_company_project_count: {
+        Args: { p_company_user_id: string }
         Returns: boolean
       }
       initialize_freelancer_achievements: {
