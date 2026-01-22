@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -7,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { 
   Loader2, Clock, CheckCircle, AlertCircle,
-  CreditCard, Ticket, Landmark, ArrowDownToLine, Info, Sparkles
+  CreditCard, Ticket, Landmark, ArrowDownToLine, Info, Sparkles, Rocket
 } from "lucide-react";
 import { format } from "date-fns";
 import { formatMoney } from "@/lib/formatMoney";
@@ -26,6 +27,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { CompanyAddFundsDialog } from "@/components/billing/CompanyAddFundsDialog";
+import { CompanyPlanCard } from "@/components/billing/CompanyPlanCard";
+import { useCompanyPlan } from "@/hooks/useCompanyPlan";
+import { toast } from "sonner";
 
 interface Payment {
   id: string;
@@ -48,6 +52,8 @@ interface PlatformCredits {
 export default function CompanyFinances() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const { checkSubscription } = useCompanyPlan();
   
   const [loading, setLoading] = useState(true);
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -57,6 +63,17 @@ export default function CompanyFinances() {
     inEscrow: 0, 
     released: 0 
   });
+
+  // Handle subscription success/cancel from Stripe redirect
+  useEffect(() => {
+    const subscriptionStatus = searchParams.get("subscription");
+    if (subscriptionStatus === "success") {
+      toast.success("Assinatura ativada com sucesso!");
+      checkSubscription();
+    } else if (subscriptionStatus === "canceled") {
+      toast.info("Assinatura cancelada");
+    }
+  }, [searchParams, checkSubscription]);
 
   useEffect(() => {
     if (user) {
@@ -167,6 +184,9 @@ export default function CompanyFinances() {
         <h1 className="text-3xl font-bold">{t("finances.title")}</h1>
         <p className="text-muted-foreground">{t("finances.subtitle")}</p>
       </div>
+
+      {/* Company Plan Card */}
+      <CompanyPlanCard />
 
       {/* Summary Cards - Separated Credits vs Escrow */}
       <div className="grid gap-4 md:grid-cols-3">
