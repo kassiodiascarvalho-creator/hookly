@@ -1127,5 +1127,16 @@
       "howSendProposal": "Comment envoyer une proposition?",
       "whereEarnings": "Où sont mes revenus?"
     }
+  },
+  "ai": {
+    "primaryRecommendation": "Recommandation Principale",
+    "highlyRecommended": "Hautement Recommandé",
+    "compatible": "Compatible",
+    "notRecommended": "Non Recommandé",
+    "analysisPending": "Analyse en Attente",
+    "scoreLabel": "Score IA",
+    "proceedAnywayWarning": "Cette proposition a été marquée comme Non Recommandée par l'IA. Voulez-vous continuer quand même?",
+    "analyzed": "Analysé",
+    "aiSuggestion": "Suggestion basée sur l'IA"
   }
 }
