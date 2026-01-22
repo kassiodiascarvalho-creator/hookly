@@ -28,6 +28,14 @@ export function usePublishProject(): UsePublishProjectReturn {
 
       if (error) {
         console.error('[usePublishProject] RPC error:', error);
+        
+        // Check if error message contains profile incomplete info
+        if (error.message?.includes('COMPANY_PROFILE_INCOMPLETE') || 
+            error.code === 'P0001') {
+          // Don't show generic toast - let caller handle with modal
+          return { success: false, error: 'COMPANY_PROFILE_INCOMPLETE' };
+        }
+        
         toast.error(t('common.error'));
         return { success: false, error: 'RPC_ERROR' };
       }

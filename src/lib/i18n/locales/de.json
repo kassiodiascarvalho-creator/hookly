@@ -495,7 +495,8 @@
     "moreItems": "weitere Elemente",
     "completeNow": "Profil Vervollständigen",
     "freelancerAlertTitle": "Vervollständigen Sie Ihr Profil, um Vorschläge zu senden",
-    "companyAlertTitle": "Vervollständigen Sie Ihr Unternehmensprofil, um Projekte zu veröffentlichen"
+    "companyAlertTitle": "Vervollständigen Sie Ihr Unternehmensprofil, um Projekte zu veröffentlichen",
+    "completeToPublish": "Vervollständigen Sie Ihr Profil, um das Projekt zu veröffentlichen"
   },
   "credits": "Credits",
   "earnings": {

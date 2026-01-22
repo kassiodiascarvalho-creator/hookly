@@ -1053,7 +1053,8 @@
     "moreItems": "more items",
     "completeNow": "Complete Profile",
     "freelancerAlertTitle": "Complete your profile to send proposals",
-    "companyAlertTitle": "Complete your company profile to publish projects"
+    "companyAlertTitle": "Complete your company profile to publish projects",
+    "completeToPublish": "Complete your profile to publish the project"
   },
   "credits": "credits",
   "admin": {

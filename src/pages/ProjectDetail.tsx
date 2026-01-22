@@ -173,7 +173,8 @@ export default function ProjectDetail() {
     if (result.success) {
       setProject({ ...project, status: "open" });
     } else if (result.error === 'COMPANY_PROFILE_INCOMPLETE') {
-      // Show profile gate modal
+      // Show profile gate modal with user-friendly message
+      toast.info(t('profileGate.completeToPublish', 'Complete seu perfil para publicar o projeto'));
       setShowProfileGateModal(true);
     }
   };

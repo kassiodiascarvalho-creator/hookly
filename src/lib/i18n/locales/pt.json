@@ -1116,7 +1116,8 @@
     "moreItems": "itens a mais",
     "completeNow": "Completar Perfil",
     "freelancerAlertTitle": "Complete seu perfil para enviar propostas",
-    "companyAlertTitle": "Complete o perfil da empresa para publicar projetos"
+    "companyAlertTitle": "Complete o perfil da empresa para publicar projetos",
+    "completeToPublish": "Complete seu perfil para publicar o projeto"
   },
   "credits": "créditos",
   "admin": {
