@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FileText, DollarSign, Loader2, CheckCircle, XCircle, Clock, ChevronRight, Star } from "lucide-react";
 import { format } from "date-fns";
+import { GeniusRankingButton } from "@/components/genius";
 
 interface ProposalGroup {
   project: {
@@ -146,14 +147,22 @@ export default function CompanyProposals() {
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg">{group.project.title}</CardTitle>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => navigate(`/projects/${group.project.id}`)}
-                  >
-                    {t("common.view")}
-                    <ChevronRight className="h-4 w-4 ml-1" />
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    {group.proposals.filter(p => p.status === "sent").length >= 2 && (
+                      <GeniusRankingButton 
+                        projectId={group.project.id} 
+                        proposalsCount={group.proposals.filter(p => p.status === "sent").length}
+                      />
+                    )}
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => navigate(`/projects/${group.project.id}`)}
+                    >
+                      {t("common.view")}
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>

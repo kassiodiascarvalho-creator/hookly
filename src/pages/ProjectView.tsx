@@ -20,6 +20,7 @@ import { format } from "date-fns";
 import { usePlatformCredits, PLATFORM_ACTIONS } from "@/hooks/usePlatformCredits";
 import { CreditCheckModal } from "@/components/credits/CreditCheckModal";
 import { ViewCompanyDataButton } from "@/components/company/ViewCompanyDataButton";
+import { GeniusProposalButton } from "@/components/genius";
 
 interface Project {
   id: string;
@@ -418,6 +419,7 @@ export default function ProjectView() {
                         submitting={submitting}
                         onSubmit={handleSubmitProposal}
                         isEdit
+                        projectId={project.id}
                         t={t}
                       />
                     </Dialog>
@@ -452,6 +454,7 @@ export default function ProjectView() {
                     creditBalance={creditBalance}
                     isHighlighted={isHighlighted}
                     setIsHighlighted={setIsHighlighted}
+                    projectId={project.id}
                     t={t}
                   />
                 </Dialog>
@@ -490,6 +493,7 @@ function ProposalDialog({
   creditBalance = 0,
   isHighlighted = false,
   setIsHighlighted,
+  projectId,
   t,
 }: {
   coverLetter: string;
@@ -507,6 +511,7 @@ function ProposalDialog({
   creditBalance?: number;
   isHighlighted?: boolean;
   setIsHighlighted?: (v: boolean) => void;
+  projectId: string;
   t: (key: string) => string;
 }) {
   const totalCreditsNeeded = (isEdit ? 0 : proposalCost) + (isHighlighted ? highlightCost : 0);
@@ -519,7 +524,13 @@ function ProposalDialog({
       
       <div className="space-y-6 py-4">
         <div className="space-y-2">
-          <Label>{t("proposals.coverLetter")} *</Label>
+          <div className="flex items-center justify-between">
+            <Label>{t("proposals.coverLetter")} *</Label>
+            <GeniusProposalButton 
+              projectId={projectId} 
+              onProposalGenerated={(text) => setCoverLetter(text)}
+            />
+          </div>
           <Textarea
             value={coverLetter}
             onChange={(e) => setCoverLetter(e.target.value)}
