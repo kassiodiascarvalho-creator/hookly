@@ -46,6 +46,9 @@ interface ContractData {
   company_user_id: string;
   freelancer_user_id: string;
   project_id: string;
+  was_counterproposal?: boolean;
+  agreed_amount_cents?: number | null;
+  original_proposal_amount_cents?: number | null;
 }
 
 interface CompanyInfo {
@@ -276,11 +279,39 @@ export function ContractAcceptanceModal({
             <div className="space-y-6">
               {/* CONTRACT SUMMARY */}
               <section className="p-4 rounded-lg bg-muted/50 border">
-                <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground mb-3">
-                  Resumo do Contrato
-                </h3>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
+                    Resumo do Contrato
+                  </h3>
+                  {contract.was_counterproposal && (
+                    <Badge variant="outline" className="gap-1 text-amber-600 border-amber-500">
+                      <AlertTriangle className="h-3 w-3" />
+                      Contra-proposta
+                    </Badge>
+                  )}
+                </div>
                 <div className="space-y-2">
                   <p className="font-medium text-lg">{contract.title}</p>
+                  
+                  {/* Show counterproposal info if applicable */}
+                  {contract.was_counterproposal && contract.original_proposal_amount_cents ? (
+                    <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 mb-3">
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5" />
+                        <div className="text-sm">
+                          <p className="font-medium text-amber-700 dark:text-amber-400">
+                            Valor negociado via contra-proposta
+                          </p>
+                          <p className="text-muted-foreground mt-1">
+                            Orçamento original: <span className="line-through">{formatMoneyFromCents(contract.original_proposal_amount_cents, contract.currency)}</span>
+                            {" → "}
+                            Valor acordado: <span className="font-semibold text-foreground">{formatMoneyFromCents(contract.amount_cents, contract.currency)}</span>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+                  
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div>
                       <span className="text-muted-foreground">Valor: </span>
