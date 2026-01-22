@@ -862,6 +862,42 @@
     "addFirst": "添加您的认证来展示您的专业技能"
   },
   "payments": {
+    "fees": {
+      "international_card": "国际信用卡",
+      "brl_pix": "PIX",
+      "brl_card": "巴西信用卡",
+      "unknown": "服务费"
+    },
+    "feeLabels": {
+      "methodFee": "支付保护",
+      "conversionFee": "汇率保护",
+      "total": "总计",
+      "processingFee": "服务费",
+      "contractValue": "合同价值",
+      "paymentSummary": "支付摘要",
+      "freelancerReceives": "自由职业者将在完成后收到 {{amount}}。"
+    },
+    "breakdown": {
+      "youSend": "您发送",
+      "currencyProtection": "汇率保护 ({{percent}}%)",
+      "convertedAmount": "转换金额",
+      "currency": "货币",
+      "paymentMethod": "支付方式",
+      "card": "信用卡"
+    },
+    "protectionFee": "支付保护",
+    "processing": "处理中...",
+    "currencyNotAllowed": "不支持此货币",
+    "currencyRestrictionMessage": "您的国家不允许使用货币 {{currency}}。允许的货币：{{allowed}}。",
+    "cardInternational": "国际信用卡",
+    "fundContract": "为合同注资",
+    "amountToFund": "注资金额",
+    "paymentMethod": "支付方式",
+    "instant": "即时支付",
+    "card": "信用卡",
+    "creditDebit": "信用卡或借记卡",
+    "generatePix": "生成 PIX 二维码",
+    "payWithCard": "使用信用卡支付",
     "title": "付款",
     "subtitle": "管理您的付款和交易",
     "noPayments": "暂无付款",

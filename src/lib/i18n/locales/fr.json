@@ -851,6 +851,34 @@
     "expired": "Expirée"
   },
   "payments": {
+    "fees": {
+      "international_card": "Carte Internationale",
+      "brl_pix": "PIX",
+      "brl_card": "Carte Brésil",
+      "unknown": "Frais de Service"
+    },
+    "feeLabels": {
+      "methodFee": "Protection de paiement",
+      "conversionFee": "Protection de change",
+      "total": "Total",
+      "processingFee": "Frais de Service",
+      "contractValue": "Valeur du contrat",
+      "paymentSummary": "Résumé du Paiement",
+      "freelancerReceives": "Le freelance recevra exactement {{amount}} à la fin."
+    },
+    "breakdown": {
+      "youSend": "Vous envoyez",
+      "currencyProtection": "Protection de change ({{percent}}%)",
+      "convertedAmount": "Montant converti",
+      "currency": "Devise",
+      "paymentMethod": "Méthode de paiement",
+      "card": "Carte"
+    },
+    "protectionFee": "Protection du paiement",
+    "processing": "Traitement...",
+    "currencyNotAllowed": "Devise non autorisée",
+    "currencyRestrictionMessage": "La devise {{currency}} n'est pas autorisée pour votre pays. Devises autorisées : {{allowed}}.",
+    "cardInternational": "Carte Internationale",
     "milestones": "Paiements par Jalons",
     "milestonesDescCompany": "Financez les jalons pour garder le paiement en séquestre. Libérez quand le travail est approuvé.",
     "milestonesDescFreelancer": "Suivez vos paiements par jalons et le statut du séquestre.",
