@@ -73,11 +73,13 @@ async function getStripePromise(): Promise<Stripe | null> {
 interface SubscriptionFormProps {
   planName: string;
   amount: number;
+  intentType: "setup" | "payment";
+  onSetupComplete: (paymentMethodId: string) => Promise<void>;
   onSuccess: () => void;
   onError: (message: string) => void;
 }
 
-function SubscriptionForm({ planName, amount, onSuccess, onError }: SubscriptionFormProps) {
+function SubscriptionForm({ planName, amount, intentType, onSetupComplete, onSuccess, onError }: SubscriptionFormProps) {
   const { t } = useTranslation();
   const stripe = useStripe();
   const elements = useElements();
@@ -93,6 +95,36 @@ function SubscriptionForm({ planName, amount, onSuccess, onError }: Subscription
     setLoading(true);
 
     try {
+      if (intentType === "setup") {
+        const { error, setupIntent } = await stripe.confirmSetup({
+          elements,
+          confirmParams: {
+            return_url: `${window.location.origin}/finances?subscription=setup`,
+          },
+          redirect: "if_required",
+        });
+
+        if (error) {
+          console.error("[SubscriptionPaymentModal] Setup error:", error);
+          onError(error.message || "Erro ao validar cartão");
+          return;
+        }
+
+        if (!setupIntent || setupIntent.status !== "succeeded") {
+          onError("Não foi possível validar o cartão");
+          return;
+        }
+
+        const paymentMethodId = setupIntent.payment_method;
+        if (!paymentMethodId || typeof paymentMethodId !== "string") {
+          onError("Cartão validado, mas não foi possível obter o método de pagamento");
+          return;
+        }
+
+        await onSetupComplete(paymentMethodId);
+        return;
+      }
+
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
@@ -177,7 +209,9 @@ function SubscriptionForm({ planName, amount, onSuccess, onError }: Subscription
         ) : (
           <>
             <CreditCard className="h-4 w-4 mr-2" />
-            Assinar {formatMoney(amount / 100, "BRL")}/mês
+            {intentType === "setup"
+              ? "Continuar"
+              : `Assinar ${formatMoney(amount / 100, "BRL")}/mês`}
           </>
         )}
       </Button>
@@ -209,6 +243,7 @@ export function SubscriptionPaymentModal({
     amount: number;
   } | null>(null);
   const [creating, setCreating] = useState(false);
+  const [intentType, setIntentType] = useState<"setup" | "payment">("setup");
 
   const planConfig = COMPANY_PLANS.find((p) => p.type === planType);
 
@@ -243,12 +278,39 @@ export function SubscriptionPaymentModal({
       if (data?.error) throw new Error(data.error);
 
       setClientSecret(data.clientSecret);
+      setIntentType((data.intentType as "setup" | "payment") || "setup");
       setSubscriptionData({
         planName: data.planName,
         amount: data.amount,
       });
     } catch (err) {
       console.error("[SubscriptionPaymentModal] Error creating intent:", err);
+      setError(err instanceof Error ? err.message : "Erro ao criar assinatura");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const createSubscriptionFromPaymentMethod = async (paymentMethodId: string) => {
+    try {
+      setCreating(true);
+      setError(null);
+
+      const { data, error } = await supabase.functions.invoke("create-subscription-intent", {
+        body: { planType, paymentMethodId },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setClientSecret(data.clientSecret);
+      setIntentType("payment");
+      setSubscriptionData({
+        planName: data.planName,
+        amount: data.amount,
+      });
+    } catch (err) {
+      console.error("[SubscriptionPaymentModal] Error creating subscription:", err);
       setError(err instanceof Error ? err.message : "Erro ao criar assinatura");
     } finally {
       setCreating(false);
@@ -273,6 +335,7 @@ export function SubscriptionPaymentModal({
       setError(null);
       setClientSecret(null);
       setSubscriptionData(null);
+      setIntentType("setup");
     }
     onOpenChange(isOpen);
   };
@@ -378,10 +441,12 @@ export function SubscriptionPaymentModal({
 
         {/* Payment Form */}
         {!creating && !stripeLoading && !error && !success && clientSecret && stripeInstance && options && subscriptionData && (
-          <Elements stripe={stripeInstance} options={options}>
+          <Elements key={clientSecret} stripe={stripeInstance} options={options}>
             <SubscriptionForm
               planName={subscriptionData.planName}
               amount={subscriptionData.amount}
+              intentType={intentType}
+              onSetupComplete={createSubscriptionFromPaymentMethod}
               onSuccess={handleSuccess}
               onError={handleError}
             />
