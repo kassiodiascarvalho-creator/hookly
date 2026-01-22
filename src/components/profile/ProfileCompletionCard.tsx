@@ -161,8 +161,15 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
   const updateProfileCompletion = async (percent: number) => {
     if (!user || !userType) return;
     
+    console.log("[PROFILE] Attempting to update completion:", { 
+      percent, 
+      userId: user.id, 
+      userType,
+      bonusClaimed 
+    });
+    
     try {
-      await supabase
+      const { error } = await supabase
         .from("profiles")
         .update({
           profile_completion_percent: percent,
@@ -170,10 +177,16 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
         })
         .eq("user_id", user.id);
       
-      console.log("[PROFILE] completion updated", { percent });
+      if (error) {
+        console.error("[PROFILE] Error updating completion in DB:", error);
+        return;
+      }
+      
+      console.log("[PROFILE] Completion saved successfully to DB:", { percent });
       
       // Check if 100% and bonus not claimed
       if (percent >= 100 && !bonusClaimed) {
+        console.log("[PROFILE] Profile complete! Attempting to claim bonus...");
         await claimCompletionBonus();
       }
     } catch (error) {
@@ -182,7 +195,19 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
   };
 
   const claimCompletionBonus = async () => {
-    if (!user || !userType || bonusClaimed) return;
+    if (!user || !userType || bonusClaimed) {
+      console.log("[PROFILE] Skipping bonus claim:", { 
+        hasUser: !!user, 
+        userType, 
+        bonusClaimed 
+      });
+      return;
+    }
+    
+    console.log("[PROFILE] Calling grant_profile_completion_bonus RPC...", {
+      userId: user.id,
+      userType
+    });
     
     try {
       const { data, error } = await supabase.rpc('grant_profile_completion_bonus', {
@@ -190,9 +215,12 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
         p_user_type: userType
       });
       
+      console.log("[PROFILE] RPC response:", { data, error });
+      
       if (error) throw error;
       
       if (data === true) {
+        console.log("[PROFILE] Bonus granted successfully!");
         setBonusClaimed(true);
         setShowCelebration(true);
         toast({
@@ -202,6 +230,8 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
         
         // Hide celebration after 5 seconds
         setTimeout(() => setShowCelebration(false), 5000);
+      } else {
+        console.log("[PROFILE] Bonus not granted - already claimed or disabled");
       }
     } catch (error) {
       console.error("[PROFILE] Error claiming bonus:", error);
