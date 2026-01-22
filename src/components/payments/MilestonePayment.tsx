@@ -182,7 +182,10 @@ export default function MilestonePayment({
     }
   };
 
-  const totalAmount = milestones.reduce((sum, m) => sum + m.amount, 0);
+  // Use agreed_amount_cents from contract if available, otherwise sum milestones
+  const totalAmount = contractInfo?.agreed_amount_cents 
+    ? contractInfo.agreed_amount_cents / 100 
+    : milestones.reduce((sum, m) => sum + m.amount, 0);
   const fundedAmount = payments.filter(p => p.status === "paid" || p.status === "released")
     .reduce((sum, p) => sum + Number(p.amount), 0);
   const releasedAmount = payments.filter(p => p.status === "released")
@@ -218,13 +221,13 @@ export default function MilestonePayment({
               <div className="flex items-start gap-2">
                 <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5" />
                 <div className="text-sm">
-                  <p className="font-medium text-amber-700 dark:text-amber-400">
+                  <p className="font-medium text-amber-600 dark:text-amber-400">
                     Valor negociado via contra-proposta
                   </p>
                   <p className="text-muted-foreground mt-1">
-                    Orçamento original: <span className="line-through">{formatMoneyFromCents(contractInfo.original_proposal_amount_cents, currency)}</span>
+                    Orçamento original: <span className="line-through text-muted-foreground">{formatMoneyFromCents(contractInfo.original_proposal_amount_cents, currency)}</span>
                     {" → "}
-                    Valor acordado: <span className="font-semibold text-foreground">{formatMoney(totalAmount, currency)}</span>
+                    Valor acordado: <span className="font-semibold text-green-500">{formatMoney(totalAmount, currency)}</span>
                   </p>
                 </div>
               </div>
