@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, DollarSign, Calendar, Loader2, CheckCircle, XCircle, Clock, AlertTriangle, MessageCircle } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-
+import { FreelancerCounterproposalResponseModal } from "@/components/proposals/FreelancerCounterproposalResponseModal";
 interface Proposal {
   id: string;
   cover_letter: string | null;
@@ -28,6 +28,8 @@ interface Proposal {
     budget_min: number | null;
     budget_max: number | null;
     status: string;
+    currency: string;
+    company_user_id: string;
   } | null;
 }
 
@@ -51,7 +53,8 @@ export default function MyProposals() {
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("all");
-
+  const [responseModalOpen, setResponseModalOpen] = useState(false);
+  const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
   useEffect(() => {
     if (user) fetchProposals();
   }, [user]);
@@ -71,7 +74,7 @@ export default function MyProposals() {
         data.map(async (proposal) => {
           const { data: project } = await supabase
             .from("projects")
-            .select("title, category, budget_min, budget_max, status")
+            .select("title, category, budget_min, budget_max, status, currency, company_user_id")
             .eq("id", proposal.project_id)
             .maybeSingle();
           return { ...proposal, project };
@@ -170,11 +173,27 @@ export default function MyProposals() {
                           {/* Company response to counter-proposal */}
                           {proposal.is_counterproposal && proposal.company_response && responseConfig && ResponseIcon && (
                             <div className="mb-3 p-3 rounded-lg bg-muted/50 border">
-                              <div className="flex items-center gap-2 mb-1">
+                              <div className="flex items-center justify-between gap-2 mb-1">
                                 <Badge className={responseConfig.color}>
                                   <ResponseIcon className="h-3 w-3 mr-1" />
                                   {t(`counterproposal.status${proposal.company_response.charAt(0).toUpperCase() + proposal.company_response.slice(1)}`, responseConfig.label)}
                                 </Badge>
+                                {/* Action button for negotiating status */}
+                                {proposal.company_response === "negotiating" && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="border-blue-500 text-blue-600 hover:bg-blue-50"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedProposal(proposal);
+                                      setResponseModalOpen(true);
+                                    }}
+                                  >
+                                    <MessageCircle className="h-4 w-4 mr-1" />
+                                    {t("counterproposal.respond", "Respond")}
+                                  </Button>
+                                )}
                               </div>
                               {proposal.company_feedback && (
                                 <p className="text-sm text-muted-foreground mt-2">
@@ -217,6 +236,29 @@ export default function MyProposals() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Freelancer response modal */}
+      {selectedProposal && selectedProposal.project && (
+        <FreelancerCounterproposalResponseModal
+          open={responseModalOpen}
+          onOpenChange={setResponseModalOpen}
+          proposal={{
+            id: selectedProposal.id,
+            milestones: selectedProposal.milestones,
+            company_response: selectedProposal.company_response,
+            company_feedback: selectedProposal.company_feedback,
+            project_id: selectedProposal.project_id,
+          }}
+          project={{
+            title: selectedProposal.project.title,
+            budget_min: selectedProposal.project.budget_min,
+            budget_max: selectedProposal.project.budget_max,
+            currency: selectedProposal.project.currency || "USD",
+            company_user_id: selectedProposal.project.company_user_id,
+          }}
+          onResponseSubmitted={fetchProposals}
+        />
+      )}
     </div>
   );
 }
