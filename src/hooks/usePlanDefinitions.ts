@@ -16,6 +16,8 @@ export interface PlanDefinition {
   popular: boolean;
   display_order: number;
   is_active: boolean;
+  monthly_credits: number;
+  credit_cap: number | null;
 }
 
 export function usePlanDefinitions() {

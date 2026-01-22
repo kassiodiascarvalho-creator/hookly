@@ -77,6 +77,7 @@ export type Database = {
       company_plan_definitions: {
         Row: {
           created_at: string
+          credit_cap: number | null
           dedicated_manager: boolean
           description: string | null
           display_order: number
@@ -84,6 +85,7 @@ export type Database = {
           highlight_proposals: boolean
           id: string
           is_active: boolean
+          monthly_credits: number
           name: string
           plan_type: string
           popular: boolean
@@ -95,6 +97,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          credit_cap?: number | null
           dedicated_manager?: boolean
           description?: string | null
           display_order?: number
@@ -102,6 +105,7 @@ export type Database = {
           highlight_proposals?: boolean
           id?: string
           is_active?: boolean
+          monthly_credits?: number
           name: string
           plan_type: string
           popular?: boolean
@@ -113,6 +117,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          credit_cap?: number | null
           dedicated_manager?: boolean
           description?: string | null
           display_order?: number
@@ -120,6 +125,7 @@ export type Database = {
           highlight_proposals?: boolean
           id?: string
           is_active?: boolean
+          monthly_credits?: number
           name?: string
           plan_type?: string
           popular?: boolean
@@ -139,6 +145,7 @@ export type Database = {
           current_period_end: string | null
           current_period_start: string | null
           id: string
+          last_credit_grant_at: string | null
           plan_type: string
           projects_reset_at: string | null
           projects_this_month: number | null
@@ -154,6 +161,7 @@ export type Database = {
           current_period_end?: string | null
           current_period_start?: string | null
           id?: string
+          last_credit_grant_at?: string | null
           plan_type?: string
           projects_reset_at?: string | null
           projects_this_month?: number | null
@@ -169,6 +177,7 @@ export type Database = {
           current_period_end?: string | null
           current_period_start?: string | null
           id?: string
+          last_credit_grant_at?: string | null
           plan_type?: string
           projects_reset_at?: string | null
           projects_this_month?: number | null
@@ -625,12 +634,14 @@ export type Database = {
       freelancer_plan_definitions: {
         Row: {
           created_at: string
+          credit_cap: number | null
           description: string | null
           display_order: number
           features: Json
           highlight_proposals: boolean
           id: string
           is_active: boolean
+          monthly_credits: number
           name: string
           plan_type: string
           popular: boolean
@@ -643,12 +654,14 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          credit_cap?: number | null
           description?: string | null
           display_order?: number
           features?: Json
           highlight_proposals?: boolean
           id?: string
           is_active?: boolean
+          monthly_credits?: number
           name: string
           plan_type: string
           popular?: boolean
@@ -661,12 +674,14 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          credit_cap?: number | null
           description?: string | null
           display_order?: number
           features?: Json
           highlight_proposals?: boolean
           id?: string
           is_active?: boolean
+          monthly_credits?: number
           name?: string
           plan_type?: string
           popular?: boolean
@@ -687,6 +702,7 @@ export type Database = {
           current_period_start: string | null
           freelancer_user_id: string
           id: string
+          last_credit_grant_at: string | null
           plan_type: string
           proposals_reset_at: string | null
           proposals_this_month: number | null
@@ -702,6 +718,7 @@ export type Database = {
           current_period_start?: string | null
           freelancer_user_id: string
           id?: string
+          last_credit_grant_at?: string | null
           plan_type?: string
           proposals_reset_at?: string | null
           proposals_this_month?: number | null
@@ -717,6 +734,7 @@ export type Database = {
           current_period_start?: string | null
           freelancer_user_id?: string
           id?: string
+          last_credit_grant_at?: string | null
           plan_type?: string
           proposals_reset_at?: string | null
           proposals_this_month?: number | null
@@ -1564,6 +1582,42 @@ export type Database = {
         }
         Relationships: []
       }
+      plan_credit_grants: {
+        Row: {
+          amount: number
+          created_at: string
+          grant_period_start: string
+          grant_type: string
+          id: string
+          plan_type: string
+          subscription_id: string | null
+          user_id: string
+          user_type: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          grant_period_start: string
+          grant_type: string
+          id?: string
+          plan_type: string
+          subscription_id?: string | null
+          user_id: string
+          user_type: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          grant_period_start?: string
+          grant_type?: string
+          id?: string
+          plan_type?: string
+          subscription_id?: string | null
+          user_id?: string
+          user_type?: string
+        }
+        Relationships: []
+      }
       platform_action_costs: {
         Row: {
           action_key: string
@@ -2389,6 +2443,10 @@ export type Database = {
         Args: { p_user_id: string; p_user_type: string }
         Returns: Json
       }
+      check_and_grant_plan_credits: {
+        Args: { p_user_id: string; p_user_type: string }
+        Returns: Json
+      }
       check_company_can_publish_project: {
         Args: { p_company_user_id: string }
         Returns: Json
@@ -2445,6 +2503,16 @@ export type Database = {
           p_payment_id: string
         }
         Returns: boolean
+      }
+      grant_plan_credits: {
+        Args: {
+          p_grant_type?: string
+          p_plan_type: string
+          p_subscription_id: string
+          p_user_id: string
+          p_user_type: string
+        }
+        Returns: Json
       }
       grant_profile_completion_bonus: {
         Args: { p_user_id: string; p_user_type: string }

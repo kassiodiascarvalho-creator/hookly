@@ -6,10 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Crown, Zap, Building2, Rocket, Check,
-  Calendar, Settings, ChevronRight, Sparkles 
+  Calendar, Settings, ChevronRight, Sparkles, Coins, RefreshCw
 } from "lucide-react";
 import { useCompanyPlan } from "@/hooks/useCompanyPlan";
 import { usePlanDefinitions } from "@/hooks/usePlanDefinitions";
+import { usePlanCredits } from "@/hooks/usePlanCredits";
 import { PlanUpgradeModal } from "./PlanUpgradeModal";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -33,6 +34,7 @@ export function CompanyPlanCard() {
   const { t } = useTranslation();
   const { plan, loading, isSubscribed, openCustomerPortal } = useCompanyPlan();
   const { plans, loading: plansLoading } = usePlanDefinitions();
+  const { info: creditsInfo, loading: creditsLoading } = usePlanCredits('company');
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [managingPortal, setManagingPortal] = useState(false);
 
@@ -63,6 +65,9 @@ export function CompanyPlanCard() {
       </Card>
     );
   }
+
+  const monthlyCredits = creditsInfo?.monthlyCredits || currentPlanConfig?.monthly_credits || 0;
+  const creditCap = creditsInfo?.creditCap || currentPlanConfig?.credit_cap || null;
 
   return (
     <>
@@ -97,6 +102,45 @@ export function CompanyPlanCard() {
         </CardHeader>
 
         <CardContent className="space-y-4">
+          {/* Monthly Credits Info - for paid plans */}
+          {isSubscribed && monthlyCredits > 0 && (
+            <div className="p-3 rounded-lg bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Coins className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium">Créditos mensais</span>
+                </div>
+                <Badge variant="secondary" className="font-bold">
+                  {monthlyCredits}/mês
+                </Badge>
+              </div>
+              {creditCap && (
+                <div className="text-xs text-muted-foreground mt-1">
+                  Acumula até {creditCap} créditos (3x mensal)
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Current Balance */}
+          {!creditsLoading && creditsInfo && (
+            <div className="p-3 rounded-lg bg-muted/50">
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Saldo atual</span>
+                <span className="font-bold text-lg">{creditsInfo.currentBalance} créditos</span>
+              </div>
+              {creditsInfo.nextGrantDate && creditsInfo.daysUntilGrant !== null && (
+                <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                  <RefreshCw className="h-3 w-3" />
+                  <span>
+                    Próxima recarga em {creditsInfo.daysUntilGrant} dias 
+                    ({format(creditsInfo.nextGrantDate, "d MMM", { locale: ptBR })})
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Plan usage */}
           {plan?.projects_limit && (
             <div className="p-3 rounded-lg bg-muted/50">
