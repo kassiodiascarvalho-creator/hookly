@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Languages, Info } from "lucide-react";
+import { Languages, Info, Lock } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -20,31 +21,74 @@ export function TranslationToggle({
   className,
   onAutoTranslateChange 
 }: TranslationToggleProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [autoTranslate, setAutoTranslate] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isPremium, setIsPremium] = useState(false);
+  const [userType, setUserType] = useState<"company" | "freelancer" | null>(null);
 
   useEffect(() => {
     if (!user) return;
 
-    const fetchSettings = async () => {
-      const { data } = await supabase
+    const fetchData = async () => {
+      // Get user type
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("user_type")
+        .eq("user_id", user.id)
+        .single();
+      
+      const currentUserType = profile?.user_type as "company" | "freelancer" | null;
+      setUserType(currentUserType);
+
+      // Check if user has premium plan
+      if (currentUserType === "company") {
+        const { data: plan } = await supabase
+          .from("company_plans")
+          .select("plan_type, status")
+          .eq("company_user_id", user.id)
+          .maybeSingle();
+        
+        setIsPremium(
+          plan?.status === "active" && 
+          (plan?.plan_type === "pro" || plan?.plan_type === "elite")
+        );
+      } else if (currentUserType === "freelancer") {
+        const { data: plan } = await supabase
+          .from("freelancer_plans")
+          .select("plan_type, status")
+          .eq("freelancer_user_id", user.id)
+          .maybeSingle();
+        
+        setIsPremium(
+          plan?.status === "active" && 
+          (plan?.plan_type === "pro" || plan?.plan_type === "elite")
+        );
+      }
+
+      // Get translation settings
+      const { data: settings } = await supabase
         .from("user_translation_settings")
         .select("auto_translate_enabled")
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (data) {
-        setAutoTranslate(data.auto_translate_enabled);
+      if (settings) {
+        // Only enable auto-translate if user has premium
+        const shouldEnable = settings.auto_translate_enabled && isPremium;
+        setAutoTranslate(shouldEnable);
+        onAutoTranslateChange?.(shouldEnable);
       }
+      
       setLoading(false);
     };
 
-    fetchSettings();
-  }, [user]);
+    fetchData();
+  }, [user, isPremium, onAutoTranslateChange]);
 
   const handleToggle = async (enabled: boolean) => {
-    if (!user) return;
+    if (!user || !isPremium) return;
 
     setAutoTranslate(enabled);
     onAutoTranslateChange?.(enabled);
@@ -62,6 +106,39 @@ export function TranslationToggle({
   };
 
   if (loading) return null;
+
+  // If not premium, show locked state
+  if (!isPremium) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className={cn("flex items-center gap-2 opacity-60 cursor-not-allowed", className)}>
+            <Languages className="h-4 w-4 text-muted-foreground" />
+            <Switch
+              id="auto-translate"
+              checked={false}
+              disabled
+              className="data-[state=checked]:bg-primary"
+            />
+            <Label 
+              htmlFor="auto-translate" 
+              className="text-xs text-muted-foreground cursor-not-allowed flex items-center gap-1"
+            >
+              Auto-tradução
+              <Lock className="h-3 w-3" />
+            </Label>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="max-w-[220px] text-xs">
+          <p className="font-medium mb-1">Disponível no Plano Pro ou Elite</p>
+          <p className="text-muted-foreground">
+            Faça upgrade para traduzir mensagens automaticamente. 
+            No plano gratuito você tem {10} traduções manuais/dia.
+          </p>
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
 
   return (
     <div className={cn("flex items-center gap-2", className)}>
