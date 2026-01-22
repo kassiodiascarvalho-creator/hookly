@@ -253,7 +253,15 @@
     "sent": "Proposal sent!",
     "updated": "Proposal updated!",
     "pending": "Pending",
-    "submittedOn": "Submitted on"
+    "submittedOn": "Submitted on",
+    "milestonesHelp": {
+      "title": "What is a Milestone?",
+      "description": "Break your proposal into clear stages with deadlines, deliverables, and amounts. This builds trust with companies and enables protected partial payments.",
+      "titleTip": "Name of the stage (e.g., \"Home Design\", \"Functional API\", \"Final Delivery\")",
+      "amountTip": "Value for this deliverable (in USD, BRL, etc.)",
+      "descriptionTip": "Detail what will be delivered and when",
+      "proTip": "Proposals with well-defined milestones are up to 3x more likely to be approved."
+    }
   },
   "findProjects": {
     "title": "Find Projects",

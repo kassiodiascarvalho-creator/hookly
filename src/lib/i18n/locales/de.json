@@ -414,6 +414,14 @@
       "accept": "Akzeptieren",
       "reject": "Ablehnen",
       "viewProject": "Projekt Anzeigen"
+    },
+    "milestonesHelp": {
+      "title": "Was ist ein Meilenstein?",
+      "description": "Teilen Sie Ihr Angebot in klare Etappen mit Fristen, Liefergegenständen und Beträgen auf. Das schafft Vertrauen bei Unternehmen und ermöglicht geschützte Teilzahlungen.",
+      "titleTip": "Name der Etappe (z.B. \"Home Design\", \"Funktionale API\", \"Endlieferung\")",
+      "amountTip": "Betrag für diese Lieferung (in USD, EUR usw.)",
+      "descriptionTip": "Details zur Lieferung und zum Zeitrahmen",
+      "proTip": "Angebote mit gut definierten Meilensteinen werden bis zu 3x häufiger genehmigt."
     }
   },
   "messages": {

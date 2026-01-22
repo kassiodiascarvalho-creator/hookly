@@ -13,8 +13,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from "sonner";
 import { 
   ArrowLeft, DollarSign, Calendar, Loader2, 
-  Check, Plus, X, Send, Building2, Coins, AlertTriangle, Star
+  Check, Plus, X, Send, Building2, Coins, AlertTriangle, Star, HelpCircle
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { usePlatformCredits, PLATFORM_ACTIONS } from "@/hooks/usePlatformCredits";
@@ -541,7 +542,28 @@ function ProposalDialog({
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <Label>{t("proposals.milestones")} *</Label>
+            <div className="flex items-center gap-2">
+              <Label>{t("proposals.milestones")} *</Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button type="button" className="text-muted-foreground hover:text-foreground transition-colors">
+                      <HelpCircle className="h-4 w-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="max-w-xs p-4 space-y-2">
+                    <p className="font-semibold text-sm">{t("proposals.milestonesHelp.title")}</p>
+                    <p className="text-xs text-muted-foreground">{t("proposals.milestonesHelp.description")}</p>
+                    <ul className="text-xs space-y-1 mt-2">
+                      <li><strong>Title:</strong> {t("proposals.milestonesHelp.titleTip")}</li>
+                      <li><strong>Amount:</strong> {t("proposals.milestonesHelp.amountTip")}</li>
+                      <li><strong>Description:</strong> {t("proposals.milestonesHelp.descriptionTip")}</li>
+                    </ul>
+                    <p className="text-xs text-primary font-medium mt-2">💡 {t("proposals.milestonesHelp.proTip")}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             <Button type="button" variant="outline" size="sm" onClick={addMilestone}>
               <Plus className="h-4 w-4 mr-1" />
               {t("proposals.addMilestone")}

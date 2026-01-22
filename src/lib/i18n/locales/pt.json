@@ -277,7 +277,15 @@
     "sent": "Proposta enviada!",
     "updated": "Proposta atualizada!",
     "pending": "Pendente",
-    "submittedOn": "Enviada em"
+    "submittedOn": "Enviada em",
+    "milestonesHelp": {
+      "title": "O que é uma Milestone?",
+      "description": "Divida sua proposta em etapas claras com prazos, entregas e valores. Isso aumenta a confiança da empresa e facilita pagamentos parciais protegidos.",
+      "titleTip": "Nome da etapa (ex: \"Design da Home\", \"API funcional\", \"Entrega final\")",
+      "amountTip": "Valor para essa entrega (em USD, BRL etc.)",
+      "descriptionTip": "Detalhe o que será entregue e em quanto tempo",
+      "proTip": "Propostas com milestones bem definidas têm até 3x mais chances de aprovação."
+    }
   },
   "findProjects": {
     "title": "Encontrar Projetos",
