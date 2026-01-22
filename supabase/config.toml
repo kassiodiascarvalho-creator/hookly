@@ -74,3 +74,6 @@ verify_jwt = false
 
 [functions.company-customer-portal]
 verify_jwt = false
+
+[functions.create-subscription-intent]
+verify_jwt = false
