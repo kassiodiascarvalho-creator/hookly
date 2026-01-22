@@ -92,12 +92,6 @@ export function CompanyPlanCard() {
                 </CardDescription>
               </div>
             </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold">{currentPlanConfig.priceDisplay}</div>
-              {currentPlanConfig.price > 0 && (
-                <div className="text-sm text-muted-foreground">/mês</div>
-              )}
-            </div>
           </div>
         </CardHeader>
 
