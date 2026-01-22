@@ -19,6 +19,7 @@ import FxRevenueReport from "@/components/admin/FxRevenueReport";
 import FinancialAlertsCard from "@/components/admin/FinancialAlertsCard";
 import { ActionCostsManager } from "@/components/admin/ActionCostsManager";
 import { CreditRevenueCards } from "@/components/admin/CreditRevenueCards";
+import { PlanDefinitionsManager } from "@/components/admin/PlanDefinitionsManager";
 import { 
   Coins, 
   Wallet, 
@@ -623,6 +624,10 @@ export default function AdminFinances() {
             <Coins className="h-3 w-3 md:h-4 md:w-4 mr-1" />
             Custos Ações
           </TabsTrigger>
+          <TabsTrigger value="plans" className="text-xs md:text-sm">
+            <DollarSign className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+            Planos
+          </TabsTrigger>
         </TabsList>
 
         {/* Balances Tab */}
@@ -972,6 +977,11 @@ export default function AdminFinances() {
         {/* Action Costs Tab */}
         <TabsContent value="action-costs" className="space-y-6">
           <ActionCostsManager />
+        </TabsContent>
+
+        {/* Plans Tab */}
+        <TabsContent value="plans" className="space-y-6">
+          <PlanDefinitionsManager />
         </TabsContent>
       </Tabs>
 

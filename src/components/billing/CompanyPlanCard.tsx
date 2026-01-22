@@ -1,15 +1,15 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
-  Crown, Zap, Building2, Rocket, Check, ArrowRight, 
+  Crown, Zap, Building2, Rocket, Check,
   Calendar, Settings, ChevronRight, Sparkles 
 } from "lucide-react";
-import { useCompanyPlan, COMPANY_PLANS, type PlanConfig } from "@/hooks/useCompanyPlan";
+import { useCompanyPlan } from "@/hooks/useCompanyPlan";
+import { usePlanDefinitions } from "@/hooks/usePlanDefinitions";
 import { PlanUpgradeModal } from "./PlanUpgradeModal";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -32,11 +32,12 @@ const planColors: Record<string, string> = {
 export function CompanyPlanCard() {
   const { t } = useTranslation();
   const { plan, loading, isSubscribed, openCustomerPortal } = useCompanyPlan();
+  const { plans, loading: plansLoading } = usePlanDefinitions();
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [managingPortal, setManagingPortal] = useState(false);
 
-  const currentPlanConfig = COMPANY_PLANS.find((p) => p.type === plan?.plan_type) || COMPANY_PLANS[0];
-  const PlanIcon = planIcons[currentPlanConfig.type] || Building2;
+  const currentPlanConfig = plans.find((p) => p.plan_type === plan?.plan_type) || plans[0];
+  const PlanIcon = planIcons[currentPlanConfig?.plan_type || "free"] || Building2;
 
   const handleManageSubscription = async () => {
     try {
@@ -49,7 +50,7 @@ export function CompanyPlanCard() {
     }
   };
 
-  if (loading) {
+  if (loading || plansLoading || !currentPlanConfig) {
     return (
       <Card>
         <CardHeader>
@@ -74,7 +75,7 @@ export function CompanyPlanCard() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg ${planColors[currentPlanConfig.type]}`}>
+              <div className={`p-2 rounded-lg ${planColors[currentPlanConfig.plan_type] || planColors.free}`}>
                 <PlanIcon className="h-5 w-5" />
               </div>
               <div>
