@@ -463,6 +463,22 @@
         "suspend": "暂停",
         "viewProfile": "查看档案"
       }
+    },
+    "plans": {
+      "plan": "计划",
+      "priceUsd": "价格 (USD)",
+      "monthlyBonus": "每月奖励",
+      "monthlyBonusLabel": "每月奖励 (积分)",
+      "monthlyBonusDesc": "每30天自动添加积分（仅限100%完整资料）",
+      "projectsLimit": "项目限制",
+      "proposalsLimit": "提案限制",
+      "features": "功能",
+      "status": "状态",
+      "actions": "操作",
+      "month": "月",
+      "unlimited": "无限",
+      "active": "活跃",
+      "inactive": "不活跃"
     }
   },
   "common": {

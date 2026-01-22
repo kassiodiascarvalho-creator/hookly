@@ -44,6 +44,7 @@ export function FreelancerPlanDefinitionsManager() {
     stripe_price_id: "",
     features: "",
     proposals_limit: "",
+    monthly_credits: 0,
     highlight_proposals: false,
     priority_support: false,
     verified_badge: false,
@@ -60,6 +61,7 @@ export function FreelancerPlanDefinitionsManager() {
       stripe_price_id: plan.stripe_price_id || "",
       features: plan.features.join("\n"),
       proposals_limit: plan.proposals_limit?.toString() || "",
+      monthly_credits: plan.monthly_credits || 0,
       highlight_proposals: plan.highlight_proposals,
       priority_support: plan.priority_support,
       verified_badge: plan.verified_badge,
@@ -88,6 +90,7 @@ export function FreelancerPlanDefinitionsManager() {
           stripe_price_id: formData.stripe_price_id || null,
           features: featuresArray,
           proposals_limit: formData.proposals_limit ? parseInt(formData.proposals_limit) : null,
+          monthly_credits: formData.monthly_credits,
           highlight_proposals: formData.highlight_proposals,
           priority_support: formData.priority_support,
           verified_badge: formData.verified_badge,
@@ -144,15 +147,17 @@ export function FreelancerPlanDefinitionsManager() {
           </div>
         </CardHeader>
         <CardContent>
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Plano</TableHead>
-                <TableHead>Preço (USD)</TableHead>
-                <TableHead>Limite Propostas</TableHead>
-                <TableHead>Recursos</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableHead>{t("admin.plans.plan")}</TableHead>
+                <TableHead>{t("admin.plans.priceUsd")}</TableHead>
+                <TableHead>{t("admin.plans.monthlyBonus")}</TableHead>
+                <TableHead>{t("admin.plans.proposalsLimit")}</TableHead>
+                <TableHead>{t("admin.plans.features")}</TableHead>
+                <TableHead>{t("admin.plans.status")}</TableHead>
+                <TableHead className="text-right">{t("admin.plans.actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -174,13 +179,18 @@ export function FreelancerPlanDefinitionsManager() {
                     <span className="font-mono">
                       {formatMoneyFromCents(plan.price_usd_cents, "USD")}
                     </span>
-                    <span className="text-xs text-muted-foreground">/mês</span>
+                    <span className="text-xs text-muted-foreground">/{t("admin.plans.month")}</span>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+                      {plan.monthly_credits || 0}/{t("admin.plans.month")}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     {plan.proposals_limit ? (
-                      <Badge variant="outline">{plan.proposals_limit}/mês</Badge>
+                      <Badge variant="outline">{plan.proposals_limit}/{t("admin.plans.month")}</Badge>
                     ) : (
-                      <Badge variant="secondary">Ilimitado</Badge>
+                      <Badge variant="secondary">{t("admin.plans.unlimited")}</Badge>
                     )}
                   </TableCell>
                   <TableCell>
@@ -198,7 +208,7 @@ export function FreelancerPlanDefinitionsManager() {
                   </TableCell>
                   <TableCell>
                     <Badge variant={plan.is_active ? "default" : "secondary"}>
-                      {plan.is_active ? "Ativo" : "Inativo"}
+                      {plan.is_active ? t("admin.plans.active") : t("admin.plans.inactive")}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
@@ -214,6 +224,7 @@ export function FreelancerPlanDefinitionsManager() {
               ))}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
 
@@ -282,6 +293,23 @@ export function FreelancerPlanDefinitionsManager() {
                   placeholder="Vazio = ilimitado"
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="monthly_credits">{t("admin.plans.monthlyBonusLabel")}</Label>
+              <Input
+                id="monthly_credits"
+                type="number"
+                min={0}
+                max={50000}
+                value={formData.monthly_credits}
+                onChange={(e) =>
+                  setFormData({ ...formData, monthly_credits: parseInt(e.target.value) || 0 })
+                }
+              />
+              <p className="text-xs text-muted-foreground">
+                {t("admin.plans.monthlyBonusDesc")}
+              </p>
             </div>
 
             <div className="space-y-2">

@@ -463,6 +463,22 @@
         "suspend": "Suspendre",
         "viewProfile": "Voir le Profil"
       }
+    },
+    "plans": {
+      "plan": "Plan",
+      "priceUsd": "Prix (USD)",
+      "monthlyBonus": "Bonus Mensuel",
+      "monthlyBonusLabel": "Bonus Mensuel (crédits)",
+      "monthlyBonusDesc": "Crédits ajoutés automatiquement tous les 30 jours (uniquement avec profil 100% complet)",
+      "projectsLimit": "Limite Projets",
+      "proposalsLimit": "Limite Propositions",
+      "features": "Fonctionnalités",
+      "status": "Statut",
+      "actions": "Actions",
+      "month": "mois",
+      "unlimited": "Illimité",
+      "active": "Actif",
+      "inactive": "Inactif"
     }
   },
   "common": {
