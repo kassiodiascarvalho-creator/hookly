@@ -74,6 +74,63 @@ export type Database = {
         }
         Relationships: []
       }
+      company_plan_definitions: {
+        Row: {
+          created_at: string
+          dedicated_manager: boolean
+          description: string | null
+          display_order: number
+          features: Json
+          highlight_proposals: boolean
+          id: string
+          is_active: boolean
+          name: string
+          plan_type: string
+          popular: boolean
+          price_usd_cents: number
+          priority_support: boolean
+          projects_limit: number | null
+          stripe_price_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dedicated_manager?: boolean
+          description?: string | null
+          display_order?: number
+          features?: Json
+          highlight_proposals?: boolean
+          id?: string
+          is_active?: boolean
+          name: string
+          plan_type: string
+          popular?: boolean
+          price_usd_cents?: number
+          priority_support?: boolean
+          projects_limit?: number | null
+          stripe_price_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dedicated_manager?: boolean
+          description?: string | null
+          display_order?: number
+          features?: Json
+          highlight_proposals?: boolean
+          id?: string
+          is_active?: boolean
+          name?: string
+          plan_type?: string
+          popular?: boolean
+          price_usd_cents?: number
+          priority_support?: boolean
+          projects_limit?: number | null
+          stripe_price_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       company_plans: {
         Row: {
           cancel_at_period_end: boolean | null
