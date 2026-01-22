@@ -113,7 +113,7 @@ export default function ProjectView() {
       .from("projects")
       .select("*")
       .eq("id", id)
-      .in("status", ["open", "in_progress"])
+      .in("status", ["open", "in_progress", "completed"])
       .maybeSingle();
 
     if (error) {
