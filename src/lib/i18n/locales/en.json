@@ -833,7 +833,8 @@
     "viewProject": "View Project",
     "viewCredential": "View Credential",
     "issued": "Issued",
-    "expires": "Expires"
+    "expires": "Expires",
+    "billing": "Billing"
   },
   "billing": {
     "addFunds": "Add Credits",
