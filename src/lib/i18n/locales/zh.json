@@ -495,7 +495,8 @@
     "moreItems": "个项目",
     "completeNow": "完善资料",
     "freelancerAlertTitle": "完善您的资料以发送提案",
-    "companyAlertTitle": "完善公司资料以发布项目"
+    "companyAlertTitle": "完善公司资料以发布项目",
+    "completeToPublish": "完善您的资料以发布项目"
   },
   "credits": "积分",
   "earnings": {
