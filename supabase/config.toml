@@ -77,3 +77,9 @@ verify_jwt = false
 
 [functions.create-subscription-intent]
 verify_jwt = false
+
+[functions.create-freelancer-subscription-intent]
+verify_jwt = false
+
+[functions.freelancer-customer-portal]
+verify_jwt = false
