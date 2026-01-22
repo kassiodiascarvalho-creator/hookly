@@ -10,7 +10,6 @@ import {
   Building2,
   FolderOpen,
   CreditCard,
-  Mail,
   LogOut,
   UserCheck,
   Wallet,
@@ -31,7 +30,6 @@ const navItems = [
   { path: "/admin/finances", icon: Wallet, labelKey: "admin.finances" },
   { path: "/admin/tiers", icon: Star, labelKey: "admin.tiers" },
   { path: "/admin/payment-providers", icon: CreditCard, labelKey: "admin.paymentProviders" },
-  { path: "/admin/leads", icon: Mail, labelKey: "admin.leads" },
 ];
 
 interface AdminLayoutProps {
