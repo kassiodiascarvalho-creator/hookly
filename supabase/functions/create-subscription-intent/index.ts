@@ -12,19 +12,6 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[CREATE-SUBSCRIPTION-INTENT] ${step}${detailsStr}`);
 };
 
-// Price IDs for each plan
-const PLAN_PRICES: Record<string, string> = {
-  starter: "price_1SsBtG3Vsa0jBPRLlsc0LJ25",
-  pro: "price_1SsBuv3Vsa0jBPRLS8MUiy2e",
-  elite: "price_1SsBvI3Vsa0jBPRLfZzm5n8F",
-};
-
-const PLAN_DISPLAY: Record<string, { name: string; price: number }> = {
-  starter: { name: "Business Starter", price: 14900 },
-  pro: { name: "Business Pro", price: 29900 },
-  elite: { name: "Business Elite", price: 49900 },
-};
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -66,13 +53,31 @@ serve(async (req) => {
     const body = await req.json();
     const { planType, paymentMethodId } = body as { planType?: string; paymentMethodId?: string };
 
-    if (!planType || !PLAN_PRICES[planType]) {
-      throw new Error(`Invalid plan type: ${planType}. Valid options: starter, pro, elite`);
+    if (!planType) {
+      throw new Error("Plan type is required");
     }
 
-    const priceId = PLAN_PRICES[planType];
-    const planInfo = PLAN_DISPLAY[planType];
-    logStep("Selected plan", { planType, priceId });
+    // Fetch plan definition from database
+    const { data: planDef, error: planError } = await supabaseAdmin
+      .from("company_plan_definitions")
+      .select("name, price_usd_cents, stripe_price_id")
+      .eq("plan_type", planType)
+      .eq("is_active", true)
+      .single();
+
+    if (planError || !planDef) {
+      throw new Error(`Invalid plan type: ${planType}. Plan not found.`);
+    }
+
+    if (!planDef.stripe_price_id) {
+      throw new Error(`Plan ${planType} does not have a Stripe price ID configured.`);
+    }
+
+    const priceId = planDef.stripe_price_id;
+    const planName = planDef.name;
+    const priceUsdCents = planDef.price_usd_cents;
+
+    logStep("Selected plan from database", { planType, priceId, planName, priceUsdCents });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
@@ -124,9 +129,9 @@ serve(async (req) => {
         JSON.stringify({
           intentType: "setup",
           clientSecret: setupIntent.client_secret,
-          planName: planInfo.name,
-          amount: planInfo.price,
-          currency: "BRL",
+          planName,
+          amount: priceUsdCents, // USD cents - frontend will convert to local currency
+          currency: "USD",
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
       );
@@ -187,9 +192,9 @@ serve(async (req) => {
         intentType: "payment",
         clientSecret,
         subscriptionId: subscription.id,
-        planName: planInfo.name,
-        amount: planInfo.price,
-        currency: "BRL",
+        planName,
+        amount: priceUsdCents, // USD cents - frontend will convert to local currency
+        currency: "USD",
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
@@ -198,7 +203,7 @@ serve(async (req) => {
     logStep("ERROR", { message: errorMessage });
     return new Response(
       JSON.stringify({ error: errorMessage }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   }
 });
