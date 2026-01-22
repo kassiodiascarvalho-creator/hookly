@@ -870,6 +870,86 @@ export type Database = {
         }
         Relationships: []
       }
+      genius_access: {
+        Row: {
+          access_source: string
+          created_at: string
+          credits_spent: number | null
+          expires_at: string
+          feature_type: string
+          id: string
+          updated_at: string
+          user_id: string
+          user_type: string
+        }
+        Insert: {
+          access_source: string
+          created_at?: string
+          credits_spent?: number | null
+          expires_at: string
+          feature_type: string
+          id?: string
+          updated_at?: string
+          user_id: string
+          user_type: string
+        }
+        Update: {
+          access_source?: string
+          created_at?: string
+          credits_spent?: number | null
+          expires_at?: string
+          feature_type?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+          user_type?: string
+        }
+        Relationships: []
+      }
+      genius_usage_log: {
+        Row: {
+          created_at: string
+          feature_type: string
+          id: string
+          input_tokens: number | null
+          model_used: string | null
+          output_tokens: number | null
+          project_id: string | null
+          user_id: string
+          user_type: string
+        }
+        Insert: {
+          created_at?: string
+          feature_type: string
+          id?: string
+          input_tokens?: number | null
+          model_used?: string | null
+          output_tokens?: number | null
+          project_id?: string | null
+          user_id: string
+          user_type: string
+        }
+        Update: {
+          created_at?: string
+          feature_type?: string
+          id?: string
+          input_tokens?: number | null
+          model_used?: string | null
+          output_tokens?: number | null
+          project_id?: string | null
+          user_id?: string
+          user_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "genius_usage_log_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           created_at: string

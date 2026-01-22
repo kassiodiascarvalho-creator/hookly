@@ -83,3 +83,12 @@ verify_jwt = false
 
 [functions.freelancer-customer-portal]
 verify_jwt = false
+
+[functions.genius-proposal]
+verify_jwt = false
+
+[functions.genius-ranking]
+verify_jwt = false
+
+[functions.genius-purchase-access]
+verify_jwt = false
