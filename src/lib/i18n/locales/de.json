@@ -1127,5 +1127,16 @@
       "howSendProposal": "Wie sende ich einen Vorschlag?",
       "whereEarnings": "Wo sind meine Einnahmen?"
     }
+  },
+  "ai": {
+    "primaryRecommendation": "Hauptempfehlung",
+    "highlyRecommended": "Sehr Empfohlen",
+    "compatible": "Kompatibel",
+    "notRecommended": "Nicht Empfohlen",
+    "analysisPending": "Analyse Ausstehend",
+    "scoreLabel": "KI-Score",
+    "proceedAnywayWarning": "Dieser Vorschlag wurde von der KI als Nicht Empfohlen markiert. Möchten Sie trotzdem fortfahren?",
+    "analyzed": "Analysiert",
+    "aiSuggestion": "KI-basierte Empfehlung"
   }
 }

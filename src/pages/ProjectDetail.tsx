@@ -6,17 +6,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { 
   ArrowLeft, Briefcase, Clock, CheckCircle, FileText, Loader2, 
-  DollarSign, MessageSquare, Star, Calendar, MapPin, Check, X, Flag
+  DollarSign, Calendar, Check, Flag, Sparkles
 } from "lucide-react";
 import { ReviewForm } from "@/components/reviews/ReviewForm";
 import { format } from "date-fns";
 import MilestonePayment from "@/components/payments/MilestonePayment";
 import { formatMoney } from "@/lib/formatMoney";
+import { GeniusRankingButton } from "@/components/genius";
+import { ProposalCard } from "@/components/proposals";
+import { useProposalRankings } from "@/hooks/useProposalRankings";
 
 interface Project {
   id: string;
@@ -76,6 +77,15 @@ export default function ProjectDetail() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showReviewForm, setShowReviewForm] = useState(false);
+  const [showGeniusModal, setShowGeniusModal] = useState(false);
+  
+  // Fetch AI rankings for proposals
+  const { 
+    getRankingForProposal, 
+    sortProposalsByScore, 
+    hasCache: hasRankingCache,
+    refetch: refetchRankings 
+  } = useProposalRankings(id);
 
   useEffect(() => {
     if (id) {
@@ -420,7 +430,24 @@ export default function ProjectDetail() {
           {isOwner && (
             <Card>
               <CardHeader>
-                <CardTitle>{t("proposals.received")} ({proposals.length})</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    {t("proposals.received")} ({proposals.length})
+                    {hasRankingCache && (
+                      <Badge variant="outline" className="gap-1 text-xs">
+                        <Sparkles className="h-3 w-3" />
+                        {t("ai.analyzed", "Analisado")}
+                      </Badge>
+                    )}
+                  </CardTitle>
+                  {proposals.filter(p => p.status === "sent").length >= 2 && (
+                    <GeniusRankingButton
+                      projectId={project.id}
+                      proposalsCount={proposals.filter(p => p.status === "sent").length}
+                      onRankingGenerated={() => refetchRankings()}
+                    />
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
                 {proposals.length === 0 ? (
@@ -430,105 +457,17 @@ export default function ProjectDetail() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {proposals.map((proposal) => (
-                      <div key={proposal.id} className="border rounded-lg p-4">
-                        <div className="flex items-start gap-4">
-                          <Avatar className="h-12 w-12">
-                            <AvatarImage src={proposal.freelancer?.avatar_url || undefined} />
-                            <AvatarFallback>
-                              {proposal.freelancer?.full_name?.charAt(0) || "F"}
-                            </AvatarFallback>
-                          </Avatar>
-                          
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h4 className="font-semibold">
-                                {proposal.freelancer?.full_name || "Freelancer"}
-                              </h4>
-                              {proposal.freelancer?.verified && (
-                                <Badge variant="secondary" className="text-xs">
-                                  <Check className="h-3 w-3 mr-1" />
-                                  Verified
-                                </Badge>
-                              )}
-                              <Badge 
-                                variant={proposal.status === "accepted" ? "default" : proposal.status === "rejected" ? "destructive" : "secondary"}
-                              >
-                                {proposal.status}
-                              </Badge>
-                            </div>
-                            
-                            <p className="text-sm text-muted-foreground mb-2">
-                              {proposal.freelancer?.title}
-                            </p>
-                            
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
-                              {proposal.freelancer?.hourly_rate && (
-                                <span className="flex items-center gap-1">
-                                  <DollarSign className="h-3 w-3" />
-                                  ${proposal.freelancer.hourly_rate}/hr
-                                </span>
-                              )}
-                              {proposal.freelancer?.location && (
-                                <span className="flex items-center gap-1">
-                                  <MapPin className="h-3 w-3" />
-                                  {proposal.freelancer.location}
-                                </span>
-                              )}
-                            </div>
-                            
-                            {proposal.cover_letter && (
-                              <p className="text-sm mb-3 line-clamp-3">{proposal.cover_letter}</p>
-                            )}
-
-                            {proposal.milestones && Array.isArray(proposal.milestones) && proposal.milestones.length > 0 && (
-                              <div className="mb-3">
-                                <p className="text-sm font-medium mb-1">{t("proposals.milestones")}:</p>
-                                <div className="flex flex-wrap gap-2">
-                                  {(proposal.milestones as { title: string; amount: number }[]).map((m, idx) => (
-                                    <Badge key={idx} variant="outline">
-                                      {m.title}: {formatMoney(m.amount, project.currency || "USD")}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                            
-                            {proposal.status === "sent" && (
-                              <div className="flex gap-2">
-                                <Button 
-                                  size="sm" 
-                                  onClick={() => handleAcceptProposal(proposal.id, proposal.freelancer_user_id)}
-                                  disabled={actionLoading === proposal.id}
-                                >
-                                  {actionLoading === proposal.id ? (
-                                    <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                                  ) : (
-                                    <Check className="h-4 w-4 mr-1" />
-                                  )}
-                                  {t("proposals.accept")}
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  onClick={() => handleRejectProposal(proposal.id, proposal.freelancer_user_id)}
-                                  disabled={actionLoading === proposal.id}
-                                >
-                                  <X className="h-4 w-4 mr-1" />
-                                  {t("proposals.reject")}
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="ghost"
-                                  onClick={() => navigate(`/freelancers/${proposal.freelancer_user_id}`)}
-                                >
-                                  {t("proposals.viewProfile")}
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
+                    {sortProposalsByScore(proposals).map((proposal) => (
+                      <ProposalCard
+                        key={proposal.id}
+                        proposal={proposal}
+                        currency={project.currency || "USD"}
+                        ranking={getRankingForProposal(proposal.id)}
+                        actionLoading={actionLoading}
+                        onAccept={handleAcceptProposal}
+                        onReject={handleRejectProposal}
+                        onViewProfile={(userId) => navigate(`/freelancers/${userId}`)}
+                      />
                     ))}
                   </div>
                 )}

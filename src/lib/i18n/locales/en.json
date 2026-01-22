@@ -1466,5 +1466,16 @@
       "howSendProposal": "How to send a proposal?",
       "whereEarnings": "Where are my earnings?"
     }
+  },
+  "ai": {
+    "primaryRecommendation": "Top Pick",
+    "highlyRecommended": "Highly Recommended",
+    "compatible": "Compatible",
+    "notRecommended": "Not Recommended",
+    "analysisPending": "Analysis Pending",
+    "scoreLabel": "AI Score",
+    "proceedAnywayWarning": "This proposal was marked as Not Recommended by AI. Do you want to proceed anyway?",
+    "analyzed": "Analyzed",
+    "aiSuggestion": "AI-based suggestion"
   }
 }

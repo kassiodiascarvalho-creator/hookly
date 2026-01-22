@@ -1143,5 +1143,16 @@
       "howSendProposal": "如何发送提案？",
       "whereEarnings": "我的收入在哪里？"
     }
+  },
+  "ai": {
+    "primaryRecommendation": "首选推荐",
+    "highlyRecommended": "强烈推荐",
+    "compatible": "适合",
+    "notRecommended": "不推荐",
+    "analysisPending": "待分析",
+    "scoreLabel": "AI评分",
+    "proceedAnywayWarning": "此提案被AI标记为不推荐。您确定要继续吗？",
+    "analyzed": "已分析",
+    "aiSuggestion": "基于AI的建议"
   }
 }
