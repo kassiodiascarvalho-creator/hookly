@@ -26,7 +26,7 @@ import { useProfileGate } from "@/hooks/useProfileGate";
 import { ProfileGateModal } from "@/components/profile/ProfileGateModal";
 import { ProfileGateAlert } from "@/components/profile/ProfileGateAlert";
 import { BudgetRangeDisplay, ProposalBudgetValidation, CounterproposalJustification, validateProposalBudget } from "@/components/proposals";
-import { getCurrencySymbol } from "@/lib/formatMoney";
+import { getCurrencySymbol, formatMoney } from "@/lib/formatMoney";
 
 interface Project {
   id: string;
@@ -57,6 +57,12 @@ interface Proposal {
   counterproposal_justification?: string | null;
 }
 
+interface ContractInfo {
+  agreed_amount_cents: number | null;
+  was_counterproposal: boolean | null;
+  original_proposal_amount_cents: number | null;
+}
+
 interface Milestone {
   id: string;
   title: string;
@@ -72,6 +78,7 @@ export default function ProjectView() {
   
   const [project, setProject] = useState<Project | null>(null);
   const [myProposal, setMyProposal] = useState<Proposal | null>(null);
+  const [contractInfo, setContractInfo] = useState<ContractInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -103,7 +110,10 @@ export default function ProjectView() {
   useEffect(() => {
     if (id) {
       fetchProject();
-      if (user) fetchMyProposal();
+      if (user) {
+        fetchMyProposal();
+        fetchContractInfo();
+      }
     }
   }, [id, user]);
 
@@ -158,6 +168,21 @@ export default function ProjectView() {
           }))
         );
       }
+    }
+  };
+
+  const fetchContractInfo = async () => {
+    if (!user || !id) return;
+    
+    const { data } = await supabase
+      .from("contracts")
+      .select("agreed_amount_cents, was_counterproposal, original_proposal_amount_cents")
+      .eq("project_id", id)
+      .eq("freelancer_user_id", user.id)
+      .maybeSingle();
+
+    if (data) {
+      setContractInfo(data);
     }
   };
 
@@ -445,6 +470,26 @@ export default function ProjectView() {
                   <p className="text-sm text-muted-foreground">
                     {t("proposals.submittedOn")} {format(new Date(myProposal.created_at), "MMM d, yyyy")}
                   </p>
+                  
+                  {/* Show agreed amount when proposal is accepted */}
+                  {myProposal.status === "accepted" && contractInfo && (
+                    <div className="mt-3 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Check className="h-4 w-4 text-green-600" />
+                        <span className="text-sm font-medium text-green-700 dark:text-green-400">
+                          {t("projects.agreedAmount", "Valor Acordado")}
+                        </span>
+                      </div>
+                      <p className="text-lg font-semibold text-green-600 dark:text-green-400">
+                        {formatMoney((contractInfo.agreed_amount_cents || 0) / 100, project.currency)}
+                      </p>
+                      {contractInfo.was_counterproposal && contractInfo.original_proposal_amount_cents && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {t("contracts.negotiatedFrom", "Negociado a partir de")} {formatMoney(contractInfo.original_proposal_amount_cents / 100, project.currency)}
+                        </p>
+                      )}
+                    </div>
+                  )}
                   {myProposal.status === "sent" && (
                     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                       <DialogTrigger asChild>
