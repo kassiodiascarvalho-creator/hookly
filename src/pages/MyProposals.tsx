@@ -7,8 +7,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, DollarSign, Calendar, Loader2, CheckCircle, XCircle, Clock } from "lucide-react";
+import { FileText, DollarSign, Calendar, Loader2, CheckCircle, XCircle, Clock, AlertTriangle, MessageCircle } from "lucide-react";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface Proposal {
   id: string;
@@ -17,6 +18,10 @@ interface Proposal {
   status: "sent" | "accepted" | "rejected";
   created_at: string;
   project_id: string;
+  is_counterproposal?: boolean;
+  counterproposal_justification?: string | null;
+  company_response?: string | null;
+  company_feedback?: string | null;
   project?: {
     title: string;
     category: string | null;
@@ -30,6 +35,12 @@ const statusConfig = {
   sent: { label: "Pending", color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300", icon: Clock },
   accepted: { label: "Accepted", color: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300", icon: CheckCircle },
   rejected: { label: "Rejected", color: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300", icon: XCircle },
+};
+
+const companyResponseConfig = {
+  accepted: { label: "Company Accepted", color: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300", icon: CheckCircle },
+  negotiating: { label: "Negotiating", color: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300", icon: MessageCircle },
+  rejected: { label: "Company Rejected", color: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300", icon: XCircle },
 };
 
 export default function MyProposals() {
@@ -50,7 +61,7 @@ export default function MyProposals() {
     
     const { data, error } = await supabase
       .from("proposals")
-      .select("*")
+      .select("id, cover_letter, milestones, status, created_at, project_id, is_counterproposal, counterproposal_justification, company_response, company_feedback")
       .eq("freelancer_user_id", user.id)
       .order("created_at", { ascending: false });
 
@@ -122,25 +133,56 @@ export default function MyProposals() {
                 const config = statusConfig[proposal.status];
                 const StatusIcon = config.icon;
                 const totalAmount = getTotalAmount(proposal.milestones as { title: string; amount: number }[] | null);
+                const responseConfig = proposal.company_response 
+                  ? companyResponseConfig[proposal.company_response as keyof typeof companyResponseConfig]
+                  : null;
+                const ResponseIcon = responseConfig?.icon;
                 
                 return (
                   <Card 
                     key={proposal.id}
-                    className="cursor-pointer hover:shadow-md transition-shadow"
+                    className={cn(
+                      "cursor-pointer hover:shadow-md transition-shadow",
+                      proposal.is_counterproposal && "border-amber-300 dark:border-amber-700",
+                      proposal.company_response === "negotiating" && "border-blue-300 dark:border-blue-700"
+                    )}
                     onClick={() => navigate(`/project/${proposal.project_id}`)}
                   >
                     <CardContent className="p-6">
                       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-3 mb-2">
-                        <h3 className="font-semibold text-lg truncate">
+                          <div className="flex items-center flex-wrap gap-2 mb-2">
+                            <h3 className="font-semibold text-lg truncate">
                               {proposal.project?.title || t("myProposals.untitledProject")}
                             </h3>
+                            {proposal.is_counterproposal && (
+                              <Badge variant="outline" className="border-amber-500 text-amber-600 gap-1">
+                                <AlertTriangle className="h-3 w-3" />
+                                {t("proposals.counterproposal", "Counter-proposal")}
+                              </Badge>
+                            )}
                             <Badge className={config.color}>
                               <StatusIcon className="h-3 w-3 mr-1" />
                               {config.label}
                             </Badge>
                           </div>
+                          
+                          {/* Company response to counter-proposal */}
+                          {proposal.is_counterproposal && proposal.company_response && responseConfig && ResponseIcon && (
+                            <div className="mb-3 p-3 rounded-lg bg-muted/50 border">
+                              <div className="flex items-center gap-2 mb-1">
+                                <Badge className={responseConfig.color}>
+                                  <ResponseIcon className="h-3 w-3 mr-1" />
+                                  {t(`counterproposal.status${proposal.company_response.charAt(0).toUpperCase() + proposal.company_response.slice(1)}`, responseConfig.label)}
+                                </Badge>
+                              </div>
+                              {proposal.company_feedback && (
+                                <p className="text-sm text-muted-foreground mt-2">
+                                  <span className="font-medium">{t("counterproposal.companyFeedback", "Company feedback")}:</span> {proposal.company_feedback}
+                                </p>
+                              )}
+                            </div>
+                          )}
                           
                           {proposal.cover_letter && (
                             <p className="text-muted-foreground line-clamp-2 mb-3">
