@@ -112,26 +112,45 @@ serve(async (req) => {
         save_default_payment_method: "on_subscription",
         payment_method_types: ["card"],
       },
-      expand: ["latest_invoice.payment_intent"],
+      expand: ["latest_invoice.payment_intent", "pending_setup_intent"],
       metadata: {
         userId,
         planType,
       },
     });
 
-    logStep("Created incomplete subscription", { subscriptionId: subscription.id });
+    logStep("Created incomplete subscription", { 
+      subscriptionId: subscription.id,
+      status: subscription.status,
+      latestInvoice: subscription.latest_invoice,
+    });
 
-    // Get the client secret from the payment intent
-    const invoice = subscription.latest_invoice as Stripe.Invoice;
-    const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
+    // Get the client secret from the payment intent or setup intent
+    let clientSecret: string | null = null;
+    
+    const invoice = subscription.latest_invoice as Stripe.Invoice | null;
+    if (invoice?.payment_intent) {
+      const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
+      clientSecret = paymentIntent.client_secret;
+      logStep("Got client secret from payment intent", { paymentIntentId: paymentIntent.id });
+    } else if (subscription.pending_setup_intent) {
+      const setupIntent = subscription.pending_setup_intent as Stripe.SetupIntent;
+      clientSecret = setupIntent.client_secret;
+      logStep("Got client secret from setup intent", { setupIntentId: setupIntent.id });
+    }
 
-    if (!paymentIntent?.client_secret) {
+    if (!clientSecret) {
+      logStep("No client secret found", {
+        hasInvoice: !!invoice,
+        invoiceStatus: invoice?.status,
+        invoicePaymentIntent: invoice?.payment_intent,
+        pendingSetupIntent: subscription.pending_setup_intent,
+      });
       throw new Error("Failed to get payment intent client secret");
     }
 
     logStep("Got client secret for payment", { 
       subscriptionId: subscription.id,
-      paymentIntentId: paymentIntent.id 
     });
 
     // Store pending subscription in database
@@ -146,7 +165,7 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({
-        clientSecret: paymentIntent.client_secret,
+        clientSecret,
         subscriptionId: subscription.id,
         planName: planInfo.name,
         amount: planInfo.price,
