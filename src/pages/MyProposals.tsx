@@ -7,10 +7,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, DollarSign, Calendar, Loader2, CheckCircle, XCircle, Clock, AlertTriangle, MessageCircle } from "lucide-react";
+import { FileText, Calendar, Loader2, CheckCircle, XCircle, Clock, AlertTriangle, MessageCircle } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { FreelancerCounterproposalResponseModal } from "@/components/proposals/FreelancerCounterproposalResponseModal";
+import { formatMoney } from "@/lib/formatMoney";
 interface Proposal {
   id: string;
   cover_letter: string | null;
@@ -234,18 +235,16 @@ export default function MyProposals() {
                         </div>
                         
                         <div className="text-right">
-                          <div className="flex items-center gap-1 text-lg font-semibold text-primary">
-                            <DollarSign className="h-4 w-4" />
-                            {totalAmount.toLocaleString()}
+                          <div className="text-lg font-semibold text-primary">
+                            {formatMoney(totalAmount, proposal.project?.currency || "USD")}
                           </div>
                           <p className="text-xs text-muted-foreground">{t("myProposals.yourBid")}</p>
                           
                           {/* Show agreed amount for accepted counter-proposals */}
                           {proposal.status === "accepted" && proposal.agreed_amount_cents && (
                             <div className="mt-2 pt-2 border-t border-border">
-                              <div className="flex items-center gap-1 text-lg font-semibold text-green-500">
-                                <DollarSign className="h-4 w-4" />
-                                {(proposal.agreed_amount_cents / 100).toLocaleString()}
+                              <div className="text-lg font-semibold text-green-500">
+                                {formatMoney(proposal.agreed_amount_cents / 100, proposal.project?.currency || "USD")}
                               </div>
                               <p className="text-xs text-green-600">{t("myProposals.agreedAmount", "Valor Acordado")}</p>
                             </div>
