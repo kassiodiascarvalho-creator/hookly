@@ -21,6 +21,7 @@ import { Separator } from "@/components/ui/separator";
 import { WithdrawalRequestModal } from "@/components/earnings/WithdrawalRequestModal";
 import { formatMoney, formatMoneyFromCents } from "@/lib/formatMoney";
 import { useLocalCurrencyDisplay } from "@/hooks/useLocalCurrencyDisplay";
+import { FreelancerPlanCard } from "@/components/billing/FreelancerPlanCard";
 interface Payment {
   id: string;
   amount: number;
@@ -359,6 +360,9 @@ export default function Earnings() {
         payoutMethods={payoutMethods}
         onSuccess={fetchData}
       />
+
+      {/* Freelancer Plan Card */}
+      <FreelancerPlanCard />
 
       {/* Withdrawable Balance Card - Always show */}
       <Card className={`border-2 ${userBalance.earnings_available > 0 ? 'border-green-500/50 bg-gradient-to-r from-green-500/10 to-emerald-500/10' : 'border-muted'}`}>
