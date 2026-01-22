@@ -64,7 +64,7 @@ serve(async (req) => {
     logStep("User authenticated", { userId, email: userEmail });
 
     const body = await req.json();
-    const { planType } = body;
+    const { planType, paymentMethodId } = body as { planType?: string; paymentMethodId?: string };
 
     if (!planType || !PLAN_PRICES[planType]) {
       throw new Error(`Invalid plan type: ${planType}. Valid options: starter, pro, elite`);
@@ -103,55 +103,74 @@ serve(async (req) => {
       logStep("Created new Stripe customer", { customerId });
     }
 
-    // Create subscription with incomplete status to get PaymentIntent
+    // 1) First call: create a SetupIntent so the UI can collect the card transparently.
+    // 2) Second call (with paymentMethodId): create the subscription and return the PaymentIntent client_secret.
+
+    if (!paymentMethodId) {
+      logStep("Creating setup intent", { customerId, planType });
+
+      const setupIntent = await stripe.setupIntents.create({
+        customer: customerId,
+        payment_method_types: ["card"],
+        usage: "off_session",
+        metadata: { userId, planType },
+      });
+
+      if (!setupIntent.client_secret) {
+        throw new Error("Failed to create setup intent client secret");
+      }
+
+      return new Response(
+        JSON.stringify({
+          intentType: "setup",
+          clientSecret: setupIntent.client_secret,
+          planName: planInfo.name,
+          amount: planInfo.price,
+          currency: "BRL",
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      );
+    }
+
+    // Create subscription with default payment method so an invoice PaymentIntent is generated.
+    logStep("Creating subscription", { customerId, planType, hasPaymentMethodId: !!paymentMethodId });
+
     const subscription = await stripe.subscriptions.create({
       customer: customerId,
+      default_payment_method: paymentMethodId,
       items: [{ price: priceId }],
       payment_behavior: "default_incomplete",
       payment_settings: {
         save_default_payment_method: "on_subscription",
         payment_method_types: ["card"],
       },
-      expand: ["latest_invoice.payment_intent", "pending_setup_intent"],
+      expand: ["latest_invoice.payment_intent"],
       metadata: {
         userId,
         planType,
       },
     });
 
-    logStep("Created incomplete subscription", { 
-      subscriptionId: subscription.id,
-      status: subscription.status,
-      latestInvoice: subscription.latest_invoice,
-    });
-
-    // Get the client secret from the payment intent or setup intent
-    let clientSecret: string | null = null;
-    
-    const invoice = subscription.latest_invoice as Stripe.Invoice | null;
-    if (invoice?.payment_intent) {
-      const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
-      clientSecret = paymentIntent.client_secret;
-      logStep("Got client secret from payment intent", { paymentIntentId: paymentIntent.id });
-    } else if (subscription.pending_setup_intent) {
-      const setupIntent = subscription.pending_setup_intent as Stripe.SetupIntent;
-      clientSecret = setupIntent.client_secret;
-      logStep("Got client secret from setup intent", { setupIntentId: setupIntent.id });
+    const latestInvoice = subscription.latest_invoice as Stripe.Invoice | string | null;
+    const invoiceId = typeof latestInvoice === "string" ? latestInvoice : latestInvoice?.id;
+    if (!invoiceId) {
+      throw new Error("Subscription created but latest_invoice is missing");
     }
 
-    if (!clientSecret) {
-      logStep("No client secret found", {
-        hasInvoice: !!invoice,
-        invoiceStatus: invoice?.status,
-        invoicePaymentIntent: invoice?.payment_intent,
-        pendingSetupIntent: subscription.pending_setup_intent,
+    const invoice = (await stripe.invoices.retrieve(invoiceId, { expand: ["payment_intent"] })) as Stripe.Invoice;
+    const invoicePaymentIntent = invoice.payment_intent as Stripe.PaymentIntent | string | null;
+
+    if (!invoicePaymentIntent || typeof invoicePaymentIntent === "string" || !invoicePaymentIntent.client_secret) {
+      logStep("Invoice has no payment intent", {
+        subscriptionId: subscription.id,
+        invoiceId,
+        invoiceStatus: invoice.status,
+        invoicePaymentIntent: invoice.payment_intent,
       });
       throw new Error("Failed to get payment intent client secret");
     }
 
-    logStep("Got client secret for payment", { 
-      subscriptionId: subscription.id,
-    });
+    const clientSecret = invoicePaymentIntent.client_secret;
 
     // Store pending subscription in database
     await supabaseAdmin.from("company_plans").upsert({
@@ -165,6 +184,7 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({
+        intentType: "payment",
         clientSecret,
         subscriptionId: subscription.id,
         planName: planInfo.name,
