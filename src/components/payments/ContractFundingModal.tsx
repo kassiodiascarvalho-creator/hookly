@@ -487,7 +487,11 @@ export function ContractFundingModal({
                   <div className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
                     <p className="text-sm text-green-700 dark:text-green-300 font-medium">
-                      {t("payments.feeLabels.freelancerReceives", { amount: formatMoney(amount, currency) })}
+                      {t("payments.feeLabels.freelancerReceives", {
+                        amount: formatMoney(amount, currency),
+                        // Safety fallback: never show raw translation keys in the UI
+                        defaultValue: `O freelancer receberá exatamente ${formatMoney(amount, currency)} após a conclusão.`,
+                      })}
                     </p>
                   </div>
                 </div>
