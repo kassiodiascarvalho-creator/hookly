@@ -10,8 +10,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { formatMoney, formatMoneyFromCents } from "@/lib/formatMoney";
 import { useLocalCurrencyDisplay } from "@/hooks/useLocalCurrencyDisplay";
+import { computeFreelancerCompletion } from "@/lib/profileCompletion";
 import { TrustMessage } from "@/components/trust/TrustBadge";
-
 interface DashboardStats {
   activeProjects: number;
   pendingProposals: number;
@@ -55,7 +55,9 @@ export default function FreelancerDashboard() {
         balanceResult,
         activeContractsResult,
         paidWithdrawalsResult,
-        profileResult
+        freelancerProfileResult,
+        portfolioCountResult,
+        payoutCountResult
       ] = await Promise.all([
         // Active contracts (accepted proposals = contracts created)
         supabase
@@ -99,12 +101,24 @@ export default function FreelancerDashboard() {
           .eq("freelancer_user_id", user.id)
           .eq("status", "paid"),
         
-        // Profile completion
+        // Freelancer profile for real-time completion calculation
         supabase
-          .from("profiles")
-          .select("profile_completion_percent")
+          .from("freelancer_profiles")
+          .select("*")
           .eq("user_id", user.id)
-          .maybeSingle()
+          .maybeSingle(),
+        
+        // Portfolio items count
+        supabase
+          .from("portfolio_items")
+          .select("*", { count: "exact", head: true })
+          .eq("freelancer_user_id", user.id),
+        
+        // Payout methods count
+        supabase
+          .from("payout_methods")
+          .select("*", { count: "exact", head: true })
+          .eq("freelancer_user_id", user.id)
       ]);
 
       // Calculate totals
@@ -122,7 +136,17 @@ export default function FreelancerDashboard() {
       // Total earnings in cents = available + contracts escrow + already withdrawn
       const totalEarningsCents = earningsAvailable + contractsEscrow + paidWithdrawals;
       const currency = balanceResult.data?.currency || "BRL";
-      const profileCompletion = profileResult.data?.profile_completion_percent || 0;
+      
+      // Calculate profile completion in real-time (not from stale database value)
+      let profileCompletion = 0;
+      if (freelancerProfileResult.data) {
+        const completion = computeFreelancerCompletion(
+          freelancerProfileResult.data,
+          (portfolioCountResult.count || 0) > 0,
+          (payoutCountResult.count || 0) > 0
+        );
+        profileCompletion = completion.percent;
+      }
 
       setStats({
         activeProjects,
