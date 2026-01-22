@@ -414,6 +414,14 @@
       "accept": "Aceptar",
       "reject": "Rechazar",
       "viewProject": "Ver Proyecto"
+    },
+    "milestonesHelp": {
+      "title": "¿Qué es un Hito?",
+      "description": "Divide tu propuesta en etapas claras con plazos, entregables y montos. Esto genera confianza con las empresas y permite pagos parciales protegidos.",
+      "titleTip": "Nombre de la etapa (ej: \"Diseño del Home\", \"API funcional\", \"Entrega final\")",
+      "amountTip": "Valor para esta entrega (en USD, BRL, etc.)",
+      "descriptionTip": "Detalla qué se entregará y cuándo",
+      "proTip": "Las propuestas con hitos bien definidos tienen hasta 3x más probabilidades de ser aprobadas."
     }
   },
   "messages": {

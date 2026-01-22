@@ -414,6 +414,14 @@
       "accept": "Accepter",
       "reject": "Refuser",
       "viewProject": "Voir le Projet"
+    },
+    "milestonesHelp": {
+      "title": "Qu'est-ce qu'un Jalon ?",
+      "description": "Divisez votre proposition en étapes claires avec des délais, des livrables et des montants. Cela renforce la confiance avec les entreprises et permet des paiements partiels protégés.",
+      "titleTip": "Nom de l'étape (ex : \"Design de l'accueil\", \"API fonctionnelle\", \"Livraison finale\")",
+      "amountTip": "Montant pour cette livraison (en USD, EUR, etc.)",
+      "descriptionTip": "Détaillez ce qui sera livré et quand",
+      "proTip": "Les propositions avec des jalons bien définis ont jusqu'à 3x plus de chances d'être approuvées."
     }
   },
   "messages": {
