@@ -183,9 +183,20 @@ export default function MilestonePayment({
   };
 
   // Use agreed_amount_cents from contract if available, otherwise sum milestones
+  const originalMilestoneTotal = milestones.reduce((sum, m) => sum + m.amount, 0);
   const totalAmount = contractInfo?.agreed_amount_cents 
     ? contractInfo.agreed_amount_cents / 100 
-    : milestones.reduce((sum, m) => sum + m.amount, 0);
+    : originalMilestoneTotal;
+  
+  // Redistribute milestone amounts proportionally when counterproposal was accepted
+  const adjustedMilestones = milestones.map((milestone) => {
+    if (contractInfo?.agreed_amount_cents && originalMilestoneTotal > 0) {
+      const proportion = milestone.amount / originalMilestoneTotal;
+      return { ...milestone, amount: Math.round(totalAmount * proportion * 100) / 100 };
+    }
+    return milestone;
+  });
+
   const fundedAmount = payments.filter(p => p.status === "paid" || p.status === "released")
     .reduce((sum, p) => sum + Number(p.amount), 0);
   const releasedAmount = payments.filter(p => p.status === "released")
@@ -252,7 +263,7 @@ export default function MilestonePayment({
 
           {/* Milestones List */}
           <div className="space-y-3">
-            {milestones.map((milestone, idx) => {
+            {adjustedMilestones.map((milestone, idx) => {
               const payment = getPaymentForMilestone(idx);
               const isPaid = payment?.status === "paid";
               const isReleased = payment?.status === "released";
