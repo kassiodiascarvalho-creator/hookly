@@ -20,6 +20,7 @@ import FinancialAlertsCard from "@/components/admin/FinancialAlertsCard";
 import { ActionCostsManager } from "@/components/admin/ActionCostsManager";
 import { CreditRevenueCards } from "@/components/admin/CreditRevenueCards";
 import { PlanDefinitionsManager } from "@/components/admin/PlanDefinitionsManager";
+import { FreelancerPlanDefinitionsManager } from "@/components/admin/FreelancerPlanDefinitionsManager";
 import { 
   Coins, 
   Wallet, 
@@ -982,6 +983,7 @@ export default function AdminFinances() {
         {/* Plans Tab */}
         <TabsContent value="plans" className="space-y-6">
           <PlanDefinitionsManager />
+          <FreelancerPlanDefinitionsManager />
         </TabsContent>
       </Tabs>
 

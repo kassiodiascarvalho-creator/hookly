@@ -622,6 +622,111 @@ export type Database = {
           },
         ]
       }
+      freelancer_plan_definitions: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number
+          features: Json
+          highlight_proposals: boolean
+          id: string
+          is_active: boolean
+          name: string
+          plan_type: string
+          popular: boolean
+          price_usd_cents: number
+          priority_support: boolean
+          proposals_limit: number | null
+          stripe_price_id: string | null
+          updated_at: string
+          verified_badge: boolean
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          features?: Json
+          highlight_proposals?: boolean
+          id?: string
+          is_active?: boolean
+          name: string
+          plan_type: string
+          popular?: boolean
+          price_usd_cents?: number
+          priority_support?: boolean
+          proposals_limit?: number | null
+          stripe_price_id?: string | null
+          updated_at?: string
+          verified_badge?: boolean
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          features?: Json
+          highlight_proposals?: boolean
+          id?: string
+          is_active?: boolean
+          name?: string
+          plan_type?: string
+          popular?: boolean
+          price_usd_cents?: number
+          priority_support?: boolean
+          proposals_limit?: number | null
+          stripe_price_id?: string | null
+          updated_at?: string
+          verified_badge?: boolean
+        }
+        Relationships: []
+      }
+      freelancer_plans: {
+        Row: {
+          cancel_at_period_end: boolean | null
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          freelancer_user_id: string
+          id: string
+          plan_type: string
+          proposals_reset_at: string | null
+          proposals_this_month: number | null
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          freelancer_user_id: string
+          id?: string
+          plan_type?: string
+          proposals_reset_at?: string | null
+          proposals_this_month?: number | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          freelancer_user_id?: string
+          id?: string
+          plan_type?: string
+          proposals_reset_at?: string | null
+          proposals_this_month?: number | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       freelancer_profiles: {
         Row: {
           avatar_url: string | null
