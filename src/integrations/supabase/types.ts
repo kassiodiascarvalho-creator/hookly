@@ -2526,6 +2526,10 @@ export type Database = {
         Returns: string
       }
       ensure_user_wallet: { Args: { p_user_id: string }; Returns: string }
+      freelancer_can_view_project: {
+        Args: { p_freelancer_user_id: string; p_project_id: string }
+        Returns: boolean
+      }
       fund_contract_escrow: {
         Args: {
           p_amount: number
