@@ -126,7 +126,7 @@ serve(async (req) => {
         milestones
       `)
       .eq("project_id", projectId)
-      .eq("status", "pending");
+      .eq("status", "sent");
 
     if (proposalsError) {
       throw proposalsError;
