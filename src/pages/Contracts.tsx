@@ -331,7 +331,13 @@ export default function Contracts() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => navigate(`/projects/${contract.project_id}`)}
+                          onClick={() => {
+                            const isCompanyUser = user?.id === contract.company_user_id;
+                            const path = isCompanyUser 
+                              ? `/projects/${contract.project_id}` 
+                              : `/project/${contract.project_id}`;
+                            navigate(path);
+                          }}
                         >
                           {t("contracts.viewProject")}
                         </Button>
