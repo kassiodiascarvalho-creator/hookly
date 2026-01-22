@@ -199,6 +199,7 @@
     "publish": "Publish Project",
     "savedAsDraft": "Project saved as draft",
     "published": "Project published successfully!",
+    "alreadyPublished": "This project is already published",
     "notFound": "Project not found",
     "markComplete": "Mark as Complete",
     "completed": "Project marked as completed!",

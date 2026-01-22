@@ -384,6 +384,10 @@
       "next": "Weiter",
       "back": "Zurück"
     },
+    "published": "Projekt erfolgreich veröffentlicht!",
+    "alreadyPublished": "Dieses Projekt ist bereits veröffentlicht",
+    "savedAsDraft": "Projekt als Entwurf gespeichert",
+    "notFound": "Projekt nicht gefunden",
     "boost": {
       "title": "Hervorgehobenes Projekt",
       "label": "Hervorgehoben",

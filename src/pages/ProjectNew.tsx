@@ -16,6 +16,8 @@ import { CurrencySelect } from "@/components/CurrencySelect";
 import { getCurrencySymbol } from "@/lib/formatMoney";
 import { useProfileGate } from "@/hooks/useProfileGate";
 import { ProfileGateAlert } from "@/components/profile/ProfileGateAlert";
+import { ProfileGateModal } from "@/components/profile/ProfileGateModal";
+import { usePublishProject } from "@/hooks/usePublishProject";
 
 // Schema defined but validation done manually with i18n messages below
 
@@ -46,9 +48,13 @@ export default function ProjectNew() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showProfileGateModal, setShowProfileGateModal] = useState(false);
 
   // Profile gate for companies
   const { allowed: profileAllowed, completionPercent, loading: gateLoading, checkMonthlyCredits } = useProfileGate('company');
+  
+  // Centralized publish hook
+  const { publishProject, isPublishing } = usePublishProject();
   
   // Check monthly credits on mount
   useEffect(() => {
@@ -136,14 +142,9 @@ export default function ProjectNew() {
       return;
     }
 
-    // Block publishing if profile is incomplete (drafts are allowed)
-    if (!asDraft && !profileAllowed) {
-      toast.error(t("profileGate.companyAlertTitle"));
-      return;
-    }
-
     setLoading(true);
     
+    // Always create project as draft first, then publish via RPC if needed
     const projectData = {
       title: formData.title,
       description: formData.description,
@@ -152,7 +153,7 @@ export default function ProjectNew() {
       budget_max: formData.budget_max ? parseFloat(formData.budget_max) : null,
       currency: formData.currency,
       kpis: kpis.map(({ name, target }) => ({ name, target })),
-      status: asDraft ? "draft" as const : "open" as const,
+      status: "draft" as const, // Always create as draft first
       company_user_id: user.id,
     };
 
@@ -164,11 +165,33 @@ export default function ProjectNew() {
 
     if (error) {
       toast.error(error.message);
-    } else {
-      toast.success(asDraft ? t("projects.savedAsDraft") : t("projects.published"));
-      navigate(`/projects/${data.id}`);
+      setLoading(false);
+      return;
+    }
+
+    // If user wants to publish, use centralized RPC
+    if (!asDraft) {
+      const publishResult = await publishProject(data.id);
+      
+      if (!publishResult.success) {
+        if (publishResult.error === 'COMPANY_PROFILE_INCOMPLETE') {
+          setShowProfileGateModal(true);
+          // Still navigate to project (it's saved as draft)
+          toast.info(t("projects.savedAsDraft"));
+          navigate(`/projects/${data.id}`);
+          setLoading(false);
+          return;
+        }
+        // Other errors - project saved as draft
+        toast.info(t("projects.savedAsDraft"));
+        navigate(`/projects/${data.id}`);
+        setLoading(false);
+        return;
+      }
     }
     
+    toast.success(asDraft ? t("projects.savedAsDraft") : t("projects.published"));
+    navigate(`/projects/${data.id}`);
     setLoading(false);
   };
 
@@ -426,17 +449,25 @@ export default function ProjectNew() {
                 {t("common.back")}
               </Button>
               <div className="flex gap-3">
-                <Button variant="outline" onClick={() => handleSubmit(true)} disabled={loading}>
+                <Button variant="outline" onClick={() => handleSubmit(true)} disabled={loading || isPublishing}>
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("projects.saveAsDraft")}
                 </Button>
-                <Button onClick={() => handleSubmit(false)} disabled={loading}>
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("projects.publish")}
+                <Button onClick={() => handleSubmit(false)} disabled={loading || isPublishing}>
+                  {(loading || isPublishing) ? <Loader2 className="h-4 w-4 animate-spin" /> : t("projects.publish")}
                 </Button>
               </div>
             </div>
           </CardContent>
         </Card>
       )}
+
+      {/* Profile Gate Modal */}
+      <ProfileGateModal
+        open={showProfileGateModal}
+        onOpenChange={setShowProfileGateModal}
+        userType="company"
+        completionPercent={completionPercent}
+      />
     </div>
   );
 }

@@ -18,6 +18,10 @@ import { formatMoney } from "@/lib/formatMoney";
 import { GeniusRankingButton } from "@/components/genius";
 import { ProposalCard } from "@/components/proposals";
 import { useProposalRankings } from "@/hooks/useProposalRankings";
+import { useProfileGate } from "@/hooks/useProfileGate";
+import { usePublishProject } from "@/hooks/usePublishProject";
+import { ProfileGateModal } from "@/components/profile/ProfileGateModal";
+import { ProfileGateAlert } from "@/components/profile/ProfileGateAlert";
 
 interface Project {
   id: string;
@@ -78,6 +82,11 @@ export default function ProjectDetail() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [showGeniusModal, setShowGeniusModal] = useState(false);
+  const [showProfileGateModal, setShowProfileGateModal] = useState(false);
+  
+  // Profile gate for companies (to publish projects)
+  const { allowed: profileAllowed, completionPercent, loading: gateLoading } = useProfileGate('company');
+  const { publishProject, isPublishing } = usePublishProject();
   
   // Fetch AI rankings for proposals
   const { 
@@ -157,20 +166,16 @@ export default function ProjectDetail() {
 
   const handlePublish = async () => {
     if (!project) return;
-    setActionLoading("publish");
     
-    const { error } = await supabase
-      .from("projects")
-      .update({ status: "open" })
-      .eq("id", project.id);
-
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success(t("projects.published"));
+    // Use centralized RPC that validates profile completion server-side
+    const result = await publishProject(project.id);
+    
+    if (result.success) {
       setProject({ ...project, status: "open" });
+    } else if (result.error === 'COMPANY_PROFILE_INCOMPLETE') {
+      // Show profile gate modal
+      setShowProfileGateModal(true);
     }
-    setActionLoading(null);
   };
 
   const handleAcceptProposal = async (proposalId: string, freelancerUserId: string) => {
@@ -359,8 +364,8 @@ export default function ProjectDetail() {
                 
                 <div className="flex gap-2">
                   {isOwner && project.status === "draft" && (
-                    <Button onClick={handlePublish} disabled={actionLoading === "publish"}>
-                      {actionLoading === "publish" ? (
+                    <Button onClick={handlePublish} disabled={isPublishing}>
+                      {isPublishing ? (
                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
                       ) : null}
                       {t("projects.publish")}
@@ -501,6 +506,14 @@ export default function ProjectDetail() {
           onReviewSubmitted={() => setShowReviewForm(false)}
         />
       )}
+
+      {/* Profile Gate Modal for publishing */}
+      <ProfileGateModal
+        open={showProfileGateModal}
+        onOpenChange={setShowProfileGateModal}
+        userType="company"
+        completionPercent={completionPercent}
+      />
     </div>
   );
 }
