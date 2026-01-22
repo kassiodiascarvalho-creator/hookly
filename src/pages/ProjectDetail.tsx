@@ -536,19 +536,22 @@ export default function ProjectDetail() {
       />
 
       {/* Counter-proposal Response Modal */}
-      {selectedCounterproposal && (
+      {selectedCounterproposal && project && user && (
         <CounterproposalResponseModal
           open={counterproposalModalOpen}
           onOpenChange={setCounterproposalModalOpen}
           proposal={selectedCounterproposal}
           project={{
+            id: project.id,
             budget_min: project.budget_min,
             budget_ideal: null,
             budget_max: project.budget_max,
             currency: project.currency || "USD",
           }}
+          companyUserId={user.id}
           onResponseSubmitted={() => {
             fetchProposals();
+            fetchProject();
             setSelectedCounterproposal(null);
           }}
         />

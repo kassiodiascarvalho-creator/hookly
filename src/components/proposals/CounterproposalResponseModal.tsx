@@ -45,6 +45,7 @@ interface Proposal {
 }
 
 interface Project {
+  id: string;
   budget_min: number | null;
   budget_ideal: number | null;
   budget_max: number | null;
@@ -56,6 +57,7 @@ interface CounterproposalResponseModalProps {
   onOpenChange: (open: boolean) => void;
   proposal: Proposal;
   project: Project;
+  companyUserId: string;
   onResponseSubmitted: () => void;
 }
 
@@ -66,6 +68,7 @@ export function CounterproposalResponseModal({
   onOpenChange,
   proposal,
   project,
+  companyUserId,
   onResponseSubmitted,
 }: CounterproposalResponseModalProps) {
   const { t } = useTranslation();
@@ -122,6 +125,44 @@ export function CounterproposalResponseModal({
         .eq("id", proposal.id);
 
       if (error) throw error;
+
+      // If accepted, also update project status and create contract
+      if (responseType === "accepted") {
+        // Update project to in_progress
+        await supabase
+          .from("projects")
+          .update({ status: "in_progress" })
+          .eq("id", project.id);
+
+        // Call RPC to create contract from proposal
+        const { data: contractResult, error: contractError } = await supabase
+          .rpc("create_contract_from_proposal", {
+            p_proposal_id: proposal.id,
+            p_company_user_id: companyUserId,
+          });
+
+        if (contractError) {
+          console.error("Error creating contract:", contractError);
+          // Don't fail the whole operation, just log it
+        } else {
+          console.log("Contract created:", contractResult);
+        }
+
+        // Create or get conversation
+        const { data: existingConv } = await supabase
+          .from("conversations")
+          .select("id")
+          .eq("company_user_id", companyUserId)
+          .eq("freelancer_user_id", proposal.freelancer_user_id)
+          .maybeSingle();
+
+        if (!existingConv) {
+          await supabase.from("conversations").insert({
+            company_user_id: companyUserId,
+            freelancer_user_id: proposal.freelancer_user_id,
+          });
+        }
+      }
 
       // Create notification for freelancer
       const notificationMessages = {
