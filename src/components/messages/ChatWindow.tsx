@@ -14,6 +14,10 @@ import { Conversation } from "@/pages/Messages";
 import { AudioRecorder } from "./AudioRecorder";
 import { FileUploadButton } from "./FileUploadButton";
 import { AudioPlayer } from "./AudioPlayer";
+import { PresenceIndicator, PresenceDot } from "./PresenceIndicator";
+import { MessageTranslation } from "./MessageTranslation";
+import { TranslationToggle } from "./TranslationToggle";
+import { usePresenceHeartbeat } from "@/hooks/useUserPresence";
 
 interface Message {
   id: string;
@@ -59,14 +63,21 @@ function extractStoragePath(fullUrl: string): string | null {
 }
 
 export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const [messages, setMessages] = useState<MessageWithSignedUrl[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [autoTranslate, setAutoTranslate] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const signedUrlCache = useRef<Map<string, string>>(new Map());
+
+  // Start presence heartbeat
+  usePresenceHeartbeat();
+
+  // Get user's preferred language
+  const userPreferredLang = i18n.language || "pt-BR";
 
   // Generate signed URLs for messages with files - with caching
   const generateSignedUrls = useCallback(async (msgs: Message[]): Promise<MessageWithSignedUrl[]> => {
@@ -382,23 +393,35 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
           <ArrowLeft className="h-5 w-5" />
         </Button>
 
-        <Avatar className="h-10 w-10">
-          <AvatarImage src={conversation.other_user_avatar || undefined} />
-          <AvatarFallback className="bg-primary text-primary-foreground">
-            {conversation.other_user_name.charAt(0).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
+        <div className="relative">
+          <Avatar className="h-10 w-10">
+            <AvatarImage src={conversation.other_user_avatar || undefined} />
+            <AvatarFallback className="bg-primary text-primary-foreground">
+              {conversation.other_user_name.charAt(0).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <PresenceDot userId={conversation.other_user_id} size="md" />
+        </div>
 
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-foreground truncate">
-            {conversation.other_user_name}
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="font-medium text-foreground truncate">
+              {conversation.other_user_name}
+            </p>
+            <PresenceIndicator userId={conversation.other_user_id} showLabel size="sm" />
+          </div>
           {conversation.project_title && (
             <p className="text-xs text-muted-foreground truncate">
               {conversation.project_title}
             </p>
           )}
         </div>
+
+        {/* Translation Toggle */}
+        <TranslationToggle 
+          onAutoTranslateChange={setAutoTranslate}
+          className="hidden sm:flex"
+        />
       </div>
 
       {/* Messages */}
@@ -453,6 +476,16 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
                           >
                             {format(new Date(message.created_at), "HH:mm")}
                           </p>
+                          
+                          {/* Translation button for text messages */}
+                          {(!message.type || message.type === "text") && !isOwn && (
+                            <MessageTranslation
+                              messageId={message.id}
+                              originalContent={message.content}
+                              isOwn={isOwn}
+                              userPreferredLang={userPreferredLang}
+                            />
+                          )}
                         </div>
                       </div>
                     );

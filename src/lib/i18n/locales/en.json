@@ -755,7 +755,25 @@
     "uploadError": "Failed to upload file",
     "fileTooLarge": "File is too large (max 10MB)",
     "invalidFileType": "Invalid file type",
-    "fileSent": "File sent successfully"
+    "fileSent": "File sent successfully",
+    "translationDisclaimer": "Automatic translation: use as a guide. In case of discrepancy, the original text prevails.",
+    "presence": {
+      "online": "Online",
+      "away": "Away",
+      "offline": "Offline",
+      "lastSeen": "Last seen"
+    },
+    "translation": {
+      "translate": "Translate",
+      "translating": "Translating...",
+      "translatedFrom": "Translated from {{from}} to {{to}}",
+      "showOriginal": "Show original",
+      "hideOriginal": "Hide original",
+      "autoTranslate": "Auto-translate",
+      "autoTranslateDesc": "When enabled, messages in other languages will be automatically translated.",
+      "sameLanguage": "The message is already in your language.",
+      "error": "Could not translate the message."
+    }
   },
   "verifiedCompanies": {
     "title": "Verified Companies",

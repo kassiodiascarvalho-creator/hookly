@@ -95,3 +95,6 @@ verify_jwt = false
 
 [functions.suggest-project-ai]
 verify_jwt = false
+
+[functions.translate-message]
+verify_jwt = false
