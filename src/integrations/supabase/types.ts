@@ -2543,6 +2543,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      publish_project: { Args: { p_project_id: string }; Returns: Json }
       release_escrow_to_earnings: {
         Args: {
           p_amount: number
