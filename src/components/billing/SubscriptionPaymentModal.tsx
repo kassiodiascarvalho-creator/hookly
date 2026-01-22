@@ -17,9 +17,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, CreditCard, CheckCircle, AlertCircle, Lock, Sparkles } from "lucide-react";
-import { formatMoney } from "@/lib/formatMoney";
 import { supabase } from "@/integrations/supabase/client";
-import { COMPANY_PLANS, type PlanConfig } from "@/hooks/useCompanyPlan";
+import { COMPANY_PLANS } from "@/hooks/useCompanyPlan";
+import { useLocalizedPlanPrice } from "@/hooks/useLocalizedPlanPrice";
 
 // Cache for Stripe instance
 let stripePromiseCache: Promise<Stripe | null> | null = null;
@@ -80,6 +80,7 @@ interface SubscriptionFormProps {
 }
 
 function SubscriptionForm({ planName, amount, intentType, onSetupComplete, onSuccess, onError }: SubscriptionFormProps) {
+  const { formatLocalPrice, userCurrency } = useLocalizedPlanPrice();
   const { t } = useTranslation();
   const stripe = useStripe();
   const elements = useElements();
@@ -148,6 +149,9 @@ function SubscriptionForm({ planName, amount, intentType, onSetupComplete, onSuc
     }
   };
 
+  // Amount comes in USD cents from the backend
+  const localizedPrice = formatLocalPrice(amount);
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Plan Info */}
@@ -158,7 +162,7 @@ function SubscriptionForm({ planName, amount, intentType, onSetupComplete, onSuc
         </Badge>
         <p className="text-lg font-semibold text-foreground">{planName}</p>
         <p className="text-2xl font-bold text-primary mt-1">
-          {formatMoney(amount / 100, "BRL")}/mês
+          {localizedPrice}/mês
         </p>
       </div>
 
@@ -211,7 +215,7 @@ function SubscriptionForm({ planName, amount, intentType, onSetupComplete, onSuc
             <CreditCard className="h-4 w-4 mr-2" />
             {intentType === "setup"
               ? "Continuar"
-              : `Assinar ${formatMoney(amount / 100, "BRL")}/mês`}
+              : `Assinar ${localizedPrice}/mês`}
           </>
         )}
       </Button>
