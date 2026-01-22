@@ -6,6 +6,7 @@ import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Conversation } from "@/pages/Messages";
 import { MessageSquare } from "lucide-react";
+import { PresenceDot } from "./PresenceIndicator";
 
 interface ConversationListProps {
   conversations: Conversation[];
@@ -64,12 +65,15 @@ export function ConversationList({
               selectedConversation?.id === conversation.id && "bg-accent"
             )}
           >
-            <Avatar className="h-12 w-12 shrink-0">
-              <AvatarImage src={conversation.other_user_avatar || undefined} />
-              <AvatarFallback className="bg-primary text-primary-foreground">
-                {conversation.other_user_name.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            <div className="relative">
+              <Avatar className="h-12 w-12 shrink-0">
+                <AvatarImage src={conversation.other_user_avatar || undefined} />
+                <AvatarFallback className="bg-primary text-primary-foreground">
+                  {conversation.other_user_name.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <PresenceDot userId={conversation.other_user_id} size="md" />
+            </div>
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2">

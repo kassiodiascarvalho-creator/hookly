@@ -13,6 +13,7 @@ export interface Conversation {
   freelancer_user_id: string;
   project_id: string | null;
   created_at: string;
+  other_user_id: string;
   other_user_name: string;
   other_user_avatar: string | null;
   project_title: string | null;
@@ -194,6 +195,7 @@ export default function Messages() {
 
         return {
           ...conv,
+          other_user_id: otherUserId,
           other_user_name: otherUserName,
           other_user_avatar: otherUserAvatar,
           project_title: project?.title || null,

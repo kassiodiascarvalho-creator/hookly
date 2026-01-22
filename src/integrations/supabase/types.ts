@@ -1208,6 +1208,41 @@ export type Database = {
           },
         ]
       }
+      message_translations: {
+        Row: {
+          created_at: string
+          id: string
+          message_id: string
+          source_lang: string
+          target_lang: string
+          translated_content: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_id: string
+          source_lang: string
+          target_lang: string
+          translated_content: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_id?: string
+          source_lang?: string
+          target_lang?: string
+          translated_content?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_translations_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           audio_duration: number | null
@@ -1219,6 +1254,7 @@ export type Database = {
           file_size: number | null
           file_url: string | null
           id: string
+          lang_detected: string | null
           read_at: string | null
           sender_user_id: string
           type: string | null
@@ -1233,6 +1269,7 @@ export type Database = {
           file_size?: number | null
           file_url?: string | null
           id?: string
+          lang_detected?: string | null
           read_at?: string | null
           sender_user_id: string
           type?: string | null
@@ -1247,6 +1284,7 @@ export type Database = {
           file_size?: number | null
           file_url?: string | null
           id?: string
+          lang_detected?: string | null
           read_at?: string | null
           sender_user_id?: string
           type?: string | null
@@ -2254,6 +2292,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_presence: {
+        Row: {
+          created_at: string
+          id: string
+          last_seen_at: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_seen_at?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_seen_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -2268,6 +2333,39 @@ export type Database = {
         Update: {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_translation_settings: {
+        Row: {
+          auto_translate_enabled: boolean
+          created_at: string
+          daily_translations_reset_at: string
+          daily_translations_used: number
+          id: string
+          preferred_lang: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_translate_enabled?: boolean
+          created_at?: string
+          daily_translations_reset_at?: string
+          daily_translations_used?: number
+          id?: string
+          preferred_lang?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_translate_enabled?: boolean
+          created_at?: string
+          daily_translations_reset_at?: string
+          daily_translations_used?: number
+          id?: string
+          preferred_lang?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []

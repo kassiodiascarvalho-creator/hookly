@@ -829,7 +829,25 @@
     "uploadError": "Falha ao enviar arquivo",
     "fileTooLarge": "Arquivo muito grande",
     "invalidFileType": "Tipo de arquivo inválido",
-    "fileSent": "Arquivo enviado com sucesso"
+    "fileSent": "Arquivo enviado com sucesso",
+    "translationDisclaimer": "Tradução automática: use como apoio. Em caso de divergência, vale o texto original.",
+    "presence": {
+      "online": "Online",
+      "away": "Ausente",
+      "offline": "Offline",
+      "lastSeen": "Visto por último"
+    },
+    "translation": {
+      "translate": "Traduzir",
+      "translating": "Traduzindo...",
+      "translatedFrom": "Traduzido de {{from}} para {{to}}",
+      "showOriginal": "Ver original",
+      "hideOriginal": "Ocultar original",
+      "autoTranslate": "Tradução automática",
+      "autoTranslateDesc": "Quando ativado, mensagens em outros idiomas serão traduzidas automaticamente.",
+      "sameLanguage": "A mensagem já está no seu idioma.",
+      "error": "Não foi possível traduzir a mensagem."
+    }
   },
   "notifications": {
     "title": "Notificações",
