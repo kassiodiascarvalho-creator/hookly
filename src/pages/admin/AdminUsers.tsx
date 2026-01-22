@@ -6,12 +6,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Loader2, FileText, Coins } from "lucide-react";
+import { Search, Loader2, FileText, Coins, Download } from "lucide-react";
 import { format } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileDataCard, MobileDataRow } from "@/components/admin/MobileDataCard";
 import { UserCreditStatementModal } from "@/components/admin/UserCreditStatementModal";
 import { formatMoneyFromCents } from "@/lib/formatMoney";
+import { toast } from "sonner";
 
 interface ProfileWithCredits {
   id: string;
@@ -156,6 +157,127 @@ export default function AdminUsers() {
     ));
   };
 
+  const exportAllUsers = async () => {
+    try {
+      toast.info(t("admin.exportingUsers") || "Exportando usuários...");
+      
+      // Fetch all profiles with enriched data
+      const { data: allProfiles } = await supabase
+        .from("profiles")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      // Fetch freelancer profiles
+      const { data: freelancerProfiles } = await supabase
+        .from("freelancer_profiles")
+        .select("*");
+
+      // Fetch company profiles
+      const { data: companyProfiles } = await supabase
+        .from("company_profiles")
+        .select("*");
+
+      // Fetch platform credits
+      const { data: platformCredits } = await supabase
+        .from("platform_credits")
+        .select("user_id, balance, user_type");
+
+      // Fetch freelancer plans
+      const { data: freelancerPlans } = await supabase
+        .from("freelancer_plans")
+        .select("freelancer_user_id, plan_type, status, stripe_subscription_id, current_period_start, current_period_end");
+
+      // Fetch company plans
+      const { data: companyPlans } = await supabase
+        .from("company_plans")
+        .select("company_user_id, plan_type, status, stripe_subscription_id, current_period_start, current_period_end");
+
+      // Build enriched data
+      const enrichedData = (allProfiles || []).map((profile) => {
+        const freelancer = freelancerProfiles?.find(fp => fp.user_id === profile.user_id);
+        const company = companyProfiles?.find(cp => cp.user_id === profile.user_id);
+        const credits = platformCredits?.find(pc => pc.user_id === profile.user_id);
+        const fPlan = freelancerPlans?.find(fp => fp.freelancer_user_id === profile.user_id);
+        const cPlan = companyPlans?.find(cp => cp.company_user_id === profile.user_id);
+        const creditStats = profiles.find(p => p.user_id === profile.user_id);
+
+        return {
+          // Base profile
+          user_id: profile.user_id,
+          email: profile.email,
+          user_type: profile.user_type,
+          role: profile.role,
+          preferred_language: profile.preferred_language,
+          created_at: profile.created_at,
+          // Credits
+          current_balance: credits?.balance || 0,
+          total_credits_granted: creditStats?.total_credits_granted || 0,
+          total_paid_usd: creditStats?.total_paid_usd || 0,
+          last_purchase_at: creditStats?.last_purchase_at || "",
+          // Freelancer data
+          freelancer_full_name: freelancer?.full_name || "",
+          freelancer_title: freelancer?.title || "",
+          freelancer_bio: freelancer?.bio || "",
+          freelancer_skills: freelancer?.skills?.join("; ") || "",
+          freelancer_hourly_rate: freelancer?.hourly_rate || "",
+          freelancer_location: freelancer?.location || "",
+          freelancer_country: freelancer?.country || "",
+          freelancer_languages: freelancer?.languages?.join("; ") || "",
+          freelancer_verified: freelancer?.verified || false,
+          freelancer_tier: freelancer?.tier || "",
+          freelancer_total_revenue: freelancer?.total_revenue || 0,
+          // Company data
+          company_name: company?.company_name || "",
+          company_about: company?.about || "",
+          company_industry: company?.industry || "",
+          company_size: company?.company_size || "",
+          company_website: company?.website || "",
+          company_location: company?.location || "",
+          company_country: company?.country || "",
+          company_contact_name: company?.contact_name || "",
+          company_phone: company?.phone || "",
+          company_verified: company?.is_verified || false,
+          // Plans
+          freelancer_plan: fPlan?.plan_type || "",
+          freelancer_plan_status: fPlan?.status || "",
+          freelancer_plan_started: fPlan?.current_period_start || "",
+          freelancer_plan_expires: fPlan?.current_period_end || "",
+          company_plan: cPlan?.plan_type || "",
+          company_plan_status: cPlan?.status || "",
+          company_plan_started: cPlan?.current_period_start || "",
+          company_plan_expires: cPlan?.current_period_end || "",
+        };
+      });
+
+      // Generate CSV
+      const headers = Object.keys(enrichedData[0] || {});
+      const csvRows = [
+        headers.join(","),
+        ...enrichedData.map(row => 
+          headers.map(h => {
+            const val = row[h as keyof typeof row];
+            const str = String(val ?? "").replace(/"/g, '""');
+            return `"${str}"`;
+          }).join(",")
+        )
+      ];
+      
+      const csvContent = csvRows.join("\n");
+      const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `usuarios_completo_${format(new Date(), "yyyy-MM-dd")}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+      
+      toast.success(t("admin.exportSuccess") || "Exportação concluída!");
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error(t("admin.exportError") || "Erro ao exportar");
+    }
+  };
+
   return (
     <div className="space-y-4 md:space-y-6">
       <div>
@@ -167,14 +289,25 @@ export default function AdminUsers() {
         <CardHeader className="pb-3 md:pb-6">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <CardTitle className="text-lg md:text-xl">{t("admin.allUsers")}</CardTitle>
-            <div className="relative w-full md:w-64">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder={t("admin.searchUsers")}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-10"
-              />
+            <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={exportAllUsers}
+                className="gap-2"
+              >
+                <Download className="h-4 w-4" />
+                {t("admin.exportAll") || "Exportar Todos"}
+              </Button>
+              <div className="relative w-full md:w-64">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder={t("admin.searchUsers")}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
             </div>
           </div>
         </CardHeader>
