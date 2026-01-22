@@ -293,9 +293,10 @@ serve(async (req) => {
 
     const newStatus = mapMPStatus(mpStatus);
 
-    // Check idempotency
+    // ATOMIC IDEMPOTENCY CHECK: Use conditional update to prevent race conditions
+    // This ensures only ONE webhook request can transition status from pending to paid
     if (payment.status === 'paid' && newStatus === 'paid') {
-      logStep("Payment already processed", { paymentId: payment.id });
+      logStep("Payment already processed (pre-check)", { paymentId: payment.id });
       return new Response(JSON.stringify({ received: true, already_processed: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -314,7 +315,8 @@ serve(async (req) => {
       spread: fxResult.fx_spread_amount_usd_minor,
     });
 
-    // Update payment record with FX data
+    // ATOMIC STATUS TRANSITION: Only proceed if we successfully claim this payment
+    // Uses conditional update (WHERE status != 'paid') to prevent race conditions
     const updateData: Record<string, unknown> = {
       status: newStatus,
       provider_payment_id: mpPaymentId,
@@ -338,10 +340,29 @@ serve(async (req) => {
       updateData.paid_at = new Date().toISOString();
     }
 
-    await supabaseAdmin
+    // CRITICAL: Atomic update with condition - only update if NOT already paid
+    // This prevents race conditions where multiple webhooks try to process the same payment
+    const { data: updateResult, error: updateError } = await supabaseAdmin
       .from('unified_payments')
       .update(updateData)
-      .eq('id', payment.id);
+      .eq('id', payment.id)
+      .neq('status', 'paid') // Only update if not already paid
+      .select('id')
+      .maybeSingle();
+
+    // If no row was updated, it means another request already processed this payment
+    if (!updateResult && newStatus === 'paid') {
+      logStep("Payment already processed by another request (atomic check)", { paymentId: payment.id });
+      return new Response(JSON.stringify({ received: true, already_processed: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    if (updateError) {
+      logStep("Error updating payment status", { error: updateError });
+      throw new Error(`Failed to update payment status: ${updateError.message}`);
+    }
 
     logStep("Payment status updated with FX data", { paymentId: payment.id, newStatus });
 
