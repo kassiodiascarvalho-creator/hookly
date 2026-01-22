@@ -94,8 +94,7 @@ export default {
 				blue: 'hsl(var(--hookly-blue))',
 				'blue-hover': 'hsl(var(--hookly-blue-hover))',
 				'blue-light': 'hsl(var(--hookly-blue-light))',
-				purple: 'hsl(var(--hookly-purple))',
-				'purple-light': 'hsl(var(--hookly-purple-light))',
+				'blue-dark': 'hsl(var(--secondary))',
 				navy: 'hsl(var(--hookly-navy))',
 				'navy-light': 'hsl(var(--hookly-navy-light))',
 				'navy-dark': 'hsl(var(--hookly-navy-dark))'

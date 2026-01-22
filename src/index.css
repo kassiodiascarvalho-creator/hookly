@@ -18,8 +18,7 @@
     --hookly-blue: 199 89% 48%;
     --hookly-blue-hover: 199 89% 55%;
     --hookly-blue-light: 199 89% 90%;
-    --hookly-purple: 265 89% 66%;
-    --hookly-purple-light: 265 60% 75%;
+    --hookly-blue-dark: 199 70% 35%;
     --hookly-navy: 220 30% 8%;
     --hookly-navy-light: 220 30% 15%;
     --hookly-navy-dark: 220 30% 4%;
@@ -40,8 +39,8 @@
     --primary: 199 89% 48%;
     --primary-foreground: 220 30% 5%;
 
-    /* Secondary - Purple */
-    --secondary: 265 89% 66%;
+    /* Secondary - Blue (lighter variant) */
+    --secondary: 199 70% 35%;
     --secondary-foreground: 0 0% 100%;
 
     /* Muted */
@@ -83,11 +82,11 @@
 
     /* Gradients */
     --gradient-hero: linear-gradient(180deg, hsl(220 30% 5%) 0%, hsl(220 30% 8%) 50%, hsl(220 30% 6%) 100%);
-    --gradient-cta: linear-gradient(135deg, hsl(199 89% 48%) 0%, hsl(265 89% 66%) 100%);
+    --gradient-cta: linear-gradient(135deg, hsl(199 89% 48%) 0%, hsl(199 70% 35%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(220 30% 12%) 0%, hsl(220 30% 10%) 100%);
-    --gradient-text: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(199 89% 70%) 50%, hsl(265 89% 70%) 100%);
+    --gradient-text: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(199 89% 70%) 50%, hsl(199 70% 55%) 100%);
     --gradient-glow: radial-gradient(ellipse 80% 50% at 50% -20%, hsl(199 89% 48% / 0.15) 0%, transparent 70%);
-    --gradient-purple-glow: radial-gradient(ellipse 50% 80% at 80% 50%, hsl(265 89% 66% / 0.1) 0%, transparent 70%);
+    --gradient-blue-glow: radial-gradient(ellipse 50% 80% at 80% 50%, hsl(199 89% 48% / 0.1) 0%, transparent 70%);
 
     /* Shadows */
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
@@ -167,8 +166,8 @@
     background: var(--gradient-glow);
   }
 
-  .bg-purple-glow {
-    background: var(--gradient-purple-glow);
+  .bg-blue-glow {
+    background: var(--gradient-blue-glow);
   }
 
   /* Glass Effect */
@@ -200,7 +199,7 @@
   }
 
   .btn-gradient:hover {
-    background: linear-gradient(135deg, hsl(199 89% 55%) 0%, hsl(265 89% 72%) 100%);
+    background: linear-gradient(135deg, hsl(199 89% 55%) 0%, hsl(199 70% 42%) 100%);
   }
 
   /* Surface cards */
