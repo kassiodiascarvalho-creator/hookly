@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +14,8 @@ import { ArrowLeft, ArrowRight, Loader2, Check, X, Plus } from "lucide-react";
 import { z } from "zod";
 import { CurrencySelect } from "@/components/CurrencySelect";
 import { getCurrencySymbol } from "@/lib/formatMoney";
+import { useProfileGate } from "@/hooks/useProfileGate";
+import { ProfileGateAlert } from "@/components/profile/ProfileGateAlert";
 
 // Schema defined but validation done manually with i18n messages below
 
@@ -44,6 +46,16 @@ export default function ProjectNew() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Profile gate for companies
+  const { allowed: profileAllowed, completionPercent, loading: gateLoading, checkMonthlyCredits } = useProfileGate('company');
+  
+  // Check monthly credits on mount
+  useEffect(() => {
+    if (user) {
+      checkMonthlyCredits();
+    }
+  }, [user, checkMonthlyCredits]);
   
   const [formData, setFormData] = useState({
     title: "",
@@ -124,6 +136,12 @@ export default function ProjectNew() {
       return;
     }
 
+    // Block publishing if profile is incomplete (drafts are allowed)
+    if (!asDraft && !profileAllowed) {
+      toast.error(t("profileGate.companyAlertTitle"));
+      return;
+    }
+
     setLoading(true);
     
     const projectData = {
@@ -160,6 +178,11 @@ export default function ProjectNew() {
         <ArrowLeft className="h-4 w-4" />
         {t("common.back")}
       </Button>
+
+      {/* Profile Gate Alert */}
+      {!profileAllowed && !gateLoading && (
+        <ProfileGateAlert completionPercent={completionPercent} userType="company" />
+      )}
 
       {/* Progress Steps */}
       <div className="flex items-center justify-center gap-4">

@@ -1102,7 +1102,20 @@
     "goBack": "Voltar",
     "signOut": "Sair",
     "comingSoon": "Em breve",
-    "days": "dias"
+    "days": "dias",
+    "later": "Depois"
+  },
+  "profileGate": {
+    "title": "Complete seu Perfil",
+    "freelancerDescription": "Complete 100% do seu perfil para enviar propostas e liberar seus créditos bônus.",
+    "companyDescription": "Complete 100% do perfil da empresa para publicar projetos e liberar seus créditos bônus.",
+    "profileProgress": "Progresso do perfil",
+    "bonusHint": "Complete seu perfil e ganhe 10 créditos bônus!",
+    "missingItems": "O que falta:",
+    "moreItems": "itens a mais",
+    "completeNow": "Completar Perfil",
+    "freelancerAlertTitle": "Complete seu perfil para enviar propostas",
+    "companyAlertTitle": "Complete o perfil da empresa para publicar projetos"
   },
   "credits": "créditos",
   "admin": {

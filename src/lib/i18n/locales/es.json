@@ -478,7 +478,20 @@
     "next": "Siguiente",
     "submit": "Enviar",
     "logout": "Cerrar sesión",
-    "days": "días"
+    "days": "días",
+    "later": "Después"
+  },
+  "profileGate": {
+    "title": "Completa tu Perfil",
+    "freelancerDescription": "Completa el 100% de tu perfil para enviar propuestas y desbloquear tus créditos de bonificación.",
+    "companyDescription": "Completa el 100% del perfil de tu empresa para publicar proyectos y desbloquear tus créditos de bonificación.",
+    "profileProgress": "Progreso del perfil",
+    "bonusHint": "¡Completa tu perfil y gana 10 créditos de bonificación!",
+    "missingItems": "Lo que falta:",
+    "moreItems": "elementos más",
+    "completeNow": "Completar Perfil",
+    "freelancerAlertTitle": "Completa tu perfil para enviar propuestas",
+    "companyAlertTitle": "Completa el perfil de la empresa para publicar proyectos"
   },
   "credits": "créditos",
   "earnings": {

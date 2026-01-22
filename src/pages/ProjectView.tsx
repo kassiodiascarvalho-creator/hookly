@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from "sonner";
 import { 
   ArrowLeft, DollarSign, Calendar, Loader2, 
-  Check, Plus, X, Send, Building2, Coins, AlertTriangle, Star, HelpCircle
+  Check, Plus, X, Send, Building2, Coins, AlertTriangle, Star, HelpCircle, Lock
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -22,6 +22,9 @@ import { usePlatformCredits, PLATFORM_ACTIONS } from "@/hooks/usePlatformCredits
 import { CreditCheckModal } from "@/components/credits/CreditCheckModal";
 import { ViewCompanyDataButton } from "@/components/company/ViewCompanyDataButton";
 import { GeniusProposalButton } from "@/components/genius";
+import { useProfileGate } from "@/hooks/useProfileGate";
+import { ProfileGateModal } from "@/components/profile/ProfileGateModal";
+import { ProfileGateAlert } from "@/components/profile/ProfileGateAlert";
 
 interface Project {
   id: string;
@@ -78,6 +81,17 @@ export default function ProjectView() {
   const { balance: creditBalance, loading: creditsLoading, spendCredits, getActionCost, checkCredits } = usePlatformCredits();
   const proposalCost = getActionCost(PLATFORM_ACTIONS.SEND_PROPOSAL);
   const highlightCost = getActionCost(PLATFORM_ACTIONS.HIGHLIGHT_PROPOSAL);
+
+  // Profile gate for freelancers
+  const { allowed: profileAllowed, completionPercent, loading: gateLoading, checkMonthlyCredits } = useProfileGate('freelancer');
+  const [gateModalOpen, setGateModalOpen] = useState(false);
+
+  // Check monthly credits on mount
+  useEffect(() => {
+    if (user) {
+      checkMonthlyCredits();
+    }
+  }, [user, checkMonthlyCredits]);
 
   useEffect(() => {
     if (id) {
@@ -426,10 +440,25 @@ export default function ProjectView() {
                     </Dialog>
                   )}
                 </div>
+              ) : !profileAllowed ? (
+                <div className="space-y-3">
+                  <Button 
+                    className="w-full gap-2" 
+                    variant="outline"
+                    onClick={() => setGateModalOpen(true)}
+                  >
+                    <Lock className="h-4 w-4" />
+                    {t("proposals.submitProposal")}
+                  </Button>
+                  <ProfileGateAlert 
+                    completionPercent={completionPercent} 
+                    userType="freelancer" 
+                  />
+                </div>
               ) : (
                 <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button className="w-full gap-2" disabled={creditsLoading}>
+                    <Button className="w-full gap-2" disabled={creditsLoading || gateLoading}>
                       <Send className="h-4 w-4" />
                       {t("proposals.submitProposal")}
                       {proposalCost > 0 && (
@@ -472,6 +501,14 @@ export default function ProjectView() {
         actionName="Enviar Proposta"
         requiredCredits={proposalCost}
         currentBalance={creditBalance}
+      />
+
+      {/* Profile Gate Modal */}
+      <ProfileGateModal
+        open={gateModalOpen}
+        onOpenChange={setGateModalOpen}
+        completionPercent={completionPercent}
+        userType="freelancer"
       />
     </div>
   );
