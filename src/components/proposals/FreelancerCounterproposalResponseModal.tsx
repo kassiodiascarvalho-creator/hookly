@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Dialog,
@@ -10,17 +10,19 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, CheckCircle, MessageCircle, DollarSign } from "lucide-react";
+import { Loader2, CheckCircle, MessageCircle, DollarSign, ArrowRight } from "lucide-react";
 import { formatMoney } from "@/lib/formatMoney";
 
 interface Milestone {
   title: string;
   amount: number;
+  description?: string;
 }
 
 interface Proposal {
@@ -59,6 +61,7 @@ export function FreelancerCounterproposalResponseModal({
   const { t } = useTranslation();
   const [response, setResponse] = useState<ResponseType | null>(null);
   const [newJustification, setNewJustification] = useState("");
+  const [newProposedAmount, setNewProposedAmount] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
 
   // Calculate current proposed amount
@@ -67,15 +70,30 @@ export function FreelancerCounterproposalResponseModal({
     : [];
   const totalProposed = milestones.reduce((sum, m) => sum + (m.amount || 0), 0);
 
+  // Initialize new proposed amount when modal opens
+  useEffect(() => {
+    if (open) {
+      setNewProposedAmount(totalProposed.toString());
+    }
+  }, [open, totalProposed]);
+
   const handleSubmit = async () => {
     if (!response) {
       toast.error(t("counterproposal.selectResponse", "Please select a response"));
       return;
     }
 
-    if (response === "counter" && newJustification.trim().length < 50) {
-      toast.error(t("counterproposal.justificationRequired", "Please provide a detailed justification (at least 50 characters)"));
-      return;
+    if (response === "counter") {
+      if (newJustification.trim().length < 50) {
+        toast.error(t("counterproposal.justificationRequired", "Please provide a detailed justification (at least 50 characters)"));
+        return;
+      }
+      
+      const proposedValue = parseFloat(newProposedAmount);
+      if (isNaN(proposedValue) || proposedValue <= 0) {
+        toast.error(t("counterproposal.invalidAmount", "Please enter a valid amount"));
+        return;
+      }
     }
 
     setSubmitting(true);
@@ -105,24 +123,47 @@ export function FreelancerCounterproposalResponseModal({
 
         toast.success(t("counterproposal.acceptedSuccess", "You have accepted the company's terms"));
       } else {
-        // Freelancer sends a new counter-argument
+        // Freelancer sends a new counter-argument with new proposed amount
+        const proposedValue = parseFloat(newProposedAmount);
+        
+        // Update milestones with the new proposed amount
+        // Keep the same milestone structure but update the amount proportionally
+        const updatedMilestones = milestones.length > 0
+          ? milestones.map((m, index) => {
+              if (milestones.length === 1) {
+                return { ...m, amount: proposedValue };
+              }
+              // Distribute proportionally for multiple milestones
+              const proportion = m.amount / totalProposed;
+              return { ...m, amount: Math.round(proposedValue * proportion) };
+            })
+          : [{ title: "Milestone 1", amount: proposedValue }];
+
         const { error } = await supabase
           .from("proposals")
           .update({
             company_response: null, // Reset to allow company to respond again
             counterproposal_justification: newJustification,
+            milestones: updatedMilestones,
           })
           .eq("id", proposal.id);
 
         if (error) throw error;
 
-        // Send notification to company
+        // Send notification to company with the new proposed value
         await supabase.from("notifications").insert({
           user_id: project.company_user_id,
           type: "counterproposal_response",
           title: t("notifications.newCounterArgument", "New counter-argument received"),
-          message: t("notifications.newCounterArgumentMessage", "The freelancer has sent a new argument for project: {{project}}", { project: project.title }),
-          metadata: { proposal_id: proposal.id, project_id: proposal.project_id },
+          message: t("notifications.newCounterArgumentMessage", "The freelancer has proposed {{amount}} for project: {{project}}", { 
+            amount: formatMoney(proposedValue, project.currency),
+            project: project.title 
+          }),
+          metadata: { 
+            proposal_id: proposal.id, 
+            project_id: proposal.project_id,
+            proposed_amount: proposedValue,
+          },
         });
 
         toast.success(t("counterproposal.counterSent", "Your response has been sent to the company"));
@@ -141,7 +182,11 @@ export function FreelancerCounterproposalResponseModal({
   const resetState = () => {
     setResponse(null);
     setNewJustification("");
+    setNewProposedAmount(totalProposed.toString());
   };
+
+  const parsedNewAmount = parseFloat(newProposedAmount) || 0;
+  const amountDifference = parsedNewAmount - totalProposed;
 
   return (
     <Dialog 
@@ -213,36 +258,79 @@ export function FreelancerCounterproposalResponseModal({
                     {t("counterproposal.sendNewArgument", "Send new argument")}
                   </Label>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {t("counterproposal.sendNewArgumentDesc", "Provide additional justification for your proposed amount")}
+                    {t("counterproposal.sendNewArgumentDesc", "Propose a new amount with justification")}
                   </p>
                 </div>
               </div>
             </RadioGroup>
           </div>
 
-          {/* New justification textarea */}
+          {/* New proposed amount and justification */}
           {response === "counter" && (
-            <div className="space-y-2">
-              <Label htmlFor="newJustification">
-                {t("counterproposal.newJustification", "Your argument")} *
-              </Label>
-              <Textarea
-                id="newJustification"
-                value={newJustification}
-                onChange={(e) => setNewJustification(e.target.value)}
-                placeholder={t("counterproposal.justificationPlaceholder", "Explain why your proposed amount is justified...")}
-                rows={4}
-                maxLength={500}
-              />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>
-                  {newJustification.length < 50 && (
-                    <span className="text-destructive">
-                      {t("counterproposal.minChars", "Minimum 50 characters")}
-                    </span>
-                  )}
-                </span>
-                <span>{newJustification.length}/500</span>
+            <div className="space-y-4">
+              {/* New proposed amount */}
+              <div className="space-y-2">
+                <Label htmlFor="newAmount">
+                  {t("counterproposal.newProposedAmount", "New proposed amount")} *
+                </Label>
+                <div className="flex items-center gap-3">
+                  <div className="relative flex-1">
+                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="newAmount"
+                      type="number"
+                      value={newProposedAmount}
+                      onChange={(e) => setNewProposedAmount(e.target.value)}
+                      className="pl-9"
+                      min="0"
+                      step="0.01"
+                    />
+                  </div>
+                  <span className="text-sm text-muted-foreground">{project.currency}</span>
+                </div>
+                
+                {/* Show difference from original */}
+                {amountDifference !== 0 && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-muted-foreground">{formatMoney(totalProposed, project.currency)}</span>
+                    <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                    <span className="font-medium">{formatMoney(parsedNewAmount, project.currency)}</span>
+                    <Badge 
+                      variant="outline" 
+                      className={amountDifference > 0 
+                        ? "text-amber-600 border-amber-500" 
+                        : "text-green-600 border-green-500"
+                      }
+                    >
+                      {amountDifference > 0 ? "+" : ""}{formatMoney(amountDifference, project.currency)}
+                    </Badge>
+                  </div>
+                )}
+              </div>
+
+              {/* Justification */}
+              <div className="space-y-2">
+                <Label htmlFor="newJustification">
+                  {t("counterproposal.newJustification", "Your argument")} *
+                </Label>
+                <Textarea
+                  id="newJustification"
+                  value={newJustification}
+                  onChange={(e) => setNewJustification(e.target.value)}
+                  placeholder={t("counterproposal.justificationPlaceholder", "Explain why your proposed amount is justified...")}
+                  rows={4}
+                  maxLength={500}
+                />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>
+                    {newJustification.length < 50 && (
+                      <span className="text-destructive">
+                        {t("counterproposal.minChars", "Minimum 50 characters")}
+                      </span>
+                    )}
+                  </span>
+                  <span>{newJustification.length}/500</span>
+                </div>
               </div>
             </div>
           )}
