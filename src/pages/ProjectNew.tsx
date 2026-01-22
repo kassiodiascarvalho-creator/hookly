@@ -18,8 +18,8 @@ import { useProfileGate } from "@/hooks/useProfileGate";
 import { ProfileGateAlert } from "@/components/profile/ProfileGateAlert";
 import { ProfileGateModal } from "@/components/profile/ProfileGateModal";
 import { usePublishProject } from "@/hooks/usePublishProject";
-
-// Schema defined but validation done manually with i18n messages below
+import { BudgetSuggestion } from "@/components/projects/BudgetSuggestion";
+import { KpiSuggestion } from "@/components/projects/KpiSuggestion";
 
 const categoryKeys = [
   "development",
@@ -299,6 +299,20 @@ export default function ProjectNew() {
             <CardDescription>{t("projects.budgetKpisDesc")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* AI Budget Suggestion */}
+            <BudgetSuggestion
+              title={formData.title}
+              description={formData.description}
+              category={formData.category}
+              currency={formData.currency}
+              currentMin={formData.budget_min}
+              currentMax={formData.budget_max}
+              onApplySuggestion={(min, max) => {
+                handleChange("budget_min", min.toString());
+                handleChange("budget_max", max.toString());
+              }}
+            />
+            
             <div className="space-y-2">
               <Label>{t("projects.currency")} *</Label>
               <CurrencySelect
@@ -347,6 +361,17 @@ export default function ProjectNew() {
             <div className="space-y-4">
               <Label>{t("projects.kpis")}</Label>
               <p className="text-sm text-muted-foreground">{t("projects.kpisDesc")}</p>
+              
+              {/* AI KPI Suggestion */}
+              <KpiSuggestion
+                title={formData.title}
+                description={formData.description}
+                category={formData.category}
+                existingKpis={kpis}
+                onAddKpi={(name, target) => {
+                  setKpis(prev => [...prev, { id: crypto.randomUUID(), name, target }]);
+                }}
+              />
               
               {kpis.length > 0 && (
                 <div className="space-y-2">

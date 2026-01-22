@@ -92,3 +92,6 @@ verify_jwt = false
 
 [functions.genius-purchase-access]
 verify_jwt = false
+
+[functions.suggest-project-ai]
+verify_jwt = false
