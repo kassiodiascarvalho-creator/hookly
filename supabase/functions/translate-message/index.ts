@@ -250,21 +250,11 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 7) Translate using Lovable AI Gateway
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      console.error("LOVABLE_API_KEY is not configured");
-      return new Response(
-        JSON.stringify({ error: "Translation service not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    // 7) Translate using Lovable AI (Gemini)
+    const aiResponse = await fetch("https://api.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
       },
       body: JSON.stringify({
         model: "google/gemini-2.5-flash-lite",
@@ -287,21 +277,7 @@ Do not add any explanations, notes, or formatting.`
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error("AI translation error:", aiResponse.status, errorText);
-      
-      if (aiResponse.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Translation rate limit exceeded. Please try again later.", code: "RATE_LIMITED" }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (aiResponse.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "Translation credits exhausted. Please contact support.", code: "CREDITS_EXHAUSTED" }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      
+      console.error("AI translation error:", errorText);
       return new Response(
         JSON.stringify({ error: "Translation service unavailable" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

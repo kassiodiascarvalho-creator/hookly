@@ -33,9 +33,6 @@ interface Contract {
   project_id: string;
   company_user_id: string;
   freelancer_user_id: string;
-  was_counterproposal?: boolean;
-  agreed_amount_cents?: number | null;
-  original_proposal_amount_cents?: number | null;
   company_name?: string;
   freelancer_name?: string;
 }
@@ -178,7 +175,7 @@ export default function Contracts() {
           <TabsTrigger value="pending" className="gap-1">
             Pendentes
             {contracts.filter(c => needsAction(c)).length > 0 && (
-              <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 text-xs flex items-center justify-center rounded-full">
+              <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 text-xs">
                 {contracts.filter(c => needsAction(c)).length}
               </Badge>
             )}
@@ -270,12 +267,6 @@ export default function Contracts() {
                           <Badge variant="outline" className="text-xs">
                             {contract.currency}
                           </Badge>
-                          {contract.was_counterproposal && (
-                            <Badge variant="outline" className="text-xs gap-1 text-amber-600 border-amber-500">
-                              <AlertTriangle className="h-3 w-3" />
-                              Negociado
-                            </Badge>
-                          )}
                         </div>
                         
                         <div className="flex items-center gap-2 text-sm">

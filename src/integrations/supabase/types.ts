@@ -2021,7 +2021,6 @@ export type Database = {
       }
       proposals: {
         Row: {
-          company_feedback: string | null
           company_response: string | null
           company_response_at: string | null
           counterproposal_justification: string | null
@@ -2039,7 +2038,6 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          company_feedback?: string | null
           company_response?: string | null
           company_response_at?: string | null
           counterproposal_justification?: string | null
@@ -2057,7 +2055,6 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          company_feedback?: string | null
           company_response?: string | null
           company_response_at?: string | null
           counterproposal_justification?: string | null

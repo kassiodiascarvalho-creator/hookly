@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { FileText, DollarSign, Loader2, CheckCircle, XCircle, Clock, ChevronRight, Star, AlertTriangle } from "lucide-react";
+import { FileText, DollarSign, Loader2, CheckCircle, XCircle, Clock, ChevronRight, Star } from "lucide-react";
 import { format } from "date-fns";
 import { GeniusRankingButton } from "@/components/genius";
 
@@ -26,7 +26,6 @@ interface ProposalGroup {
     freelancer_user_id: string;
     is_highlighted?: boolean;
     highlighted_at?: string | null;
-    is_counterproposal?: boolean;
     freelancer?: {
       full_name: string | null;
       avatar_url: string | null;
@@ -196,12 +195,12 @@ export default function CompanyProposals() {
                         </div>
                         
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <div className="flex items-center gap-2 mb-1">
                             <p className="font-medium truncate">
                               {proposal.freelancer?.full_name || "Freelancer"}
                             </p>
                             {proposal.is_highlighted && (
-                              <Badge variant="outline" className="border-amber-500 text-amber-500 gap-1">
+                              <Badge variant="outline" className="border-amber-500 text-amber-600 gap-1">
                                 <Star className="h-3 w-3 fill-current" />
                                 Destacado
                               </Badge>
@@ -210,12 +209,6 @@ export default function CompanyProposals() {
                               <StatusIcon className="h-3 w-3 mr-1" />
                               {config.label}
                             </Badge>
-                            {proposal.status === "accepted" && proposal.is_counterproposal && (
-                              <Badge variant="outline" className="gap-1 text-amber-500 border-amber-500">
-                                <AlertTriangle className="h-3 w-3" />
-                                Negociado
-                              </Badge>
-                            )}
                           </div>
                           <p className="text-sm text-muted-foreground truncate">
                             {proposal.freelancer?.title || proposal.cover_letter?.slice(0, 50)}

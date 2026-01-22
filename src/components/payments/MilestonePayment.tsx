@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { DollarSign, Loader2, CheckCircle, Clock, CreditCard, AlertTriangle } from "lucide-react";
-import { formatMoney, formatMoneyFromCents } from "@/lib/formatMoney";
+import { DollarSign, Loader2, CheckCircle, Clock, CreditCard } from "lucide-react";
+import { formatMoney } from "@/lib/formatMoney";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,12 +31,6 @@ interface Payment {
   amount: number;
   status: "pending" | "paid" | "released" | "failed";
   stripe_payment_intent_id: string | null;
-}
-
-interface ContractInfo {
-  was_counterproposal: boolean;
-  agreed_amount_cents: number | null;
-  original_proposal_amount_cents: number | null;
 }
 
 interface MilestonePaymentProps {
@@ -71,27 +65,21 @@ export default function MilestonePayment({
   const [selectedMilestone, setSelectedMilestone] = useState<{ index: number; milestone: Milestone } | null>(null);
   const [contractId, setContractId] = useState<string | null>(null);
   const [companyCountry, setCompanyCountry] = useState<string | null>(null);
-  const [contractInfo, setContractInfo] = useState<ContractInfo | null>(null);
 
-  // Fetch contract ID, company country, and contract info
+  // Fetch contract ID and company country
   useEffect(() => {
     const fetchContractAndCountry = async () => {
       if (!user || !projectId) return;
 
-      // Get contract for this project with counterproposal info
+      // Get contract for this project
       const { data: contract } = await supabase
         .from("contracts")
-        .select("id, was_counterproposal, agreed_amount_cents, original_proposal_amount_cents")
+        .select("id")
         .eq("project_id", projectId)
         .maybeSingle();
 
       if (contract) {
         setContractId(contract.id);
-        setContractInfo({
-          was_counterproposal: contract.was_counterproposal || false,
-          agreed_amount_cents: contract.agreed_amount_cents,
-          original_proposal_amount_cents: contract.original_proposal_amount_cents,
-        });
       }
 
       // Get company country for payment routing
@@ -182,21 +170,7 @@ export default function MilestonePayment({
     }
   };
 
-  // Use agreed_amount_cents from contract if available, otherwise sum milestones
-  const originalMilestoneTotal = milestones.reduce((sum, m) => sum + m.amount, 0);
-  const totalAmount = contractInfo?.agreed_amount_cents 
-    ? contractInfo.agreed_amount_cents / 100 
-    : originalMilestoneTotal;
-  
-  // Redistribute milestone amounts proportionally when counterproposal was accepted
-  const adjustedMilestones = milestones.map((milestone) => {
-    if (contractInfo?.agreed_amount_cents && originalMilestoneTotal > 0) {
-      const proportion = milestone.amount / originalMilestoneTotal;
-      return { ...milestone, amount: Math.round(totalAmount * proportion * 100) / 100 };
-    }
-    return milestone;
-  });
-
+  const totalAmount = milestones.reduce((sum, m) => sum + m.amount, 0);
   const fundedAmount = payments.filter(p => p.status === "paid" || p.status === "released")
     .reduce((sum, p) => sum + Number(p.amount), 0);
   const releasedAmount = payments.filter(p => p.status === "released")
@@ -206,18 +180,10 @@ export default function MilestonePayment({
     <>
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <CreditCard className="h-5 w-5" />
-              {t("payments.milestones")}
-            </CardTitle>
-            {contractInfo?.was_counterproposal && (
-              <Badge variant="outline" className="gap-1 text-amber-600 border-amber-500">
-                <AlertTriangle className="h-3 w-3" />
-                Contra-proposta Aceita
-              </Badge>
-            )}
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            <CreditCard className="h-5 w-5" />
+            {t("payments.milestones")}
+          </CardTitle>
           <CardDescription>
             {isCompany 
               ? t("payments.milestonesDescCompany")
@@ -226,25 +192,6 @@ export default function MilestonePayment({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Counterproposal Info */}
-          {contractInfo?.was_counterproposal && contractInfo.original_proposal_amount_cents && (
-            <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
-              <div className="flex items-start gap-2">
-                <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5" />
-                <div className="text-sm">
-                  <p className="font-medium text-amber-600 dark:text-amber-400">
-                    Valor negociado via contra-proposta
-                  </p>
-                  <p className="text-muted-foreground mt-1">
-                    Orçamento original: <span className="line-through text-muted-foreground">{formatMoneyFromCents(contractInfo.original_proposal_amount_cents, currency)}</span>
-                    {" → "}
-                    Valor acordado: <span className="font-semibold text-green-500">{formatMoney(totalAmount, currency)}</span>
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Summary */}
           <div className="grid grid-cols-3 gap-4 p-4 bg-muted rounded-lg">
             <div className="text-center">
@@ -253,17 +200,17 @@ export default function MilestonePayment({
             </div>
             <div className="text-center">
               <p className="text-sm text-muted-foreground">{t("payments.inEscrow")}</p>
-              <p className="text-lg font-bold text-amber-600">{formatMoney(fundedAmount - releasedAmount, currency)}</p>
+              <p className="text-lg font-bold text-yellow-600">{formatMoney(fundedAmount - releasedAmount, currency)}</p>
             </div>
             <div className="text-center">
               <p className="text-sm text-muted-foreground">{t("payments.released")}</p>
-              <p className="text-lg font-bold text-emerald-600">{formatMoney(releasedAmount, currency)}</p>
+              <p className="text-lg font-bold text-green-600">{formatMoney(releasedAmount, currency)}</p>
             </div>
           </div>
 
           {/* Milestones List */}
           <div className="space-y-3">
-            {adjustedMilestones.map((milestone, idx) => {
+            {milestones.map((milestone, idx) => {
               const payment = getPaymentForMilestone(idx);
               const isPaid = payment?.status === "paid";
               const isReleased = payment?.status === "released";
