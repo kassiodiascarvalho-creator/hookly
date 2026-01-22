@@ -108,11 +108,12 @@ export default function ProjectView() {
   }, [id, user]);
 
   const fetchProject = async () => {
+    // Fetch project with open OR in_progress status (for accepted freelancers)
     const { data, error } = await supabase
       .from("projects")
       .select("*")
       .eq("id", id)
-      .eq("status", "open")
+      .in("status", ["open", "in_progress"])
       .maybeSingle();
 
     if (error) {
