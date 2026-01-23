@@ -178,21 +178,34 @@ export function FreelancerCounterproposalResponseModal({
 
         if (error) throw error;
 
-        // Send notification to company with the new proposed value
-        await supabase.from("notifications").insert({
-          user_id: project.company_user_id,
-          type: "counterproposal_response",
-          title: t("notifications.newCounterArgument", "New counter-argument received"),
-          message: t("notifications.newCounterArgumentMessage", "The freelancer has proposed {{amount}} for project: {{project}}", { 
-            amount: formatMoney(proposedValue, project.currency),
-            project: project.title 
-          }),
-          metadata: { 
-            proposal_id: proposal.id, 
-            project_id: proposal.project_id,
-            proposed_amount: proposedValue,
-          },
-        });
+        // Send notification to company with idempotency check
+        // Check if a similar notification was sent in the last 60 seconds
+        const { data: existingNotification } = await supabase
+          .from("notifications")
+          .select("id")
+          .eq("user_id", project.company_user_id)
+          .eq("type", "counterproposal_received")
+          .gte("created_at", new Date(Date.now() - 60000).toISOString())
+          .contains("metadata", { proposal_id: proposal.id })
+          .maybeSingle();
+
+        if (!existingNotification) {
+          await supabase.from("notifications").insert({
+            user_id: project.company_user_id,
+            type: "counterproposal_received",
+            title: t("notifications.counterproposalReceived", "New counterproposal received"),
+            message: t("notifications.counterproposalReceivedMessage", "The freelancer has proposed {{amount}} for project: {{project}}", { 
+              amount: formatMoney(proposedValue, project.currency),
+              project: project.title 
+            }),
+            link: `/projects/${proposal.project_id}?tab=proposals`,
+            metadata: { 
+              proposal_id: proposal.id, 
+              project_id: proposal.project_id,
+              proposed_amount: proposedValue,
+            },
+          });
+        }
 
         toast.success(t("counterproposal.counterSent", "Your response has been sent to the company"));
       }
