@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, CheckCircle, MessageCircle, DollarSign, ArrowRight } from "lucide-react";
-import { formatMoney } from "@/lib/formatMoney";
+import { formatMoney, formatMoneyFromCents, majorToMinor } from "@/lib/formatMoney";
 
 interface Milestone {
   title: string;
@@ -31,6 +31,8 @@ interface Proposal {
   company_response?: string | null;
   company_feedback?: string | null;
   project_id: string;
+  current_offer_cents?: number | null;
+  current_offer_by?: string | null;
 }
 
 interface Project {
@@ -141,6 +143,8 @@ export function FreelancerCounterproposalResponseModal({
             company_response: null, // Reset to allow company to respond again
             counterproposal_justification: newJustification,
             milestones: updatedMilestones,
+            current_offer_cents: majorToMinor(proposedValue, project.currency),
+            current_offer_by: "freelancer",
           })
           .eq("id", proposal.id);
 
@@ -184,6 +188,10 @@ export function FreelancerCounterproposalResponseModal({
   const parsedNewAmount = parseFloat(newProposedAmount) || 0;
   const amountDifference = parsedNewAmount - totalProposed;
 
+  // Check if company has made a structured offer
+  const companyOfferCents = proposal.current_offer_cents;
+  const isCompanyOffer = proposal.current_offer_by === "company" && companyOfferCents;
+
   return (
     <Dialog 
       open={open} 
@@ -201,19 +209,33 @@ export function FreelancerCounterproposalResponseModal({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {/* Current proposal amount */}
-          <div className="p-3 rounded-lg bg-muted/50 border">
-            <p className="text-sm font-medium mb-1">{t("counterproposal.yourProposal", "Your proposal")}</p>
-            <div className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-primary" />
-              <span className="font-semibold">{formatMoney(totalProposed, project.currency)}</span>
-              {project.budget_max && totalProposed > project.budget_max && (
-                <Badge variant="outline" className="text-amber-600 border-amber-500">
-                  +{formatMoney(totalProposed - project.budget_max, project.currency)} {t("counterproposal.aboveBudget", "above budget")}
-                </Badge>
-              )}
+          {/* Company's structured offer - prominent display */}
+          {isCompanyOffer && (
+            <div className="p-4 rounded-lg bg-success/10 border-2 border-success">
+              <p className="text-sm font-medium text-success mb-1">
+                {t("counterproposal.companyOffer", "Company's Offer")}
+              </p>
+              <p className="text-2xl font-bold text-success">
+                {formatMoneyFromCents(companyOfferCents, project.currency)}
+              </p>
             </div>
-          </div>
+          )}
+
+          {/* Current proposal amount - only show if different from company offer */}
+          {!isCompanyOffer && (
+            <div className="p-3 rounded-lg bg-muted/50 border">
+              <p className="text-sm font-medium mb-1">{t("counterproposal.yourProposal", "Your proposal")}</p>
+              <div className="flex items-center gap-2">
+                <DollarSign className="h-4 w-4 text-primary" />
+                <span className="font-semibold">{formatMoney(totalProposed, project.currency)}</span>
+                {project.budget_max && totalProposed > project.budget_max && (
+                  <Badge variant="outline" className="text-amber-600 border-amber-500">
+                    +{formatMoney(totalProposed - project.budget_max, project.currency)} {t("counterproposal.aboveBudget", "above budget")}
+                  </Badge>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Company feedback */}
           {proposal.company_feedback && (
@@ -237,11 +259,17 @@ export function FreelancerCounterproposalResponseModal({
                 <RadioGroupItem value="accept" id="accept" className="mt-0.5" />
                 <div className="flex-1">
                   <Label htmlFor="accept" className="font-medium cursor-pointer flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    {t("counterproposal.acceptTerms", "Accept company's terms")}
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    {isCompanyOffer 
+                      ? t("counterproposal.acceptOfferAmount", "Accept {{amount}}", { amount: formatMoneyFromCents(companyOfferCents, project.currency) })
+                      : t("counterproposal.acceptTerms", "Accept company's terms")
+                    }
                   </Label>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {t("counterproposal.acceptTermsDesc", "Agree to the company's feedback and proceed with the negotiation")}
+                    {isCompanyOffer
+                      ? t("counterproposal.acceptOfferDesc", "Accept the company's proposed amount and proceed to contract")
+                      : t("counterproposal.acceptTermsDesc", "Agree to the company's feedback and proceed with the negotiation")
+                    }
                   </p>
                 </div>
               </div>

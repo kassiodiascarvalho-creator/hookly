@@ -67,7 +67,7 @@ export default function MyProposals() {
     
     const { data, error } = await supabase
       .from("proposals")
-      .select("id, cover_letter, milestones, status, created_at, project_id, is_counterproposal, counterproposal_justification, company_response, company_feedback")
+      .select("id, cover_letter, milestones, status, created_at, project_id, is_counterproposal, counterproposal_justification, company_response, company_feedback, current_offer_cents, current_offer_by")
       .eq("freelancer_user_id", user.id)
       .order("created_at", { ascending: false });
 
@@ -280,6 +280,8 @@ export default function MyProposals() {
             company_response: selectedProposal.company_response,
             company_feedback: selectedProposal.company_feedback,
             project_id: selectedProposal.project_id,
+            current_offer_cents: (selectedProposal as any).current_offer_cents,
+            current_offer_by: (selectedProposal as any).current_offer_by,
           }}
           project={{
             title: selectedProposal.project.title,
