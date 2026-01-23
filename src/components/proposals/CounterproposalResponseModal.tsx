@@ -108,45 +108,13 @@ export function CounterproposalResponseModal({
     setLoading(true);
 
     try {
-      const updateData: Record<string, unknown> = {
-        company_response: responseType,
-        company_response_at: new Date().toISOString(),
-        company_feedback: feedback.trim() || null,
-      };
-
-      // If accepted, update the proposal status
+      // If accepted, use centralized RPC to finalize
       if (responseType === "accepted") {
-        updateData.status = "accepted";
-      }
+        const { error: rpcError } = await supabase.rpc("finalize_proposal_acceptance", {
+          p_proposal_id: proposal.id,
+        });
 
-      const { error } = await supabase
-        .from("proposals")
-        .update(updateData)
-        .eq("id", proposal.id);
-
-      if (error) throw error;
-
-      // If accepted, also update project status and create contract
-      if (responseType === "accepted") {
-        // Update project to in_progress
-        await supabase
-          .from("projects")
-          .update({ status: "in_progress" })
-          .eq("id", project.id);
-
-        // Call RPC to create contract from proposal
-        const { data: contractResult, error: contractError } = await supabase
-          .rpc("create_contract_from_proposal", {
-            p_proposal_id: proposal.id,
-            p_company_user_id: companyUserId,
-          });
-
-        if (contractError) {
-          console.error("Error creating contract:", contractError);
-          // Don't fail the whole operation, just log it
-        } else {
-          console.log("Contract created:", contractResult);
-        }
+        if (rpcError) throw rpcError;
 
         // Create or get conversation
         const { data: existingConv } = await supabase
@@ -162,6 +130,20 @@ export function CounterproposalResponseModal({
             freelancer_user_id: proposal.freelancer_user_id,
           });
         }
+      } else {
+        // For negotiating or rejected, just update proposal fields
+        const updateData: Record<string, unknown> = {
+          company_response: responseType,
+          company_response_at: new Date().toISOString(),
+          company_feedback: feedback.trim() || null,
+        };
+
+        const { error } = await supabase
+          .from("proposals")
+          .update(updateData)
+          .eq("id", proposal.id);
+
+        if (error) throw error;
       }
 
       // Create notification for freelancer

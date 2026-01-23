@@ -101,16 +101,12 @@ export function FreelancerCounterproposalResponseModal({
     try {
       if (response === "accept") {
         // Freelancer accepts the company's counter-proposal feedback
-        // Update proposal status and clear the negotiation flag
-        const { error } = await supabase
-          .from("proposals")
-          .update({
-            company_response: "accepted",
-            counterproposal_justification: newJustification || proposal.company_feedback,
-          })
-          .eq("id", proposal.id);
+        // Call centralized RPC to finalize acceptance and ensure contract exists
+        const { error: rpcError } = await supabase.rpc("finalize_proposal_acceptance", {
+          p_proposal_id: proposal.id,
+        });
 
-        if (error) throw error;
+        if (rpcError) throw rpcError;
 
         // Send notification to company
         await supabase.from("notifications").insert({
