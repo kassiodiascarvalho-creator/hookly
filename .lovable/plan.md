@@ -1,74 +1,71 @@
 
-# Plano: Corrigir Consolidação de Valor na Negociação
 
-## Problema Identificado
+# Plano: Unificar Caminhos de Aceitação + Correção de Dados Legados
 
-Quando a empresa faz uma contraproposta com valor específico (ex: R$ 900) e o freelancer aceita, o sistema não está usando esse valor - está usando o valor original dos milestones do freelancer.
+## Diagnóstico Completo
+
+### Caminhos de Aceitação Identificados
 
 ```text
-┌─────────────────────────────────────────────────────────────────────┐
-│                        FLUXO ATUAL (COM BUG)                        │
-├─────────────────────────────────────────────────────────────────────┤
-│  1. Freelancer propõe R$ 950 (contraproposta)                       │
-│  2. Empresa seleciona "Negociar" e sugere R$ 900 no feedback        │
-│  3. Freelancer clica "Aceitar termos da empresa"                    │
-│  4. Sistema cria contrato com milestones = R$ 950 ❌                │
-│     (O valor de R$ 900 da empresa se PERDEU!)                       │
-└─────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────────┐
+│                      ANÁLISE DE CAMINHOS DE ACEITAÇÃO                          │
+├────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                │
+│  CAMINHO 1: ProjectDetail.tsx → handleAcceptProposal()                         │
+│  ├── UPDATE proposals SET status='accepted'                                   │
+│  ├── UPDATE projects SET status='in_progress'                                 │
+│  ├── Cria conversation                                                        │
+│  └── NÃO CRIA CONTRATO ❌ (ignora current_offer_cents)                        │
+│                                                                                │
+│  CAMINHO 2: CounterproposalResponseModal.tsx (Empresa aceita)                  │
+│  └── supabase.rpc("finalize_proposal_acceptance") ✅                          │
+│                                                                                │
+│  CAMINHO 3: FreelancerCounterproposalResponseModal.tsx (Freelancer aceita)     │
+│  └── supabase.rpc("finalize_proposal_acceptance") ✅                          │
+│                                                                                │
+│  CAMINHO 4: ContractAcceptanceModal.tsx (Aceite de contrato já existente)      │
+│  └── UPDATE contracts (company/freelancer_accepted_at) ✅                     │
+│      (Este é um fluxo diferente - aceite bilateral do contrato, não proposta)  │
+│                                                                                │
+│  ADMIN: Nenhum caminho de aceitação de proposta no admin                       │
+│                                                                                │
+└────────────────────────────────────────────────────────────────────────────────┘
 ```
+
+### Inconsistências no Banco de Dados (Produção)
+
+| contract_id | contract_status | proposal_status | is_counterproposal | was_counterproposal | current_offer_cents |
+|-------------|-----------------|-----------------|--------------------|--------------------|---------------------|
+| 08fd645a... | active | accepted | true | **false** ❌ | 90000 |
+| 16438a54... | **pending_acceptance** ❌ | accepted | true | true | null |
+| a39288d2... | **pending_acceptance** ❌ | accepted | false | false | null |
+| 0ef3b482... | funded | accepted | false | false | null |
+| f14dcaa7... | funded | accepted | false | false | null |
+| d0034ae6... | funded | accepted | false | false | null |
 
 ---
 
-## Solução
+## Solução Robusta (4 Ajustes Obrigatórios)
 
-### 1. Adicionar Campos de Rastreamento de Oferta
+### 1. Atualizar RPC para Retornar contract_id + agreed_amount_cents
 
-Adicionar na tabela `proposals`:
-- `current_offer_cents`: Valor atual da oferta em centavos
-- `current_offer_by`: Quem fez a oferta ('company' ou 'freelancer')
+A RPC já retorna o `contract_id` (uuid). Vamos adicionar um tipo de retorno mais rico para o frontend poder redirecionar/refetch corretamente.
 
-### 2. Atualizar Modal da Empresa
+### 2. Unificar handleAcceptProposal para usar RPC
 
-Quando a empresa selecionar "Negociar", adicionar campo **obrigatório** para o valor proposto:
+Substituir os updates manuais por chamada à RPC centralizada.
 
-```text
-┌────────────────────────────────────────────────┐
-│  💰 Valor Proposto *                           │
-│  ┌──────────────────────────────────────────┐  │
-│  │ R$  [    900,00    ]                     │  │
-│  └──────────────────────────────────────────┘  │
-│                                                │
-│  📝 Feedback                                   │
-│  ┌──────────────────────────────────────────┐  │
-│  │ Podemos fechar por R$ 900...             │  │
-│  └──────────────────────────────────────────┘  │
-└────────────────────────────────────────────────┘
+### 3. Busca Global: Nenhum Outro Caminho de Update Manual
+
+Confirmado: apenas `ProjectDetail.tsx` faz update manual de proposals.status.
+
+### 4. Migração de Dados Legados Baseada em Regras (não IDs)
+
+```sql
+-- Regra 1: Contratos com proposal.status='accepted' devem ter status='active' ou 'funded'
+-- Regra 2: Se proposal.is_counterproposal=true, contract.was_counterproposal=true
+-- Regra 3: accepted_at deve estar preenchido se status != 'pending_acceptance'
 ```
-
-### 3. Atualizar Modal do Freelancer
-
-Mostrar claramente o valor que a empresa está oferecendo:
-
-```text
-┌────────────────────────────────────────────────┐
-│  💰 Oferta da Empresa                          │
-│  ╔══════════════════════════════════════════╗  │
-│  ║  R$ 900,00                               ║  │
-│  ╚══════════════════════════════════════════╝  │
-│                                                │
-│  "Podemos fechar por R$ 900..."                │
-│                                                │
-│  ○ Aceitar R$ 900,00                           │
-│  ○ Enviar nova contra-argumentação             │
-└────────────────────────────────────────────────┘
-```
-
-### 4. Atualizar RPC de Finalização
-
-A função `finalize_proposal_acceptance` vai:
-1. Verificar se existe `current_offer_cents`
-2. Recalcular milestones proporcionalmente
-3. Criar contrato com `agreed_amount_cents = current_offer_cents`
 
 ---
 
@@ -76,120 +73,183 @@ A função `finalize_proposal_acceptance` vai:
 
 | Arquivo | Alteração |
 |---------|-----------|
-| Nova migração SQL | Adicionar colunas + atualizar RPC |
-| `CounterproposalResponseModal.tsx` | Adicionar campo de valor ao negociar |
-| `FreelancerCounterproposalResponseModal.tsx` | Mostrar oferta da empresa + usar valor correto |
-| `MyProposals.tsx` | Buscar e mostrar `current_offer_cents` quando em negociação |
-
----
-
-## Resultado Esperado
-
-```text
-┌─────────────────────────────────────────────────────────────────────┐
-│                      FLUXO CORRIGIDO                                │
-├─────────────────────────────────────────────────────────────────────┤
-│  1. Freelancer propõe R$ 950                                        │
-│  2. Empresa propõe R$ 900 → current_offer_cents = 90000             │
-│  3. Freelancer aceita → finalize usa 90000                          │
-│  4. Contrato criado com agreed_amount_cents = 90000 ✅              │
-│  5. UI mostra "Valor Acordado: R$ 900" ✅                           │
-│  6. Empresa vê "Aceito" com valor R$ 900 ✅                         │
-└─────────────────────────────────────────────────────────────────────┘
-```
+| Nova migração SQL | Correção de dados legados baseada em regras |
+| `src/pages/ProjectDetail.tsx` | Substituir handleAcceptProposal por chamada à RPC |
 
 ---
 
 ## Seção Técnica
 
-### Migração SQL
+### Migração SQL - Correção de Dados Legados (Baseada em Regras)
 
 ```sql
--- 1. Adicionar campos de rastreamento
-ALTER TABLE public.proposals 
-  ADD COLUMN IF NOT EXISTS current_offer_cents BIGINT,
-  ADD COLUMN IF NOT EXISTS current_offer_by TEXT 
-    CHECK (current_offer_by IN ('company', 'freelancer'));
+-- ============================================================
+-- MIGRAÇÃO: Corrigir inconsistências de contratos legados
+-- Regras aplicadas, não IDs fixos
+-- ============================================================
 
--- 2. Atualizar RPC para usar current_offer_cents
-CREATE OR REPLACE FUNCTION public.finalize_proposal_acceptance(p_proposal_id uuid)
-RETURNS uuid AS $$
-DECLARE
-  v_final_amount_cents BIGINT;
-  v_milestones JSONB;
-  v_original_total NUMERIC;
-BEGIN
-  -- Se há oferta pendente, usar esse valor
-  IF v_proposal.current_offer_cents IS NOT NULL THEN
-    v_final_amount_cents := v_proposal.current_offer_cents;
-    
-    -- Recalcular milestones proporcionalmente
-    SELECT SUM((m->>'amount')::numeric) INTO v_original_total
-    FROM jsonb_array_elements(v_proposal.milestones) AS m;
-    
-    IF v_original_total > 0 THEN
-      SELECT jsonb_agg(
-        jsonb_set(m, '{amount}', 
-          to_jsonb(ROUND((m->>'amount')::numeric * 
-            (v_final_amount_cents / 100.0) / v_original_total, 2)))
-      ) INTO v_milestones
-      FROM jsonb_array_elements(v_proposal.milestones) AS m;
-      
-      UPDATE proposals SET milestones = v_milestones WHERE id = p_proposal_id;
-    END IF;
-  END IF;
-  
-  -- Criar contrato com agreed_amount_cents = v_final_amount_cents
-  -- ...
-END;
-$$;
+-- 1. Contratos com proposal.status='accepted' mas contract.status='pending_acceptance'
+--    REGRA: Se a proposta foi aceita, o contrato deve estar 'active' (ou superior)
+UPDATE public.contracts c
+SET 
+  status = 'active',
+  accepted_at = COALESCE(c.accepted_at, now()),
+  updated_at = now()
+FROM public.proposals p
+WHERE c.proposal_id = p.id
+  AND p.status = 'accepted'
+  AND c.status = 'pending_acceptance';
+
+-- 2. Contratos com proposal.is_counterproposal=true mas contract.was_counterproposal=false
+--    REGRA: O flag deve ser consistente
+UPDATE public.contracts c
+SET 
+  was_counterproposal = true,
+  updated_at = now()
+FROM public.proposals p
+WHERE c.proposal_id = p.id
+  AND p.is_counterproposal = true
+  AND (c.was_counterproposal IS NULL OR c.was_counterproposal = false);
+
+-- 3. Contratos sem agreed_amount_cents mas com current_offer_cents na proposta
+--    REGRA: Se houve negociação, o valor acordado deve refletir
+UPDATE public.contracts c
+SET 
+  agreed_amount_cents = p.current_offer_cents,
+  amount_cents = p.current_offer_cents,
+  updated_at = now()
+FROM public.proposals p
+WHERE c.proposal_id = p.id
+  AND p.current_offer_cents IS NOT NULL
+  AND (c.agreed_amount_cents IS NULL OR c.agreed_amount_cents != p.current_offer_cents);
+
+-- 4. Garantir company_accepted_at e freelancer_accepted_at preenchidos em contratos ativos
+UPDATE public.contracts
+SET 
+  company_accepted_at = COALESCE(company_accepted_at, accepted_at, now()),
+  freelancer_accepted_at = COALESCE(freelancer_accepted_at, accepted_at, now()),
+  updated_at = now()
+WHERE status IN ('active', 'funded', 'completed')
+  AND (company_accepted_at IS NULL OR freelancer_accepted_at IS NULL);
 ```
 
-### Modal da Empresa (CounterproposalResponseModal)
+### ProjectDetail.tsx - handleAcceptProposal (Unificado)
 
 ```typescript
-const [suggestedAmount, setSuggestedAmount] = useState("");
+const handleAcceptProposal = async (proposalId: string, freelancerUserId: string) => {
+  if (!project || !user) return;
+  setActionLoading(proposalId);
 
-// Campo de valor quando "Negociar"
-{responseType === "negotiating" && (
-  <div className="space-y-2">
-    <Label>Valor Proposto *</Label>
-    <Input
-      type="number"
-      value={suggestedAmount}
-      onChange={(e) => setSuggestedAmount(e.target.value)}
-      placeholder="Ex: 900"
-    />
-  </div>
-)}
+  try {
+    // Usar RPC centralizada - fonte única de verdade
+    const { data: contractId, error: rpcError } = await supabase.rpc(
+      "finalize_proposal_acceptance",
+      { p_proposal_id: proposalId }
+    );
 
-// Ao enviar:
-await supabase.from("proposals").update({
-  company_response: "negotiating",
-  company_feedback: feedback,
-  current_offer_cents: Math.round(parseFloat(suggestedAmount) * 100),
-  current_offer_by: "company",
-}).eq("id", proposal.id);
+    if (rpcError) throw rpcError;
+
+    // Criar ou buscar conversa
+    const { data: existingConv } = await supabase
+      .from("conversations")
+      .select("id")
+      .eq("company_user_id", user.id)
+      .eq("freelancer_user_id", freelancerUserId)
+      .eq("project_id", project.id)
+      .maybeSingle();
+
+    if (!existingConv) {
+      await supabase.from("conversations").insert({
+        company_user_id: user.id,
+        freelancer_user_id: freelancerUserId,
+        project_id: project.id,
+      });
+    }
+
+    // Notificação para freelancer
+    await supabase.from("notifications").insert({
+      user_id: freelancerUserId,
+      type: "proposal_accepted",
+      message: `Your proposal for "${project.title}" has been accepted!`,
+      link: `/contracts`,
+    });
+
+    toast.success(t("proposals.accepted"));
+    
+    // Refetch para garantir dados atualizados
+    fetchProposals();
+    fetchProject();
+    
+    // Opcional: redirecionar para o contrato criado
+    // navigate(`/contracts/${contractId}`);
+    
+  } catch (error) {
+    console.error("Error accepting proposal:", error);
+    toast.error(t("common.error", "An error occurred"));
+  } finally {
+    setActionLoading(null);
+  }
+};
 ```
 
-### Modal do Freelancer (FreelancerCounterproposalResponseModal)
+---
 
-```typescript
-// Mostrar oferta da empresa
-{proposal.current_offer_cents && proposal.current_offer_by === "company" && (
-  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-    <p className="text-sm font-medium text-green-700">Oferta da Empresa</p>
-    <p className="text-2xl font-bold text-green-600">
-      {formatMoneyFromCents(proposal.current_offer_cents, project.currency)}
-    </p>
-  </div>
-)}
+## Fluxo Resultante
 
-// Aceitar usa o valor da oferta
-if (responseType === "accept") {
-  // Chama RPC que usará current_offer_cents automaticamente
-  await supabase.rpc("finalize_proposal_acceptance", { 
-    p_proposal_id: proposal.id 
-  });
-}
+```text
+┌────────────────────────────────────────────────────────────────────────────────┐
+│                     ARQUITETURA UNIFICADA (APÓS CORREÇÃO)                      │
+├────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                │
+│  QUALQUER caminho de aceitação de proposta:                                    │
+│  ├── Botão "Accept" em ProjectDetail.tsx ─────────────┐                        │
+│  ├── Modal CounterproposalResponseModal.tsx ──────────┼──→ finalize_proposal_  │
+│  └── Modal FreelancerCounterproposalResponseModal.tsx ┘    acceptance (RPC)    │
+│                                                                                │
+│                              │                                                 │
+│                              ▼                                                 │
+│              ┌───────────────────────────────────┐                             │
+│              │  RPC finalize_proposal_acceptance │                             │
+│              │  ─────────────────────────────────│                             │
+│              │  1. Verifica current_offer_cents  │                             │
+│              │  2. Recalcula milestones          │                             │
+│              │  3. proposal.status = 'accepted'  │                             │
+│              │  4. project.status = 'in_progress'│                             │
+│              │  5. Cria/atualiza contract        │                             │
+│              │  6. Retorna contract_id           │                             │
+│              └───────────────────────────────────┘                             │
+│                              │                                                 │
+│                              ▼                                                 │
+│              ┌───────────────────────────────────┐                             │
+│              │  RESULTADO GARANTIDO:             │                             │
+│              │  • proposal.status = 'accepted'   │                             │
+│              │  • project.status = 'in_progress' │                             │
+│              │  • contract.status = 'active'     │                             │
+│              │  • contract.agreed_amount_cents ✅│                             │
+│              │  • milestones recalculados ✅     │                             │
+│              │  • was_counterproposal correto ✅ │                             │
+│              └───────────────────────────────────┘                             │
+│                                                                                │
+└────────────────────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## Benefícios da Solução
+
+| Aspecto | Antes | Depois |
+|---------|-------|--------|
+| Caminhos de aceitação | 2 (um quebrado) | 1 (RPC única) |
+| Contratos órfãos | Possível | Impossível |
+| Valores divergentes | Frequente | Impossível |
+| Correção de legados | Por ID | Por regra |
+| Idempotência | Não | Sim (RPC verifica se contrato já existe) |
+
+---
+
+## Resumo de Ações
+
+1. **Migração SQL**: Corrigir todos os contratos legados com base em regras (joins)
+2. **ProjectDetail.tsx**: Substituir handleAcceptProposal por chamada à RPC
+3. **Validação**: Busca global confirmou que não há outros caminhos de update manual
+
