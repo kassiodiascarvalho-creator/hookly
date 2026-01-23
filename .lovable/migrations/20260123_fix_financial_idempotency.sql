@@ -2,23 +2,18 @@
 -- FINANCIAL IDEMPOTENCY & CONSISTENCY FIX
 -- Date: 2026-01-23
 -- 
--- This migration fixes 3 critical RPCs with:
--- - Strong idempotency using advisory locks and ledger checks
--- - Atomic balance updates with guards against negative balances
--- - Backward compatible signatures
--- - Uses ONLY existing columns from schema
+-- PREFLIGHT CHECK CONFIRMADO:
+-- - Todas as tabelas usam MAJOR UNITS (numeric, ex: 100.00 = $100)
+-- - Colunas verificadas no schema real
+-- - Assinaturas backward compatible
 -- ================================================================================
 
 -- ================================================================================
 -- 1) release_escrow_to_earnings
 -- ================================================================================
--- Signature (backward compatible + new optional param):
---   p_company_user_id uuid
---   p_freelancer_user_id uuid
---   p_contract_id uuid
---   p_amount numeric
---   p_context text DEFAULT 'milestone_approved'
---   p_payment_id uuid DEFAULT NULL  <-- NEW (optional, for legacy payment idempotency)
+-- Assinatura BACKWARD COMPATIBLE:
+--   Existente: (p_company_user_id, p_freelancer_user_id, p_contract_id, p_amount, p_context)
+--   Nova:      + p_payment_id uuid DEFAULT NULL (no final)
 -- ================================================================================
 
 CREATE OR REPLACE FUNCTION public.release_escrow_to_earnings(
@@ -38,7 +33,6 @@ DECLARE
   v_company_escrow numeric;
   v_freelancer_earnings numeric;
   v_currency text;
-  v_lock_acquired boolean := FALSE;
 BEGIN
   -- =========================================================================
   -- VALIDATION: Amount must be positive
@@ -59,13 +53,12 @@ BEGIN
   IF p_payment_id IS NOT NULL THEN
     -- Advisory lock prevents concurrent execution for same payment
     PERFORM pg_advisory_xact_lock(hashtext(p_payment_id::text)::bigint);
-    v_lock_acquired := TRUE;
     
     -- Check if already processed (by legacy_payment_id in metadata)
     IF EXISTS (
       SELECT 1 FROM ledger_transactions 
       WHERE tx_type = 'escrow_release' 
-      AND metadata->>'legacy_payment_id' = p_payment_id::text
+        AND metadata->>'legacy_payment_id' = p_payment_id::text
       LIMIT 1
     ) THEN
       -- Already processed - idempotent return
@@ -74,7 +67,7 @@ BEGIN
   END IF;
 
   -- =========================================================================
-  -- GET CURRENCY (from company balance, fallback to freelancer, then BRL)
+  -- GET CURRENCY (from company balance, fallback to freelancer, then USD)
   -- =========================================================================
   SELECT currency INTO v_currency
   FROM user_balances 
@@ -86,7 +79,7 @@ BEGIN
     WHERE user_id = p_freelancer_user_id AND user_type = 'freelancer';
   END IF;
   
-  v_currency := COALESCE(v_currency, 'BRL');
+  v_currency := COALESCE(v_currency, 'USD');
 
   -- =========================================================================
   -- ATOMIC DEBIT: Company escrow (with guard against negative)
@@ -101,7 +94,7 @@ BEGIN
   RETURNING escrow_held INTO v_company_escrow;
 
   IF NOT FOUND THEN
-    RAISE EXCEPTION 'Insufficient escrow balance for company %. Required: %, Available: (check user_balances)', 
+    RAISE EXCEPTION 'Insufficient escrow balance for company %. Required: %, check user_balances', 
       p_company_user_id, p_amount;
   END IF;
 
@@ -122,7 +115,9 @@ BEGIN
 
   -- =========================================================================
   -- LEDGER: Insert 2 entries (company debit + freelancer credit)
-  -- Using ONLY existing columns from schema
+  -- Using ONLY existing columns from schema:
+  --   amount (numeric), currency (text), tx_type, context, 
+  --   related_contract_id, balance_after_escrow, balance_after_earnings, metadata (jsonb)
   -- =========================================================================
   
   -- Company ledger entry (escrow release - debit)
@@ -138,7 +133,7 @@ BEGIN
   ) VALUES (
     p_company_user_id,
     'escrow_release',
-    -p_amount,  -- Negative for debit
+    -p_amount,  -- Negative for debit (MAJOR UNITS)
     v_currency,
     p_context,
     p_contract_id,
@@ -162,7 +157,7 @@ BEGIN
   ) VALUES (
     p_freelancer_user_id,
     'escrow_release',
-    p_amount,  -- Positive for credit
+    p_amount,  -- Positive for credit (MAJOR UNITS)
     v_currency,
     p_context,
     p_contract_id,
@@ -180,11 +175,9 @@ $$;
 -- ================================================================================
 -- 2) request_withdrawal
 -- ================================================================================
--- Signature (UNCHANGED - backward compatible):
---   p_freelancer_user_id uuid
---   p_amount numeric
---   p_payout_method_id uuid
--- Returns: uuid (withdrawal_request id)
+-- Assinatura INALTERADA (backward compatible):
+--   (p_freelancer_user_id uuid, p_amount numeric, p_payout_method_id uuid) 
+--   RETURNS uuid
 -- ================================================================================
 
 CREATE OR REPLACE FUNCTION public.request_withdrawal(
@@ -216,12 +209,12 @@ BEGIN
   PERFORM ensure_user_balance(p_freelancer_user_id, 'freelancer');
 
   -- =========================================================================
-  -- VALIDATE PAYOUT METHOD OWNERSHIP (using freelancer_user_id column)
+  -- VALIDATE PAYOUT METHOD OWNERSHIP (using freelancer_user_id column - CONFIRMED)
   -- =========================================================================
   IF NOT EXISTS (
     SELECT 1 FROM payout_methods 
     WHERE id = p_payout_method_id 
-    AND freelancer_user_id = p_freelancer_user_id
+      AND freelancer_user_id = p_freelancer_user_id
   ) THEN
     RAISE EXCEPTION 'Invalid payout method or not owned by this freelancer';
   END IF;
@@ -250,10 +243,11 @@ BEGIN
   FROM user_balances 
   WHERE user_id = p_freelancer_user_id AND user_type = 'freelancer';
   
-  v_currency := COALESCE(v_currency, 'BRL');
+  v_currency := COALESCE(v_currency, 'USD');
 
   -- =========================================================================
   -- ATOMIC DEBIT: Freelancer earnings (anti-race condition)
+  -- Using WHERE earnings_available >= p_amount to prevent overdraft
   -- =========================================================================
   UPDATE user_balances
   SET 
@@ -270,7 +264,8 @@ BEGIN
 
   -- =========================================================================
   -- CREATE WITHDRAWAL REQUEST
-  -- Using ONLY existing columns from schema
+  -- Using ONLY existing columns: freelancer_user_id, amount, currency, status,
+  --   payout_method_id, payout_details, created_at (has default), updated_at (has default)
   -- =========================================================================
   INSERT INTO withdrawal_requests (
     freelancer_user_id,
@@ -279,10 +274,9 @@ BEGIN
     status,
     payout_method_id,
     payout_details
-    -- created_at and updated_at have defaults
   ) VALUES (
     p_freelancer_user_id,
-    p_amount,
+    p_amount,  -- MAJOR UNITS
     v_currency,
     'pending_review',
     p_payout_method_id,
@@ -305,9 +299,9 @@ BEGIN
   ) VALUES (
     p_freelancer_user_id,
     'withdrawal_request',
-    -p_amount,  -- Negative (funds reserved)
+    -p_amount,  -- Negative (funds reserved) - MAJOR UNITS
     v_currency,
-    'withdrawal_request',
+    'withdrawal_requested',
     v_withdrawal_id,
     v_new_earnings,
     '{}'::jsonb
@@ -320,12 +314,10 @@ $$;
 -- ================================================================================
 -- 3) process_withdrawal
 -- ================================================================================
--- Signature (UNCHANGED - backward compatible):
---   p_withdrawal_id uuid
---   p_new_status withdrawal_status
---   p_admin_id uuid
---   p_admin_notes text DEFAULT NULL
--- Returns: boolean
+-- Assinatura INALTERADA (backward compatible):
+--   (p_withdrawal_id uuid, p_new_status withdrawal_status, p_admin_id uuid, 
+--    p_admin_notes text DEFAULT NULL)
+--   RETURNS boolean
 -- ================================================================================
 
 CREATE OR REPLACE FUNCTION public.process_withdrawal(
@@ -391,14 +383,14 @@ BEGIN
   -- HANDLE REJECTION: Refund funds to freelancer
   -- =========================================================================
   IF p_new_status = 'rejected' THEN
-    -- Check if refund already exists (idempotency)
+    -- Check if refund already exists (idempotency guard)
     IF NOT EXISTS (
       SELECT 1 FROM ledger_transactions 
       WHERE related_withdrawal_id = p_withdrawal_id 
-      AND tx_type = 'refund'
+        AND tx_type = 'refund'
       LIMIT 1
     ) THEN
-      -- Refund to freelancer balance
+      -- Refund to freelancer balance (MAJOR UNITS)
       UPDATE user_balances
       SET 
         earnings_available = earnings_available + v_amount,
@@ -420,7 +412,7 @@ BEGIN
       ) VALUES (
         v_freelancer_user_id,
         'refund',
-        v_amount,  -- Positive (funds returned)
+        v_amount,  -- Positive (funds returned) - MAJOR UNITS
         v_currency,
         'withdrawal_rejected',
         p_withdrawal_id,
@@ -456,11 +448,11 @@ BEGIN
   -- HANDLE PAID: Record completion (balance already debited in request)
   -- =========================================================================
   ELSIF p_new_status = 'paid' THEN
-    -- Check if already recorded (idempotency)
+    -- Check if already recorded (idempotency guard)
     IF NOT EXISTS (
       SELECT 1 FROM ledger_transactions 
       WHERE related_withdrawal_id = p_withdrawal_id 
-      AND tx_type = 'withdrawal_paid'
+        AND tx_type = 'withdrawal_paid'
       LIMIT 1
     ) THEN
       -- Record paid in ledger (no balance change - already debited)
@@ -475,7 +467,7 @@ BEGIN
       ) VALUES (
         v_freelancer_user_id,
         'withdrawal_paid',
-        -v_amount,  -- Negative (informational - funds left the system)
+        -v_amount,  -- Negative (informational - funds left the system) - MAJOR UNITS
         v_currency,
         'withdrawal_completed',
         p_withdrawal_id,
@@ -498,7 +490,7 @@ END;
 $$;
 
 -- ================================================================================
--- OPTIONAL INDEXES (for performance, not unique - advisory lock handles races)
+-- OPTIONAL INDEXES (for performance)
 -- ================================================================================
 
 -- Index for ledger lookups by withdrawal
