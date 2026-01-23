@@ -162,9 +162,10 @@ export default function CompanyFinances() {
     return <Badge variant="outline">{payment.status}</Badge>;
   };
 
-  // Safe display for zero/empty values - uses standard formatting
-  const formatSafeValue = (value: number, currency: string) => {
-    if (value === 0) return t("finances.noData");
+  // Safe display for monetary values - ALWAYS shows formatted amount, including zero
+  // "noData" should NEVER be used for actual monetary balances
+  const formatSafeValue = (value: number | null | undefined, currency: string) => {
+    if (value === null || value === undefined) return formatMoney(0, currency);
     return formatMoney(value, currency);
   };
 
