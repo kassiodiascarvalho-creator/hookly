@@ -11,7 +11,7 @@ import { FileText, Calendar, Loader2, CheckCircle, XCircle, Clock, AlertTriangle
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { FreelancerCounterproposalResponseModal } from "@/components/proposals/FreelancerCounterproposalResponseModal";
-import { formatMoney } from "@/lib/formatMoney";
+import { formatMoney, formatMoneyFromCents } from "@/lib/formatMoney";
 interface Proposal {
   id: string;
   cover_letter: string | null;
@@ -24,6 +24,7 @@ interface Proposal {
   company_response?: string | null;
   company_feedback?: string | null;
   agreed_amount_cents?: number | null;
+  was_counterproposal?: boolean | null;
   project?: {
     title: string;
     category: string | null;
@@ -82,16 +83,21 @@ export default function MyProposals() {
           
           // Fetch contract info for accepted proposals
           let agreedAmountCents: number | null = null;
+          let wasCounterproposal: boolean | null = null;
           if (proposal.status === "accepted") {
             const { data: contract } = await supabase
               .from("contracts")
-              .select("agreed_amount_cents")
+              .select("agreed_amount_cents, amount_cents, was_counterproposal")
               .eq("proposal_id", proposal.id)
               .maybeSingle();
-            agreedAmountCents = contract?.agreed_amount_cents || null;
+
+            // Prefer agreed_amount_cents when present, otherwise fall back to amount_cents.
+            // This prevents UI divergence for older contracts that may not have agreed_amount_cents populated.
+            agreedAmountCents = (contract?.agreed_amount_cents ?? contract?.amount_cents) ?? null;
+            wasCounterproposal = contract?.was_counterproposal ?? null;
           }
           
-          return { ...proposal, project, agreed_amount_cents: agreedAmountCents };
+          return { ...proposal, project, agreed_amount_cents: agreedAmountCents, was_counterproposal: wasCounterproposal };
         })
       );
       setProposals(proposalsWithProjects);
@@ -240,15 +246,18 @@ export default function MyProposals() {
                           </div>
                           <p className="text-xs text-muted-foreground">{t("myProposals.yourBid")}</p>
                           
-                          {/* Show agreed amount for accepted counter-proposals */}
-                          {proposal.status === "accepted" && proposal.agreed_amount_cents && (
-                            <div className="mt-2 pt-2 border-t border-border">
-                              <div className="text-lg font-semibold text-green-500">
-                                {formatMoney(proposal.agreed_amount_cents / 100, proposal.project?.currency || "USD")}
+                          {/* Show agreed amount for accepted negotiations (counter-proposal path) */}
+                          {proposal.status === "accepted" &&
+                            (proposal.was_counterproposal || proposal.is_counterproposal) &&
+                            proposal.agreed_amount_cents !== null &&
+                            proposal.agreed_amount_cents !== undefined && (
+                              <div className="mt-2 pt-2 border-t border-border">
+                                <div className="text-lg font-semibold text-success">
+                                  {formatMoneyFromCents(proposal.agreed_amount_cents, proposal.project?.currency || "USD")}
+                                </div>
+                                <p className="text-xs text-success/80">{t("myProposals.agreedAmount", "Valor Acordado")}</p>
                               </div>
-                              <p className="text-xs text-green-600">{t("myProposals.agreedAmount", "Valor Acordado")}</p>
-                            </div>
-                          )}
+                            )}
                         </div>
                       </div>
                     </CardContent>
