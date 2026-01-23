@@ -24,7 +24,7 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Create admin client for database operations
+  // Create admin client for database operations (service role for writes)
   const supabaseAdmin = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
@@ -43,6 +43,17 @@ serve(async (req) => {
     const user = data.user;
     if (!user) throw new Error("User not authenticated");
     logStep("User authenticated", { userId: user.id });
+
+    // Create user-context client for RLS-dependent checks (like is_admin)
+    const supabaseUserContext = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      {
+        global: {
+          headers: { Authorization: authHeader }
+        }
+      }
+    );
 
     // Parse and validate request body
     let body: unknown;
@@ -89,10 +100,10 @@ serve(async (req) => {
       });
     }
 
-    // Check if user is admin
-    const { data: isAdminResult } = await supabaseAdmin.rpc('is_admin');
+    // Check if user is admin using user-context client (respects RLS/auth.uid())
+    const { data: isAdminResult } = await supabaseUserContext.rpc('is_admin');
     const isAdmin = isAdminResult === true;
-    logStep("Admin check", { isAdmin });
+    logStep("Admin check with user context", { isAdmin, userId: user.id });
 
     // Verify user is the company owner OR an admin
     if (payment.company_user_id !== user.id && !isAdmin) {
@@ -136,7 +147,7 @@ serve(async (req) => {
     }
 
     // =========================================================================
-    // STEP 2: Find contract for this payment
+    // STEP 2: Find contract for this payment (REQUIRED for release)
     // =========================================================================
     const { data: contract, error: contractError } = await supabaseAdmin
       .from("contracts")
@@ -147,95 +158,90 @@ serve(async (req) => {
       .single();
 
     if (contractError || !contract) {
-      // Log error but don't fail - log for manual reconciliation
-      logStep("WARNING: No contract found for payment - balance update will be skipped", { 
+      // NO CONTRACT = CANNOT RELEASE - log for manual reconciliation
+      logStep("ERROR: No contract found - cannot release payment", { 
         paymentId,
         projectId: payment.project_id,
         error: contractError?.message
       });
       
-      // Log this for manual reconciliation
       await supabaseAdmin.from("payment_logs").insert({
         payment_id: paymentId,
         action: "release_no_contract",
         admin_user_id: isAdminOverride ? user.id : null,
         details: { 
-          reason: "No contract found - manual reconciliation needed",
+          reason: "No contract found - manual reconciliation required",
           projectId: payment.project_id,
           companyUserId: payment.company_user_id,
-          freelancerUserId: payment.freelancer_user_id
+          freelancerUserId: payment.freelancer_user_id,
+          stripePaymentIntentId: payment.stripe_payment_intent_id
         },
+      });
+
+      // Return error - DO NOT mark as released
+      return new Response(JSON.stringify({ 
+        error: "No contract found for this payment. Manual reconciliation required.",
+        paymentId,
+        requiresReconciliation: true
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
       });
     }
 
     // =========================================================================
-    // STEP 3: Call RPC to update balances (if contract exists)
+    // STEP 3: Call RPC to update balances (REQUIRED for release)
     // Uses p_payment_id for idempotency (advisory lock + metadata check)
     // =========================================================================
-    let rpcSuccess = false;
-    if (contract) {
-      // payment.amount is already in the correct unit (as stored in payments table)
-      const { data: releaseResult, error: releaseError } = await supabaseAdmin.rpc(
-        'release_escrow_to_earnings',
-        {
-          p_company_user_id: payment.company_user_id,
-          p_freelancer_user_id: payment.freelancer_user_id,
-          p_contract_id: contract.id,
-          p_amount: payment.amount, // Use as-is, no unit conversion
-          p_context: 'legacy_release_payment:' + paymentId,
-          p_payment_id: paymentId // Enables idempotency in the RPC
-        }
-      );
-
-      if (releaseError) {
-        // Check if it's an "insufficient escrow" error
-        if (releaseError.message?.includes('Insufficient escrow')) {
-          logStep("ERROR: Insufficient escrow - cannot release", { 
-            error: releaseError.message,
-            paymentId,
-            amount: payment.amount
-          });
-          
-          // Log for reconciliation
-          await supabaseAdmin.from("payment_logs").insert({
-            payment_id: paymentId,
-            action: "release_insufficient_escrow",
-            admin_user_id: isAdminOverride ? user.id : null,
-            details: { 
-              error: releaseError.message,
-              amount: payment.amount,
-              contractId: contract.id
-            },
-          });
-          
-          // DON'T mark as released - return error for reconciliation
-          throw new Error(`Failed to release: ${releaseError.message}. Manual reconciliation required.`);
-        }
-        
-        // Other RPC errors - log but continue (Stripe already captured)
-        logStep("WARNING: RPC failed but Stripe captured - logging for reconciliation", { 
-          error: releaseError.message,
-          paymentId
-        });
-        
-        await supabaseAdmin.from("payment_logs").insert({
-          payment_id: paymentId,
-          action: "release_rpc_failed",
-          admin_user_id: isAdminOverride ? user.id : null,
-          details: { 
-            error: releaseError.message,
-            contractId: contract.id,
-            amount: payment.amount
-          },
-        });
-      } else {
-        rpcSuccess = true;
-        logStep("Balances updated via RPC", { releaseResult, contractId: contract.id });
+    const { data: releaseResult, error: releaseError } = await supabaseAdmin.rpc(
+      'release_escrow_to_earnings',
+      {
+        p_company_user_id: payment.company_user_id,
+        p_freelancer_user_id: payment.freelancer_user_id,
+        p_contract_id: contract.id,
+        p_amount: payment.amount, // Use as-is, no unit conversion
+        p_context: 'legacy_release_payment:' + paymentId,
+        p_payment_id: paymentId // Enables idempotency in the RPC
       }
+    );
+
+    if (releaseError) {
+      // RPC FAILED = CANNOT RELEASE - log for manual reconciliation
+      logStep("ERROR: RPC failed - cannot release payment", { 
+        error: releaseError.message,
+        paymentId,
+        contractId: contract.id,
+        amount: payment.amount
+      });
+      
+      await supabaseAdmin.from("payment_logs").insert({
+        payment_id: paymentId,
+        action: "release_rpc_failed",
+        admin_user_id: isAdminOverride ? user.id : null,
+        details: { 
+          error: releaseError.message,
+          contractId: contract.id,
+          amount: payment.amount,
+          stripePaymentIntentId: payment.stripe_payment_intent_id
+        },
+      });
+
+      // Return error - DO NOT mark as released
+      return new Response(JSON.stringify({ 
+        error: `Failed to update balances: ${releaseError.message}. Manual reconciliation required.`,
+        paymentId,
+        requiresReconciliation: true
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
     }
+
+    logStep("Balances updated via RPC", { releaseResult, contractId: contract.id });
 
     // =========================================================================
     // STEP 4: Update payment status (conditional - only if still 'paid')
+    // Only reaches here if RPC succeeded
     // =========================================================================
     const { data: updateResult, error: updateError } = await supabaseAdmin
       .from("payments")
@@ -267,7 +273,7 @@ serve(async (req) => {
       });
     }
 
-    logStep("Payment status updated to released", { paymentId, rpcSuccess });
+    logStep("Payment status updated to released", { paymentId });
 
     // Log admin override action if applicable
     if (isAdminOverride) {
@@ -275,7 +281,7 @@ serve(async (req) => {
         payment_id: paymentId,
         action: "admin_release",
         admin_user_id: user.id,
-        details: { reason: "Admin override release", rpcSuccess },
+        details: { reason: "Admin override release" },
       });
       logStep("Admin override logged");
     }
@@ -307,8 +313,7 @@ serve(async (req) => {
     return new Response(JSON.stringify({ 
       success: true, 
       paymentIntent,
-      rpcSuccess,
-      balancesUpdated: rpcSuccess
+      balancesUpdated: true
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
