@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { formatMoneyFromCents, formatMoneyDynamic } from "@/lib/formatMoney";
+import { formatMoney, formatMoneyFromCents } from "@/lib/formatMoney";
 import {
   Dialog,
   DialogContent,

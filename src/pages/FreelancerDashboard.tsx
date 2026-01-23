@@ -8,7 +8,7 @@ import { AchievementsCard } from "@/components/achievements";
 import { ProfileCompletionCard } from "@/components/profile/ProfileCompletionCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { formatMoney, formatMoneyFromCents, formatMoneyDynamic, formatMoneyFromCentsDynamic } from "@/lib/formatMoney";
+import { formatMoney, formatMoneyFromCents } from "@/lib/formatMoney";
 import { useLocalCurrencyDisplay } from "@/hooks/useLocalCurrencyDisplay";
 import { computeFreelancerCompletion } from "@/lib/profileCompletion";
 import { TrustMessage } from "@/components/trust/TrustBadge";
@@ -168,9 +168,9 @@ export default function FreelancerDashboard() {
     if (stats.totalEarnings === 0) {
       return { usdValue: "—", localValue: null };
     }
-    const usdValue = formatMoneyFromCentsDynamic(stats.totalEarnings, stats.currency);
+    const usdValue = formatMoneyFromCents(stats.totalEarnings, stats.currency);
     const localValue = localCurrency !== "USD" && !fxLoading && stats.totalEarnings > 0
-      ? `≈ ${formatMoneyDynamic(convertToLocal(stats.totalEarnings) || 0, localCurrency)}`
+      ? `≈ ${formatMoney(convertToLocal(stats.totalEarnings) || 0, localCurrency)}`
       : null;
     
     return { usdValue, localValue };

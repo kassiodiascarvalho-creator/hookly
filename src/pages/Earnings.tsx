@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { Separator } from "@/components/ui/separator";
 import { WithdrawalRequestModal } from "@/components/earnings/WithdrawalRequestModal";
-import { formatMoney, formatMoneyFromCents, formatMoneyDynamic, formatMoneyFromCentsDynamic } from "@/lib/formatMoney";
+import { formatMoney, formatMoneyFromCents } from "@/lib/formatMoney";
 import { useLocalCurrencyDisplay } from "@/hooks/useLocalCurrencyDisplay";
 
 interface Payment {
@@ -373,20 +373,20 @@ export default function Earnings() {
               <div>
                 <p className="text-sm text-muted-foreground">{t("earnings.withdrawableBalance")}</p>
                 <p className={`text-3xl font-bold ${userBalance.earnings_available > 0 ? 'text-green-600' : 'text-muted-foreground'}`}>
-                  {formatMoneyFromCentsDynamic(userBalance.earnings_available, userBalance.currency)}
+                  {formatMoneyFromCents(userBalance.earnings_available, userBalance.currency)}
                 </p>
                 {/* Approximate local currency value */}
                 {localCurrency !== "USD" && !fxLoading && userBalance.earnings_available > 0 && (
                   <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
                     <span>≈</span>
-                    <span>{formatMoneyDynamic(convertToLocal(userBalance.earnings_available) || 0, localCurrency)}</span>
+                    <span>{formatMoney(convertToLocal(userBalance.earnings_available) || 0, localCurrency)}</span>
                   </p>
                 )}
                 <p className="text-xs text-muted-foreground mt-1">
                   {userBalance.earnings_available > 0 
                     ? t("earnings.withdrawableDesc")
                     : contractsEscrow > 0
-                      ? t("earnings.pendingFundingDesc", { amount: formatMoneyFromCentsDynamic(contractsEscrow, userBalance.currency) })
+                      ? t("earnings.pendingFundingDesc", { amount: formatMoneyFromCents(contractsEscrow, userBalance.currency) })
                       : t("earnings.noWithdrawableBalance")
                   }
                 </p>
@@ -423,13 +423,13 @@ export default function Earnings() {
               <div>
                 <p className="text-sm text-muted-foreground">{t("earnings.received")}</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {formatMoneyFromCentsDynamic(userBalance.earnings_available, userBalance.currency)}
+                  {formatMoneyFromCents(userBalance.earnings_available, userBalance.currency)}
                 </p>
                 {/* Approximate local currency value */}
                 {localCurrency !== "USD" && !fxLoading && userBalance.earnings_available > 0 && (
                   <p className="text-xs text-muted-foreground flex items-center gap-1">
                     <span>≈</span>
-                    <span>{formatMoneyDynamic(convertToLocal(userBalance.earnings_available) || 0, localCurrency)}</span>
+                    <span>{formatMoney(convertToLocal(userBalance.earnings_available) || 0, localCurrency)}</span>
                   </p>
                 )}
                 <p className="text-xs text-muted-foreground mt-1">
@@ -451,13 +451,13 @@ export default function Earnings() {
               <div>
                 <p className="text-sm text-muted-foreground">{t("earnings.inEscrow")}</p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {formatMoneyFromCentsDynamic(contractsEscrow, userBalance.currency)}
+                  {formatMoneyFromCents(contractsEscrow, userBalance.currency)}
                 </p>
                 {/* Approximate local currency value */}
                 {localCurrency !== "USD" && !fxLoading && (
                   <p className="text-xs text-muted-foreground flex items-center gap-1">
                     <span>≈</span>
-                    <span>{formatMoneyDynamic(convertToLocal(contractsEscrow) || 0, localCurrency)}</span>
+                    <span>{formatMoney(convertToLocal(contractsEscrow) || 0, localCurrency)}</span>
                   </p>
                 )}
                 <p className="text-xs text-muted-foreground mt-1">
