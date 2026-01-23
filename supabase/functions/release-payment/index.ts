@@ -75,6 +75,19 @@ serve(async (req) => {
       throw new Error("Payment not found");
     }
 
+    // IDEMPOTENCY CHECK: If already released, return success (idempotent)
+    if (payment.status === 'released') {
+      logStep("Payment already released - idempotent return", { paymentId });
+      return new Response(JSON.stringify({ 
+        success: true, 
+        alreadyReleased: true,
+        message: "Payment was already released" 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
     // Check if user is admin
     const { data: isAdminResult } = await supabaseClient.rpc('is_admin');
     const isAdmin = isAdminResult === true;
@@ -101,11 +114,24 @@ serve(async (req) => {
       apiVersion: "2025-08-27.basil" 
     });
 
-    // Capture the payment (release from escrow)
-    const paymentIntent = await stripe.paymentIntents.capture(
-      payment.stripe_payment_intent_id
-    );
-    logStep("Payment captured", { paymentIntentId: paymentIntent.id });
+    // Capture the payment (release from escrow) - Stripe capture is idempotent
+    let paymentIntent;
+    try {
+      paymentIntent = await stripe.paymentIntents.capture(
+        payment.stripe_payment_intent_id
+      );
+      logStep("Payment captured", { paymentIntentId: paymentIntent.id });
+    } catch (stripeError: unknown) {
+      // Handle already captured case (Stripe idempotency)
+      const errorMessage = stripeError instanceof Error ? stripeError.message : String(stripeError);
+      if (errorMessage.includes('already been captured') || errorMessage.includes('has already been')) {
+        logStep("Payment already captured in Stripe - continuing", { paymentId });
+        // Retrieve the existing payment intent
+        paymentIntent = await stripe.paymentIntents.retrieve(payment.stripe_payment_intent_id);
+      } else {
+        throw stripeError;
+      }
+    }
 
     // Log admin override action if applicable
     if (isAdminOverride) {
@@ -118,8 +144,8 @@ serve(async (req) => {
       logStep("Admin override logged");
     }
 
-    // Update payment status with admin tracking
-    const { error: updateError } = await supabaseClient
+    // CONDITIONAL UPDATE: Only update if status is still 'paid' (prevents race condition)
+    const { data: updateResult, error: updateError } = await supabaseClient
       .from("payments")
       .update({ 
         status: "released", 
@@ -127,20 +153,92 @@ serve(async (req) => {
         released_by_admin_id: isAdminOverride ? user.id : null,
         updated_at: new Date().toISOString() 
       })
-      .eq("id", paymentId);
+      .eq("id", paymentId)
+      .eq("status", "paid") // Only update if still in 'paid' status
+      .select();
 
     if (updateError) {
       logStep("Error updating payment status", { error: updateError.message });
+      throw new Error("Failed to update payment status");
     }
 
-    // Notify freelancer
-    if (payment.freelancer_user_id) {
-      await supabaseClient.from("notifications").insert({
-        user_id: payment.freelancer_user_id,
-        type: "payment_released",
-        message: `Payment of $${payment.amount} has been released to you!`,
-        link: "/earnings",
+    // If no rows updated, another request already processed this
+    if (!updateResult || updateResult.length === 0) {
+      logStep("Payment status already changed by another request - idempotent return", { paymentId });
+      return new Response(JSON.stringify({ 
+        success: true, 
+        alreadyReleased: true,
+        message: "Payment was already processed" 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
       });
+    }
+
+    logStep("Payment status updated to released", { paymentId });
+
+    // Call release_escrow_to_earnings RPC to update user_balances and ledger
+    // First, get the contract for this payment
+    const { data: contract, error: contractError } = await supabaseClient
+      .from("contracts")
+      .select("id")
+      .eq("project_id", payment.project_id)
+      .eq("company_user_id", payment.company_user_id)
+      .eq("freelancer_user_id", payment.freelancer_user_id)
+      .single();
+
+    if (contract && !contractError) {
+      // Convert amount to proper format (payments.amount is in dollars, RPC expects numeric)
+      const amountNumeric = typeof payment.amount === 'number' ? payment.amount : parseFloat(payment.amount);
+      
+      const { data: releaseResult, error: releaseError } = await supabaseClient.rpc(
+        'release_escrow_to_earnings',
+        {
+          p_company_user_id: payment.company_user_id,
+          p_freelancer_user_id: payment.freelancer_user_id,
+          p_contract_id: contract.id,
+          p_amount: amountNumeric,
+          p_context: 'legacy_release_payment'
+        }
+      );
+
+      if (releaseError) {
+        logStep("Warning: Failed to update user_balances via RPC", { 
+          error: releaseError.message,
+          paymentId,
+          contractId: contract.id
+        });
+        // Don't throw - payment is already released in Stripe, log for manual reconciliation
+      } else {
+        logStep("User balances updated via RPC", { releaseResult, contractId: contract.id });
+      }
+    } else {
+      logStep("No contract found for payment - skipping balance update", { 
+        paymentId,
+        projectId: payment.project_id 
+      });
+    }
+
+    // Notify freelancer (with idempotency check)
+    if (payment.freelancer_user_id) {
+      // Check if notification already sent in last 60 seconds
+      const { data: existingNotification } = await supabaseClient
+        .from("notifications")
+        .select("id")
+        .eq("user_id", payment.freelancer_user_id)
+        .eq("type", "payment_released")
+        .gte("created_at", new Date(Date.now() - 60000).toISOString())
+        .maybeSingle();
+
+      if (!existingNotification) {
+        await supabaseClient.from("notifications").insert({
+          user_id: payment.freelancer_user_id,
+          type: "payment_released",
+          message: `Payment of $${payment.amount} has been released to you!`,
+          link: "/earnings",
+        });
+        logStep("Freelancer notified");
+      }
     }
 
     return new Response(JSON.stringify({ success: true, paymentIntent }), {
