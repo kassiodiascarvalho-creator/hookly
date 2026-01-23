@@ -8,7 +8,7 @@ import { AchievementsCard } from "@/components/achievements";
 import { ProfileCompletionCard } from "@/components/profile/ProfileCompletionCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { formatMoney, formatMoneyFromCents } from "@/lib/formatMoney";
+import { formatMoney, formatMoneyFromCents, formatMoneyDynamic, formatMoneyFromCentsDynamic } from "@/lib/formatMoney";
 import { useLocalCurrencyDisplay } from "@/hooks/useLocalCurrencyDisplay";
 import { computeFreelancerCompletion } from "@/lib/profileCompletion";
 import { TrustMessage } from "@/components/trust/TrustBadge";
@@ -163,14 +163,14 @@ export default function FreelancerDashboard() {
     }
   };
 
-  // Helper to render earnings with local currency approximation
+  // Helper to render earnings with local currency approximation - uses dynamic decimals
   const renderEarningsValue = () => {
     if (stats.totalEarnings === 0) {
       return { usdValue: "—", localValue: null };
     }
-    const usdValue = formatMoneyFromCents(stats.totalEarnings, stats.currency);
+    const usdValue = formatMoneyFromCentsDynamic(stats.totalEarnings, stats.currency);
     const localValue = localCurrency !== "USD" && !fxLoading && stats.totalEarnings > 0
-      ? `≈ ${formatMoney(convertToLocal(stats.totalEarnings) || 0, localCurrency)}`
+      ? `≈ ${formatMoneyDynamic(convertToLocal(stats.totalEarnings) || 0, localCurrency)}`
       : null;
     
     return { usdValue, localValue };

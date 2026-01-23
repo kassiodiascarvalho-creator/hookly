@@ -17,7 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Wallet, Building, AlertCircle, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
-import { formatMoneyFromCents, minorToMajor, majorToMinor, getCurrencyDecimals } from "@/lib/formatMoney";
+import { formatMoneyFromCentsDynamic, minorToMajor, majorToMinor, getCurrencyDecimals } from "@/lib/formatMoney";
 
 interface PayoutMethod {
   id: string;
@@ -204,7 +204,7 @@ export function WithdrawalRequestModal({
                 {t("earnings.withdrawal.availableBalance")}
               </span>
               <span className="text-xl font-bold text-green-600">
-                {formatMoneyFromCents(earningsAvailableMinor, currency)}
+                {formatMoneyFromCentsDynamic(earningsAvailableMinor, currency)}
               </span>
             </div>
           </div>
@@ -302,7 +302,7 @@ export function WithdrawalRequestModal({
                 <CheckCircle className="h-4 w-4" />
                 <span className="text-sm font-medium">
                   {t("earnings.withdrawal.summary", { 
-                    amount: formatMoneyFromCents(amountMinor, currency)
+                    amount: formatMoneyFromCentsDynamic(amountMinor, currency)
                   })}
                 </span>
               </div>

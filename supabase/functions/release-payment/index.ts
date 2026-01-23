@@ -23,6 +23,7 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Admin client (service role) for writes
   const supabaseAdmin = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
@@ -31,6 +32,9 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
+    // =========================================================================
+    // AUTHENTICATION
+    // =========================================================================
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       throw new Error("Missing authorization header");
@@ -42,13 +46,16 @@ serve(async (req) => {
     if (!user) throw new Error("User not authenticated");
     logStep("User authenticated", { userId: user.id });
 
-    // Client com contexto do usuário para checagem de admin
+    // User-context client for is_admin() check (uses JWT for auth.uid())
     const supabaseUserContext = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? "",
       { global: { headers: { Authorization: authHeader } } }
     );
 
+    // =========================================================================
+    // REQUEST VALIDATION
+    // =========================================================================
     let body: unknown;
     try {
       body = await req.json();
@@ -68,7 +75,9 @@ serve(async (req) => {
 
     logStep("Request validated", { paymentId });
 
-    // Get payment record
+    // =========================================================================
+    // STEP 1: Get payment record
+    // =========================================================================
     const { data: payment, error: paymentError } = await supabaseAdmin
       .from("payments")
       .select("*")
@@ -79,7 +88,9 @@ serve(async (req) => {
       throw new Error("Payment not found");
     }
 
-    // IDEMPOTENCY: Already released
+    // =========================================================================
+    // IDEMPOTENCY: Already released - return success
+    // =========================================================================
     if (payment.status === 'released') {
       logStep("Payment already released - idempotent return", { paymentId });
       return new Response(JSON.stringify({ 
@@ -92,7 +103,9 @@ serve(async (req) => {
       });
     }
 
-    // Admin check com contexto do usuário
+    // =========================================================================
+    // AUTHORIZATION: Check if user can release
+    // =========================================================================
     const { data: isAdminResult } = await supabaseUserContext.rpc('is_admin');
     const isAdmin = isAdminResult === true;
     logStep("Admin check", { isAdmin, userId: user.id });
@@ -112,7 +125,7 @@ serve(async (req) => {
     }
 
     // =========================================================================
-    // STEP 1: Find contract BEFORE Stripe capture (fail fast)
+    // STEP 2: Find contract BEFORE Stripe capture (fail fast)
     // =========================================================================
     const { data: contract, error: contractError } = await supabaseAdmin
       .from("contracts")
@@ -127,17 +140,22 @@ serve(async (req) => {
         paymentId, projectId: payment.project_id, error: contractError?.message
       });
       
-      await supabaseAdmin.from("payment_logs").insert({
-        payment_id: paymentId,
-        action: "release_no_contract",
-        admin_user_id: isAdminOverride ? user.id : null,
-        details: { 
-          reason: "No contract found - manual reconciliation required",
-          projectId: payment.project_id,
-          companyUserId: payment.company_user_id,
-          freelancerUserId: payment.freelancer_user_id
-        },
-      });
+      // Best-effort log to payment_logs
+      try {
+        await supabaseAdmin.from("payment_logs").insert({
+          payment_id: paymentId,
+          action: "release_no_contract",
+          admin_user_id: isAdminOverride ? user.id : null,
+          details: { 
+            reason: "No contract found - manual reconciliation required",
+            projectId: payment.project_id,
+            companyUserId: payment.company_user_id,
+            freelancerUserId: payment.freelancer_user_id
+          },
+        });
+      } catch (logError) {
+        logStep("Warning: Failed to log to payment_logs", { error: String(logError) });
+      }
 
       return new Response(JSON.stringify({ 
         error: "No contract found for this payment. Manual reconciliation required.",
@@ -152,7 +170,7 @@ serve(async (req) => {
     logStep("Contract found", { contractId: contract.id });
 
     // =========================================================================
-    // STEP 2: Capture the payment in Stripe (idempotent)
+    // STEP 3: Capture the payment in Stripe (idempotent)
     // =========================================================================
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { 
       apiVersion: "2025-08-27.basil" 
@@ -173,7 +191,7 @@ serve(async (req) => {
     }
 
     // =========================================================================
-    // STEP 3: Call RPC to update balances (REQUIRED)
+    // STEP 4: Call RPC to update balances (REQUIRED - with p_payment_id)
     // =========================================================================
     const { data: releaseResult, error: releaseError } = await supabaseAdmin.rpc(
       'release_escrow_to_earnings',
@@ -181,9 +199,9 @@ serve(async (req) => {
         p_company_user_id: payment.company_user_id,
         p_freelancer_user_id: payment.freelancer_user_id,
         p_contract_id: contract.id,
-        p_amount: payment.amount,
+        p_amount: payment.amount,  // Uses same unit as DB (no conversion)
         p_context: 'legacy_release_payment:' + paymentId,
-        p_payment_id: paymentId
+        p_payment_id: paymentId  // UUID for idempotency
       }
     );
 
@@ -192,17 +210,22 @@ serve(async (req) => {
         error: releaseError.message, paymentId, contractId: contract.id, amount: payment.amount
       });
       
-      await supabaseAdmin.from("payment_logs").insert({
-        payment_id: paymentId,
-        action: "release_rpc_failed",
-        admin_user_id: isAdminOverride ? user.id : null,
-        details: { 
-          error: releaseError.message,
-          contractId: contract.id,
-          amount: payment.amount,
-          stripePaymentIntentId: payment.stripe_payment_intent_id
-        },
-      });
+      // Best-effort log to payment_logs
+      try {
+        await supabaseAdmin.from("payment_logs").insert({
+          payment_id: paymentId,
+          action: "release_rpc_failed",
+          admin_user_id: isAdminOverride ? user.id : null,
+          details: { 
+            error: releaseError.message,
+            contractId: contract.id,
+            amount: payment.amount,
+            stripePaymentIntentId: payment.stripe_payment_intent_id
+          },
+        });
+      } catch (logError) {
+        logStep("Warning: Failed to log to payment_logs", { error: String(logError) });
+      }
 
       return new Response(JSON.stringify({ 
         error: `Failed to update balances: ${releaseError.message}. Manual reconciliation required.`,
@@ -217,7 +240,8 @@ serve(async (req) => {
     logStep("Balances updated via RPC", { releaseResult, contractId: contract.id });
 
     // =========================================================================
-    // STEP 4: Update payment status (only if RPC succeeded)
+    // STEP 5: Update payment status (only if RPC succeeded)
+    // Conditional update prevents race conditions
     // =========================================================================
     const { data: updateResult, error: updateError } = await supabaseAdmin
       .from("payments")
@@ -228,7 +252,7 @@ serve(async (req) => {
         updated_at: new Date().toISOString() 
       })
       .eq("id", paymentId)
-      .eq("status", "paid")
+      .eq("status", "paid")  // Conditional - only if still 'paid'
       .select();
 
     if (updateError) {
@@ -250,36 +274,47 @@ serve(async (req) => {
 
     logStep("Payment status updated to released", { paymentId });
 
+    // =========================================================================
+    // STEP 6: Admin audit log (best-effort)
+    // =========================================================================
     if (isAdminOverride) {
-      await supabaseAdmin.from("payment_logs").insert({
-        payment_id: paymentId,
-        action: "admin_release",
-        admin_user_id: user.id,
-        details: { reason: "Admin override release" },
-      });
-      logStep("Admin override logged");
+      try {
+        await supabaseAdmin.from("payment_logs").insert({
+          payment_id: paymentId,
+          action: "admin_release",
+          admin_user_id: user.id,
+          details: { reason: "Admin override release" },
+        });
+        logStep("Admin override logged");
+      } catch (logError) {
+        logStep("Warning: Failed to log admin override", { error: String(logError) });
+      }
     }
 
     // =========================================================================
-    // STEP 5: Notify freelancer (with deduplication)
+    // STEP 7: Notify freelancer (best-effort, with deduplication)
     // =========================================================================
     if (payment.freelancer_user_id) {
-      const { data: existingNotification } = await supabaseAdmin
-        .from("notifications")
-        .select("id")
-        .eq("user_id", payment.freelancer_user_id)
-        .eq("type", "payment_released")
-        .gte("created_at", new Date(Date.now() - 60000).toISOString())
-        .maybeSingle();
+      try {
+        const { data: existingNotification } = await supabaseAdmin
+          .from("notifications")
+          .select("id")
+          .eq("user_id", payment.freelancer_user_id)
+          .eq("type", "payment_released")
+          .gte("created_at", new Date(Date.now() - 60000).toISOString())
+          .maybeSingle();
 
-      if (!existingNotification) {
-        await supabaseAdmin.from("notifications").insert({
-          user_id: payment.freelancer_user_id,
-          type: "payment_released",
-          message: `Payment of $${payment.amount} has been released to you!`,
-          link: "/earnings",
-        });
-        logStep("Freelancer notified");
+        if (!existingNotification) {
+          await supabaseAdmin.from("notifications").insert({
+            user_id: payment.freelancer_user_id,
+            type: "payment_released",
+            message: `Payment has been released to your earnings!`,
+            link: "/earnings",
+          });
+          logStep("Freelancer notified");
+        }
+      } catch (notifyError) {
+        logStep("Warning: Failed to notify freelancer", { error: String(notifyError) });
       }
     }
 

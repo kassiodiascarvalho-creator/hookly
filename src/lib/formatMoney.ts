@@ -164,3 +164,87 @@ export function getCurrencySymbol(currency: string): string {
 export function isSupportedCurrency(currency: string): boolean {
   return currency in CURRENCY_CONFIG;
 }
+
+/**
+ * Format a monetary value with DYNAMIC decimal display
+ * 
+ * Shows decimals only when the value has cents:
+ * - 10 -> "R$ 10"
+ * - 5.5 -> "R$ 5,50"
+ * - 0.05 -> "R$ 0,05"
+ * - -1.25 -> "-R$ 1,25"
+ * 
+ * @param amount - The amount (can be string or number from Supabase NUMERIC)
+ * @param currency - ISO 4217 currency code (e.g., 'USD', 'BRL', 'EUR')
+ * @param locale - Optional locale override (defaults to currency's locale)
+ * @returns Formatted currency string with dynamic decimals
+ */
+export function formatMoneyDynamic(
+  amount: string | number | null | undefined,
+  currency: string = 'BRL',
+  locale?: string
+): string {
+  // Handle invalid/missing values
+  if (amount === null || amount === undefined) {
+    return '—';
+  }
+  
+  // Convert string to number (Supabase NUMERIC often comes as string)
+  const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+  
+  if (isNaN(numericAmount)) {
+    console.error('[formatMoneyDynamic] Invalid amount:', amount, 'currency:', currency);
+    return '—';
+  }
+  
+  const config = CURRENCY_CONFIG[currency] || { symbol: currency, locale: 'pt-BR', decimals: 2 };
+  const useLocale = locale || config.locale;
+  
+  // Detect if value has cents (fractional part)
+  // Using epsilon comparison for floating point safety
+  const hasCents = Math.abs(numericAmount - Math.trunc(numericAmount)) > 1e-9;
+  
+  // For zero-decimal currencies (JPY, KRW, etc.), never show decimals
+  const maxDecimals = config.decimals;
+  const minDecimals = hasCents ? Math.min(2, maxDecimals) : 0;
+  
+  try {
+    return new Intl.NumberFormat(useLocale, {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: minDecimals,
+      maximumFractionDigits: maxDecimals,
+    }).format(numericAmount);
+  } catch (error) {
+    console.error('[formatMoneyDynamic] Formatting error:', error, 'currency:', currency);
+    // Fallback formatting
+    const formatted = hasCents 
+      ? numericAmount.toFixed(2) 
+      : Math.trunc(numericAmount).toString();
+    return `${config.symbol} ${formatted}`;
+  }
+}
+
+/**
+ * Format a monetary value from MINOR UNITS (cents) with DYNAMIC decimal display
+ * 
+ * Similar to formatMoneyDynamic but converts from cents first.
+ * Shows decimals only when the converted value has cents.
+ * 
+ * @param amountMinor - The amount in minor units (cents) as stored in database
+ * @param currency - ISO 4217 currency code
+ * @param locale - Optional locale override
+ * @returns Formatted currency string with dynamic decimals
+ */
+export function formatMoneyFromCentsDynamic(
+  amountMinor: number | null | undefined,
+  currency: string = 'USD',
+  locale?: string
+): string {
+  if (amountMinor === null || amountMinor === undefined || isNaN(amountMinor)) {
+    return '—';
+  }
+  
+  const amountMajor = minorToMajor(amountMinor, currency);
+  return formatMoneyDynamic(amountMajor, currency, locale);
+}
