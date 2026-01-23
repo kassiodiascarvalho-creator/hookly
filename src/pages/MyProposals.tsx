@@ -241,21 +241,21 @@ export default function MyProposals() {
                         </div>
                         
                         <div className="text-right">
-                          {/* Show original proposal value */}
                           <div className="text-lg font-semibold text-primary">
                             {formatMoney(totalAmount, proposal.project?.currency || "USD")}
                           </div>
                           <p className="text-xs text-muted-foreground">{t("myProposals.yourBid")}</p>
                           
-                          {/* Show agreed amount when different from original (negotiation occurred) */}
-                          {proposal.agreed_amount_cents !== null &&
-                            proposal.agreed_amount_cents !== undefined &&
-                            proposal.agreed_amount_cents !== totalAmount * 100 && (
+                          {/* Show agreed amount for accepted negotiations (counter-proposal path) */}
+                          {proposal.status === "accepted" &&
+                            (proposal.was_counterproposal || proposal.is_counterproposal) &&
+                            proposal.agreed_amount_cents !== null &&
+                            proposal.agreed_amount_cents !== undefined && (
                               <div className="mt-2 pt-2 border-t border-border">
-                                <div className="text-lg font-semibold text-green-600 dark:text-green-400">
+                                <div className="text-lg font-semibold text-success">
                                   {formatMoneyFromCents(proposal.agreed_amount_cents, proposal.project?.currency || "USD")}
                                 </div>
-                                <p className="text-xs text-muted-foreground">{t("myProposals.agreedAmount", "Valor Acordado")}</p>
+                                <p className="text-xs text-success/80">{t("myProposals.agreedAmount", "Valor Acordado")}</p>
                               </div>
                             )}
                         </div>
