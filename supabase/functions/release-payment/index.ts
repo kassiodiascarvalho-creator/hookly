@@ -198,7 +198,8 @@ serve(async (req) => {
           p_freelancer_user_id: payment.freelancer_user_id,
           p_contract_id: contract.id,
           p_amount: amountNumeric,
-          p_context: 'legacy_release_payment'
+          p_context: 'legacy_release_payment:' + paymentId,
+          p_payment_id: paymentId // Pass payment ID for idempotency
         }
       );
 

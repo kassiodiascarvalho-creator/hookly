@@ -125,6 +125,12 @@ export function WithdrawalRequestModal({
   const handleSubmit = async () => {
     if (!user || !validateForm()) return;
     
+    // Prevent double-click: if already submitting, ignore
+    if (submitting) {
+      console.log('[WithdrawalRequest] Already submitting, ignoring duplicate call');
+      return;
+    }
+    
     setSubmitting(true);
     setError(null);
 
@@ -145,7 +151,14 @@ export function WithdrawalRequestModal({
         p_payout_method_id: selectedMethodId
       });
 
-      if (rpcError) throw rpcError;
+      if (rpcError) {
+        // Handle specific error cases
+        if (rpcError.message?.includes('Insufficient')) {
+          setError(t("earnings.withdrawal.exceedsBalance"));
+          throw new Error(t("earnings.withdrawal.exceedsBalance"));
+        }
+        throw rpcError;
+      }
 
       toast.success(t("earnings.withdrawal.success"));
       onOpenChange(false);

@@ -126,6 +126,12 @@ export default function MilestonePayment({
   };
 
   const handleReleasePayment = async (paymentId: string) => {
+    // Prevent double-click: if already releasing this payment, ignore
+    if (releasingPayment === paymentId) {
+      console.log('[MilestonePayment] Already releasing this payment, ignoring duplicate call');
+      return;
+    }
+    
     setReleasingPayment(paymentId);
     setConfirmReleaseId(null);
 
@@ -135,8 +141,16 @@ export default function MilestonePayment({
       });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
-      toast.success(t("payments.released"));
+      // Handle idempotent response - still show success
+      if (data?.alreadyReleased) {
+        console.log('[MilestonePayment] Payment was already released (idempotent)');
+        toast.success(t("payments.released"));
+      } else {
+        toast.success(t("payments.released"));
+      }
+      
       onPaymentComplete();
     } catch (error) {
       console.error("Release error:", error);

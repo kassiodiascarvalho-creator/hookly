@@ -144,6 +144,12 @@ export default function AdminPayments() {
   const handleReleasePayment = async () => {
     if (!selectedPayment) return;
     
+    // Prevent double-click
+    if (releasing) {
+      console.log('[AdminPayments] Already releasing, ignoring duplicate call');
+      return;
+    }
+    
     setReleasing(true);
     try {
       const { data, error } = await supabase.functions.invoke("release-payment", {
@@ -151,7 +157,12 @@ export default function AdminPayments() {
       });
 
       if (error) throw error;
-      if (data.error) throw new Error(data.error);
+      if (data?.error) throw new Error(data.error);
+
+      // Handle idempotent response
+      if (data?.alreadyReleased) {
+        console.log('[AdminPayments] Payment was already released (idempotent)');
+      }
 
       toast.success(t("admin.paymentReleased"));
       setConfirmOpen(false);
