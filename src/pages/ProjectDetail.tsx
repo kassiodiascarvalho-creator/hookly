@@ -212,61 +212,54 @@ export default function ProjectDetail() {
     if (!project || !user) return;
     setActionLoading(proposalId);
 
-    // Update proposal status
-    const { error: proposalError } = await supabase
-      .from("proposals")
-      .update({ status: "accepted" })
-      .eq("id", proposalId);
+    try {
+      // Usar RPC centralizada - fonte única de verdade
+      // Esta RPC: atualiza proposal, projeto, cria/atualiza contrato, recalcula milestones
+      const { data: contractId, error: rpcError } = await supabase.rpc(
+        "finalize_proposal_acceptance",
+        { p_proposal_id: proposalId }
+      );
 
-    if (proposalError) {
-      toast.error(proposalError.message);
-      setActionLoading(null);
-      return;
-    }
+      if (rpcError) throw rpcError;
 
-    // Update project status
-    const { error: projectError } = await supabase
-      .from("projects")
-      .update({ status: "in_progress" })
-      .eq("id", project.id);
+      // Create or get conversation
+      const { data: existingConv } = await supabase
+        .from("conversations")
+        .select("id")
+        .eq("company_user_id", user.id)
+        .eq("freelancer_user_id", freelancerUserId)
+        .eq("project_id", project.id)
+        .maybeSingle();
 
-    if (projectError) {
-      toast.error(projectError.message);
-      setActionLoading(null);
-      return;
-    }
+      if (!existingConv) {
+        await supabase.from("conversations").insert({
+          company_user_id: user.id,
+          freelancer_user_id: freelancerUserId,
+          project_id: project.id,
+        });
+      }
 
-    // Create or get conversation
-    const { data: existingConv } = await supabase
-      .from("conversations")
-      .select("id")
-      .eq("company_user_id", user.id)
-      .eq("freelancer_user_id", freelancerUserId)
-      .eq("project_id", project.id)
-      .maybeSingle();
-
-    if (!existingConv) {
-      await supabase.from("conversations").insert({
-        company_user_id: user.id,
-        freelancer_user_id: freelancerUserId,
-        project_id: project.id,
+      // Create notification for freelancer
+      await supabase.from("notifications").insert({
+        user_id: freelancerUserId,
+        type: "proposal_accepted",
+        message: `Your proposal for "${project.title}" has been accepted!`,
+        link: `/contracts`,
       });
+
+      toast.success(t("proposals.accepted"));
+      
+      // Refetch para garantir dados atualizados do backend
+      fetchProposals();
+      fetchProject();
+      fetchContractAgreedAmount();
+      
+    } catch (error) {
+      console.error("Error accepting proposal:", error);
+      toast.error(t("common.error", "An error occurred"));
+    } finally {
+      setActionLoading(null);
     }
-
-    // Create notification for freelancer
-    await supabase.from("notifications").insert({
-      user_id: freelancerUserId,
-      type: "proposal_accepted",
-      message: `Your proposal for "${project.title}" has been accepted!`,
-      link: `/messages`,
-    });
-
-    toast.success(t("proposals.accepted"));
-    setProject({ ...project, status: "in_progress" });
-    setProposals(proposals.map(p => 
-      p.id === proposalId ? { ...p, status: "accepted" } : p
-    ));
-    setActionLoading(null);
   };
 
   const handleRejectProposal = async (proposalId: string, freelancerUserId: string) => {
