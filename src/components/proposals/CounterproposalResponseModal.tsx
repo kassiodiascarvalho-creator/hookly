@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
 import { 
   Check, 
   X, 
@@ -21,7 +22,7 @@ import {
   DollarSign,
   Loader2
 } from "lucide-react";
-import { formatMoney } from "@/lib/formatMoney";
+import { formatMoney, majorToMinor, getCurrencySymbol } from "@/lib/formatMoney";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -100,9 +101,16 @@ export function CounterproposalResponseModal({
       return;
     }
 
-    if (responseType === "negotiating" && !feedback.trim()) {
-      toast.error(t("counterproposal.negotiationFeedbackRequired", "Please explain your negotiation terms"));
-      return;
+    if (responseType === "negotiating") {
+      if (!feedback.trim()) {
+        toast.error(t("counterproposal.negotiationFeedbackRequired", "Please explain your negotiation terms"));
+        return;
+      }
+      const parsedAmount = parseFloat(suggestedAmount);
+      if (isNaN(parsedAmount) || parsedAmount <= 0) {
+        toast.error(t("counterproposal.amountRequired", "Please enter a valid proposed amount"));
+        return;
+      }
     }
 
     setLoading(true);
@@ -137,6 +145,13 @@ export function CounterproposalResponseModal({
           company_response_at: new Date().toISOString(),
           company_feedback: feedback.trim() || null,
         };
+
+        // If negotiating, also save the proposed amount
+        if (responseType === "negotiating") {
+          const parsedAmount = parseFloat(suggestedAmount);
+          updateData.current_offer_cents = majorToMinor(parsedAmount, project.currency);
+          updateData.current_offer_by = "company";
+        }
 
         const { error } = await supabase
           .from("proposals")
@@ -307,31 +322,60 @@ export function CounterproposalResponseModal({
 
           {/* Feedback/Negotiation Terms */}
           {(responseType === "negotiating" || responseType === "rejected") && (
-            <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
-              <Label htmlFor="feedback">
-                {responseType === "negotiating" 
-                  ? t("counterproposal.negotiationTerms", "Your Negotiation Terms *")
-                  : t("counterproposal.rejectionFeedback", "Rejection Feedback *")
-                }
-              </Label>
-              <Textarea
-                id="feedback"
-                value={feedback}
-                onChange={(e) => setFeedback(e.target.value)}
-                placeholder={
-                  responseType === "negotiating"
-                    ? t("counterproposal.negotiationPlaceholder", "Explain your preferred terms, suggest a different amount, or propose scope changes...")
-                    : t("counterproposal.rejectionPlaceholder", "Explain why this counter-proposal doesn't work for your project...")
-                }
-                rows={4}
-                className="resize-none"
-              />
-              <p className="text-xs text-muted-foreground">
-                {responseType === "negotiating"
-                  ? t("counterproposal.negotiationHint", "Be specific about what changes you'd accept")
-                  : t("counterproposal.rejectionHint", "Constructive feedback helps freelancers improve future proposals")
-                }
-              </p>
+            <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+              {/* Proposed Amount - only for negotiating */}
+              {responseType === "negotiating" && (
+                <div className="space-y-2">
+                  <Label htmlFor="suggestedAmount">
+                    {t("counterproposal.proposedAmount", "Your Proposed Amount")} *
+                  </Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">
+                      {getCurrencySymbol(project.currency)}
+                    </span>
+                    <Input
+                      id="suggestedAmount"
+                      type="number"
+                      value={suggestedAmount}
+                      onChange={(e) => setSuggestedAmount(e.target.value)}
+                      placeholder={t("counterproposal.amountPlaceholder", "Ex: 900")}
+                      className="pl-10"
+                      min="0"
+                      step="0.01"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {t("counterproposal.amountHint", "Enter the amount you're willing to pay for this project")}
+                  </p>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="feedback">
+                  {responseType === "negotiating" 
+                    ? t("counterproposal.negotiationTerms", "Your Negotiation Terms *")
+                    : t("counterproposal.rejectionFeedback", "Rejection Feedback *")
+                  }
+                </Label>
+                <Textarea
+                  id="feedback"
+                  value={feedback}
+                  onChange={(e) => setFeedback(e.target.value)}
+                  placeholder={
+                    responseType === "negotiating"
+                      ? t("counterproposal.negotiationPlaceholder", "Explain your preferred terms, suggest a different amount, or propose scope changes...")
+                      : t("counterproposal.rejectionPlaceholder", "Explain why this counter-proposal doesn't work for your project...")
+                  }
+                  rows={4}
+                  className="resize-none"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {responseType === "negotiating"
+                    ? t("counterproposal.negotiationHint", "Be specific about what changes you'd accept")
+                    : t("counterproposal.rejectionHint", "Constructive feedback helps freelancers improve future proposals")
+                  }
+                </p>
+              </div>
             </div>
           )}
 

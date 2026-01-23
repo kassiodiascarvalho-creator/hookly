@@ -2027,6 +2027,8 @@ export type Database = {
           counterproposal_justification: string | null
           cover_letter: string | null
           created_at: string
+          current_offer_by: string | null
+          current_offer_cents: number | null
           freelancer_user_id: string
           highlighted_at: string | null
           id: string
@@ -2045,6 +2047,8 @@ export type Database = {
           counterproposal_justification?: string | null
           cover_letter?: string | null
           created_at?: string
+          current_offer_by?: string | null
+          current_offer_cents?: number | null
           freelancer_user_id: string
           highlighted_at?: string | null
           id?: string
@@ -2063,6 +2067,8 @@ export type Database = {
           counterproposal_justification?: string | null
           cover_letter?: string | null
           created_at?: string
+          current_offer_by?: string | null
+          current_offer_cents?: number | null
           freelancer_user_id?: string
           highlighted_at?: string | null
           id?: string
