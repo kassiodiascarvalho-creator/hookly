@@ -11,7 +11,7 @@ import {
   CreditCard, Ticket, Landmark, ArrowDownToLine, Info, Sparkles, Rocket
 } from "lucide-react";
 import { format } from "date-fns";
-import { formatMoney, formatMoneyDynamic } from "@/lib/formatMoney";
+import { formatMoney, formatMoneyFromCents } from "@/lib/formatMoney";
 import {
   Table,
   TableBody,
@@ -162,10 +162,10 @@ export default function CompanyFinances() {
     return <Badge variant="outline">{payment.status}</Badge>;
   };
 
-  // Safe display for zero/empty values - uses dynamic decimals
+  // Safe display for zero/empty values - uses standard formatting
   const formatSafeValue = (value: number, currency: string) => {
     if (value === 0) return t("finances.noData");
-    return formatMoneyDynamic(value, currency);
+    return formatMoney(value, currency);
   };
 
   if (loading) {
