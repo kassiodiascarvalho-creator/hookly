@@ -2690,16 +2690,28 @@ export type Database = {
         Returns: boolean
       }
       publish_project: { Args: { p_project_id: string }; Returns: Json }
-      release_escrow_to_earnings: {
-        Args: {
-          p_amount: number
-          p_company_user_id: string
-          p_context?: string
-          p_contract_id: string
-          p_freelancer_user_id: string
-        }
-        Returns: boolean
-      }
+      release_escrow_to_earnings:
+        | {
+            Args: {
+              p_amount: number
+              p_company_user_id: string
+              p_context?: string
+              p_contract_id: string
+              p_freelancer_user_id: string
+            }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              p_amount: number
+              p_company_user_id: string
+              p_context?: string
+              p_contract_id: string
+              p_freelancer_user_id: string
+              p_payment_id?: string
+            }
+            Returns: boolean
+          }
       request_withdrawal: {
         Args: {
           p_amount: number
