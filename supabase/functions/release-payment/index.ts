@@ -24,7 +24,8 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabaseClient = createClient(
+  // Create admin client for database operations
+  const supabaseAdmin = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
   );
@@ -38,7 +39,7 @@ serve(async (req) => {
     }
     
     const token = authHeader.replace("Bearer ", "");
-    const { data } = await supabaseClient.auth.getUser(token);
+    const { data } = await supabaseAdmin.auth.getUser(token);
     const user = data.user;
     if (!user) throw new Error("User not authenticated");
     logStep("User authenticated", { userId: user.id });
@@ -65,7 +66,7 @@ serve(async (req) => {
     logStep("Request validated", { paymentId });
 
     // Get payment record
-    const { data: payment, error: paymentError } = await supabaseClient
+    const { data: payment, error: paymentError } = await supabaseAdmin
       .from("payments")
       .select("*")
       .eq("id", paymentId)
@@ -75,7 +76,7 @@ serve(async (req) => {
       throw new Error("Payment not found");
     }
 
-    // IDEMPOTENCY CHECK: If already released, return success (idempotent)
+    // IDEMPOTENCY CHECK: If already released, return success
     if (payment.status === 'released') {
       logStep("Payment already released - idempotent return", { paymentId });
       return new Response(JSON.stringify({ 
@@ -89,7 +90,7 @@ serve(async (req) => {
     }
 
     // Check if user is admin
-    const { data: isAdminResult } = await supabaseClient.rpc('is_admin');
+    const { data: isAdminResult } = await supabaseAdmin.rpc('is_admin');
     const isAdmin = isAdminResult === true;
     logStep("Admin check", { isAdmin });
 
@@ -114,38 +115,129 @@ serve(async (req) => {
       apiVersion: "2025-08-27.basil" 
     });
 
-    // Capture the payment (release from escrow) - Stripe capture is idempotent
+    // =========================================================================
+    // STEP 1: Capture the payment in Stripe (idempotent)
+    // =========================================================================
     let paymentIntent;
     try {
       paymentIntent = await stripe.paymentIntents.capture(
         payment.stripe_payment_intent_id
       );
-      logStep("Payment captured", { paymentIntentId: paymentIntent.id });
+      logStep("Payment captured in Stripe", { paymentIntentId: paymentIntent.id });
     } catch (stripeError: unknown) {
-      // Handle already captured case (Stripe idempotency)
+      // Handle already captured case (Stripe is idempotent)
       const errorMessage = stripeError instanceof Error ? stripeError.message : String(stripeError);
       if (errorMessage.includes('already been captured') || errorMessage.includes('has already been')) {
         logStep("Payment already captured in Stripe - continuing", { paymentId });
-        // Retrieve the existing payment intent
         paymentIntent = await stripe.paymentIntents.retrieve(payment.stripe_payment_intent_id);
       } else {
         throw stripeError;
       }
     }
 
-    // Log admin override action if applicable
-    if (isAdminOverride) {
-      await supabaseClient.from("payment_logs").insert({
-        payment_id: paymentId,
-        action: "admin_release",
-        admin_user_id: user.id,
-        details: { reason: "Admin override release" },
+    // =========================================================================
+    // STEP 2: Find contract for this payment
+    // =========================================================================
+    const { data: contract, error: contractError } = await supabaseAdmin
+      .from("contracts")
+      .select("id")
+      .eq("project_id", payment.project_id)
+      .eq("company_user_id", payment.company_user_id)
+      .eq("freelancer_user_id", payment.freelancer_user_id)
+      .single();
+
+    if (contractError || !contract) {
+      // Log error but don't fail - log for manual reconciliation
+      logStep("WARNING: No contract found for payment - balance update will be skipped", { 
+        paymentId,
+        projectId: payment.project_id,
+        error: contractError?.message
       });
-      logStep("Admin override logged");
+      
+      // Log this for manual reconciliation
+      await supabaseAdmin.from("payment_logs").insert({
+        payment_id: paymentId,
+        action: "release_no_contract",
+        admin_user_id: isAdminOverride ? user.id : null,
+        details: { 
+          reason: "No contract found - manual reconciliation needed",
+          projectId: payment.project_id,
+          companyUserId: payment.company_user_id,
+          freelancerUserId: payment.freelancer_user_id
+        },
+      });
     }
 
-    // CONDITIONAL UPDATE: Only update if status is still 'paid' (prevents race condition)
-    const { data: updateResult, error: updateError } = await supabaseClient
+    // =========================================================================
+    // STEP 3: Call RPC to update balances (if contract exists)
+    // Uses p_payment_id for idempotency (advisory lock + metadata check)
+    // =========================================================================
+    let rpcSuccess = false;
+    if (contract) {
+      // payment.amount is already in the correct unit (as stored in payments table)
+      const { data: releaseResult, error: releaseError } = await supabaseAdmin.rpc(
+        'release_escrow_to_earnings',
+        {
+          p_company_user_id: payment.company_user_id,
+          p_freelancer_user_id: payment.freelancer_user_id,
+          p_contract_id: contract.id,
+          p_amount: payment.amount, // Use as-is, no unit conversion
+          p_context: 'legacy_release_payment:' + paymentId,
+          p_payment_id: paymentId // Enables idempotency in the RPC
+        }
+      );
+
+      if (releaseError) {
+        // Check if it's an "insufficient escrow" error
+        if (releaseError.message?.includes('Insufficient escrow')) {
+          logStep("ERROR: Insufficient escrow - cannot release", { 
+            error: releaseError.message,
+            paymentId,
+            amount: payment.amount
+          });
+          
+          // Log for reconciliation
+          await supabaseAdmin.from("payment_logs").insert({
+            payment_id: paymentId,
+            action: "release_insufficient_escrow",
+            admin_user_id: isAdminOverride ? user.id : null,
+            details: { 
+              error: releaseError.message,
+              amount: payment.amount,
+              contractId: contract.id
+            },
+          });
+          
+          // DON'T mark as released - return error for reconciliation
+          throw new Error(`Failed to release: ${releaseError.message}. Manual reconciliation required.`);
+        }
+        
+        // Other RPC errors - log but continue (Stripe already captured)
+        logStep("WARNING: RPC failed but Stripe captured - logging for reconciliation", { 
+          error: releaseError.message,
+          paymentId
+        });
+        
+        await supabaseAdmin.from("payment_logs").insert({
+          payment_id: paymentId,
+          action: "release_rpc_failed",
+          admin_user_id: isAdminOverride ? user.id : null,
+          details: { 
+            error: releaseError.message,
+            contractId: contract.id,
+            amount: payment.amount
+          },
+        });
+      } else {
+        rpcSuccess = true;
+        logStep("Balances updated via RPC", { releaseResult, contractId: contract.id });
+      }
+    }
+
+    // =========================================================================
+    // STEP 4: Update payment status (conditional - only if still 'paid')
+    // =========================================================================
+    const { data: updateResult, error: updateError } = await supabaseAdmin
       .from("payments")
       .update({ 
         status: "released", 
@@ -164,7 +256,7 @@ serve(async (req) => {
 
     // If no rows updated, another request already processed this
     if (!updateResult || updateResult.length === 0) {
-      logStep("Payment status already changed by another request - idempotent return", { paymentId });
+      logStep("Payment status already changed - idempotent return", { paymentId });
       return new Response(JSON.stringify({ 
         success: true, 
         alreadyReleased: true,
@@ -175,55 +267,25 @@ serve(async (req) => {
       });
     }
 
-    logStep("Payment status updated to released", { paymentId });
+    logStep("Payment status updated to released", { paymentId, rpcSuccess });
 
-    // Call release_escrow_to_earnings RPC to update user_balances and ledger
-    // First, get the contract for this payment
-    const { data: contract, error: contractError } = await supabaseClient
-      .from("contracts")
-      .select("id")
-      .eq("project_id", payment.project_id)
-      .eq("company_user_id", payment.company_user_id)
-      .eq("freelancer_user_id", payment.freelancer_user_id)
-      .single();
-
-    if (contract && !contractError) {
-      // Convert amount to proper format (payments.amount is in dollars, RPC expects numeric)
-      const amountNumeric = typeof payment.amount === 'number' ? payment.amount : parseFloat(payment.amount);
-      
-      const { data: releaseResult, error: releaseError } = await supabaseClient.rpc(
-        'release_escrow_to_earnings',
-        {
-          p_company_user_id: payment.company_user_id,
-          p_freelancer_user_id: payment.freelancer_user_id,
-          p_contract_id: contract.id,
-          p_amount: amountNumeric,
-          p_context: 'legacy_release_payment:' + paymentId,
-          p_payment_id: paymentId // Pass payment ID for idempotency
-        }
-      );
-
-      if (releaseError) {
-        logStep("Warning: Failed to update user_balances via RPC", { 
-          error: releaseError.message,
-          paymentId,
-          contractId: contract.id
-        });
-        // Don't throw - payment is already released in Stripe, log for manual reconciliation
-      } else {
-        logStep("User balances updated via RPC", { releaseResult, contractId: contract.id });
-      }
-    } else {
-      logStep("No contract found for payment - skipping balance update", { 
-        paymentId,
-        projectId: payment.project_id 
+    // Log admin override action if applicable
+    if (isAdminOverride) {
+      await supabaseAdmin.from("payment_logs").insert({
+        payment_id: paymentId,
+        action: "admin_release",
+        admin_user_id: user.id,
+        details: { reason: "Admin override release", rpcSuccess },
       });
+      logStep("Admin override logged");
     }
 
-    // Notify freelancer (with idempotency check)
+    // =========================================================================
+    // STEP 5: Notify freelancer (with deduplication)
+    // =========================================================================
     if (payment.freelancer_user_id) {
       // Check if notification already sent in last 60 seconds
-      const { data: existingNotification } = await supabaseClient
+      const { data: existingNotification } = await supabaseAdmin
         .from("notifications")
         .select("id")
         .eq("user_id", payment.freelancer_user_id)
@@ -232,7 +294,7 @@ serve(async (req) => {
         .maybeSingle();
 
       if (!existingNotification) {
-        await supabaseClient.from("notifications").insert({
+        await supabaseAdmin.from("notifications").insert({
           user_id: payment.freelancer_user_id,
           type: "payment_released",
           message: `Payment of $${payment.amount} has been released to you!`,
@@ -242,7 +304,12 @@ serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ success: true, paymentIntent }), {
+    return new Response(JSON.stringify({ 
+      success: true, 
+      paymentIntent,
+      rpcSuccess,
+      balancesUpdated: rpcSuccess
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
