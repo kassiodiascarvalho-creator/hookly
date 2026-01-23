@@ -124,25 +124,53 @@ export function FreelancerCounterproposalResponseModal({
         // Freelancer sends a new counter-argument with new proposed amount
         const proposedValue = parseFloat(newProposedAmount);
         
-        // Update milestones with the new proposed amount
-        // Keep the same milestone structure but update the amount proportionally
-        const updatedMilestones = milestones.length > 0
-          ? milestones.map((m, index) => {
-              if (milestones.length === 1) {
-                return { ...m, amount: proposedValue };
-              }
-              // Distribute proportionally for multiple milestones
-              const proportion = m.amount / totalProposed;
-              return { ...m, amount: Math.round(proposedValue * proportion) };
-            })
-          : [{ title: "Milestone 1", amount: proposedValue }];
+        // Update milestones with the new proposed amount using Largest Remainder Method
+        // This ensures the sum of milestone amounts exactly equals the proposed value
+        let updatedMilestones: Milestone[];
+
+        if (milestones.length === 0) {
+          updatedMilestones = [{ title: "Milestone 1", amount: proposedValue }];
+        } else if (milestones.length === 1) {
+          updatedMilestones = [{ ...milestones[0], amount: proposedValue }];
+        } else {
+          // Largest Remainder Method to distribute without rounding errors
+          const proportionalAmounts = milestones.map((m) => ({
+            milestone: m,
+            exactValue: (m.amount / totalProposed) * proposedValue,
+            floorValue: Math.floor((m.amount / totalProposed) * proposedValue),
+            remainder: ((m.amount / totalProposed) * proposedValue) % 1,
+          }));
+
+          // Sum of floor values
+          const floorSum = proportionalAmounts.reduce((sum, p) => sum + p.floorValue, 0);
+          
+          // How many units to distribute to reach exact total
+          const remainderUnits = Math.round(proposedValue) - floorSum;
+
+          // Sort by remainder descending to give extra units to those with highest fractional parts
+          const sorted = [...proportionalAmounts].sort((a, b) => b.remainder - a.remainder);
+
+          // Assign floor values, then add 1 to top 'remainderUnits' items
+          updatedMilestones = milestones.map((m) => {
+            const idx = sorted.findIndex((s) => s.milestone === m);
+            const baseAmount = proportionalAmounts.find((p) => p.milestone === m)!.floorValue;
+            const extra = idx < remainderUnits ? 1 : 0;
+            return { ...m, amount: baseAmount + extra };
+          });
+        }
+
+        const milestonesJson = updatedMilestones.map(m => ({
+          title: m.title,
+          amount: m.amount,
+          description: m.description,
+        }));
 
         const { error } = await supabase
           .from("proposals")
           .update({
             company_response: null, // Reset to allow company to respond again
             counterproposal_justification: newJustification,
-            milestones: updatedMilestones,
+            milestones: milestonesJson,
             current_offer_cents: majorToMinor(proposedValue, project.currency),
             current_offer_by: "freelancer",
           })
