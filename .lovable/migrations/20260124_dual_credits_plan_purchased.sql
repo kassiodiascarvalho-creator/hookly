@@ -60,12 +60,19 @@ BEGIN
     RETURN TRUE;
   END IF;
 
+  -- Lock row to prevent race conditions (FOR UPDATE)
   SELECT plan_balance, purchased_balance, user_type 
   INTO v_plan_balance, v_purchased_balance, v_user_type
   FROM platform_credits
   WHERE user_id = p_user_id
   FOR UPDATE;
 
+  -- If no record found, cannot proceed (avoids NULL user_type in log)
+  IF NOT FOUND THEN
+    RETURN FALSE;
+  END IF;
+
+  -- Calculate total locally (NEVER read balance column)
   v_plan_balance := COALESCE(v_plan_balance, 0);
   v_purchased_balance := COALESCE(v_purchased_balance, 0);
   v_total_balance := v_plan_balance + v_purchased_balance;
@@ -87,6 +94,7 @@ BEGIN
   v_new_purchased := v_purchased_balance - v_from_purchased;
   v_new_total := v_new_plan + v_new_purchased;
 
+  -- Update ONLY plan_balance and purchased_balance (trigger handles balance)
   UPDATE platform_credits
   SET plan_balance = v_new_plan,
       purchased_balance = v_new_purchased,
