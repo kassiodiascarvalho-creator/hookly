@@ -12,7 +12,7 @@ import { Search, Briefcase, DollarSign, Calendar, Loader2, Filter, Rocket } from
 import { format, isAfter } from "date-fns";
 import { BoostedBadge } from "@/components/projects/BoostedBadge";
 import { CompanyAvatar } from "@/components/company/CompanyAvatar";
-import { getEffectiveCompanyPlan, CompanyPlanType } from "@/hooks/useCompanyPlanData";
+import { fetchCompanyPlanBadges, CompanyPlanType } from "@/hooks/useCompanyPlanData";
 
 interface Project {
   id: string;
@@ -70,33 +70,23 @@ export default function FindProjects() {
       .order("created_at", { ascending: false });
 
     if (!error && data) {
-      // Fetch company info + plan for each project in a single query
+      // Fetch company info for each project
       const companyUserIds = [...new Set(data.map((p) => p.company_user_id))];
       
-      const [{ data: companies }, { data: plans }] = await Promise.all([
+      // Use parallel fetching: company profiles + plan badges via RPC
+      const [{ data: companies }, planMap] = await Promise.all([
         supabase
           .from("company_profiles")
           .select("user_id, company_name, logo_url")
           .in("user_id", companyUserIds),
-        supabase
-          .from("company_plans")
-          .select("company_user_id, plan_type, status, plan_source")
-          .in("company_user_id", companyUserIds),
+        fetchCompanyPlanBadges(companyUserIds), // Uses SECURITY DEFINER RPC - works for freelancers
       ]);
 
       const companyMap = new Map(companies?.map((c) => [c.user_id, c]) || []);
-      const planMap = new Map(plans?.map((p) => [p.company_user_id, p]) || []);
 
       const projectsWithCompany = data.map((project) => {
         const company = companyMap.get(project.company_user_id);
-        const plan = planMap.get(project.company_user_id);
-        
-        // Determine effective plan using centralized helper
-        const effectivePlanType = getEffectiveCompanyPlan(
-          plan?.plan_type || null,
-          plan?.status || null,
-          plan?.plan_source || null
-        );
+        const effectivePlanType = planMap.get(project.company_user_id) || "free";
 
         return {
           ...project,
