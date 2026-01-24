@@ -5,9 +5,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TieredAvatar } from "@/components/freelancer/TieredAvatar";
+import { CompanyAvatar } from "@/components/company/CompanyAvatar";
 import type { FreelancerTier } from "@/components/freelancer/TierBadge";
+import { useCompanyPlanData } from "@/hooks/useCompanyPlanData";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -66,6 +67,11 @@ export function DashboardLayout() {
   const [userType, setUserType] = useState<"company" | "freelancer" | null>(null);
   const [profile, setProfile] = useState<any>(null);
   const [freelancerTier, setFreelancerTier] = useState<FreelancerTier>("standard");
+
+  // Fetch company plan for header avatar ring + badge
+  const { planInfo: companyPlanInfo } = useCompanyPlanData(
+    userType === "company" ? user?.id : undefined
+  );
 
   useEffect(() => {
     if (user) {
@@ -315,12 +321,13 @@ export function DashboardLayout() {
                       showBadge={true}
                     />
                   ) : (
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={avatarUrl} />
-                      <AvatarFallback className="bg-primary text-primary-foreground">
-                        {displayName?.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
+                    <CompanyAvatar
+                      logoUrl={avatarUrl}
+                      companyName={displayName}
+                      planType={companyPlanInfo?.plan_type || "free"}
+                      size="sm"
+                      showBadge={true}
+                    />
                   )}
                   <span className="hidden sm:inline-block max-w-[120px] truncate">
                     {displayName}

@@ -12,7 +12,7 @@ import { Search, Briefcase, DollarSign, Calendar, Loader2, Filter, Rocket } from
 import { format, isAfter } from "date-fns";
 import { BoostedBadge } from "@/components/projects/BoostedBadge";
 import { CompanyAvatar } from "@/components/company/CompanyAvatar";
-import { CompanyPlanType } from "@/components/company/CompanyPlanBadge";
+import { getEffectiveCompanyPlan, CompanyPlanType } from "@/hooks/useCompanyPlanData";
 
 interface Project {
   id: string;
@@ -91,15 +91,12 @@ export default function FindProjects() {
         const company = companyMap.get(project.company_user_id);
         const plan = planMap.get(project.company_user_id);
         
-        // Determine effective plan based on source
-        let effectivePlanType: CompanyPlanType = "free";
-        if (plan) {
-          if (plan.plan_source === "manual") {
-            effectivePlanType = plan.plan_type as CompanyPlanType;
-          } else if (plan.plan_source === "stripe" && (plan.status === "active" || plan.status === "trialing")) {
-            effectivePlanType = plan.plan_type as CompanyPlanType;
-          }
-        }
+        // Determine effective plan using centralized helper
+        const effectivePlanType = getEffectiveCompanyPlan(
+          plan?.plan_type || null,
+          plan?.status || null,
+          plan?.plan_source || null
+        );
 
         return {
           ...project,

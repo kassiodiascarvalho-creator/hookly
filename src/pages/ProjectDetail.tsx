@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { 
   ArrowLeft, Briefcase, Clock, CheckCircle, FileText, Loader2, 
-  DollarSign, Calendar, Check, Flag, Sparkles
+  DollarSign, Calendar, Check, Flag, Sparkles, Building2
 } from "lucide-react";
 import { ReviewForm } from "@/components/reviews/ReviewForm";
 import { format } from "date-fns";
@@ -22,6 +22,8 @@ import { useProfileGate } from "@/hooks/useProfileGate";
 import { usePublishProject } from "@/hooks/usePublishProject";
 import { ProfileGateModal } from "@/components/profile/ProfileGateModal";
 import { ProfileGateAlert } from "@/components/profile/ProfileGateAlert";
+import { CompanyAvatar } from "@/components/company/CompanyAvatar";
+import { getEffectiveCompanyPlan, CompanyPlanType } from "@/hooks/useCompanyPlanData";
 
 interface Project {
   id: string;
@@ -35,6 +37,12 @@ interface Project {
   kpis: unknown;
   created_at: string;
   company_user_id: string;
+}
+
+interface CompanyInfo {
+  company_name: string | null;
+  logo_url: string | null;
+  plan_type: CompanyPlanType;
 }
 
 interface Proposal {
@@ -79,6 +87,7 @@ export default function ProjectDetail() {
   const { user } = useAuth();
   
   const [project, setProject] = useState<Project | null>(null);
+  const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [agreedAmountCents, setAgreedAmountCents] = useState<number | null>(null);
@@ -133,8 +142,45 @@ export default function ProjectDetail() {
       toast.error(error.message);
     } else if (data) {
       setProject(data);
+      // Fetch company info including plan (for freelancers viewing)
+      fetchCompanyInfo(data.company_user_id);
     }
     setLoading(false);
+  };
+
+  const fetchCompanyInfo = async (companyUserId: string) => {
+    try {
+      // Fetch company profile and plan in parallel
+      const [profileResult, planResult] = await Promise.all([
+        supabase
+          .from("company_profiles")
+          .select("company_name, logo_url")
+          .eq("user_id", companyUserId)
+          .maybeSingle(),
+        supabase
+          .from("company_plans")
+          .select("plan_type, status, plan_source")
+          .eq("company_user_id", companyUserId)
+          .maybeSingle(),
+      ]);
+
+      const company = profileResult.data;
+      const plan = planResult.data;
+
+      const effectivePlan = getEffectiveCompanyPlan(
+        plan?.plan_type || null,
+        plan?.status || null,
+        plan?.plan_source || null
+      );
+
+      setCompanyInfo({
+        company_name: company?.company_name || null,
+        logo_url: company?.logo_url || null,
+        plan_type: effectivePlan,
+      });
+    } catch (err) {
+      console.error("Error fetching company info:", err);
+    }
   };
 
   const fetchProposals = async () => {
@@ -450,6 +496,28 @@ export default function ProjectDetail() {
                   <p className="font-semibold">{proposals.length}</p>
                 </div>
               </div>
+
+              {/* Company Info - visible to freelancers viewing the project */}
+              {!isOwner && companyInfo && (
+                <div>
+                  <h3 className="font-medium mb-3 flex items-center gap-2">
+                    <Building2 className="h-4 w-4" />
+                    {t("projects.postedBy")}
+                  </h3>
+                  <div className="flex items-center gap-3 p-4 bg-muted rounded-lg">
+                    <CompanyAvatar
+                      logoUrl={companyInfo.logo_url}
+                      companyName={companyInfo.company_name}
+                      planType={companyInfo.plan_type}
+                      size="lg"
+                      showBadge={true}
+                    />
+                    <div>
+                      <p className="font-semibold">{companyInfo.company_name || t("projects.unknownCompany")}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {kpis.length > 0 && (
                 <div>

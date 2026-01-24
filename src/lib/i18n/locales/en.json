@@ -227,6 +227,8 @@
     "markComplete": "Mark as Complete",
     "completed": "Project marked as completed!",
     "currency": "Currency",
+    "postedBy": "Posted by",
+    "unknownCompany": "Unknown company",
     "validation": {
       "titleMin": "Title must be at least 5 characters",
       "descriptionMin": "Description must be at least 20 characters",
