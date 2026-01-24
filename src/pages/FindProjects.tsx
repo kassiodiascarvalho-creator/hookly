@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, Briefcase, DollarSign, Calendar, Loader2, Filter, Rocket } from "lucide-react";
 import { format, isAfter } from "date-fns";
 import { BoostedBadge } from "@/components/projects/BoostedBadge";
+import { CompanyAvatar } from "@/components/company/CompanyAvatar";
+import { CompanyPlanType } from "@/components/company/CompanyPlanBadge";
 
 interface Project {
   id: string;
@@ -25,6 +27,7 @@ interface Project {
   company?: {
     company_name: string | null;
     logo_url: string | null;
+    plan_type?: CompanyPlanType;
   };
   _hasProposal?: boolean;
 }
@@ -67,17 +70,45 @@ export default function FindProjects() {
       .order("created_at", { ascending: false });
 
     if (!error && data) {
-      // Fetch company info for each project
-      const projectsWithCompany = await Promise.all(
-        data.map(async (project) => {
-          const { data: company } = await supabase
-            .from("company_profiles")
-            .select("company_name, logo_url")
-            .eq("user_id", project.company_user_id)
-            .maybeSingle();
-          return { ...project, company };
-        })
-      );
+      // Fetch company info + plan for each project in a single query
+      const companyUserIds = [...new Set(data.map((p) => p.company_user_id))];
+      
+      const [{ data: companies }, { data: plans }] = await Promise.all([
+        supabase
+          .from("company_profiles")
+          .select("user_id, company_name, logo_url")
+          .in("user_id", companyUserIds),
+        supabase
+          .from("company_plans")
+          .select("company_user_id, plan_type, status, plan_source")
+          .in("company_user_id", companyUserIds),
+      ]);
+
+      const companyMap = new Map(companies?.map((c) => [c.user_id, c]) || []);
+      const planMap = new Map(plans?.map((p) => [p.company_user_id, p]) || []);
+
+      const projectsWithCompany = data.map((project) => {
+        const company = companyMap.get(project.company_user_id);
+        const plan = planMap.get(project.company_user_id);
+        
+        // Determine effective plan based on source
+        let effectivePlanType: CompanyPlanType = "free";
+        if (plan) {
+          if (plan.plan_source === "manual") {
+            effectivePlanType = plan.plan_type as CompanyPlanType;
+          } else if (plan.plan_source === "stripe" && (plan.status === "active" || plan.status === "trialing")) {
+            effectivePlanType = plan.plan_type as CompanyPlanType;
+          }
+        }
+
+        return {
+          ...project,
+          company: company
+            ? { ...company, plan_type: effectivePlanType }
+            : undefined,
+        };
+      });
+      
       setProjects(projectsWithCompany);
     }
     setLoading(false);
@@ -225,10 +256,19 @@ export default function FindProjects() {
                           </span>
                         </div>
                         
-                        {project.company?.company_name && (
-                          <p className="text-sm text-muted-foreground mt-2">
-                            {t("findProjects.postedBy")}: {project.company.company_name}
-                          </p>
+                        {project.company && (
+                          <div className="flex items-center gap-2 mt-2">
+                            <CompanyAvatar
+                              logoUrl={project.company.logo_url}
+                              companyName={project.company.company_name}
+                              planType={project.company.plan_type}
+                              size="sm"
+                              showBadge={true}
+                            />
+                            <span className="text-sm text-muted-foreground">
+                              {project.company.company_name || t("findProjects.unknownCompany")}
+                            </span>
+                          </div>
                         )}
                       </div>
                       

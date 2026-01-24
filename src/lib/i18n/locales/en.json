@@ -1087,7 +1087,9 @@
     "signOut": "Sign Out",
     "comingSoon": "Coming soon",
     "days": "days",
-    "later": "Later"
+    "later": "Later",
+    "retry": "Retry",
+    "verified": "Verified"
   },
   "profileGate": {
     "title": "Complete Your Profile",
@@ -1555,6 +1557,42 @@
       "howSendProposal": "How to send a proposal?",
       "whereEarnings": "Where are my earnings?"
     }
+  },
+  "billing": {
+    "subscriptionInfo": "Subscription Info",
+    "status": "Status",
+    "currentPeriod": "Current Period",
+    "cancelsAt": "Cancels at",
+    "upcomingCharge": "Upcoming Charge",
+    "dueOn": "Due on",
+    "invoiceHistory": "Invoice History",
+    "invoiceHistoryDesc": "View and download your past invoices",
+    "noInvoicesYet": "No invoices yet",
+    "noInvoicesDesc": "Your invoices will appear here after your first payment",
+    "invoice": "Invoice",
+    "date": "Date",
+    "amount": "Amount",
+    "actions": "Actions",
+    "pay": "Pay",
+    "paymentMethod": "Payment Method",
+    "paymentMethodDesc": "Manage your credit or debit card",
+    "managePaymentMethod": "Manage Payment Method",
+    "pastDueWarning": "Payment overdue!",
+    "pastDueDescription": "Update your payment method to avoid service suspension.",
+    "updatePayment": "Update Payment",
+    "errorLoading": "Error loading billing information",
+    "errorOpeningPortal": "Error opening payment portal",
+    "planSource": {
+      "manual": "Manual (Admin)",
+      "stripe": "Stripe"
+    },
+    "planActive": "Active plan",
+    "freePlan": "Free plan"
+  },
+  "tiers": {
+    "standard": "Standard",
+    "pro": "Pro",
+    "top_rated": "Top Rated"
   },
   "ai": {
     "primaryRecommendation": "Top Pick",

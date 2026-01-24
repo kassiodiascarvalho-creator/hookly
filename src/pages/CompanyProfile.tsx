@@ -5,12 +5,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   MapPin, Globe, Building, Users, CheckCircle, 
   Loader2, ExternalLink, Briefcase, Star
 } from "lucide-react";
 import { normalizeUrl } from "@/lib/normalizeUrl";
+import { CompanyAvatar } from "@/components/company/CompanyAvatar";
+import { CompanyPlanType, CompanyPlanBadge } from "@/components/company/CompanyPlanBadge";
 
 interface CompanyData {
   id: string;
@@ -41,6 +42,7 @@ export default function CompanyProfile() {
 
   const [loading, setLoading] = useState(true);
   const [company, setCompany] = useState<CompanyData | null>(null);
+  const [planType, setPlanType] = useState<CompanyPlanType>("free");
   const [stats, setStats] = useState<CompanyStats>({ 
     totalProjects: 0, 
     totalPaid: 0, 
@@ -57,12 +59,19 @@ export default function CompanyProfile() {
   const fetchCompanyData = async () => {
     if (!userId) return;
 
-    // Fetch company profile
-    const { data: companyData, error } = await supabase
-      .from("company_profiles")
-      .select("*")
-      .eq("user_id", userId)
-      .single();
+    // Fetch company profile and plan in parallel
+    const [{ data: companyData, error }, { data: planData }] = await Promise.all([
+      supabase
+        .from("company_profiles")
+        .select("*")
+        .eq("user_id", userId)
+        .single(),
+      supabase
+        .from("company_plans")
+        .select("plan_type, status, plan_source")
+        .eq("company_user_id", userId)
+        .maybeSingle(),
+    ]);
 
     if (error || !companyData) {
       setLoading(false);
@@ -70,6 +79,17 @@ export default function CompanyProfile() {
     }
 
     setCompany(companyData);
+    
+    // Determine effective plan
+    if (planData) {
+      let effectivePlan: CompanyPlanType = "free";
+      if (planData.plan_source === "manual") {
+        effectivePlan = planData.plan_type as CompanyPlanType;
+      } else if (planData.plan_source === "stripe" && (planData.status === "active" || planData.status === "trialing")) {
+        effectivePlan = planData.plan_type as CompanyPlanType;
+      }
+      setPlanType(effectivePlan);
+    }
 
     // Fetch stats
     const { data: projects } = await supabase
@@ -129,18 +149,22 @@ export default function CompanyProfile() {
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row gap-6">
-            <Avatar className="h-24 w-24">
-              <AvatarImage src={company.logo_url || undefined} />
-              <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
-                {company.company_name?.charAt(0) || "C"}
-              </AvatarFallback>
-            </Avatar>
+            <CompanyAvatar
+              logoUrl={company.logo_url}
+              companyName={company.company_name}
+              planType={planType}
+              size="xl"
+              showBadge={true}
+            />
 
             <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
                 <h1 className="text-2xl font-bold">
                   {company.company_name || t("companyProfile.unnamed")}
                 </h1>
+                {planType !== "free" && (
+                  <CompanyPlanBadge planType={planType} size="lg" />
+                )}
                 {company.is_verified && (
                   <Badge variant="default" className="gap-1">
                     <CheckCircle className="h-3 w-3" />

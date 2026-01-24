@@ -27,6 +27,7 @@ import { FreelancerCreditsCard } from "@/components/billing/FreelancerCreditsCar
 import { FreelancerPlanCard } from "@/components/billing/FreelancerPlanCard";
 import { CompanyWalletCard } from "@/components/billing/CompanyWalletCard";
 import { CompanyPlanCard } from "@/components/billing/CompanyPlanCard";
+import { CompanyBillingPanel } from "@/components/billing/CompanyBillingPanel";
 
 interface Profile {
   email: string;
@@ -684,6 +685,7 @@ export default function Settings() {
             <>
               <CompanyPlanCard />
               <CompanyWalletCard />
+              <CompanyBillingPanel />
             </>
           ) : (
             <>
