@@ -23,7 +23,7 @@ import { usePublishProject } from "@/hooks/usePublishProject";
 import { ProfileGateModal } from "@/components/profile/ProfileGateModal";
 import { ProfileGateAlert } from "@/components/profile/ProfileGateAlert";
 import { CompanyAvatar } from "@/components/company/CompanyAvatar";
-import { fetchCompanyPlanBadges, CompanyPlanType } from "@/hooks/useCompanyPlanData";
+import { fetchCompanyBadges, CompanyPlanType } from "@/hooks/useCompanyPlanData";
 
 interface Project {
   id: string;
@@ -43,6 +43,7 @@ interface CompanyInfo {
   company_name: string | null;
   logo_url: string | null;
   plan_type: CompanyPlanType;
+  is_verified: boolean;
 }
 
 interface Proposal {
@@ -150,23 +151,24 @@ export default function ProjectDetail() {
 
   const fetchCompanyInfo = async (companyUserId: string) => {
     try {
-      // Fetch company profile and plan badges in parallel (RPC bypasses RLS for freelancers)
-      const [profileResult, planMap] = await Promise.all([
+      // Fetch company profile and badges in parallel (RPC bypasses RLS for freelancers)
+      const [profileResult, badgeMap] = await Promise.all([
         supabase
           .from("company_profiles")
           .select("company_name, logo_url")
           .eq("user_id", companyUserId)
           .maybeSingle(),
-        fetchCompanyPlanBadges([companyUserId]),
+        fetchCompanyBadges([companyUserId]),
       ]);
 
       const company = profileResult.data;
-      const effectivePlan = planMap.get(companyUserId) || "free";
+      const badge = badgeMap.get(companyUserId) || { plan_type: "free", is_verified: false };
 
       setCompanyInfo({
         company_name: company?.company_name || null,
         logo_url: company?.logo_url || null,
-        plan_type: effectivePlan,
+        plan_type: badge.plan_type,
+        is_verified: badge.is_verified,
       });
     } catch (err) {
       console.error("Error fetching company info:", err);
@@ -499,8 +501,10 @@ export default function ProjectDetail() {
                       logoUrl={companyInfo.logo_url}
                       companyName={companyInfo.company_name}
                       planType={companyInfo.plan_type}
+                      isVerified={companyInfo.is_verified}
                       size="lg"
                       showBadge={true}
+                      showVerified={true}
                     />
                     <div>
                       <p className="font-semibold">{companyInfo.company_name || t("projects.unknownCompany")}</p>
