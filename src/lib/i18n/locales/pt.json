@@ -1271,7 +1271,26 @@
       "unlimited": "Ilimitado",
       "active": "Ativo",
       "inactive": "Inativo"
-    }
+    },
+    "errorLoading": "Erro ao carregar dados",
+    "companyNotFound": "Empresa não encontrada",
+    "companyDetail": "Detalhes da Empresa",
+    "noName": "Sem nome",
+    "noContact": "Sem contato",
+    "about": "Sobre",
+    "phone": "Telefone",
+    "totalPaid": "Total pago",
+    "freelancersHired": "Freelancers contratados",
+    "verification": "Verificação",
+    "verifiedOn": "Verificado em",
+    "companyVerified": "Empresa verificada com sucesso",
+    "companyUnverified": "Verificação da empresa removida",
+    "planManagement": "Gerenciamento de plano",
+    "currentPlan": "Plano atual",
+    "manualOverride": "Manual (Admin)",
+    "stripeManaged": "Gerenciado pelo Stripe",
+    "manualPlanProtected": "Este plano foi definido manualmente e não será alterado pelo Stripe.",
+    "planUpdated": "Plano atualizado para {{plan}}"
   },
   "finances": {
     "title": "Finanças",
