@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, CheckCircle, XCircle, ExternalLink, MapPin, Building2, Globe, Loader2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft, CheckCircle, XCircle, MapPin, Building2, Globe, Loader2, Crown } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
@@ -32,18 +33,30 @@ interface CompanyDetail {
   created_at: string;
 }
 
+interface CompanyPlan {
+  plan_type: string;
+  status: string;
+  plan_source: string;
+  stripe_subscription_id: string | null;
+}
+
+const PLAN_OPTIONS = ['free', 'starter', 'pro', 'elite'] as const;
+
 export default function AdminCompanyDetail() {
   const { t } = useTranslation();
   const { userId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [company, setCompany] = useState<CompanyDetail | null>(null);
+  const [companyPlan, setCompanyPlan] = useState<CompanyPlan | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [updatingPlan, setUpdatingPlan] = useState(false);
   const [stats, setStats] = useState({ projects: 0, totalPaid: 0, freelancersHired: 0 });
 
   useEffect(() => {
     fetchCompany();
+    fetchCompanyPlan();
     fetchStats();
   }, [userId]);
 
@@ -64,6 +77,23 @@ export default function AdminCompanyDetail() {
       toast.error(t("admin.errorLoading"));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCompanyPlan = async () => {
+    if (!userId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("company_plans")
+        .select("plan_type, status, plan_source, stripe_subscription_id")
+        .eq("company_user_id", userId)
+        .maybeSingle();
+
+      if (error) throw error;
+      setCompanyPlan(data);
+    } catch (error) {
+      console.error("Error fetching company plan:", error);
     }
   };
 
@@ -136,6 +166,47 @@ export default function AdminCompanyDetail() {
       toast.error(t("admin.errorUpdating"));
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const handlePlanChange = async (newPlanType: string) => {
+    if (!userId || !user) return;
+    setUpdatingPlan(true);
+
+    try {
+      // Upsert company_plans with plan_source='manual'
+      const { error } = await supabase
+        .from("company_plans")
+        .upsert({
+          company_user_id: userId,
+          plan_type: newPlanType,
+          status: 'active',
+          plan_source: 'manual', // Admin override - protected from Stripe
+          stripe_subscription_id: null, // Clear Stripe reference
+          stripe_customer_id: null,
+          cancel_at_period_end: false,
+          current_period_start: null,
+          current_period_end: null,
+          updated_at: new Date().toISOString(),
+        }, { 
+          onConflict: 'company_user_id' 
+        });
+
+      if (error) throw error;
+
+      setCompanyPlan({
+        plan_type: newPlanType,
+        status: 'active',
+        plan_source: 'manual',
+        stripe_subscription_id: null,
+      });
+
+      toast.success(t("admin.planUpdated", { plan: newPlanType }));
+    } catch (error) {
+      console.error("Error updating plan:", error);
+      toast.error(t("admin.errorUpdating"));
+    } finally {
+      setUpdatingPlan(false);
     }
   };
 
@@ -269,37 +340,85 @@ export default function AdminCompanyDetail() {
           </CardContent>
         </Card>
 
-        {/* Verification Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("admin.verification")}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {company.is_verified ? (
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                ) : (
-                  <XCircle className="h-5 w-5 text-muted-foreground" />
-                )}
-                <span className="font-medium">
-                  {company.is_verified ? t("admin.verified") : t("admin.unverified")}
-                </span>
+        <div className="space-y-6">
+          {/* Verification Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("admin.verification")}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {company.is_verified ? (
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                  ) : (
+                    <XCircle className="h-5 w-5 text-muted-foreground" />
+                  )}
+                  <span className="font-medium">
+                    {company.is_verified ? t("admin.verified") : t("admin.unverified")}
+                  </span>
+                </div>
+                <Switch
+                  checked={company.is_verified || false}
+                  onCheckedChange={toggleVerification}
+                  disabled={updating}
+                />
               </div>
-              <Switch
-                checked={company.is_verified || false}
-                onCheckedChange={toggleVerification}
-                disabled={updating}
-              />
-            </div>
 
-            {company.is_verified && company.verified_at && (
-              <div className="text-sm text-muted-foreground">
-                <p>{t("admin.verifiedOn")}: {format(new Date(company.verified_at), "PPP")}</p>
+              {company.is_verified && company.verified_at && (
+                <div className="text-sm text-muted-foreground">
+                  <p>{t("admin.verifiedOn")}: {format(new Date(company.verified_at), "PPP")}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Plan Management Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Crown className="h-5 w-5" />
+                {t("admin.planManagement")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">{t("admin.currentPlan")}</label>
+                <Select
+                  value={companyPlan?.plan_type || 'free'}
+                  onValueChange={handlePlanChange}
+                  disabled={updatingPlan}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PLAN_OPTIONS.map((plan) => (
+                      <SelectItem key={plan} value={plan}>
+                        {plan.charAt(0).toUpperCase() + plan.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            )}
-          </CardContent>
-        </Card>
+
+              <div className="flex flex-wrap gap-2 text-sm">
+                <Badge variant={companyPlan?.status === 'active' ? 'default' : 'secondary'}>
+                  {companyPlan?.status || 'free'}
+                </Badge>
+                <Badge variant={companyPlan?.plan_source === 'manual' ? 'outline' : 'secondary'}>
+                  {companyPlan?.plan_source === 'manual' ? t("admin.manualOverride") : t("admin.stripeManaged")}
+                </Badge>
+              </div>
+
+              {companyPlan?.plan_source === 'manual' && (
+                <p className="text-xs text-muted-foreground">
+                  {t("admin.manualPlanProtected")}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
