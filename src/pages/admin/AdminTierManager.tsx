@@ -104,14 +104,19 @@ export default function AdminTierManager() {
 
   const updateFreelancerTier = async (userId: string, newTier: FreelancerTier) => {
     try {
+      // Set tier_source='manual' when admin changes tier to protect from Stripe overwriting
       const { error } = await supabase
         .from("freelancer_profiles")
-        .update({ tier: newTier })
+        .update({ 
+          tier: newTier,
+          tier_source: 'manual',
+          updated_at: new Date().toISOString(),
+        })
         .eq("user_id", userId);
 
       if (error) throw error;
       
-      toast.success(`Tier atualizado para ${newTier}`);
+      toast.success(`Tier atualizado para ${newTier} (manual)`);
       fetchData();
     } catch (error) {
       console.error("Error updating tier:", error);
