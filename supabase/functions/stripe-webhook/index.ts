@@ -683,13 +683,14 @@ serve(async (req) => {
             }
           }
         } else if (subProfile.user_type === 'company') {
-          // Upsert company_plans
+          // Upsert company_plans with plan_source='stripe'
           const { error: companyPlanError } = await supabaseClient
             .from("company_plans")
             .upsert({
               company_user_id: subProfile.user_id,
               plan_type: subPlanType,
               status: subStatus,
+              plan_source: 'stripe', // Mark as Stripe-managed
               stripe_subscription_id: subscription.id,
               stripe_customer_id: subCustomerId,
               current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
@@ -703,7 +704,7 @@ serve(async (req) => {
           if (companyPlanError) {
             logStep("Error upserting company_plans", { error: companyPlanError });
           } else {
-            logStep("company_plans upserted", { userId: subProfile.user_id, planType: subPlanType });
+            logStep("company_plans upserted with plan_source=stripe", { userId: subProfile.user_id, planType: subPlanType });
           }
         }
 
@@ -822,23 +823,49 @@ serve(async (req) => {
             link: "/settings?tab=billing",
           });
         } else if (cancelProfile.user_type === 'company') {
-          // Update company_plans status
-          await supabaseClient
+          // Check plan_source before downgrading
+          const { data: companyPlan } = await supabaseClient
             .from("company_plans")
-            .update({ 
-              status: 'cancelled',
-              cancel_at_period_end: true,
-              updated_at: new Date().toISOString(),
-            })
+            .select("plan_type, plan_source")
             .eq("company_user_id", cancelProfile.user_id)
-            .eq("stripe_subscription_id", cancelledSub.id);
+            .maybeSingle();
 
-          await supabaseClient.from("notifications").insert({
-            user_id: cancelProfile.user_id,
-            type: "subscription_cancelled",
-            message: "Sua assinatura foi cancelada. Seus créditos restantes continuam válidos.",
-            link: "/settings?tab=billing",
-          });
+          const companyPlanSource = companyPlan?.plan_source;
+
+          if (companyPlanSource === 'manual') {
+            // Do NOT downgrade manual plans - just log
+            logStep("Keeping manual company plan on subscription cancel", { 
+              userId: cancelProfile.user_id, 
+              planType: companyPlan?.plan_type,
+              planSource: companyPlanSource 
+            });
+          } else {
+            // plan_source is 'stripe' or null - downgrade to free
+            logStep("Downgrading company plan from stripe subscription", { 
+              userId: cancelProfile.user_id, 
+              currentPlan: companyPlan?.plan_type,
+              planSource: companyPlanSource 
+            });
+
+            await supabaseClient
+              .from("company_plans")
+              .update({ 
+                status: 'cancelled',
+                plan_type: 'free',
+                cancel_at_period_end: true,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("company_user_id", cancelProfile.user_id)
+              .eq("stripe_subscription_id", cancelledSub.id);
+
+            // Notify user about cancellation
+            await supabaseClient.from("notifications").insert({
+              user_id: cancelProfile.user_id,
+              type: "subscription_cancelled",
+              message: "Sua assinatura foi cancelada. Seus créditos restantes continuam válidos.",
+              link: "/settings?tab=billing",
+            });
+          }
         }
         break;
       }
