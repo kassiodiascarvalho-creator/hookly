@@ -45,6 +45,8 @@ function detectLanguage(text: string): string {
 }
 
 // Check if user has premium plan (Pro or Elite)
+// FREELANCERS: Use freelancer_profiles.tier as canonical source (allows admin-assigned PRO/ELITE)
+// COMPANIES: Use company_plans subscription status
 async function checkUserPlan(supabase: any, userId: string, userType: string): Promise<{ isPremium: boolean; planType: string }> {
   if (userType === "company") {
     const { data: plan } = await supabase
@@ -57,15 +59,20 @@ async function checkUserPlan(supabase: any, userId: string, userType: string): P
       (plan.plan_type === "pro" || plan.plan_type === "elite");
     return { isPremium, planType: plan?.plan_type || "free" };
   } else {
-    const { data: plan } = await supabase
-      .from("freelancer_plans")
-      .select("plan_type, status")
-      .eq("freelancer_user_id", userId)
+    // FREELANCERS: Check tier from freelancer_profiles (canonical source)
+    // This allows PRO/ELITE without requiring active Stripe subscription
+    const { data: freelancerProfile } = await supabase
+      .from("freelancer_profiles")
+      .select("tier")
+      .eq("user_id", userId)
       .maybeSingle();
     
-    const isPremium = plan && plan.status === "active" && 
-      (plan.plan_type === "pro" || plan.plan_type === "elite");
-    return { isPremium, planType: plan?.plan_type || "free" };
+    const tier = freelancerProfile?.tier || "standard";
+    const isPremium = tier === "pro" || tier === "top_rated";
+    
+    // Map tier to planType for response compatibility
+    const planType = tier === "top_rated" ? "elite" : tier;
+    return { isPremium, planType };
   }
 }
 

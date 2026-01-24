@@ -42,30 +42,33 @@ export function TranslationToggle({
       const currentUserType = profile?.user_type as "company" | "freelancer" | null;
       setUserType(currentUserType);
 
-      // Check if user has premium plan
+      // Check if user has premium plan based on TIER (canonical source)
+      let premium = false;
+      
       if (currentUserType === "company") {
+        // Companies still use company_plans for subscription status
         const { data: plan } = await supabase
           .from("company_plans")
           .select("plan_type, status")
           .eq("company_user_id", user.id)
           .maybeSingle();
         
-        setIsPremium(
-          plan?.status === "active" && 
-          (plan?.plan_type === "pro" || plan?.plan_type === "elite")
-        );
+        premium = plan?.status === "active" && 
+          (plan?.plan_type === "pro" || plan?.plan_type === "elite");
       } else if (currentUserType === "freelancer") {
-        const { data: plan } = await supabase
-          .from("freelancer_plans")
-          .select("plan_type, status")
-          .eq("freelancer_user_id", user.id)
+        // FREELANCERS: Use freelancer_profiles.tier as canonical source
+        // This allows admin-assigned PRO/ELITE without Stripe subscription
+        const { data: freelancerProfile } = await supabase
+          .from("freelancer_profiles")
+          .select("tier")
+          .eq("user_id", user.id)
           .maybeSingle();
         
-        setIsPremium(
-          plan?.status === "active" && 
-          (plan?.plan_type === "pro" || plan?.plan_type === "elite")
-        );
+        const tier = freelancerProfile?.tier || "standard";
+        premium = tier === "pro" || tier === "top_rated";
       }
+      
+      setIsPremium(premium);
 
       // Get translation settings
       const { data: settings } = await supabase
@@ -76,7 +79,7 @@ export function TranslationToggle({
 
       if (settings) {
         // Only enable auto-translate if user has premium
-        const shouldEnable = settings.auto_translate_enabled && isPremium;
+        const shouldEnable = settings.auto_translate_enabled && premium;
         setAutoTranslate(shouldEnable);
         onAutoTranslateChange?.(shouldEnable);
       }
@@ -85,7 +88,7 @@ export function TranslationToggle({
     };
 
     fetchData();
-  }, [user, isPremium, onAutoTranslateChange]);
+  }, [user, onAutoTranslateChange]);
 
   const handleToggle = async (enabled: boolean) => {
     if (!user || !isPremium) return;
