@@ -14,6 +14,7 @@ export interface PlanCreditsInfo {
   daysUntilGrant: number | null;
   planType: string;
   isSubscribed: boolean;
+  tier: string; // canonical tier for freelancers
 }
 
 export function usePlanCredits(userType: 'freelancer' | 'company') {
@@ -45,19 +46,44 @@ export function usePlanCredits(userType: 'freelancer' | 'company') {
       let planType = 'free';
       let lastGrantAt: string | null = null;
       let isSubscribed = false;
+      let tier = 'standard';
 
       if (userType === 'freelancer') {
+        // CANONICAL SOURCE: freelancer_profiles.tier for plan status
+        const { data: profile } = await supabase
+          .from("freelancer_profiles")
+          .select("tier")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        
+        const profileData = profile as { tier?: string } | null;
+        tier = profileData?.tier || 'standard';
+        
+        // Map tier to planType for definitions lookup
+        if (tier === 'pro') {
+          planType = 'pro';
+        } else if (tier === 'top_rated') {
+          planType = 'elite';
+        } else {
+          planType = 'free';
+        }
+        
+        // Also check freelancer_plans for grant date (optional, for subscription-based users)
         const { data: plan } = await supabase
           .from("freelancer_plans")
-          .select("plan_type, status, last_credit_grant_at")
+          .select("plan_type, status, last_credit_grant_at, stripe_subscription_id")
           .eq("freelancer_user_id", user.id)
           .maybeSingle();
 
-        const planData = plan as { plan_type?: string; status?: string; last_credit_grant_at?: string } | null;
+        const planData = plan as { plan_type?: string; status?: string; last_credit_grant_at?: string; stripe_subscription_id?: string } | null;
         if (planData) {
-          planType = planData.plan_type || 'free';
           lastGrantAt = planData.last_credit_grant_at || null;
-          isSubscribed = planData.status === 'active' && planType !== 'free';
+          // Consider subscribed if tier is premium OR has active Stripe subscription
+          isSubscribed = (tier === 'pro' || tier === 'top_rated') || 
+            (planData.status === 'active' && !!planData.stripe_subscription_id);
+        } else {
+          // No plan record, but still can be premium via tier
+          isSubscribed = tier === 'pro' || tier === 'top_rated';
         }
       } else {
         const { data: plan } = await supabase
@@ -75,6 +101,7 @@ export function usePlanCredits(userType: 'freelancer' | 'company') {
       }
 
       // Get plan definition for monthly credits and cap
+      // For freelancers, use tier-mapped planType
       let monthlyCredits = 0;
       let creditCap: number | null = null;
 
@@ -119,7 +146,7 @@ export function usePlanCredits(userType: 'freelancer' | 'company') {
 
       // Calculate plan vs purchased credits breakdown
       // Plan credits are capped at creditCap (or monthlyCredits if no cap)
-      // Everything above that is considered "purchased"
+      // For premium users (PRO/ELITE), they have monthly credits as part of their plan
       const planMaxCredits = creditCap ?? monthlyCredits;
       const planAvailable = Math.min(currentBalance, planMaxCredits);
       const purchasedAvailable = Math.max(0, currentBalance - planMaxCredits);
@@ -137,6 +164,7 @@ export function usePlanCredits(userType: 'freelancer' | 'company') {
         daysUntilGrant,
         planType,
         isSubscribed,
+        tier,
       });
       setError(null);
     } catch (err) {
