@@ -3,14 +3,13 @@ import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Save, Star, Zap, Shield, Users, TrendingDown } from "lucide-react";
+import { Loader2, Save, Users, TrendingDown, Building2 } from "lucide-react";
 import { TierBadge, FreelancerTier } from "@/components/freelancer/TierBadge";
 import { formatMoneyFromCents } from "@/lib/formatMoney";
 
@@ -32,16 +31,30 @@ interface FreelancerWithTier {
   verified: boolean;
 }
 
+interface CompanyWithPlan {
+  user_id: string;
+  company_name: string | null;
+  plan_type: string;
+  status: string;
+  plan_source: string;
+  stripe_subscription_id: string | null;
+  updated_at: string | null;
+}
+
+type CompanyPlanType = "free" | "starter" | "pro" | "elite";
+
 export default function AdminTierManager() {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [overrides, setOverrides] = useState<TierFeeOverride[]>([]);
   const [freelancers, setFreelancers] = useState<FreelancerWithTier[]>([]);
+  const [companies, setCompanies] = useState<CompanyWithPlan[]>([]);
   const [editedOverrides, setEditedOverrides] = useState<Record<string, number>>({});
   const [searchQuery, setSearchQuery] = useState("");
+  const [companySearchQuery, setCompanySearchQuery] = useState("");
   const [tierFilter, setTierFilter] = useState<FreelancerTier | "all">("all");
-
+  const [companyPlanFilter, setCompanyPlanFilter] = useState<CompanyPlanType | "all">("all");
   useEffect(() => {
     fetchData();
   }, []);
@@ -50,22 +63,50 @@ export default function AdminTierManager() {
     try {
       setLoading(true);
       
-      const [overridesResult, freelancersResult] = await Promise.all([
+      const [overridesResult, freelancersResult, companyProfilesResult, companyPlansResult] = await Promise.all([
         supabase.from("tier_fee_overrides").select("*").order("tier"),
         supabase.from("freelancer_profiles")
           .select("user_id, full_name, title, tier, total_revenue, verified")
           .order("total_revenue", { ascending: false })
           .limit(100),
+        supabase.from("company_profiles")
+          .select("user_id, company_name")
+          .order("created_at", { ascending: false })
+          .limit(100),
+        supabase.from("company_plans")
+          .select("company_user_id, plan_type, status, plan_source, stripe_subscription_id, updated_at"),
       ]);
 
       if (overridesResult.error) throw overridesResult.error;
       if (freelancersResult.error) throw freelancersResult.error;
+      if (companyProfilesResult.error) throw companyProfilesResult.error;
+      if (companyPlansResult.error) throw companyPlansResult.error;
 
       setOverrides(overridesResult.data as TierFeeOverride[] || []);
       setFreelancers(freelancersResult.data as FreelancerWithTier[] || []);
+      
+      // Merge company profiles with plans
+      const plansMap = new Map(
+        (companyPlansResult.data || []).map(p => [p.company_user_id, p])
+      );
+      
+      const mergedCompanies: CompanyWithPlan[] = (companyProfilesResult.data || []).map(profile => {
+        const plan = plansMap.get(profile.user_id);
+        return {
+          user_id: profile.user_id,
+          company_name: profile.company_name,
+          plan_type: plan?.plan_type || "free",
+          status: plan?.status || "active",
+          plan_source: plan?.plan_source || "manual",
+          stripe_subscription_id: plan?.stripe_subscription_id || null,
+          updated_at: plan?.updated_at || null,
+        };
+      });
+      
+      setCompanies(mergedCompanies);
     } catch (error) {
       console.error("Error fetching tier data:", error);
-      toast.error("Erro ao carregar dados");
+      toast.error(t("admin.errorLoading"));
     } finally {
       setLoading(false);
     }
@@ -104,7 +145,6 @@ export default function AdminTierManager() {
 
   const updateFreelancerTier = async (userId: string, newTier: FreelancerTier) => {
     try {
-      // Set tier_source='manual' when admin changes tier to protect from Stripe overwriting
       const { error } = await supabase
         .from("freelancer_profiles")
         .update({ 
@@ -121,6 +161,33 @@ export default function AdminTierManager() {
     } catch (error) {
       console.error("Error updating tier:", error);
       toast.error("Erro ao atualizar tier");
+    }
+  };
+
+  const updateCompanyPlan = async (userId: string, newPlan: CompanyPlanType) => {
+    try {
+      const { error } = await supabase
+        .from("company_plans")
+        .upsert({
+          company_user_id: userId,
+          plan_type: newPlan,
+          status: "active",
+          plan_source: "manual",
+          stripe_subscription_id: null,
+          stripe_customer_id: null,
+          cancel_at_period_end: false,
+          current_period_start: null,
+          current_period_end: null,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "company_user_id" });
+
+      if (error) throw error;
+      
+      toast.success(t("admin.planUpdated", { plan: newPlan.toUpperCase() }));
+      fetchData();
+    } catch (error) {
+      console.error("Error updating company plan:", error);
+      toast.error(t("admin.errorLoading"));
     }
   };
 
@@ -141,12 +208,49 @@ export default function AdminTierManager() {
     return matchesSearch && matchesTier;
   });
 
+  const filteredCompanies = companies.filter(c => {
+    const matchesSearch = !companySearchQuery || 
+      c.company_name?.toLowerCase().includes(companySearchQuery.toLowerCase()) ||
+      c.user_id.toLowerCase().includes(companySearchQuery.toLowerCase());
+    const matchesPlan = companyPlanFilter === "all" || c.plan_type === companyPlanFilter;
+    return matchesSearch && matchesPlan;
+  });
+
   // Group overrides by tier
   const overridesByTier = overrides.reduce((acc, o) => {
     if (!acc[o.tier]) acc[o.tier] = [];
     acc[o.tier].push(o);
     return acc;
   }, {} as Record<string, TierFeeOverride[]>);
+
+  const getPlanSourceBadge = (planSource: string) => {
+    if (planSource === "manual") {
+      return (
+        <Badge variant="secondary" className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+          {t("admin.manualOverride")}
+        </Badge>
+      );
+    }
+    return (
+      <Badge variant="outline">
+        {t("admin.stripeManaged")}
+      </Badge>
+    );
+  };
+
+  const getPlanBadge = (planType: string) => {
+    const planColors: Record<string, string> = {
+      free: "bg-muted text-muted-foreground",
+      starter: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+      pro: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+      elite: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+    };
+    return (
+      <Badge className={planColors[planType] || planColors.free}>
+        {planType.toUpperCase()}
+      </Badge>
+    );
+  };
 
   if (loading) {
     return (
@@ -172,6 +276,10 @@ export default function AdminTierManager() {
           <TabsTrigger value="freelancers" className="gap-2">
             <Users className="h-4 w-4" />
             Freelancers
+          </TabsTrigger>
+          <TabsTrigger value="companies" className="gap-2">
+            <Building2 className="h-4 w-4" />
+            {t("admin.companies")}
           </TabsTrigger>
         </TabsList>
 
@@ -338,6 +446,98 @@ export default function AdminTierManager() {
               {filteredFreelancers.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
                   Nenhum freelancer encontrado
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Companies Tab */}
+        <TabsContent value="companies" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex flex-col md:flex-row md:items-center gap-4">
+                <div className="flex-1">
+                  <CardTitle>{t("admin.companies")}</CardTitle>
+                  <CardDescription>{t("admin.companyPlanManagement")}</CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder={t("admin.searchCompanies")}
+                    value={companySearchQuery}
+                    onChange={(e) => setCompanySearchQuery(e.target.value)}
+                    className="w-48"
+                  />
+                  <Select value={companyPlanFilter} onValueChange={(v) => setCompanyPlanFilter(v as CompanyPlanType | "all")}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("admin.allPlans")}</SelectItem>
+                      <SelectItem value="free">Free</SelectItem>
+                      <SelectItem value="starter">Starter</SelectItem>
+                      <SelectItem value="pro">Pro</SelectItem>
+                      <SelectItem value="elite">Elite</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("admin.companies")}</TableHead>
+                    <TableHead>{t("admin.currentPlan")}</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>{t("admin.source")}</TableHead>
+                    <TableHead>Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredCompanies.map(company => (
+                    <TableRow key={company.user_id}>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{company.company_name || t("admin.noName")}</p>
+                          <p className="text-sm text-muted-foreground truncate max-w-[150px]">{company.user_id}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {getPlanBadge(company.plan_type)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={company.status === "active" ? "default" : "secondary"}>
+                          {company.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {getPlanSourceBadge(company.plan_source)}
+                      </TableCell>
+                      <TableCell>
+                        <Select 
+                          value={company.plan_type} 
+                          onValueChange={(v) => updateCompanyPlan(company.user_id, v as CompanyPlanType)}
+                        >
+                          <SelectTrigger className="w-28">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="free">Free</SelectItem>
+                            <SelectItem value="starter">Starter</SelectItem>
+                            <SelectItem value="pro">Pro</SelectItem>
+                            <SelectItem value="elite">Elite</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              
+              {filteredCompanies.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  {t("admin.noCompaniesFound")}
                 </div>
               )}
             </CardContent>

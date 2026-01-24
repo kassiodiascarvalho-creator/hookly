@@ -1290,7 +1290,13 @@
     "manualOverride": "Manual (Admin)",
     "stripeManaged": "Gerenciado pelo Stripe",
     "manualPlanProtected": "Este plano foi definido manualmente e não será alterado pelo Stripe.",
-    "planUpdated": "Plano atualizado para {{plan}}"
+    "planUpdated": "Plano atualizado para {{plan}}",
+    "companies": "Empresas",
+    "companyPlanManagement": "Gerenciamento de planos de empresas",
+    "source": "Fonte",
+    "searchCompanies": "Buscar empresas...",
+    "allPlans": "Todos os planos",
+    "noCompaniesFound": "Nenhuma empresa encontrada"
   },
   "finances": {
     "title": "Finanças",
