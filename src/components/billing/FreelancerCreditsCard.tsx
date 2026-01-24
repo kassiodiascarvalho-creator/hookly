@@ -4,9 +4,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Coins, Loader2, History, ShoppingCart, Sparkles, Gift, AlertCircle } from "lucide-react";
+import { Coins, Loader2, History, ShoppingCart, Sparkles, Gift, AlertCircle, Info } from "lucide-react";
 import { BuyCreditsDialog } from "./BuyCreditsDialog";
 import { format } from "date-fns";
+import { usePlanCredits } from "@/hooks/usePlanCredits";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // Same packages as BuyCreditsDialog for consistency
 const CREDIT_PACKAGES = [
@@ -15,9 +21,6 @@ const CREDIT_PACKAGES = [
   { credits: 50, price: 40, bonus: 10, label: "Popular", discount: "20%", popular: true },
   { credits: 100, price: 70, bonus: 30, label: "Profissional", discount: "30%" },
 ];
-interface PlatformCredits {
-  balance: number;
-}
 
 interface CreditTransaction {
   id: string;
@@ -32,37 +35,19 @@ export function FreelancerCreditsCard() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [credits, setCredits] = useState(0);
   const [transactions, setTransactions] = useState<CreditTransaction[]>([]);
+  
+  // Use the enhanced hook for credits breakdown
+  const { info: planCredits, refetch: refetchPlanCredits } = usePlanCredits('freelancer');
 
   useEffect(() => {
     if (user) {
-      fetchData();
+      fetchTransactions();
     }
   }, [user]);
 
-  const fetchData = async () => {
+  const fetchTransactions = async () => {
     if (!user) return;
-
-    // Fetch from platform_credits table (the correct source)
-    const { data: platformCredits } = await supabase
-      .from("platform_credits")
-      .select("balance")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    if (platformCredits) {
-      setCredits(platformCredits.balance || 0);
-    } else {
-      // Fallback to freelancer_profiles for migration
-      const { data: profile } = await supabase
-        .from("freelancer_profiles")
-        .select("proposal_credits")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      
-      setCredits(profile?.proposal_credits || 0);
-    }
 
     // Fetch platform credit transactions for credit history
     const { data: txData } = await supabase
@@ -78,6 +63,11 @@ export function FreelancerCreditsCard() {
     }
 
     setLoading(false);
+  };
+
+  const handlePurchaseSuccess = () => {
+    refetchPlanCredits();
+    fetchTransactions();
   };
 
   const getReasonLabel = (reason: string) => {
@@ -113,6 +103,10 @@ export function FreelancerCreditsCard() {
     );
   }
 
+  const totalCredits = planCredits?.totalAvailable ?? 0;
+  const planAvailable = planCredits?.planAvailable ?? 0;
+  const purchasedAvailable = planCredits?.purchasedAvailable ?? 0;
+
   return (
     <div className="space-y-6">
       {/* Credits Balance Card */}
@@ -128,7 +122,7 @@ export function FreelancerCreditsCard() {
               Use créditos para enviar propostas aos projetos
             </CardDescription>
           </div>
-          <BuyCreditsDialog onSuccess={fetchData} />
+          <BuyCreditsDialog onSuccess={handlePurchaseSuccess} />
         </CardHeader>
         <CardContent>
           {/* Info banner */}
@@ -140,19 +134,40 @@ export function FreelancerCreditsCard() {
             </div>
           </div>
 
+          {/* Main total display */}
           <div className="flex items-baseline gap-2">
-            <span className="text-5xl font-bold">{credits}</span>
+            <span className="text-5xl font-bold">{totalCredits}</span>
             <span className="text-lg text-muted-foreground">
               créditos disponíveis
             </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="h-4 w-4 text-muted-foreground cursor-help ml-1" />
+              </TooltipTrigger>
+              <TooltipContent side="right" className="max-w-[220px]">
+                <p className="text-xs">
+                  Ao consumir créditos, os do plano são usados primeiro, depois os avulsos.
+                </p>
+              </TooltipContent>
+            </Tooltip>
           </div>
           
-          {credits === 0 && (
-            <div className="mt-4 p-4 rounded-lg bg-amber-500/10 border border-amber-500/20">
+          {/* Breakdown: plan + purchased */}
+          {(planAvailable > 0 || purchasedAvailable > 0) && (
+            <div className="mt-2 text-sm text-muted-foreground">
+              Inclui: <span className="font-medium">{planAvailable}</span> do plano
+              {purchasedAvailable > 0 && (
+                <> + <span className="font-medium">{purchasedAvailable}</span> avulsos</>
+              )}
+            </div>
+          )}
+          
+          {totalCredits === 0 && (
+            <div className="mt-4 p-4 rounded-lg bg-destructive/10 border border-destructive/20">
               <div className="flex items-start gap-3">
-                <Sparkles className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                <Sparkles className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-medium text-amber-600">Sem créditos</p>
+                  <p className="font-medium text-destructive">Sem créditos</p>
                   <p className="text-sm text-muted-foreground">
                     Compre créditos para começar a enviar propostas e conquistar novos projetos!
                   </p>
@@ -161,9 +176,9 @@ export function FreelancerCreditsCard() {
             </div>
           )}
 
-          {credits > 0 && credits <= 5 && (
-            <div className="mt-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
-              <p className="text-sm text-blue-600">
+          {totalCredits > 0 && totalCredits <= 5 && (
+            <div className="mt-4 p-3 rounded-lg bg-accent/50 border border-accent">
+              <p className="text-sm text-accent-foreground">
                 💡 Você tem poucos créditos restantes. Considere recarregar para não perder oportunidades!
               </p>
             </div>

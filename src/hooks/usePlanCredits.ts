@@ -6,6 +6,9 @@ export interface PlanCreditsInfo {
   monthlyCredits: number;
   creditCap: number | null;
   currentBalance: number;
+  planAvailable: number;
+  purchasedAvailable: number;
+  totalAvailable: number;
   lastGrantAt: string | null;
   nextGrantDate: Date | null;
   daysUntilGrant: number | null;
@@ -29,7 +32,7 @@ export function usePlanCredits(userType: 'freelancer' | 'company') {
     try {
       setLoading(true);
 
-      // Get current balance
+      // Get current balance from platform_credits
       const { data: credits } = await supabase
         .from("platform_credits")
         .select("balance")
@@ -114,10 +117,21 @@ export function usePlanCredits(userType: 'freelancer' | 'company') {
         daysUntilGrant = Math.max(0, Math.ceil((nextGrantDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)));
       }
 
+      // Calculate plan vs purchased credits breakdown
+      // Plan credits are capped at creditCap (or monthlyCredits if no cap)
+      // Everything above that is considered "purchased"
+      const planMaxCredits = creditCap ?? monthlyCredits;
+      const planAvailable = Math.min(currentBalance, planMaxCredits);
+      const purchasedAvailable = Math.max(0, currentBalance - planMaxCredits);
+      const totalAvailable = currentBalance;
+
       setInfo({
         monthlyCredits,
         creditCap,
         currentBalance,
+        planAvailable,
+        purchasedAvailable,
+        totalAvailable,
         lastGrantAt,
         nextGrantDate,
         daysUntilGrant,
