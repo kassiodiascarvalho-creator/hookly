@@ -1751,6 +1751,8 @@ export type Database = {
           created_at: string
           currency: string
           id: string
+          plan_balance: number
+          purchased_balance: number
           updated_at: string
           user_id: string
           user_type: string
@@ -1760,6 +1762,8 @@ export type Database = {
           created_at?: string
           currency?: string
           id?: string
+          plan_balance?: number
+          purchased_balance?: number
           updated_at?: string
           user_id: string
           user_type: string
@@ -1769,6 +1773,8 @@ export type Database = {
           created_at?: string
           currency?: string
           id?: string
+          plan_balance?: number
+          purchased_balance?: number
           updated_at?: string
           user_id?: string
           user_type?: string
