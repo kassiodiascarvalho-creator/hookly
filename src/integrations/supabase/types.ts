@@ -771,6 +771,7 @@ export type Database = {
           proposal_credits: number
           skills: string[] | null
           tier: string | null
+          tier_source: string
           title: string | null
           total_revenue: number | null
           updated_at: string
@@ -795,6 +796,7 @@ export type Database = {
           proposal_credits?: number
           skills?: string[] | null
           tier?: string | null
+          tier_source?: string
           title?: string | null
           total_revenue?: number | null
           updated_at?: string
@@ -819,6 +821,7 @@ export type Database = {
           proposal_credits?: number
           skills?: string[] | null
           tier?: string | null
+          tier_source?: string
           title?: string | null
           total_revenue?: number | null
           updated_at?: string
