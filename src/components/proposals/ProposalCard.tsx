@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Check, X, Loader2, DollarSign, MapPin, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatMoney } from "@/lib/formatMoney";
@@ -12,6 +11,8 @@ import {
   getProposalBorderClass 
 } from "./ProposalAIBadge";
 import type { ProposalRankingData } from "@/hooks/useProposalRankings";
+import { TieredAvatar } from "@/components/freelancer/TieredAvatar";
+import type { FreelancerTier } from "@/components/freelancer/TierBadge";
 
 interface Freelancer {
   full_name: string | null;
@@ -20,6 +21,7 @@ interface Freelancer {
   hourly_rate: number | null;
   location: string | null;
   verified: boolean | null;
+  tier?: FreelancerTier | null;
 }
 
 interface Proposal {
@@ -86,12 +88,12 @@ export function ProposalCard({
       )}
     >
       <div className="flex items-start gap-4">
-        <Avatar className="h-12 w-12">
-          <AvatarImage src={proposal.freelancer?.avatar_url || undefined} />
-          <AvatarFallback>
-            {proposal.freelancer?.full_name?.charAt(0) || "F"}
-          </AvatarFallback>
-        </Avatar>
+        <TieredAvatar
+          avatarUrl={proposal.freelancer?.avatar_url}
+          name={proposal.freelancer?.full_name}
+          tier={proposal.freelancer?.tier}
+          size="lg"
+        />
         
         <div className="flex-1 min-w-0">
           {/* Header with name, badges, and AI recommendation */}

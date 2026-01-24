@@ -20,6 +20,8 @@ import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
 import { FreelancerPlanCard } from "@/components/billing/FreelancerPlanCard";
+import { TieredAvatar } from "@/components/freelancer/TieredAvatar";
+import { TierBadge, FreelancerTier } from "@/components/freelancer/TierBadge";
 
 interface FreelancerData {
   id: string;
@@ -33,6 +35,7 @@ interface FreelancerData {
   languages: string[] | null;
   avatar_url: string | null;
   verified: boolean | null;
+  tier: FreelancerTier | null;
   created_at: string;
 }
 
@@ -122,7 +125,10 @@ export default function FreelancerProfile() {
       return;
     }
 
-    setFreelancer(freelancerData);
+    setFreelancer({
+      ...freelancerData,
+      tier: (freelancerData.tier as FreelancerTier) || "standard",
+    });
 
     // Fetch reviews with project info
     const { data: reviewsData } = await supabase
@@ -311,18 +317,21 @@ export default function FreelancerProfile() {
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row gap-6">
-            <Avatar className="h-24 w-24">
-              <AvatarImage src={freelancer.avatar_url || undefined} />
-              <AvatarFallback className="text-2xl">
-                {freelancer.full_name?.charAt(0) || "F"}
-              </AvatarFallback>
-            </Avatar>
+            <TieredAvatar
+              avatarUrl={freelancer.avatar_url}
+              name={freelancer.full_name}
+              tier={freelancer.tier}
+              size="xl"
+            />
 
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
                 <h1 className="text-2xl font-bold">{freelancer.full_name || t("freelancerProfile.unnamed")}</h1>
                 {freelancer.verified && (
                   <CheckCircle className="h-5 w-5 text-primary" />
+                )}
+                {freelancer.tier && freelancer.tier !== "standard" && (
+                  <TierBadge tier={freelancer.tier} size="md" />
                 )}
               </div>
               <p className="text-lg text-muted-foreground mb-3">{freelancer.title}</p>
