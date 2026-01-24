@@ -146,6 +146,7 @@ export type Database = {
           current_period_start: string | null
           id: string
           last_credit_grant_at: string | null
+          plan_source: string
           plan_type: string
           projects_reset_at: string | null
           projects_this_month: number | null
@@ -162,6 +163,7 @@ export type Database = {
           current_period_start?: string | null
           id?: string
           last_credit_grant_at?: string | null
+          plan_source?: string
           plan_type?: string
           projects_reset_at?: string | null
           projects_this_month?: number | null
@@ -178,6 +180,7 @@ export type Database = {
           current_period_start?: string | null
           id?: string
           last_credit_grant_at?: string | null
+          plan_source?: string
           plan_type?: string
           projects_reset_at?: string | null
           projects_this_month?: number | null
