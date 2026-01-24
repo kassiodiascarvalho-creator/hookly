@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { TieredAvatar } from "@/components/freelancer/TieredAvatar";
 import { FileText, DollarSign, Loader2, CheckCircle, XCircle, Clock, ChevronRight, Star, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { GeniusRankingButton } from "@/components/genius";
@@ -31,6 +31,7 @@ interface ProposalGroup {
       full_name: string | null;
       avatar_url: string | null;
       title: string | null;
+      tier: string | null;
     } | null;
   }[];
 }
@@ -80,12 +81,12 @@ export default function CompanyProposals() {
         .order("created_at", { ascending: false });
 
       if (proposals && proposals.length > 0) {
-        // Fetch freelancer info for each proposal
+        // Fetch freelancer info for each proposal (including tier)
         const proposalsWithFreelancers = await Promise.all(
           proposals.map(async (proposal) => {
             const { data: freelancer } = await supabase
               .from("freelancer_profiles")
-              .select("full_name, avatar_url, title")
+              .select("full_name, avatar_url, title, tier")
               .eq("user_id", proposal.freelancer_user_id)
               .maybeSingle();
             return { ...proposal, freelancer };
@@ -182,12 +183,13 @@ export default function CompanyProposals() {
                         onClick={() => navigate(`/projects/${group.project.id}`)}
                       >
                         <div className="relative">
-                          <Avatar>
-                            <AvatarImage src={proposal.freelancer?.avatar_url || undefined} />
-                            <AvatarFallback>
-                              {proposal.freelancer?.full_name?.charAt(0) || "F"}
-                            </AvatarFallback>
-                          </Avatar>
+                          <TieredAvatar
+                            avatarUrl={proposal.freelancer?.avatar_url}
+                            name={proposal.freelancer?.full_name}
+                            tier={(proposal.freelancer?.tier as "standard" | "pro" | "top_rated") || "standard"}
+                            size="md"
+                            showBadge={true}
+                          />
                           {proposal.is_highlighted && (
                             <div className="absolute -top-1 -right-1 w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center">
                               <Star className="h-3 w-3 text-white fill-white" />

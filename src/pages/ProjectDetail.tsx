@@ -145,12 +145,12 @@ export default function ProjectDetail() {
       .order("created_at", { ascending: false });
 
     if (!error && proposalData) {
-      // Fetch freelancer profiles for each proposal
+      // Fetch freelancer profiles for each proposal (including tier)
       const proposalsWithFreelancers = await Promise.all(
         proposalData.map(async (proposal) => {
           const { data: freelancer } = await supabase
             .from("freelancer_profiles")
-            .select("full_name, title, avatar_url, hourly_rate, location, verified")
+            .select("full_name, title, avatar_url, hourly_rate, location, verified, tier")
             .eq("user_id", proposal.freelancer_user_id)
             .maybeSingle();
           return { ...proposal, freelancer };

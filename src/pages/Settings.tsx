@@ -13,6 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { TieredAvatar } from "@/components/freelancer/TieredAvatar";
+import type { FreelancerTier } from "@/components/freelancer/TierBadge";
 import { 
   User, Lock, Bell, CreditCard, Building, Briefcase, 
   Loader2, Save, Upload, Folder, Award, Wallet
@@ -56,6 +58,7 @@ interface FreelancerProfile {
   languages: string[] | null;
   avatar_url: string | null;
   preferred_payout_currency: string | null;
+  tier?: FreelancerTier | null;
 }
 
 export default function Settings() {
@@ -126,11 +129,14 @@ export default function Settings() {
       } else if (profileData.user_type === "freelancer") {
         const { data: freelancerData } = await supabase
           .from("freelancer_profiles")
-          .select("*")
+          .select("*, tier")
           .eq("user_id", user.id)
           .single();
         if (freelancerData) {
-          setFreelancerProfile(freelancerData);
+          setFreelancerProfile({
+            ...freelancerData,
+            tier: (freelancerData.tier as FreelancerTier) || "standard"
+          });
         }
       }
     }
@@ -267,15 +273,22 @@ export default function Settings() {
             <CardContent className="space-y-6">
               {/* Avatar/Logo with FileUpload */}
               <div className="flex items-center gap-4">
-                <Avatar className="h-20 w-20">
-                  <AvatarImage src={isCompany ? companyProfile?.logo_url || undefined : freelancerProfile?.avatar_url || undefined} />
-                  <AvatarFallback className="text-xl">
-                    {isCompany 
-                      ? companyProfile?.company_name?.charAt(0) || "C"
-                      : freelancerProfile?.full_name?.charAt(0) || "F"
-                    }
-                  </AvatarFallback>
-                </Avatar>
+                {isCompany ? (
+                  <Avatar className="h-20 w-20">
+                    <AvatarImage src={companyProfile?.logo_url || undefined} />
+                    <AvatarFallback className="text-xl">
+                      {companyProfile?.company_name?.charAt(0) || "C"}
+                    </AvatarFallback>
+                  </Avatar>
+                ) : (
+                  <TieredAvatar
+                    avatarUrl={freelancerProfile?.avatar_url}
+                    name={freelancerProfile?.full_name}
+                    tier={freelancerProfile?.tier || "standard"}
+                    size="xl"
+                    showBadge={true}
+                  />
+                )}
                 <div>
                   <input
                     type="file"

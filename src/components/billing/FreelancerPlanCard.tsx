@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,31 +15,75 @@ import { FreelancerPlanUpgradeModal } from "./FreelancerPlanUpgradeModal";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { TieredAvatar } from "@/components/freelancer/TieredAvatar";
+import type { FreelancerTier } from "@/components/freelancer/TierBadge";
 
 const planIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   free: User,
+  standard: User,
   starter: Zap,
   pro: Rocket,
+  top_rated: Crown,
   elite: Crown,
 };
 
 const planColors: Record<string, string> = {
   free: "bg-muted text-muted-foreground",
+  standard: "bg-muted text-muted-foreground",
   starter: "bg-blue-500/10 text-blue-600 border-blue-500/20",
-  pro: "bg-primary/10 text-primary border-primary/20",
+  pro: "bg-blue-500/10 text-blue-600 border-blue-500/20",
+  top_rated: "bg-amber-500/10 text-amber-600 border-amber-500/20",
   elite: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+};
+
+// Map tier from DB to display name
+const tierDisplayName: Record<string, string> = {
+  standard: "Grátis",
+  pro: "Pro",
+  top_rated: "Elite",
 };
 
 export function FreelancerPlanCard() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const { plan, loading, isSubscribed, openCustomerPortal } = useFreelancerPlan();
   const { plans, loading: plansLoading } = useFreelancerPlanDefinitions();
   const { info: creditsInfo, loading: creditsLoading } = usePlanCredits('freelancer');
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [managingPortal, setManagingPortal] = useState(false);
+  
+  // Fetch the REAL tier from freelancer_profiles (source of truth)
+  const [freelancerTier, setFreelancerTier] = useState<FreelancerTier>("standard");
+  const [freelancerProfile, setFreelancerProfile] = useState<{ avatar_url: string | null; full_name: string | null } | null>(null);
+  const [tierLoading, setTierLoading] = useState(true);
 
+  useEffect(() => {
+    async function fetchTier() {
+      if (!user) {
+        setTierLoading(false);
+        return;
+      }
+      const { data } = await supabase
+        .from("freelancer_profiles")
+        .select("tier, avatar_url, full_name")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      
+      if (data) {
+        setFreelancerTier((data.tier as FreelancerTier) || "standard");
+        setFreelancerProfile({ avatar_url: data.avatar_url, full_name: data.full_name });
+      }
+      setTierLoading(false);
+    }
+    fetchTier();
+  }, [user]);
+
+  // Use tier from DB for display, not plan_type from subscription
+  const displayTier = freelancerTier;
   const currentPlanConfig = plans.find((p) => p.plan_type === plan?.plan_type) || plans[0];
-  const PlanIcon = planIcons[currentPlanConfig?.plan_type || "free"] || User;
+  const PlanIcon = planIcons[displayTier] || User;
 
   const handleManageSubscription = async () => {
     try {
@@ -52,7 +96,7 @@ export function FreelancerPlanCard() {
     }
   };
 
-  if (loading || plansLoading || !currentPlanConfig) {
+  if (loading || plansLoading || tierLoading || !currentPlanConfig) {
     return (
       <Card>
         <CardHeader>
@@ -65,6 +109,8 @@ export function FreelancerPlanCard() {
       </Card>
     );
   }
+
+  const isPaidTier = displayTier === "pro" || displayTier === "top_rated";
 
   const monthlyCredits = creditsInfo?.monthlyCredits || currentPlanConfig?.monthly_credits || 0;
   const creditCap = creditsInfo?.creditCap || currentPlanConfig?.credit_cap || null;
@@ -80,21 +126,26 @@ export function FreelancerPlanCard() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg ${planColors[currentPlanConfig.plan_type] || planColors.free}`}>
-                <PlanIcon className="h-5 w-5" />
-              </div>
+              {/* Show TieredAvatar with real tier */}
+              <TieredAvatar
+                avatarUrl={freelancerProfile?.avatar_url}
+                name={freelancerProfile?.full_name}
+                tier={displayTier}
+                size="lg"
+                showBadge={true}
+              />
               <div>
                 <CardTitle className="flex items-center gap-2">
-                  {currentPlanConfig.name}
-                  {currentPlanConfig.popular && (
-                    <Badge variant="default" className="text-xs">
+                  {tierDisplayName[displayTier] || "Grátis"}
+                  {displayTier !== "standard" && (
+                    <Badge variant="default" className={`text-xs ${displayTier === "pro" ? "bg-blue-500" : "bg-amber-500"}`}>
                       <Sparkles className="h-3 w-3 mr-1" />
-                      Popular
+                      {displayTier === "pro" ? "PRO" : "ELITE"}
                     </Badge>
                   )}
                 </CardTitle>
                 <CardDescription>
-                  {isSubscribed ? "Plano ativo" : "Plano gratuito"}
+                  {isPaidTier ? "Plano ativo" : "Plano gratuito"}
                 </CardDescription>
               </div>
             </div>
@@ -102,8 +153,8 @@ export function FreelancerPlanCard() {
         </CardHeader>
 
         <CardContent className="space-y-4">
-          {/* Monthly Credits Info - for paid plans */}
-          {isSubscribed && monthlyCredits > 0 && (
+          {/* Monthly Credits Info - for paid tiers */}
+          {isPaidTier && monthlyCredits > 0 && (
             <div className="p-3 rounded-lg bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -162,7 +213,7 @@ export function FreelancerPlanCard() {
           )}
 
           {/* Unlimited badge */}
-          {!plan?.proposals_limit && isSubscribed && (
+          {!plan?.proposals_limit && isPaidTier && (
             <div className="p-3 rounded-lg bg-primary/10 flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium text-primary">Propostas ilimitadas</span>
@@ -197,7 +248,7 @@ export function FreelancerPlanCard() {
 
           {/* Actions */}
           <div className="flex gap-2 pt-2">
-            {!isSubscribed ? (
+            {!isPaidTier ? (
               <Button 
                 className="flex-1 gap-2" 
                 onClick={() => setUpgradeModalOpen(true)}
