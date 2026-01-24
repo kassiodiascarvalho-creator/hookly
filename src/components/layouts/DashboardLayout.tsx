@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { TieredAvatar } from "@/components/freelancer/TieredAvatar";
+import type { FreelancerTier } from "@/components/freelancer/TierBadge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -63,6 +65,7 @@ export function DashboardLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userType, setUserType] = useState<"company" | "freelancer" | null>(null);
   const [profile, setProfile] = useState<any>(null);
+  const [freelancerTier, setFreelancerTier] = useState<FreelancerTier>("standard");
 
   useEffect(() => {
     if (user) {
@@ -98,10 +101,14 @@ export function DashboardLayout() {
     } else if (profileData?.user_type === "freelancer") {
       const { data } = await supabase
         .from("freelancer_profiles")
-        .select("*")
+        .select("*, tier")
         .eq("user_id", user.id)
         .single();
       setProfile(data);
+      // Get tier from freelancer_profiles (source of truth)
+      if (data?.tier) {
+        setFreelancerTier(data.tier as FreelancerTier);
+      }
     }
   };
 
@@ -299,12 +306,22 @@ export function DashboardLayout() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="gap-2 px-2">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={avatarUrl} />
-                    <AvatarFallback className="bg-primary text-primary-foreground">
-                      {displayName?.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+                  {userType === "freelancer" ? (
+                    <TieredAvatar
+                      avatarUrl={avatarUrl}
+                      name={displayName}
+                      tier={freelancerTier}
+                      size="sm"
+                      showBadge={true}
+                    />
+                  ) : (
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={avatarUrl} />
+                      <AvatarFallback className="bg-primary text-primary-foreground">
+                        {displayName?.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
                   <span className="hidden sm:inline-block max-w-[120px] truncate">
                     {displayName}
                   </span>

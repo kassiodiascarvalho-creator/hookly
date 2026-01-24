@@ -5,7 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { TieredAvatar } from "@/components/freelancer/TieredAvatar";
+import type { FreelancerTier } from "@/components/freelancer/TierBadge";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, CheckCircle, XCircle, ExternalLink, MapPin, DollarSign, Loader2 } from "lucide-react";
@@ -29,6 +30,7 @@ interface FreelancerDetail {
   avatar_url: string | null;
   total_revenue: number | null;
   created_at: string;
+  tier: string | null;
 }
 
 export default function AdminFreelancerDetail() {
@@ -50,7 +52,7 @@ export default function AdminFreelancerDetail() {
     try {
       const { data, error } = await supabase
         .from("freelancer_profiles")
-        .select("*")
+        .select("*, tier")
         .eq("user_id", userId)
         .single();
 
@@ -133,12 +135,13 @@ export default function AdminFreelancerDetail() {
           <CardHeader>
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-4">
-                <Avatar className="h-20 w-20">
-                  <AvatarImage src={freelancer.avatar_url || undefined} />
-                  <AvatarFallback className="text-2xl">
-                    {freelancer.full_name?.charAt(0) || "F"}
-                  </AvatarFallback>
-                </Avatar>
+                <TieredAvatar
+                  avatarUrl={freelancer.avatar_url}
+                  name={freelancer.full_name}
+                  tier={(freelancer.tier as FreelancerTier) || "standard"}
+                  size="xl"
+                  showBadge={true}
+                />
                 <div>
                   <CardTitle className="text-2xl">{freelancer.full_name || t("admin.noName")}</CardTitle>
                   <p className="text-muted-foreground">{freelancer.title || t("admin.noTitle")}</p>
