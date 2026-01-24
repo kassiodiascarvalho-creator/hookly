@@ -1,23 +1,15 @@
 -- ============================================
 -- MIGRATION: Dual Credits System (Plan + Purchased)
+-- Step 1: Add columns + backfill (already done)
+-- Step 2: Create trigger for balance sync
+-- Step 3: Update ALL functions to use plan_balance/purchased_balance
 -- ============================================
 
--- 1) Add new columns for plan and purchased balances
-ALTER TABLE platform_credits
-ADD COLUMN IF NOT EXISTS plan_balance integer NOT NULL DEFAULT 0,
-ADD COLUMN IF NOT EXISTS purchased_balance integer NOT NULL DEFAULT 0;
-
--- 2) Backfill: existing balance becomes purchased_balance
-UPDATE platform_credits
-SET purchased_balance = balance,
-    plan_balance = 0
-WHERE purchased_balance = 0 AND balance > 0;
-
--- 3) Create trigger to keep balance synced with plan_balance + purchased_balance
+-- 1) Trigger to keep balance synced (MUST BE FIRST before any function updates)
 CREATE OR REPLACE FUNCTION sync_platform_credits_balance()
 RETURNS TRIGGER AS $$
 BEGIN
-  NEW.balance := NEW.plan_balance + NEW.purchased_balance;
+  NEW.balance := COALESCE(NEW.plan_balance, 0) + COALESCE(NEW.purchased_balance, 0);
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -27,7 +19,7 @@ CREATE TRIGGER sync_balance_trigger
 BEFORE INSERT OR UPDATE ON platform_credits
 FOR EACH ROW EXECUTE FUNCTION sync_platform_credits_balance();
 
--- 4) Update spend_platform_credits to consume plan_balance first, then purchased_balance
+-- 2) spend_platform_credits: consume plan_balance first, then purchased_balance
 CREATE OR REPLACE FUNCTION public.spend_platform_credits(
   p_user_id uuid,
   p_action_key text,
@@ -114,7 +106,7 @@ BEGIN
 END;
 $$;
 
--- 5) Update add_platform_credits with credit_type parameter
+-- 3) add_platform_credits: support credit_type parameter
 CREATE OR REPLACE FUNCTION public.add_platform_credits(
   p_user_id uuid,
   p_user_type text,
@@ -195,7 +187,7 @@ BEGIN
 END;
 $$;
 
--- 6) Update grant_plan_credits to credit plan_balance specifically
+-- 4) grant_plan_credits: credit plan_balance specifically
 CREATE OR REPLACE FUNCTION public.grant_plan_credits(
   p_user_id uuid,
   p_user_type text,
@@ -319,6 +311,101 @@ BEGIN
     'new_total_balance', v_new_total,
     'grant_type', p_grant_type,
     'plan_type', p_plan_type
+  );
+END;
+$$;
+
+-- 5) check_and_grant_monthly_credits: use plan_balance (for free/standard users)
+CREATE OR REPLACE FUNCTION public.check_and_grant_monthly_credits(
+  p_user_id uuid,
+  p_user_type text
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+DECLARE
+  v_last_grant timestamp with time zone;
+  v_current_plan_balance integer;
+  v_plan_type text;
+  v_new_plan_balance integer;
+  v_new_total integer;
+  v_days_since_grant integer;
+BEGIN
+  SELECT created_at INTO v_last_grant
+  FROM platform_credit_transactions
+  WHERE user_id = p_user_id 
+    AND user_type = p_user_type
+    AND action = 'monthly_grant'
+  ORDER BY created_at DESC
+  LIMIT 1;
+
+  IF v_last_grant IS NOT NULL THEN
+    v_days_since_grant := EXTRACT(DAY FROM (now() - v_last_grant));
+    IF v_days_since_grant < 30 THEN
+      RETURN jsonb_build_object(
+        'granted', false, 
+        'reason', 'NOT_ENOUGH_TIME',
+        'days_remaining', 30 - v_days_since_grant
+      );
+    END IF;
+  END IF;
+
+  IF p_user_type = 'freelancer' THEN
+    SELECT plan_type INTO v_plan_type 
+    FROM freelancer_plans 
+    WHERE freelancer_user_id = p_user_id AND status = 'active'
+    LIMIT 1;
+    
+    IF v_plan_type IS NULL THEN
+      SELECT tier INTO v_plan_type 
+      FROM freelancer_profiles 
+      WHERE user_id = p_user_id;
+    END IF;
+  ELSIF p_user_type = 'company' THEN
+    SELECT plan_type INTO v_plan_type 
+    FROM company_plans 
+    WHERE company_user_id = p_user_id AND status = 'active'
+    LIMIT 1;
+  END IF;
+
+  v_plan_type := COALESCE(v_plan_type, 'free');
+
+  IF v_plan_type NOT IN ('free', 'standard') THEN
+    RETURN jsonb_build_object(
+      'granted', false, 
+      'reason', 'NOT_FREE_PLAN',
+      'plan_type', v_plan_type
+    );
+  END IF;
+
+  -- Insert or update plan_balance (monthly grants go to plan_balance)
+  INSERT INTO platform_credits (user_id, user_type, plan_balance, purchased_balance)
+  VALUES (p_user_id, p_user_type, 10, 0)
+  ON CONFLICT (user_id) 
+  DO UPDATE SET 
+    plan_balance = platform_credits.plan_balance + 10,
+    updated_at = now()
+  RETURNING plan_balance, plan_balance + purchased_balance INTO v_new_plan_balance, v_new_total;
+
+  INSERT INTO platform_credit_transactions (
+    user_id, user_type, action, amount, balance_after, description
+  ) VALUES (
+    p_user_id, 
+    p_user_type, 
+    'monthly_grant', 
+    10, 
+    v_new_total, 
+    'Renovação mensal de créditos (' || v_plan_type || ')'
+  );
+
+  RETURN jsonb_build_object(
+    'granted', true, 
+    'credits_added', 10,
+    'new_plan_balance', v_new_plan_balance,
+    'new_total_balance', v_new_total,
+    'plan_type', v_plan_type
   );
 END;
 $$;
