@@ -17,6 +17,7 @@ import { PresenceIndicator, PresenceDot } from "./PresenceIndicator";
 import { MessageTranslation } from "./MessageTranslation";
 import { TranslationToggle } from "./TranslationToggle";
 import { TranslationDisclaimer } from "./TranslationDisclaimer";
+import { TranslationUsageBadge } from "./TranslationUsageBadge";
 import { usePresenceHeartbeat } from "@/hooks/useUserPresence";
 import { TieredAvatar } from "@/components/freelancer/TieredAvatar";
 
@@ -32,10 +33,12 @@ interface Message {
   file_mime?: string | null;
   file_size?: number | null;
   audio_duration?: number | null;
+  lang_detected?: string | null;
 }
 
 interface MessageWithSignedUrl extends Message {
   signedUrl?: string | null;
+  autoTranslation?: string | null;
 }
 
 interface ChatWindowProps {
@@ -71,14 +74,101 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [autoTranslate, setAutoTranslate] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const signedUrlCache = useRef<Map<string, string>>(new Map());
+  const autoTranslationCache = useRef<Map<string, string>>(new Map());
 
   // Start presence heartbeat
   usePresenceHeartbeat();
 
   // Get user's preferred language
   const userPreferredLang = i18n.language || "pt-BR";
+
+  // Check premium status for auto-translation
+  useEffect(() => {
+    if (!user) return;
+    
+    const checkPremium = async () => {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("user_type")
+        .eq("user_id", user.id)
+        .single();
+      
+      const userType = profile?.user_type;
+      
+      if (userType === "freelancer") {
+        const { data: fp } = await supabase
+          .from("freelancer_profiles")
+          .select("tier")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        
+        const tier = fp?.tier || "standard";
+        setIsPremium(tier === "pro" || tier === "top_rated");
+      } else if (userType === "company") {
+        const { data: plan } = await supabase
+          .from("company_plans")
+          .select("plan_type, status")
+          .eq("company_user_id", user.id)
+          .maybeSingle();
+        
+        setIsPremium(plan?.status === "active" && 
+          (plan?.plan_type === "pro" || plan?.plan_type === "elite"));
+      }
+    };
+    
+    checkPremium();
+  }, [user]);
+
+  // Auto-translate a message
+  const autoTranslateMessage = useCallback(async (message: MessageWithSignedUrl): Promise<string | null> => {
+    // Only translate text messages from others
+    if (!message.content || message.type && message.type !== "text") return null;
+    if (message.sender_user_id === user?.id) return null;
+    
+    // Check cache first
+    const cacheKey = `${message.id}:${userPreferredLang}`;
+    const cached = autoTranslationCache.current.get(cacheKey);
+    if (cached) return cached;
+    
+    try {
+      const { data, error } = await supabase.functions.invoke("translate-message", {
+        body: {
+          message_id: message.id,
+          target_lang: userPreferredLang,
+          is_auto: true,
+        },
+      });
+      
+      if (error || data.error || data.same_language) return null;
+      
+      const translation = data.translation;
+      autoTranslationCache.current.set(cacheKey, translation);
+      return translation;
+    } catch (err) {
+      console.error("[ChatWindow] Auto-translation error:", err);
+      return null;
+    }
+  }, [user?.id, userPreferredLang]);
+
+  // Apply auto-translation to messages
+  const applyAutoTranslation = useCallback(async (msgs: MessageWithSignedUrl[]): Promise<MessageWithSignedUrl[]> => {
+    if (!autoTranslate || !isPremium) return msgs;
+    
+    const translated = await Promise.all(
+      msgs.map(async (msg) => {
+        if (msg.sender_user_id === user?.id) return msg;
+        if (msg.type && msg.type !== "text") return msg;
+        
+        const translation = await autoTranslateMessage(msg);
+        return { ...msg, autoTranslation: translation };
+      })
+    );
+    
+    return translated;
+  }, [autoTranslate, isPremium, user?.id, autoTranslateMessage]);
 
   // Generate signed URLs for messages with files - with caching
   const generateSignedUrls = useCallback(async (msgs: Message[]): Promise<MessageWithSignedUrl[]> => {
@@ -142,13 +232,15 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
     
     if (!error && data) {
       console.log('[ChatWindow] fetchMessages got', data.length, 'messages');
-      const messagesWithUrls = await generateSignedUrls(data);
+      let messagesWithUrls = await generateSignedUrls(data);
+      // Apply auto-translation if enabled
+      messagesWithUrls = await applyAutoTranslation(messagesWithUrls);
       setMessages(messagesWithUrls);
       console.log('[ChatWindow] uiRendered with', messagesWithUrls.length, 'messages');
     }
     
     setLoading(false);
-  }, [conversation.id, generateSignedUrls]);
+  }, [conversation.id, generateSignedUrls, applyAutoTranslation]);
 
   const markMessagesAsRead = useCallback(async () => {
     if (!user) return;
@@ -195,8 +287,14 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
           });
           
           // Generate signed URL for the new message if it has a file
-          const [msgWithUrl] = await generateSignedUrls([newMsg]);
+          let [msgWithUrl] = await generateSignedUrls([newMsg]);
           console.log('[ChatWindow] Generated signed URL for new message:', msgWithUrl.id, 'signedUrl:', !!msgWithUrl.signedUrl);
+          
+          // Apply auto-translation if enabled and message is from other user
+          if (autoTranslate && isPremium && newMsg.sender_user_id !== user?.id) {
+            const [translated] = await applyAutoTranslation([msgWithUrl]);
+            msgWithUrl = translated;
+          }
           
           setMessages((prev) => {
             const exists = prev.some(m => m.id === newMsg.id);
@@ -218,7 +316,14 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [conversation.id, fetchMessages, generateSignedUrls, markMessagesAsRead, user?.id]);
+  }, [conversation.id, fetchMessages, generateSignedUrls, markMessagesAsRead, user?.id, autoTranslate, isPremium, applyAutoTranslation]);
+
+  // Re-fetch messages when auto-translate is toggled
+  useEffect(() => {
+    if (!loading) {
+      fetchMessages();
+    }
+  }, [autoTranslate]);
 
   useEffect(() => {
     scrollToBottom();
@@ -371,6 +476,19 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
         );
 
       default:
+        // If auto-translation is available, show translated content
+        if (message.autoTranslation && !isOwn) {
+          return (
+            <div>
+              <p className="whitespace-pre-wrap break-words italic text-foreground">
+                {message.autoTranslation}
+              </p>
+              <p className="text-xs mt-1 opacity-50 line-through">
+                {message.content}
+              </p>
+            </div>
+          );
+        }
         return (
           <p className="whitespace-pre-wrap break-words">
             {message.content}
@@ -418,11 +536,14 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
           )}
         </div>
 
-        {/* Translation Toggle */}
-        <TranslationToggle 
-          onAutoTranslateChange={setAutoTranslate}
-          className="hidden sm:flex"
-        />
+        {/* Translation controls */}
+        <div className="flex items-center gap-2">
+          <TranslationUsageBadge />
+          <TranslationToggle 
+            onAutoTranslateChange={setAutoTranslate}
+            className="hidden sm:flex"
+          />
+        </div>
       </div>
 
       {/* Translation Disclaimer */}
@@ -481,8 +602,8 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
                             {format(new Date(message.created_at), "HH:mm")}
                           </p>
                           
-                          {/* Translation button for text messages */}
-                          {(!message.type || message.type === "text") && !isOwn && (
+                          {/* Translation button for text messages - hide if auto-translated */}
+                          {(!message.type || message.type === "text") && !isOwn && !message.autoTranslation && (
                             <MessageTranslation
                               messageId={message.id}
                               originalContent={message.content}
