@@ -564,81 +564,156 @@ serve(async (req) => {
           customerId: subscription.customer,
         });
 
-        // Only process active subscriptions
-        if (subscription.status !== 'active') {
-          logStep("Skipping non-active subscription", { status: subscription.status });
-          break;
-        }
-
-        // Get customer email to find user
-        const customerId = typeof subscription.customer === 'string' 
+        // Get customer ID
+        const subCustomerId = typeof subscription.customer === 'string' 
           ? subscription.customer 
           : subscription.customer.id;
 
-        const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { 
+        const stripeForSub = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { 
           apiVersion: "2025-08-27.basil" 
         });
-        const customer = await stripe.customers.retrieve(customerId);
+        const subCustomer = await stripeForSub.customers.retrieve(subCustomerId);
         
-        if (customer.deleted || !('email' in customer) || !customer.email) {
-          logStep("Customer not found or deleted", { customerId });
+        if (subCustomer.deleted || !('email' in subCustomer) || !subCustomer.email) {
+          logStep("Customer not found or deleted", { customerId: subCustomerId });
           break;
         }
 
         // Find user by email
-        const { data: profile } = await supabaseClient
+        const { data: subProfile } = await supabaseClient
           .from("profiles")
           .select("user_id, user_type")
-          .eq("email", customer.email)
+          .eq("email", subCustomer.email)
           .maybeSingle();
 
-        if (!profile) {
-          logStep("User not found for email", { email: customer.email });
+        if (!subProfile) {
+          logStep("User not found for email", { email: subCustomer.email });
           break;
         }
 
         // Get plan type from subscription metadata or product
-        const priceId = subscription.items.data[0]?.price?.id;
-        let planType = subscription.metadata?.plan_type;
+        const subPriceId = subscription.items.data[0]?.price?.id;
+        let subPlanType = subscription.metadata?.plan_type;
 
-        if (!planType && priceId) {
+        if (!subPlanType && subPriceId) {
           // Try to find plan type from price ID in definitions
-          if (profile.user_type === 'freelancer') {
+          if (subProfile.user_type === 'freelancer') {
             const { data: planDef } = await supabaseClient
               .from("freelancer_plan_definitions")
               .select("plan_type")
-              .eq("stripe_price_id", priceId)
+              .eq("stripe_price_id", subPriceId)
               .maybeSingle();
-            planType = planDef?.plan_type;
+            subPlanType = planDef?.plan_type;
           } else {
             const { data: planDef } = await supabaseClient
               .from("company_plan_definitions")
               .select("plan_type")
-              .eq("stripe_price_id", priceId)
+              .eq("stripe_price_id", subPriceId)
               .maybeSingle();
-            planType = planDef?.plan_type;
+            subPlanType = planDef?.plan_type;
           }
         }
 
-        if (!planType) {
-          logStep("Could not determine plan type", { priceId, metadata: subscription.metadata });
+        if (!subPlanType) {
+          logStep("Could not determine plan type", { priceId: subPriceId, metadata: subscription.metadata });
           break;
         }
 
-        logStep("Granting initial plan credits", { 
-          userId: profile.user_id, 
-          userType: profile.user_type,
-          planType,
+        // Map plan type to tier
+        const PLAN_TO_TIER: Record<string, string> = {
+          'free': 'standard',
+          'pro': 'pro',
+          'elite': 'top_rated',
+        };
+        const mappedTier = PLAN_TO_TIER[subPlanType] || 'standard';
+
+        // Determine subscription status
+        const isSubActive = subscription.status === 'active' || subscription.status === 'trialing';
+        const subStatus = isSubActive ? 'active' : subscription.status;
+
+        logStep("Syncing subscription to plan/tier", { 
+          userId: subProfile.user_id, 
+          userType: subProfile.user_type,
+          planType: subPlanType,
+          tier: mappedTier,
+          status: subStatus,
           subscriptionId: subscription.id,
         });
 
-        // Check if this is a new subscription (created event) - grant initial credits
-        if (event.type === "customer.subscription.created") {
+        // ============ SYNC PLAN AND TIER ============
+        if (subProfile.user_type === 'freelancer') {
+          // Upsert freelancer_plans
+          const { error: planError } = await supabaseClient
+            .from("freelancer_plans")
+            .upsert({
+              freelancer_user_id: subProfile.user_id,
+              plan_type: subPlanType,
+              status: subStatus,
+              stripe_subscription_id: subscription.id,
+              stripe_customer_id: subCustomerId,
+              current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+              current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+              cancel_at_period_end: subscription.cancel_at_period_end,
+              updated_at: new Date().toISOString(),
+            }, { 
+              onConflict: 'freelancer_user_id' 
+            });
+
+          if (planError) {
+            logStep("Error upserting freelancer_plans", { error: planError });
+          } else {
+            logStep("freelancer_plans upserted", { userId: subProfile.user_id, planType: subPlanType });
+          }
+
+          // Update tier only for active subscriptions
+          if (isSubActive) {
+            const { error: tierError } = await supabaseClient
+              .from("freelancer_profiles")
+              .update({ 
+                tier: mappedTier,
+                tier_source: 'stripe',
+                updated_at: new Date().toISOString(),
+              })
+              .eq("user_id", subProfile.user_id);
+
+            if (tierError) {
+              logStep("Error updating freelancer_profiles.tier", { error: tierError });
+            } else {
+              logStep("freelancer_profiles.tier updated", { userId: subProfile.user_id, tier: mappedTier });
+            }
+          }
+        } else if (subProfile.user_type === 'company') {
+          // Upsert company_plans
+          const { error: companyPlanError } = await supabaseClient
+            .from("company_plans")
+            .upsert({
+              company_user_id: subProfile.user_id,
+              plan_type: subPlanType,
+              status: subStatus,
+              stripe_subscription_id: subscription.id,
+              stripe_customer_id: subCustomerId,
+              current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+              current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+              cancel_at_period_end: subscription.cancel_at_period_end,
+              updated_at: new Date().toISOString(),
+            }, { 
+              onConflict: 'company_user_id' 
+            });
+
+          if (companyPlanError) {
+            logStep("Error upserting company_plans", { error: companyPlanError });
+          } else {
+            logStep("company_plans upserted", { userId: subProfile.user_id, planType: subPlanType });
+          }
+        }
+
+        // Grant initial credits on subscription creation
+        if (event.type === "customer.subscription.created" && isSubActive) {
           const { data: grantResult, error: grantError } = await supabaseClient
             .rpc("grant_plan_credits", {
-              p_user_id: profile.user_id,
-              p_user_type: profile.user_type,
-              p_plan_type: planType,
+              p_user_id: subProfile.user_id,
+              p_user_type: subProfile.user_type,
+              p_plan_type: subPlanType,
               p_subscription_id: subscription.id,
               p_grant_type: "initial",
             });
@@ -648,13 +723,12 @@ serve(async (req) => {
           } else {
             logStep("Initial plan credits granted", { result: grantResult });
 
-            // Send notification
             const grantData = grantResult as { granted: boolean; amount?: number } | null;
             if (grantData?.granted && grantData.amount) {
               await supabaseClient.from("notifications").insert({
-                user_id: profile.user_id,
+                user_id: subProfile.user_id,
                 type: "credits_added",
-                message: `🎉 Bem-vindo ao plano ${planType}! Você recebeu ${grantData.amount} créditos mensais!`,
+                message: `🎉 Bem-vindo ao plano ${subPlanType}! Você recebeu ${grantData.amount} créditos mensais!`,
                 link: "/settings?tab=billing",
               });
             }
@@ -664,13 +738,108 @@ serve(async (req) => {
       }
 
       case "customer.subscription.deleted": {
-        const subscription = event.data.object as Stripe.Subscription;
+        const cancelledSub = event.data.object as Stripe.Subscription;
         logStep("Subscription deleted/cancelled", { 
-          subscriptionId: subscription.id,
-          customerId: subscription.customer,
+          subscriptionId: cancelledSub.id,
+          customerId: cancelledSub.customer,
         });
-        // Credits are NOT removed - they were already granted
-        // User just won't get more renewals
+
+        // Get customer to find user
+        const cancelCustomerId = typeof cancelledSub.customer === 'string' 
+          ? cancelledSub.customer 
+          : cancelledSub.customer.id;
+
+        const stripeForCancel = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { 
+          apiVersion: "2025-08-27.basil" 
+        });
+        const cancelCustomer = await stripeForCancel.customers.retrieve(cancelCustomerId);
+        
+        if (cancelCustomer.deleted || !('email' in cancelCustomer) || !cancelCustomer.email) {
+          logStep("Cancelled customer not found", { customerId: cancelCustomerId });
+          break;
+        }
+
+        const { data: cancelProfile } = await supabaseClient
+          .from("profiles")
+          .select("user_id, user_type")
+          .eq("email", cancelCustomer.email)
+          .maybeSingle();
+
+        if (!cancelProfile) {
+          logStep("User not found for cancelled subscription", { email: cancelCustomer.email });
+          break;
+        }
+
+        if (cancelProfile.user_type === 'freelancer') {
+          // Update freelancer_plans status
+          await supabaseClient
+            .from("freelancer_plans")
+            .update({ 
+              status: 'cancelled',
+              cancel_at_period_end: true,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("freelancer_user_id", cancelProfile.user_id)
+            .eq("stripe_subscription_id", cancelledSub.id);
+
+          // Downgrade tier ONLY if tier_source = 'stripe' (do not touch manual tiers)
+          const { data: freelancerProfile } = await supabaseClient
+            .from("freelancer_profiles")
+            .select("tier, tier_source")
+            .eq("user_id", cancelProfile.user_id)
+            .maybeSingle();
+
+          const tierSource = (freelancerProfile as { tier_source?: string } | null)?.tier_source;
+          
+          if (tierSource === 'stripe' && freelancerProfile?.tier && freelancerProfile.tier !== 'standard') {
+            logStep("Downgrading tier from stripe subscription", { 
+              userId: cancelProfile.user_id, 
+              currentTier: freelancerProfile.tier,
+              tierSource 
+            });
+            
+            await supabaseClient
+              .from("freelancer_profiles")
+              .update({ 
+                tier: 'standard',
+                tier_source: 'manual', // Reset to manual after downgrade
+                updated_at: new Date().toISOString(),
+              })
+              .eq("user_id", cancelProfile.user_id);
+          } else {
+            logStep("Keeping manual tier on subscription cancel", { 
+              userId: cancelProfile.user_id, 
+              tier: freelancerProfile?.tier,
+              tierSource 
+            });
+          }
+
+          // Notify user
+          await supabaseClient.from("notifications").insert({
+            user_id: cancelProfile.user_id,
+            type: "subscription_cancelled",
+            message: "Sua assinatura foi cancelada. Seus créditos restantes continuam válidos.",
+            link: "/settings?tab=billing",
+          });
+        } else if (cancelProfile.user_type === 'company') {
+          // Update company_plans status
+          await supabaseClient
+            .from("company_plans")
+            .update({ 
+              status: 'cancelled',
+              cancel_at_period_end: true,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("company_user_id", cancelProfile.user_id)
+            .eq("stripe_subscription_id", cancelledSub.id);
+
+          await supabaseClient.from("notifications").insert({
+            user_id: cancelProfile.user_id,
+            type: "subscription_cancelled",
+            message: "Sua assinatura foi cancelada. Seus créditos restantes continuam válidos.",
+            link: "/settings?tab=billing",
+          });
+        }
         break;
       }
     }
