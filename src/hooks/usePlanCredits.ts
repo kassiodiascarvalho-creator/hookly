@@ -33,14 +33,17 @@ export function usePlanCredits(userType: 'freelancer' | 'company') {
     try {
       setLoading(true);
 
-      // Get current balance from platform_credits
+      // Get current balances from platform_credits (dual-balance system)
       const { data: credits } = await supabase
         .from("platform_credits")
-        .select("balance")
+        .select("plan_balance, purchased_balance, balance")
         .eq("user_id", user.id)
         .maybeSingle();
 
-      const currentBalance = (credits as { balance?: number } | null)?.balance || 0;
+      const creditsData = credits as { plan_balance?: number; purchased_balance?: number; balance?: number } | null;
+      const planBalance = creditsData?.plan_balance || 0;
+      const purchasedBalance = creditsData?.purchased_balance || 0;
+      const currentBalance = creditsData?.balance || (planBalance + purchasedBalance);
 
       // Get plan info based on user type
       let planType = 'free';
@@ -144,13 +147,10 @@ export function usePlanCredits(userType: 'freelancer' | 'company') {
         daysUntilGrant = Math.max(0, Math.ceil((nextGrantDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)));
       }
 
-      // Calculate plan vs purchased credits breakdown
-      // Plan credits are capped at creditCap (or monthlyCredits if no cap)
-      // For premium users (PRO/ELITE), they have monthly credits as part of their plan
-      const planMaxCredits = creditCap ?? monthlyCredits;
-      const planAvailable = Math.min(currentBalance, planMaxCredits);
-      const purchasedAvailable = Math.max(0, currentBalance - planMaxCredits);
-      const totalAvailable = currentBalance;
+      // Use actual dual-balance values from database (no more guessing)
+      const planAvailable = planBalance;
+      const purchasedAvailable = purchasedBalance;
+      const totalAvailable = planBalance + purchasedBalance;
 
       setInfo({
         monthlyCredits,
