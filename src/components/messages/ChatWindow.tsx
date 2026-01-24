@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -19,6 +18,7 @@ import { MessageTranslation } from "./MessageTranslation";
 import { TranslationToggle } from "./TranslationToggle";
 import { TranslationDisclaimer } from "./TranslationDisclaimer";
 import { usePresenceHeartbeat } from "@/hooks/useUserPresence";
+import { TieredAvatar } from "@/components/freelancer/TieredAvatar";
 
 interface Message {
   id: string;
@@ -395,12 +395,12 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
         </Button>
 
         <div className="relative">
-          <Avatar className="h-10 w-10">
-            <AvatarImage src={conversation.other_user_avatar || undefined} />
-            <AvatarFallback className="bg-primary text-primary-foreground">
-              {conversation.other_user_name.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
+          <TieredAvatar
+            avatarUrl={conversation.other_user_avatar}
+            name={conversation.other_user_name}
+            tier={conversation.other_user_tier}
+            size="md"
+          />
           <PresenceDot userId={conversation.other_user_id} size="md" />
         </div>
 

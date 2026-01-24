@@ -12,6 +12,8 @@ import { formatMoney, formatMoneyFromCents } from "@/lib/formatMoney";
 import { useLocalCurrencyDisplay } from "@/hooks/useLocalCurrencyDisplay";
 import { computeFreelancerCompletion } from "@/lib/profileCompletion";
 import { TrustMessage } from "@/components/trust/TrustBadge";
+import { TierBadge, FreelancerTier } from "@/components/freelancer/TierBadge";
+
 interface DashboardStats {
   activeProjects: number;
   pendingProposals: number;
@@ -19,6 +21,7 @@ interface DashboardStats {
   totalEarnings: number;
   currency: string;
   profileCompletion: number;
+  tier: FreelancerTier;
 }
 
 export default function FreelancerDashboard() {
@@ -34,7 +37,8 @@ export default function FreelancerDashboard() {
     conversations: 0,
     totalEarnings: 0,
     currency: "USD",
-    profileCompletion: 0
+    profileCompletion: 0,
+    tier: "standard",
   });
 
   useEffect(() => {
@@ -148,13 +152,17 @@ export default function FreelancerDashboard() {
         profileCompletion = completion.percent;
       }
 
+      // Get tier from freelancer profile
+      const tier = (freelancerProfileResult.data?.tier as FreelancerTier) || "standard";
+
       setStats({
         activeProjects,
         pendingProposals,
         conversations,
         totalEarnings: totalEarningsCents, // Store in cents
         currency,
-        profileCompletion
+        profileCompletion,
+        tier,
       });
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
@@ -241,9 +249,14 @@ export default function FreelancerDashboard() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">{t("freelancerDashboard.welcome")}</h1>
-        <p className="text-muted-foreground mt-1">{t("freelancerDashboard.subtitle")}</p>
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">{t("freelancerDashboard.welcome")}</h1>
+          <p className="text-muted-foreground mt-1">{t("freelancerDashboard.subtitle")}</p>
+        </div>
+        {stats.tier !== "standard" && (
+          <TierBadge tier={stats.tier} size="lg" />
+        )}
       </div>
 
       {/* Stats Grid */}
@@ -307,8 +320,8 @@ export default function FreelancerDashboard() {
         </Card>
       )}
 
-      {/* Tier Upgrade Prompt (when profile is complete) */}
-      {stats.profileCompletion === 100 && (
+      {/* Tier Status Card (show current tier or upgrade hint) */}
+      {stats.profileCompletion === 100 && stats.tier === "standard" && (
         <Card className="border-amber-500/20 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20">
           <CardContent className="py-4">
             <div className="flex items-center gap-4">
@@ -317,6 +330,7 @@ export default function FreelancerDashboard() {
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2">
+                  <TierBadge tier={stats.tier} size="sm" />
                   <span className="text-sm font-medium text-amber-800 dark:text-amber-200">
                     {t("dashboard.freelancer.tierUpgrade.currentTier")}
                   </span>

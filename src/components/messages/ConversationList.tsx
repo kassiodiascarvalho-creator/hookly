@@ -1,5 +1,4 @@
 import { useTranslation } from "react-i18next";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
@@ -7,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Conversation } from "@/pages/Messages";
 import { MessageSquare } from "lucide-react";
 import { PresenceDot } from "./PresenceIndicator";
+import { TieredAvatar } from "@/components/freelancer/TieredAvatar";
 
 interface ConversationListProps {
   conversations: Conversation[];
@@ -66,12 +66,12 @@ export function ConversationList({
             )}
           >
             <div className="relative">
-              <Avatar className="h-12 w-12 shrink-0">
-                <AvatarImage src={conversation.other_user_avatar || undefined} />
-                <AvatarFallback className="bg-primary text-primary-foreground">
-                  {conversation.other_user_name.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+              <TieredAvatar
+                avatarUrl={conversation.other_user_avatar}
+                name={conversation.other_user_name}
+                tier={conversation.other_user_tier}
+                size="lg"
+              />
               <PresenceDot userId={conversation.other_user_id} size="md" />
             </div>
 

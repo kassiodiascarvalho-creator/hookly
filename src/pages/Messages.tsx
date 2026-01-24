@@ -7,6 +7,8 @@ import { ConversationList } from "@/components/messages/ConversationList";
 import { ChatWindow } from "@/components/messages/ChatWindow";
 import { MessageSquare } from "lucide-react";
 
+import type { FreelancerTier } from "@/components/freelancer/TierBadge";
+
 export interface Conversation {
   id: string;
   company_user_id: string;
@@ -16,6 +18,7 @@ export interface Conversation {
   other_user_id: string;
   other_user_name: string;
   other_user_avatar: string | null;
+  other_user_tier?: FreelancerTier | null;
   project_title: string | null;
   last_message: string | null;
   last_message_at: string | null;
@@ -97,7 +100,7 @@ export default function Messages() {
         userType === "company"
           ? supabase
               .from("freelancer_profiles")
-              .select("user_id, full_name, avatar_url")
+              .select("user_id, full_name, avatar_url, tier")
               .in("user_id", otherUserIds)
           : Promise.resolve({ data: [] }),
         
@@ -136,7 +139,7 @@ export default function Messages() {
 
       // Create lookup maps
       const freelancerProfiles = new Map(
-        (freelancerProfilesResult.data || []).map((p: { user_id: string; full_name: string | null; avatar_url: string | null }) => [p.user_id, p])
+        (freelancerProfilesResult.data || []).map((p: { user_id: string; full_name: string | null; avatar_url: string | null; tier: string | null }) => [p.user_id, p])
       );
       const companyProfiles = new Map(
         (companyProfilesResult.data || []).map((p: { user_id: string; company_name: string | null; contact_name: string | null; logo_url: string | null }) => [p.user_id, p])
@@ -165,12 +168,14 @@ export default function Messages() {
         
         let otherUserName = "Unknown";
         let otherUserAvatar: string | null = null;
+        let otherUserTier: FreelancerTier | null = null;
 
         if (userType === "company") {
           const profile = freelancerProfiles.get(otherUserId);
           if (profile) {
             otherUserName = profile.full_name || "Freelancer";
             otherUserAvatar = profile.avatar_url;
+            otherUserTier = (profile.tier as FreelancerTier) || null;
           }
         } else {
           const profile = companyProfiles.get(otherUserId);
@@ -198,6 +203,7 @@ export default function Messages() {
           other_user_id: otherUserId,
           other_user_name: otherUserName,
           other_user_avatar: otherUserAvatar,
+          other_user_tier: otherUserTier,
           project_title: project?.title || null,
           last_message: lastMessageContent,
           last_message_at: lastMessage?.created_at || conv.created_at,

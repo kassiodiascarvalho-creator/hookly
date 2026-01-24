@@ -41,6 +41,9 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 
+import { TieredAvatar } from "@/components/freelancer/TieredAvatar";
+import type { FreelancerTier } from "@/components/freelancer/TierBadge";
+
 interface Freelancer {
   id: string;
   user_id: string;
@@ -53,6 +56,7 @@ interface Freelancer {
   languages: string[] | null;
   avatar_url: string | null;
   verified: boolean | null;
+  tier?: FreelancerTier | null;
 }
 
 const SKILL_CATEGORIES = [
@@ -105,7 +109,10 @@ export default function TalentPool() {
       .order("verified", { ascending: false });
 
     if (!error && data) {
-      setFreelancers(data);
+      setFreelancers(data.map(f => ({
+        ...f,
+        tier: (f.tier as FreelancerTier) || "standard",
+      })));
     }
     setLoading(false);
   };
@@ -418,12 +425,12 @@ export default function TalentPool() {
             <Card key={freelancer.id} className="hover:shadow-lg transition-shadow">
               <CardContent className="pt-6">
                 <div className="flex items-start gap-4">
-                  <Avatar className="h-14 w-14">
-                    <AvatarImage src={freelancer.avatar_url || undefined} />
-                    <AvatarFallback className="text-lg">
-                      {freelancer.full_name?.charAt(0) || "F"}
-                    </AvatarFallback>
-                  </Avatar>
+                  <TieredAvatar
+                    avatarUrl={freelancer.avatar_url}
+                    name={freelancer.full_name}
+                    tier={freelancer.tier}
+                    size="lg"
+                  />
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">

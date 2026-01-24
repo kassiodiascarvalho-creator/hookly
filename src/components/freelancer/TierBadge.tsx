@@ -1,5 +1,4 @@
 import { useTranslation } from "react-i18next";
-import { Badge } from "@/components/ui/badge";
 import { Star, Shield, Zap, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
