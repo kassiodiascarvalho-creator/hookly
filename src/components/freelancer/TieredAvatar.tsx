@@ -18,11 +18,12 @@ const sizeClasses = {
   xl: "h-24 w-24",
 };
 
+// Badge positioned OUTSIDE the circle (not covering the avatar)
 const badgeSizeClasses = {
-  sm: "text-[8px] px-1 py-0 -top-0.5 -right-0.5",
-  md: "text-[9px] px-1.5 py-0 -top-0.5 -right-0.5",
-  lg: "text-[10px] px-1.5 py-0.5 -top-1 -right-1",
-  xl: "text-xs px-2 py-0.5 -top-1 -right-1",
+  sm: "text-[8px] px-1 py-0 -top-1 -right-3",
+  md: "text-[9px] px-1.5 py-0.5 -top-1 -right-4",
+  lg: "text-[10px] px-1.5 py-0.5 -top-1 -right-5",
+  xl: "text-xs px-2 py-0.5 -top-2 -right-6",
 };
 
 const tierConfig: Record<FreelancerTier, {

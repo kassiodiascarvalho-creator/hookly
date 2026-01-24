@@ -1009,7 +1009,13 @@
     "warning": {
       "creditsNotForPayment": "Créditos não podem ser usados para pagar freelancers",
       "useRealPayment": "Para pagamentos de projetos, use PIX ou cartão"
-    }
+    },
+    "planSource": {
+      "manual": "Manual (Admin)",
+      "stripe": "Gerenciado pelo Stripe"
+    },
+    "planActive": "Plano ativo",
+    "freePlan": "Plano gratuito"
   },
   "contracts": {
     "title": "Contratos",
