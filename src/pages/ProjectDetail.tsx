@@ -23,7 +23,7 @@ import { usePublishProject } from "@/hooks/usePublishProject";
 import { ProfileGateModal } from "@/components/profile/ProfileGateModal";
 import { ProfileGateAlert } from "@/components/profile/ProfileGateAlert";
 import { CompanyAvatar } from "@/components/company/CompanyAvatar";
-import { getEffectiveCompanyPlan, CompanyPlanType } from "@/hooks/useCompanyPlanData";
+import { fetchCompanyPlanBadges, CompanyPlanType } from "@/hooks/useCompanyPlanData";
 
 interface Project {
   id: string;
@@ -150,28 +150,18 @@ export default function ProjectDetail() {
 
   const fetchCompanyInfo = async (companyUserId: string) => {
     try {
-      // Fetch company profile and plan in parallel
-      const [profileResult, planResult] = await Promise.all([
+      // Fetch company profile and plan badges in parallel (RPC bypasses RLS for freelancers)
+      const [profileResult, planMap] = await Promise.all([
         supabase
           .from("company_profiles")
           .select("company_name, logo_url")
           .eq("user_id", companyUserId)
           .maybeSingle(),
-        supabase
-          .from("company_plans")
-          .select("plan_type, status, plan_source")
-          .eq("company_user_id", companyUserId)
-          .maybeSingle(),
+        fetchCompanyPlanBadges([companyUserId]),
       ]);
 
       const company = profileResult.data;
-      const plan = planResult.data;
-
-      const effectivePlan = getEffectiveCompanyPlan(
-        plan?.plan_type || null,
-        plan?.status || null,
-        plan?.plan_source || null
-      );
+      const effectivePlan = planMap.get(companyUserId) || "free";
 
       setCompanyInfo({
         company_name: company?.company_name || null,
