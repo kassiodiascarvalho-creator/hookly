@@ -60,14 +60,15 @@ BEGIN
     RETURN TRUE;
   END IF;
 
-  SELECT plan_balance, purchased_balance, balance, user_type 
-  INTO v_plan_balance, v_purchased_balance, v_total_balance, v_user_type
+  SELECT plan_balance, purchased_balance, user_type 
+  INTO v_plan_balance, v_purchased_balance, v_user_type
   FROM platform_credits
-  WHERE user_id = p_user_id;
+  WHERE user_id = p_user_id
+  FOR UPDATE;
 
   v_plan_balance := COALESCE(v_plan_balance, 0);
   v_purchased_balance := COALESCE(v_purchased_balance, 0);
-  v_total_balance := COALESCE(v_total_balance, 0);
+  v_total_balance := v_plan_balance + v_purchased_balance;
 
   IF v_total_balance < v_cost THEN
     RETURN FALSE;
