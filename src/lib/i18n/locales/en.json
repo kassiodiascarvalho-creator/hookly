@@ -1249,7 +1249,13 @@
     "exportFiltered": "Export Filtered",
     "noName": "No name",
     "noTitle": "No title",
-    "noContact": "No contact"
+    "noContact": "No contact",
+    "planManagement": "Plan Management",
+    "currentPlan": "Current Plan",
+    "manualOverride": "Manual (Admin)",
+    "stripeManaged": "Stripe Managed",
+    "manualPlanProtected": "This plan was set manually and will not be modified by Stripe.",
+    "planUpdated": "Plan updated to {{plan}}"
   },
   "finances": {
     "title": "Finances",
