@@ -11,6 +11,32 @@ export interface CompanyPlanInfo {
 }
 
 /**
+ * Centralized function to derive effective plan type from raw DB data
+ * Used for consistency across the entire app
+ */
+export function getEffectiveCompanyPlan(
+  planType: string | null,
+  status: string | null,
+  planSource: string | null
+): CompanyPlanType {
+  if (!planType || !planSource) return "free";
+
+  if (planSource === "manual") {
+    // Manual plans always use plan_type as-is
+    return planType as CompanyPlanType;
+  }
+
+  if (planSource === "stripe") {
+    // Stripe requires active/trialing status
+    if (status === "active" || status === "trialing") {
+      return planType as CompanyPlanType;
+    }
+  }
+
+  return "free";
+}
+
+/**
  * Hook to fetch company plan info for any company user
  * This is a lightweight hook for displaying badges/rings, not for managing subscriptions
  */
@@ -50,31 +76,14 @@ export function useCompanyPlanData(companyUserId: string | undefined) {
         return;
       }
 
-      // Determine effective plan
       const planSource = data.plan_source as "manual" | "stripe" | null;
-      const status = data.status;
-      const planType = data.plan_type as CompanyPlanType;
-
-      let effectivePlan: CompanyPlanType = "free";
-      let isSubscribed = false;
-
-      if (planSource === "manual") {
-        // Manual always uses plan_type
-        effectivePlan = planType;
-        isSubscribed = planType !== "free";
-      } else if (planSource === "stripe") {
-        // Stripe requires active/trialing
-        if (status === "active" || status === "trialing") {
-          effectivePlan = planType;
-          isSubscribed = planType !== "free";
-        }
-      }
+      const effectivePlan = getEffectiveCompanyPlan(data.plan_type, data.status, planSource);
 
       setPlanInfo({
         plan_type: effectivePlan,
-        status,
+        status: data.status,
         plan_source: planSource,
-        isSubscribed,
+        isSubscribed: effectivePlan !== "free",
       });
     } catch (err) {
       console.error("Error in useCompanyPlanData:", err);

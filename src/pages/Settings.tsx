@@ -12,9 +12,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TieredAvatar } from "@/components/freelancer/TieredAvatar";
+import { CompanyAvatar } from "@/components/company/CompanyAvatar";
 import type { FreelancerTier } from "@/components/freelancer/TierBadge";
+import { useCompanyPlanData } from "@/hooks/useCompanyPlanData";
 import { 
   User, Lock, Bell, CreditCard, Building, Briefcase, 
   Loader2, Save, Upload, Folder, Award, Wallet
@@ -97,6 +98,11 @@ export default function Settings() {
     emailPayments: true,
     emailMarketing: false,
   });
+
+  // Fetch company plan for avatar ring + badge
+  const { planInfo: companyPlanInfo } = useCompanyPlanData(
+    profile?.user_type === "company" ? user?.id : undefined
+  );
 
   useEffect(() => {
     if (user) {
@@ -275,12 +281,13 @@ export default function Settings() {
               {/* Avatar/Logo with FileUpload */}
               <div className="flex items-center gap-4">
                 {isCompany ? (
-                  <Avatar className="h-20 w-20">
-                    <AvatarImage src={companyProfile?.logo_url || undefined} />
-                    <AvatarFallback className="text-xl">
-                      {companyProfile?.company_name?.charAt(0) || "C"}
-                    </AvatarFallback>
-                  </Avatar>
+                  <CompanyAvatar
+                    logoUrl={companyProfile?.logo_url}
+                    companyName={companyProfile?.company_name}
+                    planType={companyPlanInfo?.plan_type || "free"}
+                    size="xl"
+                    showBadge={true}
+                  />
                 ) : (
                   <TieredAvatar
                     avatarUrl={freelancerProfile?.avatar_url}

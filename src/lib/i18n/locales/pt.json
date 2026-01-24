@@ -251,6 +251,8 @@
     "markComplete": "Marcar como Concluído",
     "completed": "Projeto marcado como concluído!",
     "currency": "Moeda",
+    "postedBy": "Publicado por",
+    "unknownCompany": "Empresa desconhecida",
     "validation": {
       "titleMin": "O título deve ter pelo menos 5 caracteres",
       "descriptionMin": "A descrição deve ter pelo menos 20 caracteres",
