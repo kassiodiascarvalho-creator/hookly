@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ConversationList } from "@/components/messages/ConversationList";
 import { ChatWindow } from "@/components/messages/ChatWindow";
 import { MessageSquare } from "lucide-react";
+import { fetchCompanyBadges, CompanyPlanType } from "@/hooks/useCompanyPlanData";
 
 import type { FreelancerTier } from "@/components/freelancer/TierBadge";
 
@@ -19,6 +20,9 @@ export interface Conversation {
   other_user_name: string;
   other_user_avatar: string | null;
   other_user_tier?: FreelancerTier | null;
+  other_user_type?: "company" | "freelancer";
+  other_company_plan?: CompanyPlanType | null;
+  other_company_verified?: boolean;
   project_title: string | null;
   last_message: string | null;
   last_message_at: string | null;
@@ -163,8 +167,9 @@ export default function Messages() {
       }
 
       // Build enriched conversations
-      const enrichedConversations: Conversation[] = conversationsData.map((conv: ConversationRow) => {
+      let enrichedConversations: Conversation[] = conversationsData.map((conv: ConversationRow) => {
         const otherUserId = userType === "company" ? conv.freelancer_user_id : conv.company_user_id;
+        const otherUserType = userType === "company" ? "freelancer" as const : "company" as const;
         
         let otherUserName = "Unknown";
         let otherUserAvatar: string | null = null;
@@ -204,12 +209,26 @@ export default function Messages() {
           other_user_name: otherUserName,
           other_user_avatar: otherUserAvatar,
           other_user_tier: otherUserTier,
+          other_user_type: otherUserType,
+          other_company_plan: null as CompanyPlanType | null,
+          other_company_verified: false,
           project_title: project?.title || null,
           last_message: lastMessageContent,
           last_message_at: lastMessage?.created_at || conv.created_at,
           unread_count: unreadCount,
         };
       });
+
+      // For freelancers, fetch company badges via RPC
+      if (userType === "freelancer") {
+        const companyIds = enrichedConversations.map(c => c.company_user_id);
+        const badges = await fetchCompanyBadges(companyIds);
+        enrichedConversations = enrichedConversations.map(conv => ({
+          ...conv,
+          other_company_plan: badges.get(conv.company_user_id)?.plan_type || "free",
+          other_company_verified: badges.get(conv.company_user_id)?.is_verified || false,
+        }));
+      }
 
       // Sort by last message date
       enrichedConversations.sort((a, b) => {

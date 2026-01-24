@@ -20,6 +20,7 @@ import { TranslationDisclaimer } from "./TranslationDisclaimer";
 import { TranslationUsageBadge } from "./TranslationUsageBadge";
 import { usePresenceHeartbeat } from "@/hooks/useUserPresence";
 import { TieredAvatar } from "@/components/freelancer/TieredAvatar";
+import { CompanyAvatar } from "@/components/company/CompanyAvatar";
 
 interface Message {
   id: string;
@@ -513,12 +514,24 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
         </Button>
 
         <div className="relative">
-          <TieredAvatar
-            avatarUrl={conversation.other_user_avatar}
-            name={conversation.other_user_name}
-            tier={conversation.other_user_tier}
-            size="md"
-          />
+          {conversation.other_user_type === "company" ? (
+            <CompanyAvatar
+              logoUrl={conversation.other_user_avatar}
+              companyName={conversation.other_user_name}
+              planType={conversation.other_company_plan}
+              isVerified={conversation.other_company_verified}
+              size="md"
+              showBadge={true}
+              showVerified={true}
+            />
+          ) : (
+            <TieredAvatar
+              avatarUrl={conversation.other_user_avatar}
+              name={conversation.other_user_name}
+              tier={conversation.other_user_tier}
+              size="md"
+            />
+          )}
           <PresenceDot userId={conversation.other_user_id} size="md" />
         </div>
 

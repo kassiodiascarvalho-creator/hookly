@@ -12,7 +12,7 @@ import { Search, Briefcase, DollarSign, Calendar, Loader2, Filter, Rocket } from
 import { format, isAfter } from "date-fns";
 import { BoostedBadge } from "@/components/projects/BoostedBadge";
 import { CompanyAvatar } from "@/components/company/CompanyAvatar";
-import { fetchCompanyPlanBadges, CompanyPlanType } from "@/hooks/useCompanyPlanData";
+import { fetchCompanyBadges, CompanyPlanType, CompanyBadgeInfo } from "@/hooks/useCompanyPlanData";
 
 interface Project {
   id: string;
@@ -28,6 +28,7 @@ interface Project {
     company_name: string | null;
     logo_url: string | null;
     plan_type?: CompanyPlanType;
+    is_verified?: boolean;
   };
   _hasProposal?: boolean;
 }
@@ -73,25 +74,25 @@ export default function FindProjects() {
       // Fetch company info for each project
       const companyUserIds = [...new Set(data.map((p) => p.company_user_id))];
       
-      // Use parallel fetching: company profiles + plan badges via RPC
-      const [{ data: companies }, planMap] = await Promise.all([
+      // Use parallel fetching: company profiles + plan/verified badges via RPC
+      const [{ data: companies }, badgeMap] = await Promise.all([
         supabase
           .from("company_profiles")
           .select("user_id, company_name, logo_url")
           .in("user_id", companyUserIds),
-        fetchCompanyPlanBadges(companyUserIds), // Uses SECURITY DEFINER RPC - works for freelancers
+        fetchCompanyBadges(companyUserIds), // Uses SECURITY DEFINER RPC - works for freelancers
       ]);
 
       const companyMap = new Map(companies?.map((c) => [c.user_id, c]) || []);
 
       const projectsWithCompany = data.map((project) => {
         const company = companyMap.get(project.company_user_id);
-        const effectivePlanType = planMap.get(project.company_user_id) || "free";
+        const badge = badgeMap.get(project.company_user_id) || { plan_type: "free", is_verified: false };
 
         return {
           ...project,
           company: company
-            ? { ...company, plan_type: effectivePlanType }
+            ? { ...company, plan_type: badge.plan_type, is_verified: badge.is_verified }
             : undefined,
         };
       });
@@ -249,8 +250,10 @@ export default function FindProjects() {
                               logoUrl={project.company.logo_url}
                               companyName={project.company.company_name}
                               planType={project.company.plan_type}
+                              isVerified={project.company.is_verified}
                               size="sm"
                               showBadge={true}
+                              showVerified={true}
                             />
                             <span className="text-sm text-muted-foreground">
                               {project.company.company_name || t("findProjects.unknownCompany")}
