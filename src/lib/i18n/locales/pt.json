@@ -1134,7 +1134,9 @@
     "signOut": "Sair",
     "comingSoon": "Em breve",
     "days": "dias",
-    "later": "Depois"
+    "later": "Depois",
+    "retry": "Tentar novamente",
+    "verified": "Verificado"
   },
   "profileGate": {
     "title": "Complete seu Perfil",
@@ -1655,7 +1657,35 @@
     "noPackages": "Nenhum pacote disponível",
     "selectPackage": "Selecione um pacote",
     "buyCredits": "Comprar Créditos",
-    "tierDiscount": "Desconto {{tier}}"
+    "tierDiscount": "Desconto {{tier}}",
+    "subscriptionInfo": "Informações da Assinatura",
+    "status": "Status",
+    "currentPeriod": "Período Atual",
+    "cancelsAt": "Cancela em",
+    "upcomingCharge": "Próxima Cobrança",
+    "dueOn": "Vencimento em",
+    "invoiceHistory": "Histórico de Faturas",
+    "invoiceHistoryDesc": "Visualize e baixe suas faturas anteriores",
+    "noInvoicesYet": "Nenhuma fatura ainda",
+    "noInvoicesDesc": "Suas faturas aparecerão aqui após o primeiro pagamento",
+    "invoice": "Fatura",
+    "date": "Data",
+    "actions": "Ações",
+    "pay": "Pagar",
+    "paymentMethod": "Método de Pagamento",
+    "paymentMethodDesc": "Gerencie seu cartão de crédito ou débito",
+    "managePaymentMethod": "Gerenciar Método de Pagamento",
+    "pastDueWarning": "Pagamento em atraso!",
+    "pastDueDescription": "Atualize seu método de pagamento para evitar a suspensão do serviço.",
+    "updatePayment": "Atualizar Pagamento",
+    "errorLoading": "Erro ao carregar informações de faturamento",
+    "errorOpeningPortal": "Erro ao abrir portal de pagamento",
+    "planSource": {
+      "manual": "Manual (Admin)",
+      "stripe": "Stripe"
+    },
+    "planActive": "Plano ativo",
+    "freePlan": "Plano gratuito"
   },
   "ai": {
     "primaryRecommendation": "Recomendação Principal",

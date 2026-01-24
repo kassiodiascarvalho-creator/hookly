@@ -98,3 +98,6 @@ verify_jwt = false
 
 [functions.translate-message]
 verify_jwt = false
+
+[functions.billing-company-summary]
+verify_jwt = false
