@@ -9,6 +9,8 @@ export interface CompanyPlan {
   projects_used: number;
   projects_limit: number | null;
   cancel_at_period_end?: boolean;
+  plan_source?: "manual" | "stripe";
+  status?: string;
 }
 
 export interface PlanConfig {
@@ -97,11 +99,68 @@ export function useCompanyPlan() {
 
     try {
       setLoading(true);
-      const { data, error } = await supabase.functions.invoke("check-company-subscription");
       
-      if (error) throw error;
+      // First, read directly from company_plans table (source of truth)
+      const { data: companyPlan, error: planError } = await supabase
+        .from("company_plans")
+        .select("plan_type, status, plan_source, cancel_at_period_end, current_period_end, projects_this_month, stripe_subscription_id")
+        .eq("company_user_id", user.id)
+        .maybeSingle();
       
-      setPlan(data as CompanyPlan);
+      if (planError) {
+        console.error("Error fetching company plan:", planError);
+      }
+      
+      // Determine effective plan type based on source and status
+      let effectivePlanType: "free" | "starter" | "pro" | "elite" = "free";
+      let isSubscribed = false;
+      
+      if (companyPlan) {
+        const planSource = companyPlan.plan_source as "manual" | "stripe";
+        const status = companyPlan.status;
+        const planType = companyPlan.plan_type as "free" | "starter" | "pro" | "elite";
+        
+        if (planSource === "manual") {
+          // Manual override: always use the plan_type, regardless of status
+          effectivePlanType = planType;
+          isSubscribed = planType !== "free";
+        } else if (planSource === "stripe") {
+          // Stripe managed: check if active/trialing
+          if (status === "active" || status === "trialing") {
+            effectivePlanType = planType;
+            isSubscribed = planType !== "free";
+          } else {
+            effectivePlanType = "free";
+            isSubscribed = false;
+          }
+        }
+        
+        // Determine projects limit based on plan
+        const projectsLimit = effectivePlanType === "starter" ? 5 : null;
+        
+        setPlan({
+          subscribed: isSubscribed,
+          plan_type: effectivePlanType,
+          subscription_end: companyPlan.current_period_end,
+          projects_used: companyPlan.projects_this_month || 0,
+          projects_limit: projectsLimit,
+          cancel_at_period_end: companyPlan.cancel_at_period_end || false,
+          plan_source: planSource,
+          status: status,
+        });
+      } else {
+        // No plan record exists, default to free
+        setPlan({
+          subscribed: false,
+          plan_type: "free",
+          subscription_end: null,
+          projects_used: 0,
+          projects_limit: null,
+          plan_source: undefined,
+          status: undefined,
+        });
+      }
+      
       setError(null);
     } catch (err) {
       console.error("Error checking subscription:", err);

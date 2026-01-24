@@ -962,7 +962,13 @@
     "warning": {
       "creditsNotForPayment": "Credits cannot be used to pay freelancers",
       "useRealPayment": "For project payments, use PIX or card"
-    }
+    },
+    "planSource": {
+      "manual": "Manual (Admin)",
+      "stripe": "Stripe Managed"
+    },
+    "planActive": "Active plan",
+    "freePlan": "Free plan"
   },
   "contracts": {
     "title": "Contracts",

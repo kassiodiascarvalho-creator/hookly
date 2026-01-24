@@ -93,8 +93,28 @@ export function CompanyPlanCard() {
                     </Badge>
                   )}
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="flex items-center gap-2 mt-1">
                   {isSubscribed ? "Plano ativo" : "Plano gratuito"}
+                  {plan?.plan_source && (
+                    <Badge 
+                      variant="outline" 
+                      className={`text-[10px] px-1.5 py-0 ${
+                        plan.plan_source === "manual" 
+                          ? "border-amber-500 text-amber-600" 
+                          : "border-blue-500 text-blue-600"
+                      }`}
+                    >
+                      {plan.plan_source === "manual" ? "Manual (Admin)" : "Stripe"}
+                    </Badge>
+                  )}
+                  {plan?.status && plan.status !== "active" && (
+                    <Badge 
+                      variant="outline" 
+                      className="text-[10px] px-1.5 py-0 border-red-500 text-red-600"
+                    >
+                      {plan.status}
+                    </Badge>
+                  )}
                 </CardDescription>
               </div>
             </div>
