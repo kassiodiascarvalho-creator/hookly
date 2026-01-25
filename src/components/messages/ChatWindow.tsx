@@ -6,7 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Send, FileText, Download } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
+import { ArrowLeft, Send, FileText, Download, X } from "lucide-react";
 import { format, isToday, isYesterday } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Conversation } from "@/pages/Messages";
@@ -77,6 +81,7 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
   const [sending, setSending] = useState(false);
   const [autoTranslate, setAutoTranslate] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
+  const [fullscreenImageUrl, setFullscreenImageUrl] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const signedUrlCache = useRef<Map<string, string>>(new Map());
   const autoTranslationCache = useRef<Map<string, string>>(new Map());
@@ -395,28 +400,35 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
     switch (type) {
       case 'audio':
         return (
-          <AudioPlayer 
-            src={fileUrl} 
-            duration={message.audio_duration || undefined}
-            isOwn={isOwn}
-          />
+          <div className="max-w-full overflow-hidden">
+            <AudioPlayer 
+              src={fileUrl} 
+              duration={message.audio_duration || undefined}
+              isOwn={isOwn}
+            />
+          </div>
         );
 
       case 'image':
         return (
-          <div className="max-w-xs">
+          <div className="mt-1">
             {fileUrl ? (
-              <img 
-                src={fileUrl} 
-                alt={message.file_name || 'Image'}
-                className="rounded-lg max-w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
-                onClick={() => window.open(fileUrl, '_blank')}
-                loading="lazy"
-                onError={(e) => {
-                  console.error('Image load error:', fileUrl);
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
+              <button
+                type="button"
+                onClick={() => setFullscreenImageUrl(fileUrl)}
+                className="w-full max-w-[320px] sm:max-w-[380px] md:max-w-[440px] aspect-video rounded-xl overflow-hidden bg-black/20 border border-white/10 cursor-pointer hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <img 
+                  src={fileUrl} 
+                  alt={message.file_name || 'Image'}
+                  className="w-full h-full object-contain"
+                  loading="lazy"
+                  onError={(e) => {
+                    console.error('Image load error:', fileUrl);
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              </button>
             ) : (
               <div className="p-4 bg-muted rounded-lg text-sm text-muted-foreground">
                 📷 {message.file_name || 'Image'}
@@ -427,27 +439,30 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
 
       case 'video':
         return (
-          <div className="max-w-xs">
+          <div className="mt-1">
             {fileUrl ? (
-              <video 
-                src={fileUrl} 
-                controls
-                className="rounded-lg max-w-full h-auto"
-                preload="metadata"
-                onError={(e) => {
-                  console.error('Video load error:', fileUrl);
-                }}
-              >
-                <track kind="captions" />
-                Your browser does not support the video tag.
-              </video>
+              <div className="w-full max-w-[320px] sm:max-w-[380px] md:max-w-[440px] aspect-video rounded-xl overflow-hidden bg-black/20 border border-white/10">
+                <video 
+                  src={fileUrl} 
+                  controls
+                  playsInline
+                  className="w-full h-full object-contain"
+                  preload="metadata"
+                  onError={(e) => {
+                    console.error('Video load error:', fileUrl);
+                  }}
+                >
+                  <track kind="captions" />
+                  Your browser does not support the video tag.
+                </video>
+              </div>
             ) : (
               <div className="p-4 bg-muted rounded-lg text-sm text-muted-foreground">
                 🎬 {message.file_name || 'Video'}
               </div>
             )}
             {message.file_name && (
-              <p className="text-xs mt-1 opacity-70 truncate">{message.file_name}</p>
+              <p className="text-xs mt-1 opacity-70 truncate max-w-[320px] sm:max-w-[380px] md:max-w-[440px]">{message.file_name}</p>
             )}
           </div>
         );
@@ -684,6 +699,26 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
           </Button>
         </div>
       </form>
+
+      {/* Fullscreen Image Modal */}
+      <Dialog open={!!fullscreenImageUrl} onOpenChange={() => setFullscreenImageUrl(null)}>
+        <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 bg-black/90 border-none flex items-center justify-center">
+          <button
+            onClick={() => setFullscreenImageUrl(null)}
+            className="absolute top-4 right-4 z-50 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+            aria-label="Close"
+          >
+            <X className="h-6 w-6" />
+          </button>
+          {fullscreenImageUrl && (
+            <img
+              src={fullscreenImageUrl}
+              alt="Fullscreen preview"
+              className="max-h-[80vh] w-auto max-w-[95vw] object-contain"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
