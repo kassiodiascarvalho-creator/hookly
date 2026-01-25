@@ -337,6 +337,16 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
     scrollToBottom();
   }, [messages]);
 
+  // Auto-dismiss phone blocked warning after 3 seconds
+  useEffect(() => {
+    if (lastSendError === "PHONE_NOT_ALLOWED") {
+      const timer = setTimeout(() => {
+        setLastSendError(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [lastSendError]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
