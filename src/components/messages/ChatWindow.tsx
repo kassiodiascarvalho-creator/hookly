@@ -646,21 +646,18 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
                             </div>
                             
                             {/* Timestamp - WhatsApp style (bottom right, inline) */}
-                            <div className={cn(
-                              "flex items-center justify-end gap-1 mt-0.5 -mb-0.5",
-                              isOwn ? "text-white/60" : "text-muted-foreground"
-                            )}>
+                            <div className="flex items-center justify-end gap-1 mt-0.5 -mb-0.5 text-foreground/70">
                               <span className="text-[10px] leading-none">
                                 {format(new Date(message.created_at), "HH:mm")}
                               </span>
                               {/* Read receipt checkmarks for own messages */}
                               {isOwn && message.read_at && (
-                                <svg className="w-3.5 h-3.5 text-[#53bdeb]" viewBox="0 0 16 15" fill="currentColor">
+                                <svg className="w-3.5 h-3.5 text-foreground" viewBox="0 0 16 15" fill="currentColor">
                                   <path d="M15.01 3.316l-.478-.372a.365.365 0 0 0-.51.063L8.666 9.879a.32.32 0 0 1-.484.033l-.358-.325a.319.319 0 0 0-.484.032l-.378.483a.418.418 0 0 0 .036.541l1.32 1.266c.143.14.361.125.484-.033l6.272-8.048a.366.366 0 0 0-.064-.512zm-4.1 0l-.478-.372a.365.365 0 0 0-.51.063L4.566 9.879a.32.32 0 0 1-.484.033L1.891 7.769a.366.366 0 0 0-.515.006l-.423.433a.364.364 0 0 0 .006.514l3.258 3.185c.143.14.361.125.484-.033l6.272-8.048a.365.365 0 0 0-.063-.51z"/>
                                 </svg>
                               )}
                               {isOwn && !message.read_at && (
-                                <svg className="w-3 h-3 text-white/50" viewBox="0 0 12 11" fill="currentColor">
+                                <svg className="w-3 h-3 text-foreground/50" viewBox="0 0 12 11" fill="currentColor">
                                   <path d="M11.155.66c.143.141.133.373-.021.502l-6.87 5.795a.32.32 0 0 1-.484-.033L1.79 4.48a.366.366 0 0 0-.515.006l-.423.433a.364.364 0 0 0 .006.514l3.258 3.185c.143.14.361.125.484-.033l7.34-6.195a.365.365 0 0 0 .063-.512l-.478-.372a.365.365 0 0 0-.37.154z"/>
                                 </svg>
                               )}
