@@ -585,78 +585,107 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
       {/* Translation Disclaimer */}
       <TranslationDisclaimer />
 
-      {/* Messages */}
-      <ScrollArea className="flex-1 p-4">
-        {loading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className={cn("flex", i % 2 === 0 && "justify-end")}>
-                <Skeleton className="h-16 w-64 rounded-lg" />
-              </div>
-            ))}
-          </div>
-        ) : messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-muted-foreground">
-            <p>{t("messages.startConversation")}</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {messageGroups.map((group) => (
-              <div key={group.date}>
-                <div className="flex items-center justify-center my-4">
-                  <span className="px-3 py-1 text-xs text-muted-foreground bg-muted rounded-full">
-                    {group.date}
-                  </span>
+      {/* Messages - WhatsApp-style background */}
+      <ScrollArea className="flex-1 bg-[hsl(var(--muted)/0.3)]">
+        <div className="p-3 sm:p-4">
+          {loading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className={cn("flex", i % 2 === 0 && "justify-end")}>
+                  <Skeleton className="h-14 w-48 sm:w-64 rounded-lg" />
                 </div>
+              ))}
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="flex items-center justify-center h-full min-h-[200px] text-muted-foreground">
+              <p>{t("messages.startConversation")}</p>
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {messageGroups.map((group) => (
+                <div key={group.date}>
+                  {/* Date separator - WhatsApp style */}
+                  <div className="flex items-center justify-center my-3">
+                    <span className="px-3 py-1 text-[11px] text-muted-foreground bg-background/80 backdrop-blur-sm rounded-lg shadow-sm">
+                      {group.date}
+                    </span>
+                  </div>
 
-                <div className="space-y-2">
-                  {group.messages.map((message) => {
-                    const isOwn = message.sender_user_id === user?.id;
+                  <div className="space-y-0.5">
+                    {group.messages.map((message, idx) => {
+                      const isOwn = message.sender_user_id === user?.id;
+                      const prevMessage = idx > 0 ? group.messages[idx - 1] : null;
+                      const isFirstInGroup = !prevMessage || prevMessage.sender_user_id !== message.sender_user_id;
 
-                    return (
-                      <div
-                        key={message.id}
-                        className={cn("flex", isOwn && "justify-end")}
-                      >
+                      return (
                         <div
+                          key={message.id}
                           className={cn(
-                            "max-w-[75%] rounded-2xl px-4 py-2",
-                            isOwn
-                              ? "bg-primary text-primary-foreground rounded-br-md"
-                              : "bg-muted text-foreground rounded-bl-md"
+                            "flex",
+                            isOwn ? "justify-end" : "justify-start",
+                            isFirstInGroup && "mt-2"
                           )}
                         >
-                          {renderMessageContent(message, isOwn)}
-                          <p
+                          {/* WhatsApp-style bubble */}
+                          <div
                             className={cn(
-                              "text-xs mt-1",
+                              "relative max-w-[85%] sm:max-w-[75%] px-3 py-1.5 shadow-sm",
                               isOwn
-                                ? "text-primary-foreground/70"
-                                : "text-muted-foreground"
+                                ? "bg-[#005c4b] text-white rounded-l-xl rounded-tr-xl"
+                                : "bg-[hsl(var(--card))] text-foreground rounded-r-xl rounded-tl-xl",
+                              // WhatsApp tail effect on first message of group
+                              isOwn && isFirstInGroup && "rounded-br-[4px]",
+                              !isOwn && isFirstInGroup && "rounded-bl-[4px]",
+                              // No tail on continuation messages
+                              !isFirstInGroup && "rounded-xl"
                             )}
                           >
-                            {format(new Date(message.created_at), "HH:mm")}
-                          </p>
-                          
-                          {/* Translation button for text messages - hide if auto-translated */}
-                          {(!message.type || message.type === "text") && !isOwn && !message.autoTranslation && (
-                            <MessageTranslation
-                              messageId={message.id}
-                              originalContent={message.content}
-                              isOwn={isOwn}
-                              userPreferredLang={userPreferredLang}
-                            />
-                          )}
+                            {/* Message content */}
+                            <div className="min-w-0">
+                              {renderMessageContent(message, isOwn)}
+                            </div>
+                            
+                            {/* Timestamp - WhatsApp style (bottom right, inline) */}
+                            <div className={cn(
+                              "flex items-center justify-end gap-1 mt-0.5 -mb-0.5",
+                              isOwn ? "text-white/60" : "text-muted-foreground"
+                            )}>
+                              <span className="text-[10px] leading-none">
+                                {format(new Date(message.created_at), "HH:mm")}
+                              </span>
+                              {/* Read receipt checkmarks for own messages */}
+                              {isOwn && message.read_at && (
+                                <svg className="w-3.5 h-3.5 text-[#53bdeb]" viewBox="0 0 16 15" fill="currentColor">
+                                  <path d="M15.01 3.316l-.478-.372a.365.365 0 0 0-.51.063L8.666 9.879a.32.32 0 0 1-.484.033l-.358-.325a.319.319 0 0 0-.484.032l-.378.483a.418.418 0 0 0 .036.541l1.32 1.266c.143.14.361.125.484-.033l6.272-8.048a.366.366 0 0 0-.064-.512zm-4.1 0l-.478-.372a.365.365 0 0 0-.51.063L4.566 9.879a.32.32 0 0 1-.484.033L1.891 7.769a.366.366 0 0 0-.515.006l-.423.433a.364.364 0 0 0 .006.514l3.258 3.185c.143.14.361.125.484-.033l6.272-8.048a.365.365 0 0 0-.063-.51z"/>
+                                </svg>
+                              )}
+                              {isOwn && !message.read_at && (
+                                <svg className="w-3 h-3 text-white/50" viewBox="0 0 12 11" fill="currentColor">
+                                  <path d="M11.155.66c.143.141.133.373-.021.502l-6.87 5.795a.32.32 0 0 1-.484-.033L1.79 4.48a.366.366 0 0 0-.515.006l-.423.433a.364.364 0 0 0 .006.514l3.258 3.185c.143.14.361.125.484-.033l7.34-6.195a.365.365 0 0 0 .063-.512l-.478-.372a.365.365 0 0 0-.37.154z"/>
+                                </svg>
+                              )}
+                            </div>
+                            
+                            {/* Translation button for text messages - hide if auto-translated */}
+                            {(!message.type || message.type === "text") && !isOwn && !message.autoTranslation && (
+                              <MessageTranslation
+                                messageId={message.id}
+                                originalContent={message.content}
+                                isOwn={isOwn}
+                                userPreferredLang={userPreferredLang}
+                              />
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
-        )}
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+          )}
+        </div>
       </ScrollArea>
 
       {/* Input */}
