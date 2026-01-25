@@ -12,6 +12,7 @@ import { Search, Briefcase, DollarSign, Calendar, Loader2, Filter, Rocket } from
 import { format, isAfter } from "date-fns";
 import { BoostedBadge } from "@/components/projects/BoostedBadge";
 import { CompanyAvatar } from "@/components/company/CompanyAvatar";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { fetchCompanyBadges, CompanyPlanType, CompanyBadgeInfo } from "@/hooks/useCompanyPlanData";
 
 interface Project {
@@ -250,14 +251,15 @@ export default function FindProjects() {
                               logoUrl={project.company.logo_url}
                               companyName={project.company.company_name}
                               planType={project.company.plan_type}
-                              isVerified={project.company.is_verified}
                               size="sm"
                               showBadge={true}
-                              showVerified={true}
                             />
-                            <span className="text-sm text-muted-foreground">
-                              {project.company.company_name || t("findProjects.unknownCompany")}
-                            </span>
+                            <div className="inline-flex items-center gap-1.5">
+                              <span className="text-sm text-muted-foreground">
+                                {project.company.company_name || t("findProjects.unknownCompany")}
+                              </span>
+                              {project.company.is_verified && <VerifiedBadge size="sm" />}
+                            </div>
                           </div>
                         )}
                       </div>
