@@ -43,14 +43,14 @@ export function CompanyAvatar({
   isVerified = false,
   size = "md",
   className,
-  showBadge = true,
-  showVerified = true,
+  showBadge = false, // Default to false - badges are now shown next to names, not on avatar
+  showVerified = false,
 }: CompanyAvatarProps) {
   const normalizedPlan = planType || "free";
   const isElevated = normalizedPlan !== "free";
 
   return (
-    <div className={cn("relative inline-flex", className)}>
+    <div className={cn("relative inline-flex overflow-visible", className)}>
       {/* Ring wrapper - applies ring OUTSIDE the avatar */}
       <div
         className={cn(
@@ -70,8 +70,7 @@ export function CompanyAvatar({
           </AvatarFallback>
         </Avatar>
       </div>
-
-      {/* Plan badge and verified badge now shown next to name via CompanyNameBadges component */}
+      {/* No badge overlays - verified/plan badges are shown next to name via other components */}
     </div>
   );
 }
