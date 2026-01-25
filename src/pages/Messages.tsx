@@ -23,6 +23,7 @@ export interface Conversation {
   other_user_type?: "company" | "freelancer";
   other_company_plan?: CompanyPlanType | null;
   other_company_verified?: boolean;
+  other_freelancer_verified?: boolean;
   project_title: string | null;
   last_message: string | null;
   last_message_at: string | null;
@@ -100,11 +101,11 @@ export default function Messages() {
         lastMessagesResult,
         unreadCountsResult
       ] = await Promise.all([
-        // Fetch freelancer profiles if user is company
+        // Fetch freelancer profiles if user is company (include is_verified)
         userType === "company"
           ? supabase
               .from("freelancer_profiles")
-              .select("user_id, full_name, avatar_url, tier")
+              .select("user_id, full_name, avatar_url, tier, is_verified")
               .in("user_id", otherUserIds)
           : Promise.resolve({ data: [] }),
         
@@ -143,7 +144,7 @@ export default function Messages() {
 
       // Create lookup maps
       const freelancerProfiles = new Map(
-        (freelancerProfilesResult.data || []).map((p: { user_id: string; full_name: string | null; avatar_url: string | null; tier: string | null }) => [p.user_id, p])
+        (freelancerProfilesResult.data || []).map((p: { user_id: string; full_name: string | null; avatar_url: string | null; tier: string | null; is_verified?: boolean }) => [p.user_id, p])
       );
       const companyProfiles = new Map(
         (companyProfilesResult.data || []).map((p: { user_id: string; company_name: string | null; contact_name: string | null; logo_url: string | null }) => [p.user_id, p])
@@ -174,6 +175,7 @@ export default function Messages() {
         let otherUserName = "Unknown";
         let otherUserAvatar: string | null = null;
         let otherUserTier: FreelancerTier | null = null;
+        let otherFreelancerVerified = false;
 
         if (userType === "company") {
           const profile = freelancerProfiles.get(otherUserId);
@@ -181,6 +183,7 @@ export default function Messages() {
             otherUserName = profile.full_name || "Freelancer";
             otherUserAvatar = profile.avatar_url;
             otherUserTier = (profile.tier as FreelancerTier) || null;
+            otherFreelancerVerified = profile.is_verified || false;
           }
         } else {
           const profile = companyProfiles.get(otherUserId);
@@ -212,6 +215,7 @@ export default function Messages() {
           other_user_type: otherUserType,
           other_company_plan: null as CompanyPlanType | null,
           other_company_verified: false,
+          other_freelancer_verified: otherFreelancerVerified,
           project_title: project?.title || null,
           last_message: lastMessageContent,
           last_message_at: lastMessage?.created_at || conv.created_at,
