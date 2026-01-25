@@ -54,6 +54,7 @@ export function ConversationList({
         return <button key={conversation.id} onClick={() => onSelectConversation(conversation)} className={cn("w-full flex items-start gap-3 p-3 rounded-lg text-left transition-colors hover:bg-accent", selectedConversation?.id === conversation.id && "bg-accent")}>
               <div className="relative shrink-0">
                 {isCompany ? <CompanyAvatar logoUrl={conversation.other_user_avatar} companyName={conversation.other_user_name} planType={conversation.other_company_plan} size="lg" showBadge={false} /> : <TieredAvatar avatarUrl={conversation.other_user_avatar} name={conversation.other_user_name} tier={conversation.other_user_tier} size="lg" />}
+                <PresenceDot userId={conversation.other_user_id} size="md" />
               </div>
 
               <div className="flex-1 min-w-0 overflow-hidden">
