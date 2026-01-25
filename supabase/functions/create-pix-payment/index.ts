@@ -21,7 +21,7 @@ function isValidAmount(value: unknown): value is number {
 }
 
 function isValidPaymentType(value: unknown): value is string {
-  const validTypes = ["freelancer_credits", "company_wallet", "contract_funding", "platform_credits", "company_credits"];
+  const validTypes = ["freelancer_credits", "company_wallet", "contract_funding", "platform_credits", "company_credits", "project_prefund"];
   return typeof value === 'string' && validTypes.includes(value);
 }
 
