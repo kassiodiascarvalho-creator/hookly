@@ -2575,28 +2575,17 @@ export type Database = {
         }
         Returns: boolean
       }
-      add_platform_credits:
-        | {
-            Args: {
-              p_amount: number
-              p_description?: string
-              p_payment_id?: string
-              p_user_id: string
-              p_user_type: string
-            }
-            Returns: boolean
-          }
-        | {
-            Args: {
-              p_amount: number
-              p_credit_type?: string
-              p_description?: string
-              p_payment_id?: string
-              p_user_id: string
-              p_user_type: string
-            }
-            Returns: boolean
-          }
+      add_platform_credits: {
+        Args: {
+          p_amount: number
+          p_credit_type?: string
+          p_description?: string
+          p_payment_id?: string
+          p_user_id: string
+          p_user_type: string
+        }
+        Returns: boolean
+      }
       check_and_grant_monthly_credits: {
         Args: { p_user_id: string; p_user_type: string }
         Returns: Json
