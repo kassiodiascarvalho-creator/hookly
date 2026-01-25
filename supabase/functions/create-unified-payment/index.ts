@@ -33,7 +33,7 @@ function isValidCurrency(value: unknown): value is string {
 }
 
 function isValidPaymentType(value: unknown): value is string {
-  const validTypes = ["freelancer_credits", "company_wallet", "contract_funding", "contract_payment", "platform_credits", "company_credits"];
+  const validTypes = ["freelancer_credits", "company_wallet", "contract_funding", "contract_payment", "platform_credits", "company_credits", "project_prefund"];
   return typeof value === 'string' && validTypes.includes(value);
 }
 
