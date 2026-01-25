@@ -18,6 +18,7 @@ const VALID_PAYMENT_TYPES = [
   "freelancer_credits",
   "platform_credits",
   "company_credits",
+  "project_prefund",
 ];
 
 serve(async (req) => {
