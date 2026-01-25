@@ -6,18 +6,61 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const logStep = (step: string, details?: unknown) => {
+const logStep = (correlationId: string, step: string, details?: unknown) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[CREATE-PIX-PAYMENT] ${step}${detailsStr}`);
+  console.log(`[CREATE-PIX-PAYMENT][${correlationId}] ${step}${detailsStr}`);
 };
 
+// Parse monetary input to cents (integer)
+// Accepts: number (already in cents), string formatted values like "5", "5,00", "R$ 5,00"
+function parseMoneyToCents(input: unknown): number {
+  if (typeof input === 'number') {
+    if (!Number.isFinite(input)) return NaN;
+    return Math.round(input); // Assume already in cents if number
+  }
+  
+  if (typeof input !== 'string') return NaN;
+  
+  let s = input.trim();
+  if (!s) return NaN;
+  
+  // Remove currency symbols and spaces
+  s = s.replace(/[^\d.,-]/g, "");
+  
+  const lastDot = s.lastIndexOf(".");
+  const lastComma = s.lastIndexOf(",");
+  let decimalSep = "";
+  
+  if (lastDot !== -1 && lastComma !== -1) {
+    decimalSep = lastDot > lastComma ? "." : ",";
+  } else if (lastComma !== -1) {
+    decimalSep = ",";
+  } else if (lastDot !== -1) {
+    decimalSep = ".";
+  }
+  
+  if (!decimalSep) {
+    // No decimal separator - assume it's already cents or a whole number in major units
+    const onlyDigits = s.replace(/[^\d-]/g, "");
+    const intVal = parseInt(onlyDigits || "0", 10);
+    // If it looks like cents (small number), return as-is
+    // If larger number and no decimals, assume major units
+    return intVal >= 100 ? intVal : intVal * 100;
+  }
+  
+  const parts = s.split(decimalSep);
+  const fracRaw = (parts.pop() ?? "").replace(/\D/g, "");
+  const intRaw = parts.join(decimalSep).replace(/[.,]/g, "").replace(/\D/g, "") || "0";
+  
+  const intPart = parseInt(intRaw, 10);
+  const fracPart = parseInt(fracRaw.padEnd(2, "0").slice(0, 2) || "0", 10);
+  
+  return intPart * 100 + fracPart;
+}
+
 // Validation helpers
-function isValidAmount(value: unknown): value is number {
-  return typeof value === 'number' && 
-         !isNaN(value) && 
-         isFinite(value) && 
-         value >= 100 && 
-         value <= 100000000; // 1 to 1,000,000 BRL in cents
+function isValidAmount(value: number): boolean {
+  return Number.isFinite(value) && value >= 100 && value <= 100000000; // 1 to 1,000,000 BRL in cents
 }
 
 function isValidPaymentType(value: unknown): value is string {
@@ -29,7 +72,12 @@ function isValidUserType(value: unknown): value is string {
   return value === 'company' || value === 'freelancer';
 }
 
+// Default fee percent for project_prefund if not provided
+const DEFAULT_FEE_PERCENT = 0.15; // 15%
+
 serve(async (req) => {
+  const correlationId = crypto.randomUUID().slice(0, 8);
+  
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -45,7 +93,7 @@ serve(async (req) => {
   );
 
   try {
-    logStep("Function started");
+    logStep(correlationId, "Function started");
 
     // Authenticate user
     const authHeader = req.headers.get("Authorization");
@@ -54,15 +102,22 @@ serve(async (req) => {
     }
     
     const token = authHeader.replace("Bearer ", "");
-    const { data } = await supabaseClient.auth.getUser(token);
-    const user = data.user;
+    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
     
-    if (!user?.email) {
+    if (claimsError || !claimsData?.claims) {
+      logStep(correlationId, "Auth failed", { error: claimsError?.message });
+      throw new Error("User not authenticated");
+    }
+    
+    const userId = claimsData.claims.sub as string;
+    const userEmail = claimsData.claims.email as string;
+    
+    if (!userId || !userEmail) {
       throw new Error("User not authenticated or email not available");
     }
-    logStep("User authenticated", { userId: user.id });
+    logStep(correlationId, "User authenticated", { userId });
 
-    // Parse and validate request body
+    // Parse request body
     let body: unknown;
     try {
       body = await req.json();
@@ -74,61 +129,129 @@ serve(async (req) => {
       throw new Error("Invalid request body");
     }
 
+    const rawBody = body as Record<string, unknown>;
+    logStep(correlationId, "Raw input received", { 
+      amountCents: rawBody.amountCents,
+      amountInput: rawBody.amountInput,
+      paymentType: rawBody.paymentType,
+      projectId: rawBody.projectId,
+      contractId: rawBody.contractId,
+    });
+
     const { 
       paymentType, 
       userType, 
-      amountCents, 
+      amountCents: rawAmountCents,
+      amountInput,
       creditsAmount,
       description,
       contractId,
       projectId,
       freelancerUserId,
-      // Contract funding fee info
-      contractAmountCents,
-      feePercent,
-      feeAmountCents,
-    } = body as Record<string, unknown>;
+      // Fee info (optional - will use defaults for project_prefund)
+      contractAmountCents: rawContractAmountCents,
+      feePercent: rawFeePercent,
+      feeAmountCents: rawFeeAmountCents,
+    } = rawBody;
 
-    // Validate required fields
+    // Validate payment type
     if (!isValidPaymentType(paymentType)) {
-      logStep("Invalid payment type", { paymentType });
+      logStep(correlationId, "Invalid payment type", { paymentType });
       throw new Error("Invalid payment type");
     }
     if (!isValidUserType(userType)) {
-      logStep("Invalid user type", { userType });
+      logStep(correlationId, "Invalid user type", { userType });
       throw new Error("Invalid user type");
     }
-    if (!isValidAmount(amountCents)) {
-      logStep("Invalid amount", { amountCents, type: typeof amountCents });
-      throw new Error("Amount must be between R$1 and R$1,000,000");
-    }
 
-    // Validate contract ID if contract_funding
-    if (paymentType === 'contract_funding') {
-      if (typeof contractId !== 'string' || contractId.length < 10) {
-        throw new Error("Contract ID is required for contract funding");
-      }
-      // contractAmountCents is the actual contract value (excluding fee)
-      if (typeof contractAmountCents !== 'number' || contractAmountCents < 100) {
-        throw new Error("Contract amount is required for contract funding");
-      }
-    }
-    
-    // Validate projectId if project_prefund
+    // ========== MONETARY NORMALIZATION (Backend is source of truth) ==========
+    let baseAmountCents: number;
+    let feePercent: number;
+    let feeAmountCents: number;
+    let totalAmountCents: number;
+
+    // For project_prefund: recalculate from base amount with default fee
     if (paymentType === 'project_prefund') {
+      // Validate projectId is present
       if (typeof projectId !== 'string' || projectId.length < 10) {
         throw new Error("Project ID is required for project prefund");
       }
+      
+      // Priority: use provided amountCents as total, or calculate from input
+      if (typeof rawAmountCents === 'number' && rawAmountCents >= 100) {
+        totalAmountCents = Math.round(rawAmountCents);
+      } else if (amountInput !== undefined) {
+        totalAmountCents = parseMoneyToCents(amountInput);
+      } else {
+        throw new Error("Amount is required");
+      }
+      
+      // Use provided fee breakdown or calculate with default
+      if (typeof rawFeePercent === 'number' && typeof rawFeeAmountCents === 'number') {
+        feePercent = rawFeePercent;
+        feeAmountCents = Math.round(rawFeeAmountCents);
+        // Back-calculate base from total - fee
+        baseAmountCents = totalAmountCents - feeAmountCents;
+      } else if (typeof rawContractAmountCents === 'number') {
+        // Use contract amount as base
+        baseAmountCents = Math.round(rawContractAmountCents);
+        feePercent = typeof rawFeePercent === 'number' ? rawFeePercent : DEFAULT_FEE_PERCENT;
+        feeAmountCents = Math.round(baseAmountCents * feePercent);
+        totalAmountCents = baseAmountCents + feeAmountCents;
+      } else {
+        // Fall back to default: total already includes fee, back-calculate
+        feePercent = DEFAULT_FEE_PERCENT;
+        baseAmountCents = Math.round(totalAmountCents / (1 + feePercent));
+        feeAmountCents = totalAmountCents - baseAmountCents;
+      }
+    } else if (paymentType === 'contract_funding') {
+      // Contract funding - requires contract amount
+      if (typeof contractId !== 'string' || contractId.length < 10) {
+        throw new Error("Contract ID is required for contract funding");
+      }
+      if (typeof rawContractAmountCents !== 'number' || rawContractAmountCents < 100) {
+        throw new Error("Contract amount is required for contract funding");
+      }
+      
+      baseAmountCents = Math.round(rawContractAmountCents);
+      feePercent = typeof rawFeePercent === 'number' ? rawFeePercent : DEFAULT_FEE_PERCENT;
+      feeAmountCents = typeof rawFeeAmountCents === 'number' ? Math.round(rawFeeAmountCents) : Math.round(baseAmountCents * feePercent);
+      
+      if (typeof rawAmountCents === 'number' && rawAmountCents >= 100) {
+        totalAmountCents = Math.round(rawAmountCents);
+      } else {
+        totalAmountCents = baseAmountCents + feeAmountCents;
+      }
+    } else {
+      // Other payment types (credits, wallet)
+      if (typeof rawAmountCents === 'number' && rawAmountCents >= 100) {
+        totalAmountCents = Math.round(rawAmountCents);
+      } else if (amountInput !== undefined) {
+        totalAmountCents = parseMoneyToCents(amountInput);
+      } else {
+        throw new Error("Amount is required");
+      }
+      baseAmountCents = totalAmountCents;
+      feePercent = 0;
+      feeAmountCents = 0;
     }
 
-    logStep("Request validated", { 
-      paymentType, 
-      userType, 
-      amountCents, 
-      contractAmountCents,
+    // Validate final amount
+    if (!isValidAmount(totalAmountCents)) {
+      logStep(correlationId, "Invalid calculated amount", { 
+        totalAmountCents, 
+        baseAmountCents, 
+        feeAmountCents 
+      });
+      throw new Error(`Amount must be between R$1 and R$1,000,000 (got ${totalAmountCents} cents)`);
+    }
+
+    logStep(correlationId, "Monetary values calculated", { 
+      baseAmountCents,
       feePercent,
       feeAmountCents,
-      creditsAmount 
+      totalAmountCents,
+      transactionAmountMajor: totalAmountCents / 100,
     });
 
     // Get Mercado Pago access token
@@ -138,40 +261,48 @@ serve(async (req) => {
     }
 
     // Generate unique idempotency key
-    const idempotencyKey = `pix_${user.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const idempotencyKey = `pix_${userId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     // Create payment record first
-    // Ensure credits_amount is an integer (round down any decimals from bonuses)
     const creditsAmountInt = creditsAmount != null ? Math.floor(Number(creditsAmount)) : null;
     
+    const paymentMetadata: Record<string, unknown> = {
+      description: description || null,
+      user_email: userEmail,
+      payment_method: 'pix',
+      freelancer_user_id: freelancerUserId || null,
+      // Monetary breakdown
+      base_amount_cents: baseAmountCents,
+      fee_percent: feePercent,
+      fee_amount_cents: feeAmountCents,
+      // Project prefund tracking
+      project_id: projectId || null,
+      // Contract funding tracking
+      contract_amount_cents: paymentType === 'contract_funding' ? baseAmountCents : null,
+    };
+
     const paymentInsert: Record<string, unknown> = {
       provider: 'mercadopago',
-      payment_type: paymentType as string,
-      user_id: user.id,
+      payment_type: paymentType as string, // CRITICAL: Use exact payment type from request
+      user_id: userId,
       user_type: userType as string,
-      amount_cents: amountCents as number, // Total amount charged (including fee)
+      amount_cents: totalAmountCents, // Total amount charged (including fee)
       currency: 'BRL',
       credits_amount: creditsAmountInt,
-      status: 'pending',
+      status: 'pending', // ALWAYS pending until webhook confirms
       external_reference: idempotencyKey,
-      metadata: {
-        description: description || null,
-        user_email: user.email,
-        payment_method: 'pix',
-        freelancer_user_id: freelancerUserId || null,
-        // Fee tracking for contract funding
-        contract_amount_cents: contractAmountCents || null,
-        fee_percent: feePercent || null,
-        fee_amount_cents: feeAmountCents || null,
-        // Project prefund tracking
-        project_id: projectId || null,
-      },
+      metadata: paymentMetadata,
     };
 
     // Add contract_id if contract funding
     if (paymentType === 'contract_funding' && contractId) {
       paymentInsert.contract_id = contractId;
     }
+
+    logStep(correlationId, "Creating payment record", { 
+      payment_type: paymentType,
+      amount_cents: totalAmountCents,
+    });
 
     const { data: payment, error: paymentError } = await supabaseAdmin
       .from('unified_payments')
@@ -180,11 +311,15 @@ serve(async (req) => {
       .single();
 
     if (paymentError || !payment) {
-      logStep("Failed to create payment record", { error: paymentError });
-      throw new Error("Failed to create payment record");
+      logStep(correlationId, "Failed to create payment record", { 
+        error: paymentError,
+        code: paymentError?.code,
+        message: paymentError?.message,
+      });
+      throw new Error(`Failed to create payment record: ${paymentError?.message || 'Unknown error'}`);
     }
 
-    logStep("Payment record created", { paymentId: payment.id });
+    logStep(correlationId, "Payment record created", { paymentId: payment.id });
 
     // Create PIX payment via Mercado Pago API
     const paymentDescription = paymentType === 'freelancer_credits' 
@@ -199,7 +334,7 @@ serve(async (req) => {
       ? `${creditsAmount} Créditos da Plataforma - Hookly`
       : String(description) || "Pagamento Hookly";
 
-    // Get payer info (CPF is required for PIX)
+    // Get payer info
     let payerFirstName = "Cliente";
     let payerLastName = "Hookly";
     
@@ -207,7 +342,7 @@ serve(async (req) => {
       const { data: profile } = await supabaseClient
         .from('freelancer_profiles')
         .select('full_name')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .single();
       
       if (profile?.full_name) {
@@ -219,7 +354,7 @@ serve(async (req) => {
       const { data: profile } = await supabaseClient
         .from('company_profiles')
         .select('contact_name')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .single();
       
       if (profile?.contact_name) {
@@ -229,12 +364,15 @@ serve(async (req) => {
       }
     }
 
+    // CRITICAL: Convert cents to major units for Mercado Pago
+    const transactionAmount = Number((totalAmountCents / 100).toFixed(2));
+    
     const mpPaymentBody = {
-      transaction_amount: (amountCents as number) / 100,
+      transaction_amount: transactionAmount,
       description: paymentDescription,
       payment_method_id: "pix",
       payer: {
-        email: user.email,
+        email: userEmail,
         first_name: payerFirstName,
         last_name: payerLastName,
       },
@@ -242,9 +380,10 @@ serve(async (req) => {
       external_reference: payment.id,
     };
 
-    logStep("Creating Mercado Pago PIX payment", { 
-      amount: mpPaymentBody.transaction_amount,
-      description: paymentDescription 
+    logStep(correlationId, "Creating Mercado Pago PIX payment", { 
+      transactionAmount,
+      description: paymentDescription,
+      paymentId: payment.id,
     });
 
     const mpResponse = await fetch("https://api.mercadopago.com/v1/payments", {
@@ -259,25 +398,49 @@ serve(async (req) => {
 
     if (!mpResponse.ok) {
       const errorBody = await mpResponse.text();
-      logStep("Mercado Pago API error", { status: mpResponse.status, body: errorBody });
+      logStep(correlationId, "Mercado Pago API error", { 
+        status: mpResponse.status, 
+        body: errorBody 
+      });
       
-      // Clean up the payment record
-      await supabaseAdmin.from('unified_payments').delete().eq('id', payment.id);
+      // Update payment with error info
+      await supabaseAdmin
+        .from('unified_payments')
+        .update({
+          status: 'failed',
+          metadata: {
+            ...paymentMetadata,
+            provider_error: {
+              provider: 'mercadopago',
+              status: mpResponse.status,
+              body: errorBody,
+            },
+          },
+        })
+        .eq('id', payment.id);
       
-      throw new Error(`Mercado Pago API error: ${mpResponse.status} - ${errorBody}`);
+      return new Response(JSON.stringify({ 
+        error: "Payment provider error",
+        code: "PAYMENT_PROVIDER_ERROR",
+        provider: "mercadopago",
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
     }
 
     const mpPayment = await mpResponse.json();
-    logStep("Mercado Pago payment created", { 
+    logStep(correlationId, "Mercado Pago payment created", { 
       mpPaymentId: mpPayment.id, 
-      status: mpPayment.status 
+      status: mpPayment.status,
+      transactionAmount: mpPayment.transaction_amount,
     });
 
     // Extract PIX data
     const pixData = mpPayment.point_of_interaction?.transaction_data;
     
     if (!pixData?.qr_code || !pixData?.qr_code_base64) {
-      logStep("PIX data not available", { pixData });
+      logStep(correlationId, "PIX data not available", { pixData });
       throw new Error("PIX QR Code not generated");
     }
 
@@ -286,15 +449,14 @@ serve(async (req) => {
       new Date(Date.now() + 30 * 60 * 1000).toISOString();
 
     // Update payment with Mercado Pago info
+    // CRITICAL: status stays 'pending' until webhook confirms
     await supabaseAdmin
       .from('unified_payments')
       .update({
         provider_payment_id: String(mpPayment.id),
-        status: mpPayment.status === 'approved' ? 'paid' : 'pending',
+        status: 'pending', // Always pending until webhook
         metadata: {
-          description: description || null,
-          user_email: user.email,
-          payment_method: 'pix',
+          ...paymentMetadata,
           pix_qr_code: pixData.qr_code,
           pix_expires_at: expiresAt,
           mp_status: mpPayment.status,
@@ -303,7 +465,12 @@ serve(async (req) => {
       })
       .eq('id', payment.id);
 
-    logStep("Payment updated with PIX data");
+    logStep(correlationId, "Payment updated with PIX data", {
+      paymentId: payment.id,
+      mpPaymentId: mpPayment.id,
+      totalAmountCents,
+      transactionAmount,
+    });
 
     return new Response(JSON.stringify({ 
       success: true,
@@ -316,7 +483,12 @@ serve(async (req) => {
         expiresAt: expiresAt,
         ticketUrl: pixData.ticket_url,
       },
-      amount: (amountCents as number) / 100,
+      // Return breakdown for UI display
+      amount: transactionAmount,
+      amountCents: totalAmountCents,
+      baseAmountCents,
+      feeAmountCents,
+      feePercent,
       currency: 'BRL',
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -325,7 +497,7 @@ serve(async (req) => {
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR", { message: errorMessage });
+    logStep(correlationId, "ERROR", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 400,
