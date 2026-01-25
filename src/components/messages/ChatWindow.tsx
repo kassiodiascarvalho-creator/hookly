@@ -21,6 +21,7 @@ import { TranslationUsageBadge } from "./TranslationUsageBadge";
 import { usePresenceHeartbeat } from "@/hooks/useUserPresence";
 import { TieredAvatar } from "@/components/freelancer/TieredAvatar";
 import { CompanyAvatar } from "@/components/company/CompanyAvatar";
+import { CompanyNameBadges } from "@/components/company/CompanyNameBadges";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 
 interface Message {
@@ -536,14 +537,24 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 min-w-0">
-              <span className="font-medium text-foreground truncate">
-                {conversation.other_user_name}
+            {conversation.other_user_type === "company" ? (
+              <CompanyNameBadges
+                name={conversation.other_user_name}
+                isVerified={conversation.other_company_verified}
+                planType={conversation.other_company_plan}
+                badgeSize="sm"
+                nameClassName="font-medium text-foreground"
+              />
+            ) : (
+              <span className="inline-flex items-center gap-1.5 min-w-0">
+                <span className="font-medium text-foreground truncate">
+                  {conversation.other_user_name}
+                </span>
+                {conversation.other_freelancer_verified && (
+                  <VerifiedBadge size="sm" />
+                )}
               </span>
-              {conversation.other_user_type === "company" && conversation.other_company_verified && (
-                <VerifiedBadge size="sm" />
-              )}
-            </span>
+            )}
             <PresenceIndicator userId={conversation.other_user_id} showLabel size="sm" />
           </div>
           {conversation.project_title && (
