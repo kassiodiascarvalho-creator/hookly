@@ -21,6 +21,7 @@ import { usePublishProject } from "@/hooks/usePublishProject";
 import { BudgetSuggestion } from "@/components/projects/BudgetSuggestion";
 import { BudgetRangeInput } from "@/components/projects/BudgetRangeInput";
 import { KpiSuggestion } from "@/components/projects/KpiSuggestion";
+import { ProjectPrefundModal } from "@/components/projects/ProjectPrefundModal";
 
 const categoryKeys = [
   "development",
@@ -49,6 +50,8 @@ export default function ProjectNew() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [prefundModalOpen, setPrefundModalOpen] = useState(false);
+  const [pendingProjectId, setPendingProjectId] = useState<string | null>(null);
   const [showProfileGateModal, setShowProfileGateModal] = useState(false);
 
   // Profile gate for companies
@@ -148,7 +151,7 @@ export default function ProjectNew() {
     if (step > 1) setStep(step - 1);
   };
 
-  const handleSubmit = async (asDraft: boolean) => {
+  const handleSubmit = async (asDraft: boolean, skipPrefund = false) => {
     if (!user) {
       toast.error(t("auth.mustBeLoggedIn"));
       return;
@@ -182,20 +185,30 @@ export default function ProjectNew() {
       return;
     }
 
-    // If user wants to publish, use centralized RPC
+    // If user wants to publish
     if (!asDraft) {
+      // Check if we should show prefund modal (has budget_max and not skipping)
+      const hasBudgetMax = formData.budget_max && parseFloat(formData.budget_max) > 0;
+      
+      if (hasBudgetMax && !skipPrefund) {
+        // Save project ID and show prefund modal
+        setPendingProjectId(data.id);
+        setLoading(false);
+        setPrefundModalOpen(true);
+        return;
+      }
+
+      // Publish the project
       const publishResult = await publishProject(data.id);
       
       if (!publishResult.success) {
         if (publishResult.error === 'COMPANY_PROFILE_INCOMPLETE') {
           setShowProfileGateModal(true);
-          // Still navigate to project (it's saved as draft)
           toast.info(t("projects.savedAsDraft"));
           navigate(`/projects/${data.id}`);
           setLoading(false);
           return;
         }
-        // Other errors - project saved as draft
         toast.info(t("projects.savedAsDraft"));
         navigate(`/projects/${data.id}`);
         setLoading(false);
@@ -206,6 +219,24 @@ export default function ProjectNew() {
     toast.success(asDraft ? t("projects.savedAsDraft") : t("projects.published"));
     navigate(`/projects/${data.id}`);
     setLoading(false);
+  };
+
+  const handlePrefundComplete = async () => {
+    setPrefundModalOpen(false);
+    if (pendingProjectId) {
+      await publishProject(pendingProjectId);
+      toast.success(t("projects.published"));
+      navigate(`/projects/${pendingProjectId}`);
+    }
+  };
+
+  const handleSkipPrefund = async () => {
+    setPrefundModalOpen(false);
+    if (pendingProjectId) {
+      await publishProject(pendingProjectId);
+      toast.success(t("projects.published"));
+      navigate(`/projects/${pendingProjectId}`);
+    }
   };
 
   return (
@@ -496,6 +527,19 @@ export default function ProjectNew() {
         userType="company"
         completionPercent={completionPercent}
       />
+
+      {/* Prefund Modal */}
+      {pendingProjectId && (
+        <ProjectPrefundModal
+          open={prefundModalOpen}
+          onOpenChange={setPrefundModalOpen}
+          projectId={pendingProjectId}
+          budgetMax={formData.budget_max ? parseFloat(formData.budget_max) : 0}
+          currency={formData.currency}
+          onPrefundComplete={handlePrefundComplete}
+          onSkip={handleSkipPrefund}
+        />
+      )}
     </div>
   );
 }
