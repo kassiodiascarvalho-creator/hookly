@@ -7,12 +7,22 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Briefcase, Clock, CheckCircle, FileText, Loader2, Rocket } from "lucide-react";
+import { Plus, Briefcase, Clock, CheckCircle, FileText, Loader2, Rocket, Trash2 } from "lucide-react";
 import { format, Locale, isAfter } from "date-fns";
 import { ptBR, enUS, es, fr, de, zhCN } from "date-fns/locale";
 import { ProjectBoostButton } from "@/components/projects/ProjectBoostButton";
 import { BoostedBadge } from "@/components/projects/BoostedBadge";
-
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 const dateLocales: Record<string, Locale> = {
   pt: ptBR,
   en: enUS,
@@ -49,6 +59,9 @@ export default function Projects() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<string>("all");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+  const [deleting, setDeleting] = useState(false);
   
   const currentLocale = dateLocales[i18n.language] || enUS;
 
@@ -91,6 +104,40 @@ export default function Projects() {
     if (min && max) return `$${min.toLocaleString()} - $${max.toLocaleString()}`;
     if (min) return `${t("projects.from")} $${min.toLocaleString()}`;
     return `${t("projects.upTo")} $${max?.toLocaleString()}`;
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent, project: Project) => {
+    e.stopPropagation(); // Prevent navigation
+    if (project.status !== "draft") {
+      toast.error(t("projects.delete.onlyDrafts"));
+      return;
+    }
+    setProjectToDelete(project);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!projectToDelete) return;
+    
+    setDeleting(true);
+    try {
+      const { error } = await supabase
+        .from("projects")
+        .delete()
+        .eq("id", projectToDelete.id);
+
+      if (error) throw error;
+      
+      toast.success(t("projects.delete.success"));
+      setProjects(prev => prev.filter(p => p.id !== projectToDelete.id));
+    } catch (error) {
+      console.error("Error deleting project:", error);
+      toast.error(t("projects.delete.error"));
+    } finally {
+      setDeleting(false);
+      setDeleteDialogOpen(false);
+      setProjectToDelete(null);
+    }
   };
 
   if (loading) {
@@ -186,7 +233,7 @@ export default function Projects() {
                           </div>
                         </div>
                         
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-3">
                           <div className="text-center">
                             <p className="text-2xl font-bold text-primary">{project._count?.proposals || 0}</p>
                             <p className="text-xs text-muted-foreground">{t("projects.proposals")}</p>
@@ -200,6 +247,16 @@ export default function Projects() {
                               variant="compact"
                             />
                           )}
+                          {project.status === "draft" && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={(e) => handleDeleteClick(e, project)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </CardContent>
@@ -210,6 +267,28 @@ export default function Projects() {
           )}
         </TabsContent>
       </Tabs>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("projects.delete.confirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("projects.delete.confirmMessage", { title: projectToDelete?.title || "" })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              {t("projects.delete.button")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
