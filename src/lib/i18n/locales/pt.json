@@ -1699,5 +1699,11 @@
     "proceedAnywayWarning": "Esta proposta foi marcada como Não Recomendada pela IA. Deseja prosseguir mesmo assim?",
     "analyzed": "Analisado",
     "aiSuggestion": "Sugestão baseada em IA"
+  },
+  "chat": {
+    "phoneBlocked": {
+      "title": "Por segurança, não compartilhe telefone",
+      "description": "Não recomendamos o envio de telefone para evitar fraudes e preservar sua segurança. Continue a conversa pela HOOKLY."
+    }
   }
 }

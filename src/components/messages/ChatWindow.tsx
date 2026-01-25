@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { AutoResizeTextarea } from "./AutoResizeTextarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Send, FileText, Download } from "lucide-react";
+import { ArrowLeft, Send, FileText, Download, AlertTriangle } from "lucide-react";
 import { format, isToday, isYesterday } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Conversation } from "@/pages/Messages";
@@ -23,6 +23,8 @@ import { TieredAvatar } from "@/components/freelancer/TieredAvatar";
 import { CompanyAvatar } from "@/components/company/CompanyAvatar";
 import { PlanPill } from "@/components/company/PlanPill";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import { useToast } from "@/hooks/use-toast";
+import { isPhoneBlockedError } from "@/lib/errors/isPhoneBlockedError";
 
 interface Message {
   id: string;
@@ -79,8 +81,10 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
   const [autoTranslate, setAutoTranslate] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<{ src: string; alt?: string } | null>(null);
+  const [lastSendError, setLastSendError] = useState<"PHONE_NOT_ALLOWED" | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const signedUrlCache = useRef<Map<string, string>>(new Map());
+  const { toast } = useToast();
   const autoTranslationCache = useRef<Map<string, string>>(new Map());
 
   // Start presence heartbeat
@@ -342,6 +346,7 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
     if (!newMessage.trim() || !user || sending) return;
 
     setSending(true);
+    setLastSendError(null);
     const messageContent = newMessage.trim();
     setNewMessage("");
 
@@ -354,6 +359,21 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
 
     if (error) {
       setNewMessage(messageContent);
+      
+      if (isPhoneBlockedError(error)) {
+        setLastSendError("PHONE_NOT_ALLOWED");
+        toast({
+          variant: "destructive",
+          title: t("chat.phoneBlocked.title"),
+          description: t("chat.phoneBlocked.description"),
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: t("common.error"),
+          description: error.message,
+        });
+      }
     }
 
     setSending(false);
@@ -721,6 +741,14 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
             <Send className="h-4 w-4" />
           </Button>
         </div>
+        
+        {/* Phone blocked warning banner */}
+        {lastSendError === "PHONE_NOT_ALLOWED" && (
+          <div className="mt-2 flex items-start gap-2 p-2 rounded-md bg-destructive/10 border border-destructive/20 text-destructive text-xs">
+            <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+            <p className="flex-1">{t("chat.phoneBlocked.description")}</p>
+          </div>
+        )}
       </form>
 
       {/* Image Lightbox */}
