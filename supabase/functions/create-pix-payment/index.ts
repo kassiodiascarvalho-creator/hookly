@@ -81,6 +81,7 @@ serve(async (req) => {
       creditsAmount,
       description,
       contractId,
+      projectId,
       freelancerUserId,
       // Contract funding fee info
       contractAmountCents,
@@ -90,12 +91,15 @@ serve(async (req) => {
 
     // Validate required fields
     if (!isValidPaymentType(paymentType)) {
+      logStep("Invalid payment type", { paymentType });
       throw new Error("Invalid payment type");
     }
     if (!isValidUserType(userType)) {
+      logStep("Invalid user type", { userType });
       throw new Error("Invalid user type");
     }
     if (!isValidAmount(amountCents)) {
+      logStep("Invalid amount", { amountCents, type: typeof amountCents });
       throw new Error("Amount must be between R$1 and R$1,000,000");
     }
 
@@ -107,6 +111,13 @@ serve(async (req) => {
       // contractAmountCents is the actual contract value (excluding fee)
       if (typeof contractAmountCents !== 'number' || contractAmountCents < 100) {
         throw new Error("Contract amount is required for contract funding");
+      }
+    }
+    
+    // Validate projectId if project_prefund
+    if (paymentType === 'project_prefund') {
+      if (typeof projectId !== 'string' || projectId.length < 10) {
+        throw new Error("Project ID is required for project prefund");
       }
     }
 
@@ -152,6 +163,8 @@ serve(async (req) => {
         contract_amount_cents: contractAmountCents || null,
         fee_percent: feePercent || null,
         fee_amount_cents: feeAmountCents || null,
+        // Project prefund tracking
+        project_id: projectId || null,
       },
     };
 
@@ -180,6 +193,8 @@ serve(async (req) => {
       ? `Fundos na Carteira - Hookly`
       : paymentType === 'contract_funding'
       ? String(description) || "Financiamento de Contrato - Hookly"
+      : paymentType === 'project_prefund'
+      ? "Pré-financiamento de Projeto - Hookly"
       : (paymentType === 'platform_credits' || paymentType === 'company_credits')
       ? `${creditsAmount} Créditos da Plataforma - Hookly`
       : String(description) || "Pagamento Hookly";

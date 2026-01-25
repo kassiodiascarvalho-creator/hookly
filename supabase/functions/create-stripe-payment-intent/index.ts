@@ -67,7 +67,8 @@ serve(async (req) => {
     const { 
       amountCents, 
       currency, 
-      contractId, 
+      contractId,
+      projectId,
       milestoneIndex, 
       description, 
       paymentType,
@@ -79,16 +80,27 @@ serve(async (req) => {
       feeAmountCents,
     } = body;
 
+    logStep("Request body received", { 
+      amountCents, 
+      currency, 
+      paymentType,
+      projectId,
+      contractId,
+    });
+
     if (!amountCents || amountCents <= 0) {
+      logStep("Invalid amount", { amountCents });
       throw new Error("Invalid amount");
     }
     if (!currency) {
+      logStep("Missing currency");
       throw new Error("Currency is required");
     }
 
     // Validate payment type
     const validatedPaymentType = paymentType || "contract_funding";
     if (!VALID_PAYMENT_TYPES.includes(validatedPaymentType)) {
+      logStep("Invalid payment type", { paymentType: validatedPaymentType });
       throw new Error(`Invalid payment type: ${validatedPaymentType}`);
     }
 
@@ -96,6 +108,14 @@ serve(async (req) => {
     if (validatedPaymentType === 'contract_funding') {
       if (!contractAmountCents || contractAmountCents <= 0) {
         throw new Error("Contract amount is required for contract funding");
+      }
+    }
+    
+    // Validate projectId if project_prefund
+    if (validatedPaymentType === 'project_prefund') {
+      if (!projectId || typeof projectId !== 'string') {
+        logStep("Missing projectId for project_prefund");
+        throw new Error("Project ID is required for project prefund");
       }
     }
 
@@ -152,6 +172,8 @@ serve(async (req) => {
           fee_percent: feePercent || null,
           fee_amount_cents: feeAmountCents || null,
           credits_amount: creditsAmount || null,
+          // Project prefund tracking
+          project_id: projectId || null,
         },
       })
       .select()
