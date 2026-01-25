@@ -110,26 +110,28 @@ export function TranslationToggle({
 
   if (loading) return null;
 
-  // If not premium, show locked state
+  // If not premium, show locked state - compact on mobile
   if (!isPremium) {
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className={cn("flex items-center gap-2 opacity-60 cursor-not-allowed", className)}>
-            <Languages className="h-4 w-4 text-muted-foreground" />
+          <div className={cn("flex items-center gap-1.5 opacity-60 cursor-not-allowed", className)}>
+            <Languages className="h-4 w-4 text-muted-foreground shrink-0" />
             <Switch
               id="auto-translate"
               checked={false}
               disabled
-              className="data-[state=checked]:bg-primary"
+              className="data-[state=checked]:bg-primary shrink-0"
             />
             <Label 
               htmlFor="auto-translate" 
-              className="text-xs text-muted-foreground cursor-not-allowed flex items-center gap-1"
+              className="text-xs text-muted-foreground cursor-not-allowed items-center gap-1 hidden sm:flex whitespace-nowrap"
             >
               Auto-tradução
               <Lock className="h-3 w-3" />
             </Label>
+            {/* Mobile: just show lock icon */}
+            <Lock className="h-3 w-3 text-muted-foreground sm:hidden shrink-0" />
           </div>
         </TooltipTrigger>
         <TooltipContent side="bottom" className="max-w-[220px] text-xs">
@@ -144,23 +146,24 @@ export function TranslationToggle({
   }
 
   return (
-    <div className={cn("flex items-center gap-2", className)}>
-      <Languages className="h-4 w-4 text-muted-foreground" />
+    <div className={cn("flex items-center gap-1.5", className)}>
+      <Languages className="h-4 w-4 text-muted-foreground shrink-0" />
       <Switch
         id="auto-translate"
         checked={autoTranslate}
         onCheckedChange={handleToggle}
-        className="data-[state=checked]:bg-primary"
+        className="data-[state=checked]:bg-primary shrink-0"
       />
+      {/* Label hidden on mobile, shown on sm+ */}
       <Label 
         htmlFor="auto-translate" 
-        className="text-xs text-muted-foreground cursor-pointer"
+        className="text-xs text-muted-foreground cursor-pointer hidden sm:block whitespace-nowrap"
       >
         Auto-tradução
       </Label>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+          <Info className="h-3 w-3 text-muted-foreground cursor-help shrink-0" />
         </TooltipTrigger>
         <TooltipContent side="bottom" className="max-w-[200px] text-xs">
           Quando ativado, mensagens em outros idiomas serão traduzidas automaticamente para o seu idioma.
