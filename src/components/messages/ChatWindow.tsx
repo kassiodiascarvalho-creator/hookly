@@ -535,15 +535,17 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
           <PresenceDot userId={conversation.other_user_id} size="md" />
         </div>
 
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
+        {/* Name + badges column */}
+        <div className="flex-1 min-w-0 flex flex-col justify-center">
+          <div className="flex items-center gap-1.5 min-w-0">
             {conversation.other_user_type === "company" ? (
               <CompanyNameBadges
                 name={conversation.other_user_name}
                 isVerified={conversation.other_company_verified}
                 planType={conversation.other_company_plan}
                 badgeSize="sm"
-                nameClassName="font-medium text-foreground"
+                nameClassName="font-medium text-foreground truncate"
+                hidePlanPill={true}
               />
             ) : (
               <span className="inline-flex items-center gap-1.5 min-w-0">
@@ -555,17 +557,30 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
                 )}
               </span>
             )}
-            <PresenceIndicator userId={conversation.other_user_id} showLabel size="sm" />
+            {/* Presence indicator inline - hidden on xs, shown on sm+ */}
+            <span className="hidden sm:inline-flex shrink-0">
+              <PresenceIndicator userId={conversation.other_user_id} showLabel size="sm" />
+            </span>
           </div>
+          {/* Mobile: presence + project on second line */}
+          <div className="flex items-center gap-2 sm:hidden">
+            <PresenceIndicator userId={conversation.other_user_id} showLabel={false} size="sm" />
+            {conversation.project_title && (
+              <p className="text-xs text-muted-foreground truncate">
+                {conversation.project_title}
+              </p>
+            )}
+          </div>
+          {/* Desktop: project title */}
           {conversation.project_title && (
-            <p className="text-xs text-muted-foreground truncate">
+            <p className="text-xs text-muted-foreground truncate hidden sm:block">
               {conversation.project_title}
             </p>
           )}
         </div>
 
-        {/* Translation controls */}
-        <div className="flex items-center gap-2">
+        {/* Translation controls - responsive */}
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <TranslationUsageBadge />
           <TranslationToggle 
             onAutoTranslateChange={setAutoTranslate}
