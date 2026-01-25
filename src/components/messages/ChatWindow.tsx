@@ -504,24 +504,26 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="flex items-center gap-3 p-4 border-b border-border">
+      {/* Header - responsive and overflow-safe */}
+      <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 border-b border-border min-h-[60px]">
+        {/* Back button - mobile only */}
         <Button
           variant="ghost"
           size="icon"
-          className="md:hidden"
+          className="md:hidden shrink-0 h-8 w-8"
           onClick={onBack}
         >
-          <ArrowLeft className="h-5 w-5" />
+          <ArrowLeft className="h-4 w-4" />
         </Button>
 
-        <div className="relative">
+        {/* Avatar with presence dot */}
+        <div className="relative shrink-0">
           {conversation.other_user_type === "company" ? (
             <CompanyAvatar
               logoUrl={conversation.other_user_avatar}
               companyName={conversation.other_user_name}
               planType={conversation.other_company_plan}
-              size="md"
+              size="sm"
               showBadge={true}
             />
           ) : (
@@ -529,57 +531,52 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
               avatarUrl={conversation.other_user_avatar}
               name={conversation.other_user_name}
               tier={conversation.other_user_tier}
-              size="md"
+              size="sm"
             />
           )}
-          <PresenceDot userId={conversation.other_user_id} size="md" />
+          <PresenceDot userId={conversation.other_user_id} size="sm" />
         </div>
 
-        {/* Name + badges column */}
-        <div className="flex-1 min-w-0 flex flex-col justify-center">
-          <div className="flex items-center gap-1.5 min-w-0">
+        {/* Name + info - flex-1 with proper truncation */}
+        <div className="flex-1 min-w-0 overflow-hidden">
+          <div className="flex items-center gap-1 min-w-0">
             {conversation.other_user_type === "company" ? (
               <CompanyNameBadges
                 name={conversation.other_user_name}
                 isVerified={conversation.other_company_verified}
                 planType={conversation.other_company_plan}
                 badgeSize="sm"
-                nameClassName="font-medium text-foreground truncate"
+                nameClassName="font-medium text-sm text-foreground truncate"
                 hidePlanPill={true}
               />
             ) : (
-              <span className="inline-flex items-center gap-1.5 min-w-0">
-                <span className="font-medium text-foreground truncate">
+              <span className="inline-flex items-center gap-1 min-w-0 overflow-hidden">
+                <span className="font-medium text-sm text-foreground truncate">
                   {conversation.other_user_name}
                 </span>
                 {conversation.other_freelancer_verified && (
-                  <VerifiedBadge size="sm" />
+                  <VerifiedBadge size="sm" className="shrink-0" />
                 )}
               </span>
             )}
-            {/* Presence indicator inline - hidden on xs, shown on sm+ */}
+          </div>
+          {/* Subtitle: presence (mobile) or project title */}
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="sm:hidden shrink-0">
+              <PresenceIndicator userId={conversation.other_user_id} showLabel={false} size="sm" />
+            </span>
             <span className="hidden sm:inline-flex shrink-0">
               <PresenceIndicator userId={conversation.other_user_id} showLabel size="sm" />
             </span>
-          </div>
-          {/* Mobile: presence + project on second line */}
-          <div className="flex items-center gap-2 sm:hidden">
-            <PresenceIndicator userId={conversation.other_user_id} showLabel={false} size="sm" />
             {conversation.project_title && (
-              <p className="text-xs text-muted-foreground truncate">
-                {conversation.project_title}
-              </p>
+              <span className="truncate hidden sm:inline">
+                · {conversation.project_title}
+              </span>
             )}
           </div>
-          {/* Desktop: project title */}
-          {conversation.project_title && (
-            <p className="text-xs text-muted-foreground truncate hidden sm:block">
-              {conversation.project_title}
-            </p>
-          )}
         </div>
 
-        {/* Translation toggle - compact */}
+        {/* Translation toggle - always visible, compact on mobile */}
         <TranslationToggle 
           onAutoTranslateChange={setAutoTranslate}
           className="shrink-0"
