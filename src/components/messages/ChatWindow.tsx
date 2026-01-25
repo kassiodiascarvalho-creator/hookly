@@ -631,7 +631,7 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
                             className={cn(
                               "relative max-w-[85%] sm:max-w-[75%] px-3 py-1.5 shadow-sm",
                               isOwn
-                                ? "bg-[#0095F6] text-white rounded-l-xl rounded-tr-xl"
+                                ? "bg-[hsl(var(--primary))] text-primary-foreground rounded-l-xl rounded-tr-xl"
                                 : "bg-[hsl(var(--card))] text-foreground rounded-r-xl rounded-tl-xl",
                               // WhatsApp tail effect on first message of group
                               isOwn && isFirstInGroup && "rounded-br-[4px]",
