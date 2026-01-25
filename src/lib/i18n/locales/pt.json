@@ -275,6 +275,14 @@
       "categoryRequired": "Por favor, selecione uma categoria",
       "budgetMinMax": "O orçamento mínimo não pode ser maior que o máximo"
     },
+    "delete": {
+      "button": "Excluir",
+      "confirmTitle": "Excluir Projeto",
+      "confirmMessage": "Tem certeza que deseja excluir o projeto \"{{title}}\"? Esta ação não pode ser desfeita.",
+      "success": "Projeto excluído com sucesso",
+      "error": "Erro ao excluir projeto",
+      "onlyDrafts": "Apenas projetos em rascunho podem ser excluídos"
+    },
     "boost": {
       "title": "Projeto Destacado",
       "label": "Destacado",

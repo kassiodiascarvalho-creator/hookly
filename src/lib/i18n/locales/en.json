@@ -235,6 +235,14 @@
       "categoryRequired": "Please select a category",
       "budgetMinMax": "Minimum budget cannot be greater than maximum"
     },
+    "delete": {
+      "button": "Delete",
+      "confirmTitle": "Delete Project",
+      "confirmMessage": "Are you sure you want to delete the project \"{{title}}\"? This action cannot be undone.",
+      "success": "Project deleted successfully",
+      "error": "Failed to delete project",
+      "onlyDrafts": "Only draft projects can be deleted"
+    },
     "boost": {
       "title": "Boosted Project",
       "label": "Boosted",
