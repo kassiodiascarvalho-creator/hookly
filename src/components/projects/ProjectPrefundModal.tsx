@@ -165,16 +165,21 @@ export function ProjectPrefundModal({
     setLoading(true);
 
     try {
+      // Ensure all cent values are integers
+      const totalCents = Math.round(feeInfo.totalAmountCents);
+      const baseCents = Math.round(numericAmount * 100);
+      const feeCents = Math.round(feeInfo.feeAmount * 100);
+
       const { data, error } = await supabase.functions.invoke("create-pix-payment", {
         body: {
           paymentType: "project_prefund",
           userType: "company",
-          amountCents: feeInfo.totalAmountCents,
-          contractAmountCents: Math.round(numericAmount * 100), // Base amount for escrow
+          amountCents: totalCents,
+          contractAmountCents: baseCents, // Base amount for escrow
           projectId,
           description: t("projects.prefund.pixDescription", "Pré-financiamento de projeto"),
           feePercent: feeInfo.feePercent,
-          feeAmountCents: Math.round(feeInfo.feeAmount * 100),
+          feeAmountCents: feeCents,
         },
       });
 
@@ -205,16 +210,21 @@ export function ProjectPrefundModal({
     } else if (canUseStripeCard) {
       setLoading(true);
       try {
+        // Ensure all cent values are integers
+        const totalCents = Math.round(feeInfo.totalAmountCents);
+        const baseCents = Math.round(numericAmount * 100);
+        const feeCents = Math.round(feeInfo.feeAmount * 100);
+
         const { data, error } = await supabase.functions.invoke("create-stripe-payment-intent", {
           body: {
-            amountCents: feeInfo.totalAmountCents,
-            contractAmountCents: Math.round(numericAmount * 100),
+            amountCents: totalCents,
+            contractAmountCents: baseCents,
             currency,
             projectId,
             description: t("projects.prefund.stripeDescription", "Project Prefunding"),
             paymentType: "project_prefund",
             feePercent: feeInfo.feePercent,
-            feeAmountCents: Math.round(feeInfo.feeAmount * 100),
+            feeAmountCents: feeCents,
           },
         });
 
