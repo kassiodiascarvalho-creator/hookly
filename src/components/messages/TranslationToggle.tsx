@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { Languages, Info, Lock } from "lucide-react";
 import {
   Tooltip,
@@ -110,28 +109,20 @@ export function TranslationToggle({
 
   if (loading) return null;
 
-  // If not premium, show locked state - compact on mobile
+  // If not premium, show locked state - minimal on mobile
   if (!isPremium) {
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className={cn("flex items-center gap-1.5 opacity-60 cursor-not-allowed", className)}>
-            <Languages className="h-4 w-4 text-muted-foreground shrink-0" />
+          <div className={cn("flex items-center gap-1 opacity-60 cursor-not-allowed", className)}>
+            <Languages className="h-4 w-4 text-muted-foreground shrink-0 hidden sm:block" />
             <Switch
               id="auto-translate"
               checked={false}
               disabled
-              className="data-[state=checked]:bg-primary shrink-0"
+              className="data-[state=checked]:bg-primary shrink-0 scale-90 sm:scale-100"
             />
-            <Label 
-              htmlFor="auto-translate" 
-              className="text-xs text-muted-foreground cursor-not-allowed items-center gap-1 hidden sm:flex whitespace-nowrap"
-            >
-              Auto-tradução
-              <Lock className="h-3 w-3" />
-            </Label>
-            {/* Mobile: just show lock icon */}
-            <Lock className="h-3 w-3 text-muted-foreground sm:hidden shrink-0" />
+            <Lock className="h-3 w-3 text-muted-foreground shrink-0" />
           </div>
         </TooltipTrigger>
         <TooltipContent side="bottom" className="max-w-[220px] text-xs">
@@ -146,29 +137,25 @@ export function TranslationToggle({
   }
 
   return (
-    <div className={cn("flex items-center gap-1.5", className)}>
-      <Languages className="h-4 w-4 text-muted-foreground shrink-0" />
-      <Switch
-        id="auto-translate"
-        checked={autoTranslate}
-        onCheckedChange={handleToggle}
-        className="data-[state=checked]:bg-primary shrink-0"
-      />
-      {/* Label hidden on mobile, shown on sm+ */}
-      <Label 
-        htmlFor="auto-translate" 
-        className="text-xs text-muted-foreground cursor-pointer hidden sm:block whitespace-nowrap"
-      >
-        Auto-tradução
-      </Label>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Info className="h-3 w-3 text-muted-foreground cursor-help shrink-0" />
-        </TooltipTrigger>
-        <TooltipContent side="bottom" className="max-w-[200px] text-xs">
-          Quando ativado, mensagens em outros idiomas serão traduzidas automaticamente para o seu idioma.
-        </TooltipContent>
-      </Tooltip>
-    </div>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div className={cn("flex items-center gap-1", className)}>
+          <Languages className="h-4 w-4 text-muted-foreground shrink-0 hidden sm:block" />
+          <Switch
+            id="auto-translate"
+            checked={autoTranslate}
+            onCheckedChange={handleToggle}
+            className="data-[state=checked]:bg-primary shrink-0 scale-90 sm:scale-100"
+          />
+          <Info className="h-3 w-3 text-muted-foreground shrink-0" />
+        </div>
+      </TooltipTrigger>
+      <TooltipContent side="bottom" className="max-w-[200px] text-xs">
+        {autoTranslate 
+          ? "Auto-tradução ativada. Clique para desativar."
+          : "Clique para ativar auto-tradução de mensagens."
+        }
+      </TooltipContent>
+    </Tooltip>
   );
 }
