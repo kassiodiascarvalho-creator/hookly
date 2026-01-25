@@ -1,6 +1,6 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@14.21.0";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import Stripe from "https://esm.sh/stripe@18.5.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,6 +10,12 @@ const corsHeaders = {
 const logStep = (step: string, details?: unknown) => {
   console.log(JSON.stringify({ step, details, timestamp: new Date().toISOString() }));
 };
+
+const json = (status: number, body: unknown) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -21,7 +27,9 @@ serve(async (req) => {
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY not configured");
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) throw new Error("No authorization header");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return json(401, { error: "Not authenticated" });
+    }
 
     // Create Supabase client with the auth header for proper user context
     const supabaseClient = createClient(
@@ -31,20 +39,27 @@ serve(async (req) => {
     );
 
     const token = authHeader.replace("Bearer ", "");
-    
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
-    if (authError || !user) {
-      console.error("Auth error:", authError);
-      throw new Error("Not authenticated");
+
+    // Prefer getClaims() over getUser(): getUser() can fail with `session_not_found`
+    // if the session_id referenced by the JWT has been cleaned up server-side.
+    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      logStep("Auth claims error", { code: (claimsError as any)?.code, message: String(claimsError) });
+      return json(401, { error: "Not authenticated" });
     }
 
-    logStep("User authenticated", { userId: user.id });
+    const userId = claimsData.claims.sub as string;
+    if (!userId) {
+      return json(401, { error: "Not authenticated" });
+    }
+
+    logStep("User authenticated", { userId });
 
     // Get company plan
     const { data: companyPlan, error: planError } = await supabaseClient
       .from("company_plans")
       .select("*")
-      .eq("company_user_id", user.id)
+      .eq("company_user_id", userId)
       .maybeSingle();
 
     if (planError) {
@@ -133,22 +148,16 @@ serve(async (req) => {
 
     logStep("Invoices fetched", { count: invoices.length });
 
-    return new Response(
-      JSON.stringify({
-        ...baseResponse,
-        subscription,
-        upcomingInvoice,
-        invoices,
-        hasStripeCustomer: true,
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return json(200, {
+      ...baseResponse,
+      subscription,
+      upcomingInvoice,
+      invoices,
+      hasStripeCustomer: true,
+    });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
     logStep("Error", { message });
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json(500, { error: message });
   }
 });
