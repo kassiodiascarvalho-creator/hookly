@@ -12,7 +12,8 @@ import { cn } from "@/lib/utils";
 import { Conversation } from "@/pages/Messages";
 import { AudioRecorder } from "./AudioRecorder";
 import { FileUploadButton } from "./FileUploadButton";
-import { AudioPlayer } from "./AudioPlayer";
+// NOTE: We intentionally use native <audio controls> here to guarantee
+// max-width behavior across browsers and avoid horizontal overflow in /messages.
 import { PresenceIndicator, PresenceDot } from "./PresenceIndicator";
 import { MessageTranslation } from "./MessageTranslation";
 import { TranslationToggle } from "./TranslationToggle";
@@ -395,21 +396,35 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
     switch (type) {
       case 'audio':
         return (
-          <AudioPlayer 
-            src={fileUrl} 
-            duration={message.audio_duration || undefined}
-            isOwn={isOwn}
-          />
+          <div className="w-full max-w-full overflow-hidden">
+            {fileUrl ? (
+              <div className="w-full max-w-full overflow-hidden">
+                <audio
+                  controls
+                  src={fileUrl}
+                  className="w-full max-w-full"
+                  preload="metadata"
+                />
+              </div>
+            ) : (
+              <div className="p-3 bg-muted rounded-lg text-sm text-muted-foreground max-w-full overflow-hidden">
+                🎤 {message.file_name || 'Audio'}
+              </div>
+            )}
+            {message.file_name && (
+              <p className="text-xs mt-1 opacity-70 truncate min-w-0">{message.file_name}</p>
+            )}
+          </div>
         );
 
       case 'image':
         return (
-          <div className="max-w-xs">
+          <div className="max-w-full overflow-hidden rounded-lg">
             {fileUrl ? (
               <img 
                 src={fileUrl} 
                 alt={message.file_name || 'Image'}
-                className="rounded-lg max-w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
+                className="max-w-full h-auto rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                 onClick={() => window.open(fileUrl, '_blank')}
                 loading="lazy"
                 onError={(e) => {
@@ -427,27 +442,29 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
 
       case 'video':
         return (
-          <div className="max-w-xs">
+          <div className="w-full max-w-full overflow-hidden">
             {fileUrl ? (
-              <video 
-                src={fileUrl} 
-                controls
-                className="rounded-lg max-w-full h-auto"
-                preload="metadata"
-                onError={(e) => {
-                  console.error('Video load error:', fileUrl);
-                }}
-              >
-                <track kind="captions" />
-                Your browser does not support the video tag.
-              </video>
+              <div className="w-full max-w-full overflow-hidden rounded-lg">
+                <video 
+                  src={fileUrl} 
+                  controls
+                  className="w-full max-w-full h-auto"
+                  preload="metadata"
+                  onError={() => {
+                    console.error('Video load error:', fileUrl);
+                  }}
+                >
+                  <track kind="captions" />
+                  Your browser does not support the video tag.
+                </video>
+              </div>
             ) : (
               <div className="p-4 bg-muted rounded-lg text-sm text-muted-foreground">
                 🎬 {message.file_name || 'Video'}
               </div>
             )}
             {message.file_name && (
-              <p className="text-xs mt-1 opacity-70 truncate">{message.file_name}</p>
+              <p className="text-xs mt-1 opacity-70 truncate min-w-0">{message.file_name}</p>
             )}
           </div>
         );
@@ -459,14 +476,14 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
             target="_blank" 
             rel="noopener noreferrer"
             className={cn(
-              "flex items-center gap-2 p-2 rounded-lg hover:opacity-80 transition-opacity",
+              "flex items-center gap-2 p-2 rounded-lg hover:opacity-80 transition-opacity max-w-full overflow-hidden min-w-0",
               isOwn ? "bg-primary-foreground/20" : "bg-background/50",
               !fileUrl && "pointer-events-none opacity-50"
             )}
           >
             <FileText className="h-8 w-8 shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{message.file_name}</p>
+            <div className="flex-1 min-w-0 overflow-hidden">
+              <p className="text-sm font-medium truncate min-w-0">{message.file_name}</p>
               {message.file_size && (
                 <p className="text-xs opacity-70">
                   {(message.file_size / 1024).toFixed(1)} KB
@@ -481,8 +498,8 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
         // If auto-translation is available, show translated content
         if (message.autoTranslation && !isOwn) {
           return (
-            <div className="max-w-full break-words [overflow-wrap:anywhere]">
-              <p className="whitespace-pre-wrap break-words italic text-foreground">
+            <div className="max-w-full break-words [overflow-wrap:anywhere] whitespace-pre-wrap">
+              <p className="break-words italic text-foreground">
                 {message.autoTranslation}
               </p>
               <p className="text-xs mt-1 opacity-50 line-through break-words">
@@ -492,9 +509,9 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
           );
         }
         return (
-          <p className="whitespace-pre-wrap break-words max-w-full [overflow-wrap:anywhere]">
+          <div className="max-w-full break-words [overflow-wrap:anywhere] whitespace-pre-wrap">
             {message.content}
-          </p>
+          </div>
         );
     }
   };
@@ -502,7 +519,7 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
   const messageGroups = groupMessagesByDate(messages);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-w-0">
       {/* Header - responsive and overflow-safe */}
       <div className="p-3 sm:p-4 border-b border-border">
         {/* Header: two-row on mobile, single row on desktop */}
@@ -586,7 +603,7 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
       <TranslationDisclaimer />
 
       {/* Messages */}
-      <ScrollArea className="flex-1 p-4">
+      <ScrollArea className="flex-1 p-4 min-w-0 overflow-x-hidden">
         {loading ? (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
@@ -600,7 +617,7 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
             <p>{t("messages.startConversation")}</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4 min-w-0">
             {messageGroups.map((group) => (
               <div key={group.date}>
                 <div className="flex items-center justify-center my-4">
@@ -609,7 +626,7 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
                   </span>
                 </div>
 
-                <div className="space-y-2">
+                 <div className="space-y-2 min-w-0">
                   {group.messages.map((message) => {
                     const isOwn = message.sender_user_id === user?.id;
 
@@ -620,13 +637,15 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
                       >
                         <div
                           className={cn(
-                            "max-w-[75%] rounded-2xl px-4 py-2",
+                              "max-w-[75%] min-w-0 overflow-hidden rounded-2xl px-4 py-2",
                             isOwn
                               ? "bg-primary text-primary-foreground rounded-br-md"
                               : "bg-muted text-foreground rounded-bl-md"
                           )}
                         >
-                          {renderMessageContent(message, isOwn)}
+                            <div className="max-w-full overflow-hidden">
+                              {renderMessageContent(message, isOwn)}
+                            </div>
                           <p
                             className={cn(
                               "text-xs mt-1",
