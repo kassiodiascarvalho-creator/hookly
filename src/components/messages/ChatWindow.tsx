@@ -17,7 +17,6 @@ import { PresenceIndicator, PresenceDot } from "./PresenceIndicator";
 import { MessageTranslation } from "./MessageTranslation";
 import { TranslationToggle } from "./TranslationToggle";
 import { TranslationDisclaimer } from "./TranslationDisclaimer";
-import { TranslationUsageBadge } from "./TranslationUsageBadge";
 import { usePresenceHeartbeat } from "@/hooks/useUserPresence";
 import { TieredAvatar } from "@/components/freelancer/TieredAvatar";
 import { CompanyAvatar } from "@/components/company/CompanyAvatar";
@@ -505,82 +504,87 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
   return (
     <div className="flex flex-col h-full">
       {/* Header - responsive and overflow-safe */}
-      <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 border-b border-border min-h-[60px]">
-        {/* Back button - mobile only */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="md:hidden shrink-0 h-8 w-8"
-          onClick={onBack}
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
+      <div className="p-3 sm:p-4 border-b border-border">
+        {/* Header content: wraps safely on mobile/tablet */}
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 min-w-0">
+          {/* Back button - mobile only */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden shrink-0 h-8 w-8"
+            onClick={onBack}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
 
-        {/* Avatar with presence dot */}
-        <div className="relative shrink-0">
-          {conversation.other_user_type === "company" ? (
-            <CompanyAvatar
-              logoUrl={conversation.other_user_avatar}
-              companyName={conversation.other_user_name}
-              planType={conversation.other_company_plan}
-              size="sm"
-              showBadge={true}
-            />
-          ) : (
-            <TieredAvatar
-              avatarUrl={conversation.other_user_avatar}
-              name={conversation.other_user_name}
-              tier={conversation.other_user_tier}
-              size="sm"
-            />
-          )}
-          <PresenceDot userId={conversation.other_user_id} size="sm" />
-        </div>
-
-        {/* Name + info - flex-1 with proper truncation */}
-        <div className="flex-1 min-w-0 overflow-hidden">
-          <div className="flex items-center gap-1 min-w-0">
+          {/* Avatar with presence dot */}
+          <div className="relative shrink-0">
             {conversation.other_user_type === "company" ? (
-              <CompanyNameBadges
-                name={conversation.other_user_name}
-                isVerified={conversation.other_company_verified}
+              <CompanyAvatar
+                logoUrl={conversation.other_user_avatar}
+                companyName={conversation.other_user_name}
                 planType={conversation.other_company_plan}
-                badgeSize="sm"
-                nameClassName="font-medium text-sm text-foreground truncate"
-                hidePlanPill={true}
+                size="sm"
+                showBadge={true}
               />
             ) : (
-              <span className="inline-flex items-center gap-1 min-w-0 overflow-hidden">
-                <span className="font-medium text-sm text-foreground truncate">
-                  {conversation.other_user_name}
-                </span>
-                {conversation.other_freelancer_verified && (
-                  <VerifiedBadge size="sm" className="shrink-0" />
-                )}
-              </span>
+              <TieredAvatar
+                avatarUrl={conversation.other_user_avatar}
+                name={conversation.other_user_name}
+                tier={conversation.other_user_tier}
+                size="sm"
+              />
             )}
+            <PresenceDot userId={conversation.other_user_id} size="sm" />
           </div>
-          {/* Subtitle: presence (mobile) or project title */}
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="sm:hidden shrink-0">
-              <PresenceIndicator userId={conversation.other_user_id} showLabel={false} size="sm" />
-            </span>
-            <span className="hidden sm:inline-flex shrink-0">
-              <PresenceIndicator userId={conversation.other_user_id} showLabel size="sm" />
-            </span>
-            {conversation.project_title && (
-              <span className="truncate hidden sm:inline">
-                · {conversation.project_title}
+
+          {/* Name + info - flex-1 with proper truncation */}
+          <div className="flex-1 min-w-0 overflow-hidden">
+            <div className="flex items-center gap-1 min-w-0">
+              {conversation.other_user_type === "company" ? (
+                <CompanyNameBadges
+                  name={conversation.other_user_name}
+                  isVerified={conversation.other_company_verified}
+                  planType={conversation.other_company_plan}
+                  badgeSize="sm"
+                  nameClassName="font-medium text-sm text-foreground truncate"
+                  hidePlanPill={true}
+                />
+              ) : (
+                <span className="inline-flex items-center gap-1 min-w-0 overflow-hidden">
+                  <span className="font-medium text-sm text-foreground truncate">
+                    {conversation.other_user_name}
+                  </span>
+                  {conversation.other_freelancer_verified && (
+                    <VerifiedBadge size="sm" className="shrink-0" />
+                  )}
+                </span>
+              )}
+            </div>
+            {/* Subtitle: presence (mobile) or project title */}
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span className="sm:hidden shrink-0">
+                <PresenceIndicator userId={conversation.other_user_id} showLabel={false} size="sm" />
               </span>
-            )}
+              <span className="hidden sm:inline-flex shrink-0">
+                <PresenceIndicator userId={conversation.other_user_id} showLabel size="sm" />
+              </span>
+              {conversation.project_title && (
+                <span className="truncate hidden sm:inline">
+                  · {conversation.project_title}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Translation toggle: on mobile/tablet goes to next line; on desktop stays right */}
+          <div className="flex w-full justify-end lg:w-auto lg:ml-auto">
+            <TranslationToggle
+              onAutoTranslateChange={setAutoTranslate}
+              className="shrink-0"
+            />
           </div>
         </div>
-
-        {/* Translation toggle - always visible, compact on mobile */}
-        <TranslationToggle 
-          onAutoTranslateChange={setAutoTranslate}
-          className="shrink-0"
-        />
       </div>
 
       {/* Translation Disclaimer */}
