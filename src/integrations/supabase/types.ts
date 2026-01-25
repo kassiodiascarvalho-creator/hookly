@@ -2692,6 +2692,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      hookly_contains_phone_number: {
+        Args: { p_text: string }
+        Returns: boolean
+      }
       increment_company_project_count: {
         Args: { p_company_user_id: string }
         Returns: boolean

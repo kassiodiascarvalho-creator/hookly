@@ -1606,5 +1606,11 @@
     "proceedAnywayWarning": "This proposal was marked as Not Recommended by AI. Do you want to proceed anyway?",
     "analyzed": "Analyzed",
     "aiSuggestion": "AI-based suggestion"
+  },
+  "chat": {
+    "phoneBlocked": {
+      "title": "For your safety, don't share phone numbers",
+      "description": "We don't recommend sharing phone numbers to prevent fraud and keep you safe. Please continue the conversation on HOOKLY."
+    }
   }
 }
