@@ -6,11 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  MapPin, Globe, Building, Users, CheckCircle, 
+  MapPin, Globe, Building, Users,
   Loader2, ExternalLink, Briefcase, Star
 } from "lucide-react";
 import { normalizeUrl } from "@/lib/normalizeUrl";
 import { CompanyAvatar } from "@/components/company/CompanyAvatar";
+import { CompanyNameBadges } from "@/components/company/CompanyNameBadges";
 import { CompanyPlanType, CompanyPlanBadge } from "@/components/company/CompanyPlanBadge";
 
 interface CompanyData {
@@ -159,18 +160,13 @@ export default function CompanyProfile() {
 
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2 flex-wrap">
-                <h1 className="text-2xl font-bold">
-                  {company.company_name || t("companyProfile.unnamed")}
-                </h1>
-                {planType !== "free" && (
-                  <CompanyPlanBadge planType={planType} size="lg" />
-                )}
-                {company.is_verified && (
-                  <Badge variant="default" className="gap-1">
-                    <CheckCircle className="h-3 w-3" />
-                    {t("common.verified")}
-                  </Badge>
-                )}
+                <CompanyNameBadges
+                  name={company.company_name || t("companyProfile.unnamed")}
+                  isVerified={company.is_verified || false}
+                  planType={planType}
+                  badgeSize="md"
+                  nameClassName="text-2xl font-bold"
+                />
               </div>
 
               {company.industry && (

@@ -12,8 +12,8 @@ import { Search, Briefcase, DollarSign, Calendar, Loader2, Filter, Rocket } from
 import { format, isAfter } from "date-fns";
 import { BoostedBadge } from "@/components/projects/BoostedBadge";
 import { CompanyAvatar } from "@/components/company/CompanyAvatar";
+import { CompanyNameBadges } from "@/components/company/CompanyNameBadges";
 import { fetchCompanyBadges, CompanyPlanType, CompanyBadgeInfo } from "@/hooks/useCompanyPlanData";
-import { VerifiedBadge } from "@/components/VerifiedBadge";
 
 interface Project {
   id: string;
@@ -252,12 +252,14 @@ export default function FindProjects() {
                               companyName={project.company.company_name}
                               planType={project.company.plan_type}
                               size="sm"
-                              showBadge={true}
                             />
-                            <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-                              <span>{project.company.company_name || t("findProjects.unknownCompany")}</span>
-                              {project.company.is_verified && <VerifiedBadge size="sm" />}
-                            </span>
+                            <CompanyNameBadges
+                              name={project.company.company_name || t("findProjects.unknownCompany")}
+                              isVerified={project.company.is_verified}
+                              planType={project.company.plan_type}
+                              badgeSize="sm"
+                              nameClassName="text-sm text-muted-foreground"
+                            />
                           </div>
                         )}
                       </div>

@@ -23,8 +23,8 @@ import { usePublishProject } from "@/hooks/usePublishProject";
 import { ProfileGateModal } from "@/components/profile/ProfileGateModal";
 import { ProfileGateAlert } from "@/components/profile/ProfileGateAlert";
 import { CompanyAvatar } from "@/components/company/CompanyAvatar";
+import { CompanyNameBadges } from "@/components/company/CompanyNameBadges";
 import { fetchCompanyBadges, CompanyPlanType } from "@/hooks/useCompanyPlanData";
-import { VerifiedBadge } from "@/components/VerifiedBadge";
 
 interface Project {
   id: string;
@@ -503,13 +503,15 @@ export default function ProjectDetail() {
                       companyName={companyInfo.company_name}
                       planType={companyInfo.plan_type}
                       size="lg"
-                      showBadge={true}
                     />
                     <div>
-                      <span className="inline-flex items-center gap-1.5">
-                        <span className="font-semibold">{companyInfo.company_name || t("projects.unknownCompany")}</span>
-                        {companyInfo.is_verified && <VerifiedBadge size="sm" />}
-                      </span>
+                      <CompanyNameBadges
+                        name={companyInfo.company_name || t("projects.unknownCompany")}
+                        isVerified={companyInfo.is_verified}
+                        planType={companyInfo.plan_type}
+                        badgeSize="sm"
+                        nameClassName="font-semibold"
+                      />
                     </div>
                   </div>
                 </div>

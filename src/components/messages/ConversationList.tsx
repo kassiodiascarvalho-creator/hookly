@@ -8,8 +8,8 @@ import { MessageSquare } from "lucide-react";
 import { PresenceDot } from "./PresenceIndicator";
 import { TieredAvatar } from "@/components/freelancer/TieredAvatar";
 import { CompanyAvatar } from "@/components/company/CompanyAvatar";
+import { CompanyNameBadges } from "@/components/company/CompanyNameBadges";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
-
 interface ConversationListProps {
   conversations: Conversation[];
   selectedConversation: Conversation | null;
@@ -92,14 +92,24 @@ export function ConversationList({
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="inline-flex items-center gap-1.5 min-w-0">
-                    <span className="font-medium text-foreground truncate">
-                      {conversation.other_user_name}
+                  {isCompany ? (
+                    <CompanyNameBadges
+                      name={conversation.other_user_name}
+                      isVerified={conversation.other_company_verified}
+                      planType={conversation.other_company_plan}
+                      badgeSize="sm"
+                      nameClassName="font-medium text-foreground"
+                    />
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 min-w-0">
+                      <span className="font-medium text-foreground truncate">
+                        {conversation.other_user_name}
+                      </span>
+                      {conversation.other_freelancer_verified && (
+                        <VerifiedBadge size="sm" />
+                      )}
                     </span>
-                    {isCompany && conversation.other_company_verified && (
-                      <VerifiedBadge size="sm" />
-                    )}
-                  </span>
+                  )}
                   {conversation.last_message_at && (
                     <span className="text-xs text-muted-foreground shrink-0">
                       {formatDistanceToNow(new Date(conversation.last_message_at), { addSuffix: true })}
