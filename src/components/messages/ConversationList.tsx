@@ -71,14 +71,14 @@ export function ConversationList({
                 selectedConversation?.id === conversation.id && "bg-accent"
               )}
             >
-              <div className="relative">
+              <div className="relative shrink-0">
                 {isCompany ? (
                   <CompanyAvatar
                     logoUrl={conversation.other_user_avatar}
                     companyName={conversation.other_user_name}
                     planType={conversation.other_company_plan}
                     size="lg"
-                    showBadge={true}
+                    showBadge={false}
                   />
                 ) : (
                   <TieredAvatar
@@ -91,24 +91,24 @@ export function ConversationList({
                 <PresenceDot userId={conversation.other_user_id} size="md" />
               </div>
 
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="inline-flex items-center gap-1.5 min-w-0 flex-1">
-                    <span className="font-medium text-foreground truncate">
+              <div className="flex-1 min-w-0 overflow-hidden">
+                <div className="flex items-center justify-between gap-2 min-w-0">
+                  <span className="inline-flex items-center gap-1 min-w-0 flex-1 overflow-hidden">
+                    <span className="font-medium text-foreground truncate min-w-0">
                       {conversation.other_user_name}
                     </span>
                     {isCompany && conversation.other_company_verified && (
-                      <VerifiedBadge size="sm" />
+                      <VerifiedBadge size="sm" className="shrink-0" />
                     )}
                     {isCompany && (
-                      <PlanPill planType={conversation.other_company_plan} size="sm" />
+                      <PlanPill planType={conversation.other_company_plan} size="sm" className="shrink-0 hidden sm:inline-flex" />
                     )}
                     {!isCompany && conversation.other_freelancer_verified && (
-                      <VerifiedBadge size="sm" />
+                      <VerifiedBadge size="sm" className="shrink-0" />
                     )}
                   </span>
                   {conversation.last_message_at && (
-                    <span className="text-xs text-muted-foreground shrink-0">
+                    <span className="text-xs text-muted-foreground shrink-0 whitespace-nowrap">
                       {formatDistanceToNow(new Date(conversation.last_message_at), { addSuffix: true })}
                     </span>
                   )}

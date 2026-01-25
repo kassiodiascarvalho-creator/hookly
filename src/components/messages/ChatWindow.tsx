@@ -20,7 +20,7 @@ import { TranslationDisclaimer } from "./TranslationDisclaimer";
 import { usePresenceHeartbeat } from "@/hooks/useUserPresence";
 import { TieredAvatar } from "@/components/freelancer/TieredAvatar";
 import { CompanyAvatar } from "@/components/company/CompanyAvatar";
-import { CompanyNameBadges } from "@/components/company/CompanyNameBadges";
+import { PlanPill } from "@/components/company/PlanPill";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 
 interface Message {
@@ -481,18 +481,18 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
         // If auto-translation is available, show translated content
         if (message.autoTranslation && !isOwn) {
           return (
-            <div>
+            <div className="max-w-full break-words [overflow-wrap:anywhere]">
               <p className="whitespace-pre-wrap break-words italic text-foreground">
                 {message.autoTranslation}
               </p>
-              <p className="text-xs mt-1 opacity-50 line-through">
+              <p className="text-xs mt-1 opacity-50 line-through break-words">
                 {message.content}
               </p>
             </div>
           );
         }
         return (
-          <p className="whitespace-pre-wrap break-words">
+          <p className="whitespace-pre-wrap break-words max-w-full [overflow-wrap:anywhere]">
             {message.content}
           </p>
         );
@@ -505,8 +505,8 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
     <div className="flex flex-col h-full">
       {/* Header - responsive and overflow-safe */}
       <div className="p-3 sm:p-4 border-b border-border">
-        {/* Header content: wraps safely on mobile/tablet */}
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3 min-w-0">
+        {/* Header: two-row on mobile, single row on desktop */}
+        <div className="flex items-center gap-2 sm:gap-3">
           {/* Back button - mobile only */}
           <Button
             variant="ghost"
@@ -525,7 +525,7 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
                 companyName={conversation.other_user_name}
                 planType={conversation.other_company_plan}
                 size="sm"
-                showBadge={true}
+                showBadge={false}
               />
             ) : (
               <TieredAvatar
@@ -541,27 +541,24 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
           {/* Name + info - flex-1 with proper truncation */}
           <div className="flex-1 min-w-0 overflow-hidden">
             <div className="flex items-center gap-1 min-w-0">
-              {conversation.other_user_type === "company" ? (
-                <CompanyNameBadges
-                  name={conversation.other_user_name}
-                  isVerified={conversation.other_company_verified}
-                  planType={conversation.other_company_plan}
-                  badgeSize="sm"
-                  nameClassName="font-medium text-sm text-foreground truncate"
-                  hidePlanPill={true}
-                />
-              ) : (
-                <span className="inline-flex items-center gap-1 min-w-0 overflow-hidden">
-                  <span className="font-medium text-sm text-foreground truncate">
-                    {conversation.other_user_name}
-                  </span>
-                  {conversation.other_freelancer_verified && (
-                    <VerifiedBadge size="sm" className="shrink-0" />
-                  )}
+              <span className="font-medium text-sm text-foreground truncate min-w-0">
+                {conversation.other_user_name}
+              </span>
+              {/* Verified badge - always show if verified */}
+              {conversation.other_user_type === "company" && conversation.other_company_verified && (
+                <VerifiedBadge size="sm" className="shrink-0" />
+              )}
+              {conversation.other_user_type === "freelancer" && conversation.other_freelancer_verified && (
+                <VerifiedBadge size="sm" className="shrink-0" />
+              )}
+              {/* PlanPill - only on lg+ screens to prevent overflow */}
+              {conversation.other_user_type === "company" && (
+                <span className="hidden lg:inline-flex shrink-0">
+                  <PlanPill planType={conversation.other_company_plan} size="sm" />
                 </span>
               )}
             </div>
-            {/* Subtitle: presence (mobile) or project title */}
+            {/* Subtitle: presence + project title */}
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <span className="sm:hidden shrink-0">
                 <PresenceIndicator userId={conversation.other_user_id} showLabel={false} size="sm" />
@@ -577,13 +574,11 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
             </div>
           </div>
 
-          {/* Translation toggle: on mobile/tablet goes to next line; on desktop stays right */}
-          <div className="flex w-full justify-end lg:w-auto lg:ml-auto">
-            <TranslationToggle
-              onAutoTranslateChange={setAutoTranslate}
-              className="shrink-0"
-            />
-          </div>
+          {/* Translation toggle - always on the right, no wrapping */}
+          <TranslationToggle
+            onAutoTranslateChange={setAutoTranslate}
+            className="shrink-0"
+          />
         </div>
       </div>
 
