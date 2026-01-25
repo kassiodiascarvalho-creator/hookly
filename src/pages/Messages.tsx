@@ -356,7 +356,7 @@ export default function Messages() {
         <p className="text-muted-foreground">{t("messages.subtitle")}</p>
       </div>
 
-      <div className="flex-1 flex border border-border rounded-lg overflow-hidden bg-card min-h-0 min-w-0">
+      <div className="flex-1 flex border border-border rounded-lg overflow-hidden bg-card min-h-0">
         {/* Conversation List */}
         <div className={`w-full md:w-80 lg:w-96 border-r border-border flex-shrink-0 ${selectedConversation ? 'hidden md:flex' : 'flex'} flex-col`}>
           <ConversationList
@@ -368,7 +368,7 @@ export default function Messages() {
         </div>
 
         {/* Chat Window */}
-        <div className={`flex-1 min-w-0 ${selectedConversation ? 'flex' : 'hidden md:flex'} flex-col`}>
+        <div className={`flex-1 ${selectedConversation ? 'flex' : 'hidden md:flex'} flex-col`}>
           {selectedConversation ? (
             <ChatWindow
               conversation={selectedConversation}
