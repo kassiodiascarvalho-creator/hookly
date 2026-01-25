@@ -105,17 +105,31 @@ export function ProposalBudgetValidation({
   const validation = validateProposalBudget(proposalTotal, budgetMin, budgetMax, budgetIdeal ?? null);
 
   const iconMap = {
-    success: <CheckCircle className="h-4 w-4 text-green-600" />,
-    warning: <AlertTriangle className="h-4 w-4 text-amber-600" />,
-    error: <AlertTriangle className="h-4 w-4 text-destructive" />,
-    info: <Info className="h-4 w-4 text-blue-600" />,
+    success: <CheckCircle className="h-4 w-4 text-green-700 dark:text-green-400" />,
+    warning: <AlertTriangle className="h-4 w-4 text-amber-700 dark:text-amber-400" />,
+    error: <AlertTriangle className="h-4 w-4 text-red-700 dark:text-red-400" />,
+    info: <Info className="h-4 w-4 text-blue-700 dark:text-blue-400" />,
   };
 
   const bgMap = {
-    success: "bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-900",
-    warning: "bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900",
-    error: "bg-destructive/10 border-destructive/20",
-    info: "bg-blue-50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-900",
+    success: "bg-green-100 border-green-300 dark:bg-green-950/40 dark:border-green-800",
+    warning: "bg-amber-100 border-amber-300 dark:bg-amber-950/40 dark:border-amber-800",
+    error: "bg-red-100 border-red-300 dark:bg-red-950/40 dark:border-red-800",
+    info: "bg-blue-100 border-blue-300 dark:bg-blue-950/40 dark:border-blue-800",
+  };
+
+  const textMap = {
+    success: "text-green-900 dark:text-green-100",
+    warning: "text-amber-900 dark:text-amber-100",
+    error: "text-red-900 dark:text-red-100",
+    info: "text-blue-900 dark:text-blue-100",
+  };
+
+  const descMap = {
+    success: "text-green-800 dark:text-green-200",
+    warning: "text-amber-800 dark:text-amber-200",
+    error: "text-red-800 dark:text-red-200",
+    info: "text-blue-800 dark:text-blue-200",
   };
 
   if (proposalTotal === 0) {
@@ -127,7 +141,7 @@ export function ProposalBudgetValidation({
       {iconMap[validation.level]}
       <div className="flex-1 space-y-1">
         <div className="flex items-center gap-2">
-          <p className="font-medium text-sm">{validation.message}</p>
+          <p className={`font-medium text-sm ${textMap[validation.level]}`}>{validation.message}</p>
           {isCounterproposal && (
             <Badge variant="secondary" className="text-xs">
               Contraproposta
@@ -135,15 +149,15 @@ export function ProposalBudgetValidation({
           )}
         </div>
         {validation.description && (
-          <p className="text-xs text-muted-foreground">{validation.description}</p>
+          <p className={`text-xs ${descMap[validation.level]}`}>{validation.description}</p>
         )}
       </div>
       <div className="text-right">
-        <p className="font-semibold">
+        <p className={`font-semibold ${textMap[validation.level]}`}>
           {symbol}{proposalTotal.toLocaleString()}
         </p>
         {budgetMax && proposalTotal > budgetMax && (
-          <p className="text-xs text-destructive">
+          <p className="text-xs text-red-700 dark:text-red-300 font-medium">
             Máx: {symbol}{budgetMax.toLocaleString()}
           </p>
         )}

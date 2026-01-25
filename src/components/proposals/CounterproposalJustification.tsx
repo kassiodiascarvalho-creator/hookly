@@ -48,7 +48,7 @@ export function CounterproposalJustification({
           onChange={(e) => onChange(e.target.value)}
           placeholder="Explique por que o valor proposto é superior ao orçamento máximo. Inclua detalhes sobre complexidade técnica, escopo adicional, qualidade diferenciada, ou outros fatores que justifiquem o investimento extra..."
           rows={4}
-          className="bg-white dark:bg-zinc-900 text-foreground placeholder:text-muted-foreground/70 border-amber-300 dark:border-amber-700 focus:border-amber-500 focus:ring-amber-500"
+          className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 border-amber-300 dark:border-amber-700 focus:border-amber-500 focus:ring-amber-500"
         />
         <p className="text-xs text-amber-700 dark:text-amber-300">
           {value.length}/500 caracteres (mínimo 50)
