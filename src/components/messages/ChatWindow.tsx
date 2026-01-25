@@ -17,6 +17,7 @@ import { PresenceIndicator, PresenceDot } from "./PresenceIndicator";
 import { MessageTranslation } from "./MessageTranslation";
 import { TranslationToggle } from "./TranslationToggle";
 import { TranslationDisclaimer } from "./TranslationDisclaimer";
+import { ImageLightbox } from "./ImageLightbox";
 import { usePresenceHeartbeat } from "@/hooks/useUserPresence";
 import { TieredAvatar } from "@/components/freelancer/TieredAvatar";
 import { CompanyAvatar } from "@/components/company/CompanyAvatar";
@@ -77,6 +78,7 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
   const [sending, setSending] = useState(false);
   const [autoTranslate, setAutoTranslate] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState<{ src: string; alt?: string } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const signedUrlCache = useRef<Map<string, string>>(new Map());
   const autoTranslationCache = useRef<Map<string, string>>(new Map());
@@ -410,7 +412,7 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
                 src={fileUrl} 
                 alt={message.file_name || 'Image'}
                 className="rounded-lg max-w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
-                onClick={() => window.open(fileUrl, '_blank')}
+                onClick={() => setLightboxImage({ src: fileUrl, alt: message.file_name || 'Image' })}
                 loading="lazy"
                 onError={(e) => {
                   console.error('Image load error:', fileUrl);
@@ -710,6 +712,14 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
           </Button>
         </div>
       </form>
+
+      {/* Image Lightbox */}
+      <ImageLightbox
+        src={lightboxImage?.src || ''}
+        alt={lightboxImage?.alt}
+        open={!!lightboxImage}
+        onOpenChange={(open) => !open && setLightboxImage(null)}
+      />
     </div>
   );
 }
