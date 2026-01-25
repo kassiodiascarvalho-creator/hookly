@@ -1607,6 +1607,12 @@
     "analyzed": "Analyzed",
     "aiSuggestion": "AI-based suggestion"
   },
+  "sidebar": {
+    "unreadMessages": "{{count}} unread messages",
+    "unreadMessage": "1 unread message",
+    "pendingInvites": "{{count}} pending invites",
+    "pendingInvite": "1 pending invite"
+  },
   "chat": {
     "phoneBlocked": {
       "title": "For your safety, don't share phone numbers",

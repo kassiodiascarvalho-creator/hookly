@@ -9,6 +9,8 @@ import { TieredAvatar } from "@/components/freelancer/TieredAvatar";
 import { CompanyAvatar } from "@/components/company/CompanyAvatar";
 import type { FreelancerTier } from "@/components/freelancer/TierBadge";
 import { useCompanyPlanData } from "@/hooks/useCompanyPlanData";
+import { useSidebarCounts } from "@/hooks/useSidebarCounts";
+import { SidebarBadge } from "@/components/sidebar/SidebarBadge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -61,6 +63,7 @@ export function DashboardLayout() {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { isAdmin } = useIsAdmin();
+  const { unreadConversationsCount, pendingInvitesCount } = useSidebarCounts();
   
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -134,6 +137,27 @@ export function DashboardLayout() {
     navigate("/");
   };
 
+  // Helper to get badge info for a nav item
+  const getBadgeForPath = (path: string) => {
+    if (path === "/messages" && unreadConversationsCount > 0) {
+      return {
+        count: unreadConversationsCount,
+        ariaLabel: unreadConversationsCount === 1 
+          ? t("sidebar.unreadMessage") 
+          : t("sidebar.unreadMessages", { count: unreadConversationsCount })
+      };
+    }
+    if (path === "/invites" && pendingInvitesCount > 0) {
+      return {
+        count: pendingInvitesCount,
+        ariaLabel: pendingInvitesCount === 1 
+          ? t("sidebar.pendingInvite") 
+          : t("sidebar.pendingInvites", { count: pendingInvitesCount })
+      };
+    }
+    return null;
+  };
+
   const companyNavItems = [
     { icon: LayoutDashboard, label: t("nav.dashboard"), path: "/dashboard" },
     { icon: Briefcase, label: t("nav.projects"), path: "/projects" },
@@ -202,20 +226,40 @@ export function DashboardLayout() {
         </div>
 
         <nav className="flex-1 p-4 space-y-1">
-          {navItems.map((item) => (
-            <Button
-              key={item.path}
-              variant={location.pathname === item.path ? "secondary" : "ghost"}
-              className={cn(
-                "w-full justify-start gap-3",
-                !sidebarOpen && "justify-center px-2"
-              )}
-              onClick={() => navigate(item.path)}
-            >
-              <item.icon className="h-5 w-5 shrink-0" />
-              {sidebarOpen && <span>{item.label}</span>}
-            </Button>
-          ))}
+          {navItems.map((item) => {
+            const badge = getBadgeForPath(item.path);
+            return (
+              <Button
+                key={item.path}
+                variant={location.pathname === item.path ? "secondary" : "ghost"}
+                className={cn(
+                  "w-full justify-start gap-3 relative",
+                  !sidebarOpen && "justify-center px-2"
+                )}
+                onClick={() => navigate(item.path)}
+              >
+                <item.icon className="h-5 w-5 shrink-0" />
+                {sidebarOpen && (
+                  <>
+                    <span className="flex-1 text-left">{item.label}</span>
+                    {badge && (
+                      <SidebarBadge
+                        count={badge.count}
+                        ariaLabel={badge.ariaLabel}
+                      />
+                    )}
+                  </>
+                )}
+                {!sidebarOpen && badge && (
+                  <SidebarBadge
+                    count={badge.count}
+                    collapsed
+                    ariaLabel={badge.ariaLabel}
+                  />
+                )}
+              </Button>
+            );
+          })}
         </nav>
 
         {sidebarOpen && (
@@ -259,20 +303,29 @@ export function DashboardLayout() {
         </div>
 
         <nav className="p-4 space-y-1">
-          {navItems.map((item) => (
-            <Button
-              key={item.path}
-              variant={location.pathname === item.path ? "secondary" : "ghost"}
-              className="w-full justify-start gap-3"
-              onClick={() => {
-                navigate(item.path);
-                setMobileMenuOpen(false);
-              }}
-            >
-              <item.icon className="h-5 w-5" />
-              <span>{item.label}</span>
-            </Button>
-          ))}
+          {navItems.map((item) => {
+            const badge = getBadgeForPath(item.path);
+            return (
+              <Button
+                key={item.path}
+                variant={location.pathname === item.path ? "secondary" : "ghost"}
+                className="w-full justify-start gap-3"
+                onClick={() => {
+                  navigate(item.path);
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <item.icon className="h-5 w-5" />
+                <span className="flex-1 text-left">{item.label}</span>
+                {badge && (
+                  <SidebarBadge
+                    count={badge.count}
+                    ariaLabel={badge.ariaLabel}
+                  />
+                )}
+              </Button>
+            );
+          })}
         </nav>
 
         <div className="p-4 border-t border-border">

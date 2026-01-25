@@ -1700,6 +1700,12 @@
     "analyzed": "Analisado",
     "aiSuggestion": "Sugestão baseada em IA"
   },
+  "sidebar": {
+    "unreadMessages": "{{count}} mensagens não lidas",
+    "unreadMessage": "1 mensagem não lida",
+    "pendingInvites": "{{count}} convites pendentes",
+    "pendingInvite": "1 convite pendente"
+  },
   "chat": {
     "phoneBlocked": {
       "title": "Por segurança, não compartilhe telefone",
