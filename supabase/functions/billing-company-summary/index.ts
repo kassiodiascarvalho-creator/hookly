@@ -20,17 +20,23 @@ serve(async (req) => {
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY not configured");
 
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) throw new Error("No authorization header");
+
+    // Create Supabase client with the auth header for proper user context
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
     );
 
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header");
-
     const token = authHeader.replace("Bearer ", "");
+    
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
-    if (authError || !user) throw new Error("Not authenticated");
+    if (authError || !user) {
+      console.error("Auth error:", authError);
+      throw new Error("Not authenticated");
+    }
 
     logStep("User authenticated", { userId: user.id });
 
