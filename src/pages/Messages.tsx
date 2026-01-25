@@ -86,9 +86,24 @@ export default function Messages() {
       }
 
       const convIds = conversationsData.map((c: ConversationRow) => c.id);
-      const otherUserIds = conversationsData.map((c: ConversationRow) => 
-        userType === "company" ? c.freelancer_user_id : c.company_user_id
-      );
+
+      // Determine the "other user" by comparing IDs, not by userType.
+      // This makes the UI resilient even if a conversation row has roles swapped.
+      const otherFreelancerIds = new Set<string>();
+      const otherCompanyIds = new Set<string>();
+
+      for (const c of conversationsData as ConversationRow[]) {
+        const isUserOnCompanySide = c.company_user_id === user.id;
+        const otherId = isUserOnCompanySide ? c.freelancer_user_id : c.company_user_id;
+        const otherType: "company" | "freelancer" = isUserOnCompanySide ? "freelancer" : "company";
+
+        if (!otherId || otherId === user.id) continue;
+        if (otherType === "freelancer") otherFreelancerIds.add(otherId);
+        else otherCompanyIds.add(otherId);
+      }
+
+      const otherFreelancerIdsArr = Array.from(otherFreelancerIds);
+      const otherCompanyIdsArr = Array.from(otherCompanyIds);
       const projectIds = conversationsData
         .filter((c: ConversationRow) => c.project_id)
         .map((c: ConversationRow) => c.project_id as string);
@@ -101,20 +116,20 @@ export default function Messages() {
         lastMessagesResult,
         unreadCountsResult
       ] = await Promise.all([
-        // Fetch freelancer profiles if user is company
-        userType === "company"
+        // Fetch freelancer profiles for conversations where the other side is a freelancer
+        otherFreelancerIdsArr.length > 0
           ? supabase
               .from("freelancer_profiles")
               .select("user_id, full_name, avatar_url, tier, verified")
-              .in("user_id", otherUserIds)
+              .in("user_id", otherFreelancerIdsArr)
           : Promise.resolve({ data: [] }),
-        
-        // Fetch company profiles if user is freelancer
-        userType === "freelancer"
+
+        // Fetch company profiles for conversations where the other side is a company
+        otherCompanyIdsArr.length > 0
           ? supabase
               .from("company_profiles")
               .select("user_id, company_name, contact_name, logo_url")
-              .in("user_id", otherUserIds)
+              .in("user_id", otherCompanyIdsArr)
           : Promise.resolve({ data: [] }),
         
         // Fetch projects
@@ -167,17 +182,18 @@ export default function Messages() {
         unreadCountMap.set(msg.conversation_id, (unreadCountMap.get(msg.conversation_id) || 0) + 1);
       }
 
-      // Build enriched conversations
+      // Build enriched conversations (deterministic other-side logic)
       let enrichedConversations: Conversation[] = conversationsData.map((conv: ConversationRow) => {
-        const otherUserId = userType === "company" ? conv.freelancer_user_id : conv.company_user_id;
-        const otherUserType = userType === "company" ? "freelancer" as const : "company" as const;
+        const isUserOnCompanySide = conv.company_user_id === user.id;
+        const otherUserId = isUserOnCompanySide ? conv.freelancer_user_id : conv.company_user_id;
+        const otherUserType: "company" | "freelancer" = isUserOnCompanySide ? "freelancer" : "company";
         
         let otherUserName = "Unknown";
         let otherUserAvatar: string | null = null;
         let otherUserTier: FreelancerTier | null = null;
         let otherFreelancerVerified = false;
 
-        if (userType === "company") {
+        if (otherUserType === "freelancer") {
           const profile = freelancerProfiles.get(otherUserId);
           if (profile) {
             otherUserName = profile.full_name || "Freelancer";
@@ -223,15 +239,27 @@ export default function Messages() {
         };
       });
 
-      // For freelancers, fetch company badges via RPC
-      if (userType === "freelancer") {
-        const companyIds = enrichedConversations.map(c => c.company_user_id);
-        const badges = await fetchCompanyBadges(companyIds);
-        enrichedConversations = enrichedConversations.map(conv => ({
-          ...conv,
-          other_company_plan: badges.get(conv.company_user_id)?.plan_type || "free",
-          other_company_verified: badges.get(conv.company_user_id)?.is_verified || false,
-        }));
+      // Fetch company badges (plan/verified) for conversations where other user is a company.
+      // Use the RPC-backed helper for consistent visibility rules.
+      const companyIdsForBadges = Array.from(
+        new Set(
+          enrichedConversations
+            .filter((c) => c.other_user_type === "company" && c.other_user_id && c.other_user_id !== user.id)
+            .map((c) => c.other_user_id)
+        )
+      );
+
+      if (companyIdsForBadges.length > 0) {
+        const badges = await fetchCompanyBadges(companyIdsForBadges);
+        enrichedConversations = enrichedConversations.map((conv) => {
+          if (conv.other_user_type !== "company") return conv;
+          const b = badges.get(conv.other_user_id);
+          return {
+            ...conv,
+            other_company_plan: b?.plan_type || "free",
+            other_company_verified: b?.is_verified || false,
+          };
+        });
       }
 
       // Sort by last message date
@@ -311,6 +339,15 @@ export default function Messages() {
       setSelectedConversation(conv);
     }
   }, [searchParams, conversations, selectedConversation]);
+
+  // Keep selectedConversation synchronized with refreshed conversation data
+  useEffect(() => {
+    if (!selectedConversation) return;
+    const updated = conversations.find((c) => c.id === selectedConversation.id);
+    if (updated && updated !== selectedConversation) {
+      setSelectedConversation(updated);
+    }
+  }, [conversations, selectedConversation]);
 
   return (
     <div className="h-[calc(100vh-7rem)] flex flex-col">
