@@ -2674,6 +2674,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      get_company_badges: {
+        Args: { p_company_ids: string[] }
+        Returns: {
+          company_user_id: string
+          is_verified: boolean
+          plan_type: string
+        }[]
+      }
       grant_plan_credits: {
         Args: {
           p_grant_type?: string

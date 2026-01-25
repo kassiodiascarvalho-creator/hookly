@@ -24,6 +24,7 @@ import { ProfileGateModal } from "@/components/profile/ProfileGateModal";
 import { ProfileGateAlert } from "@/components/profile/ProfileGateAlert";
 import { CompanyAvatar } from "@/components/company/CompanyAvatar";
 import { fetchCompanyBadges, CompanyPlanType } from "@/hooks/useCompanyPlanData";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 
 interface Project {
   id: string;
@@ -501,13 +502,14 @@ export default function ProjectDetail() {
                       logoUrl={companyInfo.logo_url}
                       companyName={companyInfo.company_name}
                       planType={companyInfo.plan_type}
-                      isVerified={companyInfo.is_verified}
                       size="lg"
                       showBadge={true}
-                      showVerified={true}
                     />
                     <div>
-                      <p className="font-semibold">{companyInfo.company_name || t("projects.unknownCompany")}</p>
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="font-semibold">{companyInfo.company_name || t("projects.unknownCompany")}</span>
+                        {companyInfo.is_verified && <VerifiedBadge size="sm" />}
+                      </span>
                     </div>
                   </div>
                 </div>
