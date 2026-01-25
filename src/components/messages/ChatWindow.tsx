@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { AutoResizeTextarea } from "./AutoResizeTextarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Send, FileText, Download } from "lucide-react";
@@ -689,7 +689,7 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
 
       {/* Input */}
       <form onSubmit={sendMessage} className="p-4 border-t border-border">
-        <div className="flex items-center gap-2">
+        <div className="flex items-end gap-2">
           <FileUploadButton 
             conversationId={conversation.id} 
             onFileSent={fetchMessages}
@@ -700,14 +700,24 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
             onAudioSent={fetchMessages}
             disabled={sending}
           />
-          <Input
+          <AutoResizeTextarea
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (newMessage.trim() && !sending) {
+                  sendMessage(e as unknown as React.FormEvent);
+                }
+              }
+            }}
             placeholder={t("messages.typeMessage")}
-            className="flex-1"
+            className="flex-1 min-h-[40px]"
             disabled={sending}
+            minRows={1}
+            maxRows={6}
           />
-          <Button type="submit" disabled={!newMessage.trim() || sending}>
+          <Button type="submit" disabled={!newMessage.trim() || sending} className="shrink-0 self-end">
             <Send className="h-4 w-4" />
           </Button>
         </div>
