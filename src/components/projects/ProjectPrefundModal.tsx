@@ -204,7 +204,8 @@ export function ProjectPrefundModal({
     if (!feeInfo || numericAmount <= 0) return;
 
     if (isBRL && canUseMercadoPagoCard) {
-      setCardAmount(feeInfo.totalAmount);
+      // CRITICAL: CardPaymentModal expects amount in CENTS (divides by 100 internally)
+      setCardAmount(feeInfo.totalAmountCents);
       onOpenChange(false);
       setCardModalOpen(true);
     } else if (canUseStripeCard) {
@@ -472,7 +473,11 @@ export function ProjectPrefundModal({
         paymentType="project_prefund"
         userType="company"
         currency={currency}
+        projectId={projectId}
         description={t("projects.prefund.cardDescription", "Pré-financiamento de projeto")}
+        feePercent={feeInfo?.feePercent}
+        feeAmountCents={feeInfo ? Math.round(feeInfo.feeAmount * 100) : undefined}
+        baseAmountCents={feeInfo ? Math.round(numericAmount * 100) : undefined}
         onPaymentConfirmed={handlePaymentConfirmed}
         onError={(error) => {
           toast.error(error);
