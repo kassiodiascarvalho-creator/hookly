@@ -164,23 +164,48 @@ export default function Settings() {
 
       if (profileError) throw profileError;
 
-      // Update type-specific profile
+      // Update type-specific profile - only send editable fields
       if (profile.user_type === "company" && companyProfile) {
+        const companyUpdateData = {
+          company_name: companyProfile.company_name,
+          contact_name: companyProfile.contact_name,
+          phone: companyProfile.phone,
+          location: companyProfile.location,
+          country: companyProfile.country,
+          industry: companyProfile.industry,
+          company_size: companyProfile.company_size,
+          website: companyProfile.website,
+          about: companyProfile.about,
+          logo_url: companyProfile.logo_url,
+        };
         const { error } = await supabase
           .from("company_profiles")
-          .update(companyProfile)
+          .update(companyUpdateData)
           .eq("user_id", user.id);
         if (error) throw error;
       } else if (profile.user_type === "freelancer" && freelancerProfile) {
+        const freelancerUpdateData = {
+          full_name: freelancerProfile.full_name,
+          title: freelancerProfile.title,
+          bio: freelancerProfile.bio,
+          hourly_rate: freelancerProfile.hourly_rate,
+          location: freelancerProfile.location,
+          country: freelancerProfile.country,
+          skills: freelancerProfile.skills,
+          languages: freelancerProfile.languages,
+          avatar_url: freelancerProfile.avatar_url,
+          preferred_payout_currency: freelancerProfile.preferred_payout_currency,
+        };
         const { error } = await supabase
           .from("freelancer_profiles")
-          .update(freelancerProfile)
+          .update(freelancerUpdateData)
           .eq("user_id", user.id);
         if (error) throw error;
       }
 
       toast.success(t("settings.saved"));
     } catch (error) {
+      console.error("Error saving profile:", error);
       toast.error(t("common.error"));
     } finally {
       setSaving(false);
