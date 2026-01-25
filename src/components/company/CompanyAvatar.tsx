@@ -1,6 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { CompanyPlanBadge, CompanyPlanType } from "./CompanyPlanBadge";
+import { CheckCircle2 } from "lucide-react";
 
 interface CompanyAvatarProps {
   logoUrl?: string | null;
@@ -28,12 +29,27 @@ const ringPaddingClasses = {
   xl: "p-[4px]",
 };
 
-// Plan badge positioned OUTSIDE the circle (more to the right)
+// Plan badge positioned clearly OUTSIDE the circle
 const planBadgePositionClasses = {
-  sm: "-top-1 right-0 translate-x-[75%]",
-  md: "-top-1 right-0 translate-x-[85%]",
-  lg: "-top-1 right-0 translate-x-[95%]",
-  xl: "-top-2 right-0 translate-x-[105%]",
+  sm: "-top-2 -right-2",
+  md: "-top-2 -right-2",
+  lg: "-top-2 -right-3",
+  xl: "-top-3 -right-4",
+};
+
+// Verified badge positioned bottom-right OUTSIDE the circle
+const verifiedBadgePositionClasses = {
+  sm: "-bottom-1 -right-1",
+  md: "-bottom-1 -right-1",
+  lg: "-bottom-1 -right-2",
+  xl: "-bottom-2 -right-3",
+};
+
+const verifiedIconSizeClasses = {
+  sm: "h-3.5 w-3.5",
+  md: "h-4 w-4",
+  lg: "h-5 w-5",
+  xl: "h-6 w-6",
 };
 
 const badgeSizeMap = {
@@ -64,9 +80,6 @@ export function CompanyAvatar({
   const normalizedPlan = planType || "free";
   const isElevated = normalizedPlan !== "free";
 
-  // isVerified and showVerified kept for TypeScript compatibility but not rendered here
-  // Verified badge is now shown next to the name using VerifiedBadge component
-
   return (
     <div className={cn("relative inline-flex overflow-visible", className)}>
       {/* Ring wrapper - applies ring OUTSIDE the avatar */}
@@ -89,7 +102,7 @@ export function CompanyAvatar({
         </Avatar>
       </div>
 
-      {/* Plan Badge - positioned OUTSIDE the circle (top-right, more to the side) */}
+      {/* Plan Badge - positioned OUTSIDE the circle (top-right) */}
       {isElevated && showBadge && (
         <div className={cn("absolute z-20", planBadgePositionClasses[size])}>
           <CompanyPlanBadge 
@@ -100,7 +113,23 @@ export function CompanyAvatar({
         </div>
       )}
 
-      {/* Verified badge is now shown next to name via VerifiedBadge component */}
+      {/* Verified Badge - positioned OUTSIDE the circle (bottom-right) */}
+      {isVerified && showVerified && (
+        <div 
+          className={cn(
+            "absolute z-20 bg-background rounded-full p-0.5",
+            verifiedBadgePositionClasses[size]
+          )}
+          title="Verified Company"
+        >
+          <CheckCircle2 
+            className={cn(
+              verifiedIconSizeClasses[size],
+              "text-green-500 fill-green-500/20"
+            )} 
+          />
+        </div>
+      )}
     </div>
   );
 }

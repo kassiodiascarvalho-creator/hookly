@@ -8,7 +8,6 @@ import { MessageSquare } from "lucide-react";
 import { PresenceDot } from "./PresenceIndicator";
 import { TieredAvatar } from "@/components/freelancer/TieredAvatar";
 import { CompanyAvatar } from "@/components/company/CompanyAvatar";
-import { VerifiedBadge } from "@/components/VerifiedBadge";
 
 interface ConversationListProps {
   conversations: Conversation[];
@@ -76,8 +75,10 @@ export function ConversationList({
                     logoUrl={conversation.other_user_avatar}
                     companyName={conversation.other_user_name}
                     planType={conversation.other_company_plan}
+                    isVerified={conversation.other_company_verified}
                     size="lg"
                     showBadge={true}
+                    showVerified={true}
                   />
                 ) : (
                   <TieredAvatar
@@ -92,17 +93,9 @@ export function ConversationList({
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
-                  <div className="inline-flex items-center gap-1.5 min-w-0">
-                    <span className="font-medium text-foreground truncate">
-                      {conversation.other_user_name}
-                    </span>
-                    {isCompany && conversation.other_company_verified && (
-                      <VerifiedBadge size="sm" />
-                    )}
-                    {!isCompany && conversation.other_freelancer_verified && (
-                      <VerifiedBadge size="sm" />
-                    )}
-                  </div>
+                  <p className="font-medium text-foreground truncate">
+                    {conversation.other_user_name}
+                  </p>
                   {conversation.last_message_at && (
                     <span className="text-xs text-muted-foreground shrink-0">
                       {formatDistanceToNow(new Date(conversation.last_message_at), { addSuffix: true })}

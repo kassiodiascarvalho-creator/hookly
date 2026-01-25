@@ -6,13 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  MapPin, Globe, Building, Users, 
+  MapPin, Globe, Building, Users, CheckCircle, 
   Loader2, ExternalLink, Briefcase, Star
 } from "lucide-react";
 import { normalizeUrl } from "@/lib/normalizeUrl";
 import { CompanyAvatar } from "@/components/company/CompanyAvatar";
 import { CompanyPlanType, CompanyPlanBadge } from "@/components/company/CompanyPlanBadge";
-import { VerifiedBadge } from "@/components/VerifiedBadge";
 
 interface CompanyData {
   id: string;
@@ -160,14 +159,17 @@ export default function CompanyProfile() {
 
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2 flex-wrap">
-                <div className="inline-flex items-center gap-1.5">
-                  <h1 className="text-2xl font-bold">
-                    {company.company_name || t("companyProfile.unnamed")}
-                  </h1>
-                  {company.is_verified && <VerifiedBadge size="lg" />}
-                </div>
+                <h1 className="text-2xl font-bold">
+                  {company.company_name || t("companyProfile.unnamed")}
+                </h1>
                 {planType !== "free" && (
                   <CompanyPlanBadge planType={planType} size="lg" />
+                )}
+                {company.is_verified && (
+                  <Badge variant="default" className="gap-1">
+                    <CheckCircle className="h-3 w-3" />
+                    {t("common.verified")}
+                  </Badge>
                 )}
               </div>
 
