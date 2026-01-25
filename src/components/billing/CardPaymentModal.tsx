@@ -30,11 +30,16 @@ export interface CardPaymentModalProps {
   description?: string;
   currency?: string;
   contractId?: string;
+  projectId?: string;
   onPaymentConfirmed?: () => void;
   onError?: (error: string) => void;
   fxSpreadPercent?: number;
   fxFeeAmount?: number;
   amountToConvert?: number;
+  // Fee info for backend
+  feePercent?: number;
+  feeAmountCents?: number;
+  baseAmountCents?: number;
 }
 
 interface CardFormData {
@@ -65,11 +70,15 @@ export const CardPaymentModal = forwardRef<HTMLDivElement, CardPaymentModalProps
       description,
       currency = "BRL",
       contractId,
+      projectId,
       onPaymentConfirmed,
       onError,
       fxSpreadPercent,
       fxFeeAmount,
       amountToConvert,
+      feePercent,
+      feeAmountCents,
+      baseAmountCents,
     },
     ref
   ) {
@@ -283,6 +292,11 @@ export const CardPaymentModal = forwardRef<HTMLDivElement, CardPaymentModalProps
             creditsAmount,
             description,
             contractId,
+            projectId,
+            // Fee info for backend
+            feePercent,
+            feeAmountCents,
+            contractAmountCents: baseAmountCents,
             // Include FX data if available
             ...(fxSpreadPercent !== undefined && {
               fx_spread_percent: fxSpreadPercent,
@@ -362,7 +376,7 @@ export const CardPaymentModal = forwardRef<HTMLDivElement, CardPaymentModalProps
       } finally {
         setProcessing(false);
       }
-    }, [amount, paymentType, userType, creditsAmount, description, contractId, onPaymentConfirmed, onOpenChange, onError, fxSpreadPercent, fxFeeAmount, amountToConvert]);
+    }, [amount, paymentType, userType, creditsAmount, description, contractId, projectId, onPaymentConfirmed, onOpenChange, onError, fxSpreadPercent, fxFeeAmount, amountToConvert, feePercent, feeAmountCents, baseAmountCents]);
 
     const handleFallback = async () => {
       console.log("[CardPaymentModal] User clicked fallback");
