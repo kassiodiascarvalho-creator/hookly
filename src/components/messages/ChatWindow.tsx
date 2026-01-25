@@ -579,15 +579,11 @@ export function ChatWindow({ conversation, onBack, onMessagesRead }: ChatWindowP
           )}
         </div>
 
-        {/* Translation controls - responsive */}
-        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-          <span className="hidden sm:inline-flex">
-            <TranslationUsageBadge />
-          </span>
-          <TranslationToggle 
-            onAutoTranslateChange={setAutoTranslate}
-          />
-        </div>
+        {/* Translation toggle - compact */}
+        <TranslationToggle 
+          onAutoTranslateChange={setAutoTranslate}
+          className="shrink-0"
+        />
       </div>
 
       {/* Translation Disclaimer */}
