@@ -3,7 +3,8 @@
     "verifiedPayment": "Pagamento Verificado",
     "verifiedPaymentTooltip": "Esta empresa adicionou fundos para este projeto, garantindo segurança no pagamento.",
     "unverifiedPayment": "Pagamento Não Verificado",
-    "unverifiedPaymentTooltip": "Esta empresa ainda não adicionou fundos para este projeto."
+    "unverifiedPaymentTooltip": "Esta empresa ainda não adicionou fundos para este projeto.",
+    "publishedWithFunds": "Projeto publicado com pagamento verificado!"
   },
   "payments": {
     "fees": {

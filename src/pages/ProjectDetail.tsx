@@ -25,6 +25,7 @@ import { ProfileGateAlert } from "@/components/profile/ProfileGateAlert";
 import { CompanyAvatar } from "@/components/company/CompanyAvatar";
 import { CompanyNameBadges } from "@/components/company/CompanyNameBadges";
 import { fetchCompanyBadges, CompanyPlanType } from "@/hooks/useCompanyPlanData";
+import { ProjectPrefundModal } from "@/components/projects/ProjectPrefundModal";
 
 interface Project {
   id: string;
@@ -100,6 +101,7 @@ export default function ProjectDetail() {
   const [showProfileGateModal, setShowProfileGateModal] = useState(false);
   const [counterproposalModalOpen, setCounterproposalModalOpen] = useState(false);
   const [selectedCounterproposal, setSelectedCounterproposal] = useState<Proposal | null>(null);
+  const [showPrefundModal, setShowPrefundModal] = useState(false);
   
   // Profile gate for companies (to publish projects)
   const { allowed: profileAllowed, completionPercent, loading: gateLoading } = useProfileGate('company');
@@ -224,11 +226,10 @@ export default function ProjectDetail() {
     }
   };
 
-  const handlePublish = async () => {
+  const handlePublishClick = () => {
     if (!project) return;
 
-    // If the profile gate already says it's not allowed, don't call the publish RPC.
-    // This avoids a generic error toast when the backend function is unavailable.
+    // If the profile gate already says it's not allowed, don't proceed
     if (gateLoading) return;
     if (!profileAllowed) {
       toast.info(t("profileGate.companyAlertTitle"));
@@ -236,11 +237,32 @@ export default function ProjectDetail() {
       return;
     }
     
-    // Use centralized RPC that validates profile completion server-side
+    // Show the prefund modal instead of publishing directly
+    setShowPrefundModal(true);
+  };
+
+  const handlePrefundComplete = async () => {
+    if (!project) return;
+    
+    // Publish the project after successful prefund
     const result = await publishProject(project.id);
     
     if (result.success) {
       setProject({ ...project, status: "open" });
+      setShowPrefundModal(false);
+      toast.success(t("projects.publishedWithFunds", "Projeto publicado com pagamento verificado!"));
+    }
+  };
+
+  const handleSkipPrefund = async () => {
+    if (!project) return;
+    
+    // Publish without funds
+    const result = await publishProject(project.id);
+    
+    if (result.success) {
+      setProject({ ...project, status: "open" });
+      setShowPrefundModal(false);
     } else if (result.error === 'COMPANY_PROFILE_INCOMPLETE') {
       toast.info(t("profileGate.companyAlertTitle"));
       setShowProfileGateModal(true);
@@ -431,7 +453,7 @@ export default function ProjectDetail() {
                 
                 <div className="flex gap-2">
                   {isOwner && project.status === "draft" && (
-                    <Button onClick={handlePublish} disabled={isPublishing}>
+                    <Button onClick={handlePublishClick} disabled={isPublishing}>
                       {isPublishing ? (
                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
                       ) : null}
@@ -640,6 +662,19 @@ export default function ProjectDetail() {
             fetchProject();
             setSelectedCounterproposal(null);
           }}
+        />
+      )}
+
+      {/* Project Prefund Modal */}
+      {project && isOwner && project.status === "draft" && (
+        <ProjectPrefundModal
+          open={showPrefundModal}
+          onOpenChange={setShowPrefundModal}
+          projectId={project.id}
+          budgetMax={project.budget_max || 100}
+          currency={project.currency || "USD"}
+          onPrefundComplete={handlePrefundComplete}
+          onSkip={handleSkipPrefund}
         />
       )}
     </div>
