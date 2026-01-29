@@ -94,13 +94,12 @@ export default function CompanyFinances() {
   const fetchData = async () => {
     if (!user) return;
 
-    // Fetch payments
+    // Fetch legacy payments (for history display)
     const { data: paymentsData, error } = await supabase
       .from("payments")
       .select(`
         *,
-        project:projects(title),
-        freelancer:freelancer_profiles!payments_freelancer_user_id_fkey(full_name)
+        project:projects(title)
       `)
       .eq("company_user_id", user.id)
       .order("created_at", { ascending: false });
@@ -108,6 +107,21 @@ export default function CompanyFinances() {
     if (error) {
       console.error("Error fetching payments:", error);
     }
+
+    // Fetch unified_payments for escrow calculations (project_prefund and contract_funding)
+    const { data: unifiedPayments } = await supabase
+      .from("unified_payments")
+      .select("id, payment_type, status, amount_cents, currency, paid_at, metadata")
+      .eq("user_id", user.id)
+      .eq("status", "paid")
+      .in("payment_type", ["project_prefund", "contract_funding"]);
+
+    // Fetch ledger transactions for released escrow
+    const { data: releasedTx } = await supabase
+      .from("ledger_transactions")
+      .select("amount, currency, related_contract_id")
+      .eq("user_id", user.id)
+      .eq("tx_type", "escrow_release");
 
     // Fetch platform credits
     const { data: creditsData } = await supabase
@@ -122,21 +136,42 @@ export default function CompanyFinances() {
       setCredits({ balance: 0, currency: "USD" });
     }
 
+    // Calculate escrow totals from unified_payments
+    let inEscrowTotal = 0;
+    if (unifiedPayments) {
+      // Sum paid prefunds and contract fundings (amount in cents -> convert to major)
+      unifiedPayments.forEach(p => {
+        const baseAmount = (p.metadata as any)?.base_amount_cents || p.amount_cents;
+        inEscrowTotal += Number(baseAmount) / 100;
+      });
+    }
+
+    // Calculate released totals from ledger_transactions
+    let releasedTotal = 0;
+    if (releasedTx) {
+      releasedTx.forEach(tx => {
+        // escrow_release has negative amount for company, so take absolute
+        releasedTotal += Math.abs(Number(tx.amount));
+      });
+    }
+
+    // Adjust escrow: inEscrow = total funded - released
+    const netInEscrow = Math.max(0, inEscrowTotal - releasedTotal);
+
     if (paymentsData) {
       const mapped = paymentsData.map(p => ({
         ...p,
         project: p.project as { title: string } | undefined,
-        freelancer: Array.isArray(p.freelancer) ? p.freelancer[0] : p.freelancer
+        freelancer: null as { full_name: string } | null
       }));
       setPayments(mapped);
-
-      // Calculate totals
-      const released = mapped.filter(p => p.status === "released").reduce((sum, p) => sum + Number(p.amount), 0);
-      const inEscrow = mapped.filter(p => p.status === "paid" && p.escrow_status === "held").reduce((sum, p) => sum + Number(p.amount), 0);
-      const totalSpent = released + inEscrow;
-      
-      setTotals({ totalSpent, inEscrow, released });
     }
+
+    setTotals({ 
+      totalSpent: inEscrowTotal, 
+      inEscrow: netInEscrow, 
+      released: releasedTotal 
+    });
 
     setLoading(false);
   };
