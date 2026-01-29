@@ -58,19 +58,18 @@ export function useProjectPrefund(projectId: string | null | undefined): UseProj
 
 /**
  * Check if a project has verified payment (prefund with status 'paid')
+ * Uses RPC to bypass RLS and allow freelancers to see company payment status
  */
 export async function checkProjectHasPrefund(projectId: string): Promise<boolean> {
   try {
-    // Check unified_payments for paid project_prefund payments
     const { data, error } = await supabase
-      .from('unified_payments')
-      .select('id')
-      .eq('payment_type', 'project_prefund')
-      .eq('status', 'paid')
-      .filter('metadata->>project_id', 'eq', projectId)
-      .limit(1);
+      .rpc('get_projects_prefund_status', { project_ids: [projectId] });
     
-    return !error && data && data.length > 0;
+    if (error || !data || data.length === 0) {
+      return false;
+    }
+    
+    return data[0]?.has_verified_payment || false;
   } catch {
     return false;
   }
@@ -78,7 +77,7 @@ export async function checkProjectHasPrefund(projectId: string): Promise<boolean
 
 /**
  * Fetch prefund status for multiple projects at once
- * Only considers payments with status 'paid'
+ * Uses SECURITY DEFINER RPC to allow all authenticated users to check status
  */
 export async function fetchProjectsPrefundStatus(
   projectIds: string[]
@@ -88,19 +87,13 @@ export async function fetchProjectsPrefundStatus(
   if (projectIds.length === 0) return result;
   
   try {
-    // Query unified_payments for project_prefund with status 'paid'
+    // Use RPC to bypass RLS - allows freelancers to see company payment status
     const { data, error } = await supabase
-      .from('unified_payments')
-      .select('metadata')
-      .eq('payment_type', 'project_prefund')
-      .eq('status', 'paid');
+      .rpc('get_projects_prefund_status', { project_ids: projectIds });
     
     if (!error && data) {
-      data.forEach((row) => {
-        const metadata = row.metadata as Record<string, unknown> | null;
-        if (metadata?.project_id && typeof metadata.project_id === 'string') {
-          result.set(metadata.project_id, true);
-        }
+      data.forEach((row: { project_id: string; has_verified_payment: boolean }) => {
+        result.set(row.project_id, row.has_verified_payment);
       });
     }
   } catch (err) {
