@@ -47,6 +47,7 @@ interface MilestonePaymentProps {
   isCompany: boolean;
   payments: Payment[];
   currency?: string;
+  hasVerifiedPayment?: boolean;
   onPaymentComplete: () => void;
 }
 
@@ -58,6 +59,7 @@ export default function MilestonePayment({
   isCompany,
   payments,
   currency = "USD",
+  hasVerifiedPayment = false,
   onPaymentComplete,
 }: MilestonePaymentProps) {
   const { t } = useTranslation();
@@ -320,7 +322,10 @@ export default function MilestonePayment({
                         ) : (
                           <DollarSign className="h-4 w-4" />
                         )}
-                        {t("payments.fund")}
+                        {hasVerifiedPayment 
+                          ? t("payments.approvePayment", "Aprovar Pagamento")
+                          : t("payments.fund")
+                        }
                       </Button>
                     )}
                     
