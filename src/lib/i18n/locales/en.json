@@ -243,6 +243,15 @@
       "error": "Failed to delete project",
       "onlyDrafts": "Only draft projects can be deleted"
     },
+    "edit": {
+      "title": "Edit Project",
+      "save": "Save Changes",
+      "success": "Project updated successfully",
+      "error": "Failed to update project",
+      "onlyDrafts": "Only draft projects can be edited",
+      "idealGreaterThanMin": "Ideal budget must be greater than minimum",
+      "idealLessThanMax": "Ideal budget must be less than maximum"
+    },
     "boost": {
       "title": "Boosted Project",
       "label": "Boosted",
