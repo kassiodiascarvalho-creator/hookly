@@ -1,4 +1,20 @@
 {
+  "contractApproval": {
+    "title": "Approval & Guarantee",
+    "fullyProtected": "100% Protected",
+    "partiallyProtected": "Partial Protection",
+    "fullyProtectedDesc": "The agreed amount is fully protected.",
+    "needsFundingDesc": "Add funds to protect the agreed amount with the freelancer.",
+    "agreedAmount": "Agreed Amount",
+    "currentlyProtected": "Currently Protected",
+    "needsDifference": "Add the difference for the agreed amount",
+    "needsDifferenceDesc": "The agreed amount ({{agreed}}) is higher than the initially protected amount ({{prefund}}). Add {{missing}} to fully protect the contract.",
+    "needsFunding": "Funds needed for protection",
+    "needsFundingValue": "Add {{missing}} to fully protect the agreed amount.",
+    "addFunds": "Add",
+    "allGood": "All good!",
+    "allGoodDesc": "The freelancer can work with peace of mind. Payments will be released as deliverables are approved."
+  },
   "projects": {
     "verifiedPayment": "Verified Payment",
     "verifiedPaymentTooltip": "This company has added funds for this project, ensuring payment security.",

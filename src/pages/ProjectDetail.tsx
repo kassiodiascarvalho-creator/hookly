@@ -26,6 +26,7 @@ import { CompanyAvatar } from "@/components/company/CompanyAvatar";
 import { CompanyNameBadges } from "@/components/company/CompanyNameBadges";
 import { fetchCompanyBadges, CompanyPlanType } from "@/hooks/useCompanyPlanData";
 import { ProjectPrefundModal } from "@/components/projects/ProjectPrefundModal";
+import { ContractApprovalCard } from "@/components/projects/ContractApprovalCard";
 import { checkProjectHasPrefund } from "@/hooks/useProjectPrefund";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -96,6 +97,8 @@ export default function ProjectDetail() {
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [agreedAmountCents, setAgreedAmountCents] = useState<number | null>(null);
+  const [contractId, setContractId] = useState<string | null>(null);
+  const [freelancerUserId, setFreelancerUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showReviewForm, setShowReviewForm] = useState(false);
@@ -227,12 +230,17 @@ export default function ProjectDetail() {
     
     const { data } = await supabase
       .from("contracts")
-      .select("agreed_amount_cents")
+      .select("id, agreed_amount_cents, freelancer_user_id")
       .eq("project_id", id)
+      .in("status", ["active", "in_progress", "completed"])
       .maybeSingle();
     
-    if (data?.agreed_amount_cents) {
-      setAgreedAmountCents(data.agreed_amount_cents);
+    if (data) {
+      setContractId(data.id);
+      setFreelancerUserId(data.freelancer_user_id);
+      if (data.agreed_amount_cents) {
+        setAgreedAmountCents(data.agreed_amount_cents);
+      }
     }
   };
 
@@ -644,6 +652,29 @@ export default function ProjectDetail() {
                 )}
               </CardContent>
             </Card>
+          )}
+
+          {/* Contract Approval Card - Show for companies with verified payment and active contract */}
+          {isOwner && 
+           hasVerifiedPayment && 
+           (project.status === "in_progress" || project.status === "completed") && 
+           acceptedProposal && 
+           contractId && 
+           agreedAmountCents && (
+            <ContractApprovalCard
+              projectId={project.id}
+              projectTitle={project.title}
+              currency={project.currency || "USD"}
+              agreedAmountCents={agreedAmountCents}
+              hasVerifiedPayment={hasVerifiedPayment}
+              contractId={contractId}
+              freelancerUserId={acceptedProposal.freelancer_user_id}
+              onFundingComplete={() => {
+                fetchPayments();
+                fetchContractAgreedAmount();
+                fetchPrefundStatus();
+              }}
+            />
           )}
 
           {/* Payment Section - Show for in_progress or completed projects */}

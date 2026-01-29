@@ -1,4 +1,20 @@
 {
+  "contractApproval": {
+    "title": "Aprovação e Garantia",
+    "fullyProtected": "100% Protegido",
+    "partiallyProtected": "Proteção Parcial",
+    "fullyProtectedDesc": "O valor acordado está totalmente protegido.",
+    "needsFundingDesc": "Adicione fundos para proteger o valor acordado com o freelancer.",
+    "agreedAmount": "Valor Acordado",
+    "currentlyProtected": "Protegido Atualmente",
+    "needsDifference": "Adicione a diferença do valor acordado",
+    "needsDifferenceDesc": "O valor acordado com o freelancer ({{agreed}}) é maior que o valor inicialmente protegido ({{prefund}}). Adicione {{missing}} para proteger 100% do contrato.",
+    "needsFunding": "Faltam fundos para proteger",
+    "needsFundingValue": "Adicione {{missing}} para proteger 100% do valor acordado.",
+    "addFunds": "Adicionar",
+    "allGood": "Tudo certo!",
+    "allGoodDesc": "O freelancer pode trabalhar com segurança. Os pagamentos serão liberados conforme as entregas forem aprovadas."
+  },
   "projects": {
     "verifiedPayment": "Pagamento Verificado",
     "verifiedPaymentTooltip": "Esta empresa adicionou fundos para este projeto, garantindo segurança no pagamento.",
