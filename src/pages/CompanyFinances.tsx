@@ -30,6 +30,8 @@ import { CompanyAddFundsDialog } from "@/components/billing/CompanyAddFundsDialo
 import { CompanyPlanCard } from "@/components/billing/CompanyPlanCard";
 import { useCompanyPlan } from "@/hooks/useCompanyPlan";
 import { toast } from "sonner";
+import { useCompanyFinancialSummary } from "@/hooks/useCompanyFinancialSummary";
+import { PendingCommitmentsCard, UnfundedPotentialCard } from "@/components/finances";
 
 interface Payment {
   id: string;
@@ -63,6 +65,14 @@ export default function CompanyFinances() {
     inEscrow: 0, 
     released: 0 
   });
+
+  // Financial summary for new cards
+  const { 
+    pendingCommitments, 
+    unfundedPotential, 
+    loading: summaryLoading, 
+    refetch: refetchSummary 
+  } = useCompanyFinancialSummary();
 
   // Handle subscription success/cancel from Stripe redirect
   useEffect(() => {
@@ -284,6 +294,30 @@ export default function CompanyFinances() {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* New Cards: Pending Commitments & Unfunded Potential */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <PendingCommitmentsCard
+          byCurrency={pendingCommitments.byCurrency}
+          contracts={pendingCommitments.contracts}
+          totalContracts={pendingCommitments.totalContracts}
+          loading={summaryLoading}
+          onPaymentComplete={() => {
+            fetchData();
+            refetchSummary();
+          }}
+        />
+        <UnfundedPotentialCard
+          byCurrency={unfundedPotential.byCurrency}
+          projects={unfundedPotential.projects}
+          totalProjects={unfundedPotential.totalProjects}
+          loading={summaryLoading}
+          onPaymentComplete={() => {
+            fetchData();
+            refetchSummary();
+          }}
+        />
       </div>
 
       {/* CTA for Credits - Strategic Visibility */}

@@ -1642,5 +1642,40 @@
       "title": "For your safety, don't share phone numbers",
       "description": "We don't recommend sharing phone numbers to prevent fraud and keep you safe. Please continue the conversation on HOOKLY."
     }
+  },
+  "companyFinances": {
+    "addFunds": "Add Funds",
+    "pendingCommitments": {
+      "title": "Pending Commitments",
+      "description": "Agreed values not yet 100% protected",
+      "allProtected": "All protected ✅",
+      "protectNow": "Protect now",
+      "contractsCount": "{{count}} pending contracts",
+      "modalTitle": "Contracts Pending Protection",
+      "modalDescription": "Add funds to guarantee payment for your contracts.",
+      "agreed": "Agreed",
+      "protected": "Protected",
+      "missing": "Missing",
+      "amountToAdd": "Amount to add",
+      "noContracts": "No contracts pending protection."
+    },
+    "unfundedPotential": {
+      "title": "Unfunded Potential",
+      "description": "Published projects without payment protection",
+      "tooltip": "This value represents the maximum advertised budget, not a payment obligation.",
+      "allFunded": "No unfunded projects ✅",
+      "addFunds": "Add funds",
+      "projectsCount": "{{count}} unfunded projects",
+      "modalTitle": "Projects Without Payment Protection",
+      "modalDescription": "Add funds to increase freelancer confidence and receive more proposals.",
+      "maxBudget": "Maximum budget",
+      "amountToAdd": "Amount to add",
+      "noProjects": "No projects without protection."
+    }
+  },
+  "common": {
+    "more": "more",
+    "contracts": "contracts",
+    "projects": "projects"
   }
 }

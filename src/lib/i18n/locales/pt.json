@@ -1751,5 +1751,40 @@
       "title": "Por segurança, não compartilhe telefone",
       "description": "Não recomendamos o envio de telefone para evitar fraudes e preservar sua segurança. Continue a conversa pela HOOKLY."
     }
+  },
+  "companyFinances": {
+    "addFunds": "Adicionar",
+    "pendingCommitments": {
+      "title": "Compromissos Pendentes",
+      "description": "Valores acordados que ainda não estão 100% protegidos",
+      "allProtected": "Tudo protegido ✅",
+      "protectNow": "Proteger agora",
+      "contractsCount": "{{count}} contratos pendentes",
+      "modalTitle": "Contratos Pendentes de Proteção",
+      "modalDescription": "Adicione fundos para garantir o pagamento dos seus contratos.",
+      "agreed": "Acordado",
+      "protected": "Protegido",
+      "missing": "Falta",
+      "amountToAdd": "Valor a adicionar",
+      "noContracts": "Nenhum contrato pendente de proteção."
+    },
+    "unfundedPotential": {
+      "title": "Potencial sem Fundos",
+      "description": "Projetos publicados sem proteção de pagamento",
+      "tooltip": "Este valor representa o orçamento máximo anunciado, não uma obrigação de pagamento.",
+      "allFunded": "Nenhum projeto sem fundos ✅",
+      "addFunds": "Adicionar fundos",
+      "projectsCount": "{{count}} projetos sem fundos",
+      "modalTitle": "Projetos sem Proteção de Pagamento",
+      "modalDescription": "Adicione fundos para aumentar a confiança dos freelancers e receber mais propostas.",
+      "maxBudget": "Orçamento máximo",
+      "amountToAdd": "Valor a adicionar",
+      "noProjects": "Nenhum projeto sem proteção."
+    }
+  },
+  "common": {
+    "more": "mais",
+    "contracts": "contratos",
+    "projects": "projetos"
   }
 }
