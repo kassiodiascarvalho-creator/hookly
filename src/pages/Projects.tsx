@@ -7,11 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Briefcase, Clock, CheckCircle, FileText, Loader2, Rocket, Trash2, Pencil } from "lucide-react";
+import { Plus, Briefcase, Clock, CheckCircle, FileText, Loader2, Rocket, Trash2, Pencil, ShieldX } from "lucide-react";
 import { format, Locale, isAfter } from "date-fns";
 import { ptBR, enUS, es, fr, de, zhCN } from "date-fns/locale";
 import { ProjectBoostButton } from "@/components/projects/ProjectBoostButton";
 import { BoostedBadge } from "@/components/projects/BoostedBadge";
+import { VerifiedPaymentBadge } from "@/components/projects/VerifiedPaymentBadge";
+import { fetchProjectsPrefundStatus } from "@/hooks/useProjectPrefund";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -62,6 +64,7 @@ export default function Projects() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [prefundedProjects, setPrefundedProjects] = useState<Map<string, boolean>>(new Map());
   
   const currentLocale = dateLocales[i18n.language] || enUS;
 
@@ -79,17 +82,23 @@ export default function Projects() {
       .order("created_at", { ascending: false });
 
     if (!error && data) {
-      // Fetch proposal counts for each project
-      const projectsWithCounts = await Promise.all(
-        data.map(async (project) => {
-          const { count } = await supabase
-            .from("proposals")
-            .select("*", { count: "exact", head: true })
-            .eq("project_id", project.id);
-          return { ...project, _count: { proposals: count || 0 } };
-        })
-      );
+      // Fetch proposal counts and prefund status for each project in parallel
+      const projectIds = data.map((p) => p.id);
+      const [projectsWithCounts, prefundMap] = await Promise.all([
+        Promise.all(
+          data.map(async (project) => {
+            const { count } = await supabase
+              .from("proposals")
+              .select("*", { count: "exact", head: true })
+              .eq("project_id", project.id);
+            return { ...project, _count: { proposals: count || 0 } };
+          })
+        ),
+        fetchProjectsPrefundStatus(projectIds),
+      ]);
+      
       setProjects(projectsWithCounts);
+      setPrefundedProjects(prefundMap);
     }
     setLoading(false);
   };
@@ -198,6 +207,7 @@ export default function Projects() {
                 const config = statusConfig[project.status];
                 const StatusIcon = config.icon;
                 const isBoosted = project.boosted_until && isAfter(new Date(project.boosted_until), new Date());
+                const hasVerifiedPayment = prefundedProjects.get(project.id) || false;
                 
                 return (
                   <Card 
@@ -217,6 +227,14 @@ export default function Projects() {
                               {t(config.labelKey)}
                             </Badge>
                             {isBoosted && <BoostedBadge />}
+                            {hasVerifiedPayment ? (
+                              <VerifiedPaymentBadge size="sm" showLabel />
+                            ) : (
+                              <Badge variant="outline" className="text-muted-foreground border-muted-foreground/30 gap-1">
+                                <ShieldX className="h-3 w-3" />
+                                {t("projects.unverifiedPayment", "Pagamento Não Verificado")}
+                              </Badge>
+                            )}
                           </div>
                           
                           {project.description && (
