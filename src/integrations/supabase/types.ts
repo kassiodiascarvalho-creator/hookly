@@ -2671,6 +2671,13 @@ export type Database = {
           plan_type: string
         }[]
       }
+      get_projects_prefund_status: {
+        Args: { project_ids: string[] }
+        Returns: {
+          has_verified_payment: boolean
+          project_id: string
+        }[]
+      }
       grant_plan_credits: {
         Args: {
           p_grant_type?: string

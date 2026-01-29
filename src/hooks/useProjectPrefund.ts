@@ -7,6 +7,11 @@ interface UseProjectPrefundReturn {
   refetch: () => Promise<void>;
 }
 
+interface PrefundStatusRow {
+  project_id: string;
+  has_verified_payment: boolean;
+}
+
 /**
  * Hook to get the prefund amount for a project
  */
@@ -62,8 +67,11 @@ export function useProjectPrefund(projectId: string | null | undefined): UseProj
  */
 export async function checkProjectHasPrefund(projectId: string): Promise<boolean> {
   try {
-    const { data, error } = await supabase
-      .rpc('get_projects_prefund_status', { project_ids: [projectId] });
+    // Use type assertion since RPC is dynamically created and not in generated types
+    const { data, error } = await (supabase.rpc as Function)(
+      'get_projects_prefund_status', 
+      { project_ids: [projectId] }
+    ) as { data: PrefundStatusRow[] | null; error: Error | null };
     
     if (error || !data || data.length === 0) {
       return false;
@@ -87,12 +95,14 @@ export async function fetchProjectsPrefundStatus(
   if (projectIds.length === 0) return result;
   
   try {
-    // Use RPC to bypass RLS - allows freelancers to see company payment status
-    const { data, error } = await supabase
-      .rpc('get_projects_prefund_status', { project_ids: projectIds });
+    // Use type assertion since RPC is dynamically created and not in generated types
+    const { data, error } = await (supabase.rpc as Function)(
+      'get_projects_prefund_status', 
+      { project_ids: projectIds }
+    ) as { data: PrefundStatusRow[] | null; error: Error | null };
     
     if (!error && data) {
-      data.forEach((row: { project_id: string; has_verified_payment: boolean }) => {
+      data.forEach((row: PrefundStatusRow) => {
         result.set(row.project_id, row.has_verified_payment);
       });
     }
