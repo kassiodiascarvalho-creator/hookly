@@ -13,7 +13,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from "sonner";
 import { 
   ArrowLeft, DollarSign, Calendar, Loader2, 
-  Check, Plus, X, Send, Building2, Coins, AlertTriangle, Star, HelpCircle, Lock
+  Check, Plus, X, Send, Building2, Coins, AlertTriangle, Star, HelpCircle, Lock,
+  ShieldCheck, ShieldX
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -27,6 +28,7 @@ import { ProfileGateModal } from "@/components/profile/ProfileGateModal";
 import { ProfileGateAlert } from "@/components/profile/ProfileGateAlert";
 import { BudgetRangeDisplay, ProposalBudgetValidation, CounterproposalJustification, validateProposalBudget } from "@/components/proposals";
 import { getCurrencySymbol, formatMoney } from "@/lib/formatMoney";
+import { checkProjectHasPrefund } from "@/hooks/useProjectPrefund";
 
 interface Project {
   id: string;
@@ -90,6 +92,7 @@ export default function ProjectView() {
   const [creditCheckOpen, setCreditCheckOpen] = useState(false);
   const [isHighlighted, setIsHighlighted] = useState(false);
   const [counterproposalJustification, setCounterproposalJustification] = useState("");
+  const [hasVerifiedPayment, setHasVerifiedPayment] = useState<boolean | null>(null);
 
   // Platform credits hook
   const { balance: creditBalance, loading: creditsLoading, spendCredits, getActionCost, checkCredits } = usePlatformCredits();
@@ -110,12 +113,19 @@ export default function ProjectView() {
   useEffect(() => {
     if (id) {
       fetchProject();
+      fetchPrefundStatus();
       if (user) {
         fetchMyProposal();
         fetchContractInfo();
       }
     }
   }, [id, user]);
+
+  const fetchPrefundStatus = async () => {
+    if (!id) return;
+    const hasPrefund = await checkProjectHasPrefund(id);
+    setHasVerifiedPayment(hasPrefund);
+  };
 
   const fetchProject = async () => {
     // Fetch project with open OR in_progress status (for accepted freelancers)
@@ -372,7 +382,37 @@ export default function ProjectView() {
             <CardHeader>
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <CardTitle className="text-2xl">{project.title}</CardTitle>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <CardTitle className="text-2xl">{project.title}</CardTitle>
+                    {/* Payment Verification Badge */}
+                    {hasVerifiedPayment !== null && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            {hasVerifiedPayment ? (
+                              <div className="inline-flex items-center gap-1 text-green-600 dark:text-green-500">
+                                <ShieldCheck className="h-4 w-4" />
+                                <span className="text-xs font-medium">{t("projects.verifiedPayment", "Pagamento Verificado")}</span>
+                              </div>
+                            ) : (
+                              <div className="inline-flex items-center gap-1 text-muted-foreground">
+                                <ShieldX className="h-4 w-4" />
+                                <span className="text-xs font-medium">{t("projects.unverifiedPayment", "Pagamento Não Verificado")}</span>
+                              </div>
+                            )}
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="text-sm max-w-xs">
+                              {hasVerifiedPayment
+                                ? t("projects.verifiedPaymentTooltip", "Esta empresa adicionou fundos para este projeto, garantindo segurança no pagamento.")
+                                : t("projects.unverifiedPaymentTooltip", "Esta empresa ainda não adicionou fundos para este projeto.")
+                              }
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </div>
                   <CardDescription className="flex items-center gap-4 mt-2">
                     {project.category && <Badge variant="outline">{project.category}</Badge>}
                     <span className="flex items-center gap-1">
