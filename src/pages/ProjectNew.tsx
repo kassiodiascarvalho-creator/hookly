@@ -51,8 +51,10 @@ export default function ProjectNew() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [prefundModalOpen, setPrefundModalOpen] = useState(false);
-  const [pendingProjectId, setPendingProjectId] = useState<string | null>(null);
   const [showProfileGateModal, setShowProfileGateModal] = useState(false);
+  
+  // Track the created draft project ID - this prevents creating duplicates
+  const [draftProjectId, setDraftProjectId] = useState<string | null>(null);
 
   // Profile gate for companies
   const { allowed: profileAllowed, completionPercent, loading: gateLoading, checkMonthlyCredits } = useProfileGate('company');
@@ -159,7 +161,6 @@ export default function ProjectNew() {
 
     setLoading(true);
     
-    // Always create project as draft first, then publish via RPC if needed
     const projectData = {
       title: formData.title,
       description: formData.description,
@@ -169,73 +170,110 @@ export default function ProjectNew() {
       budget_max: formData.budget_max ? parseFloat(formData.budget_max) : null,
       currency: formData.currency,
       kpis: kpis.map(({ name, target }) => ({ name, target })),
-      status: "draft" as const, // Always create as draft first
+      status: "draft" as const,
       company_user_id: user.id,
     };
 
-    const { data, error } = await supabase
-      .from("projects")
-      .insert(projectData)
-      .select()
-      .single();
+    let projectId = draftProjectId;
 
-    if (error) {
-      toast.error(error.message);
+    // If we already have a draft project, UPDATE it instead of creating a new one
+    if (projectId) {
+      const { error: updateError } = await supabase
+        .from("projects")
+        .update({
+          title: projectData.title,
+          description: projectData.description,
+          category: projectData.category,
+          budget_min: projectData.budget_min,
+          budget_ideal: projectData.budget_ideal,
+          budget_max: projectData.budget_max,
+          currency: projectData.currency,
+          kpis: projectData.kpis,
+        })
+        .eq("id", projectId)
+        .eq("company_user_id", user.id)
+        .eq("status", "draft");
+
+      if (updateError) {
+        console.error('[ProjectNew] Update error:', updateError);
+        toast.error(updateError.message);
+        setLoading(false);
+        return;
+      }
+    } else {
+      // Create new draft project
+      const { data, error } = await supabase
+        .from("projects")
+        .insert(projectData)
+        .select()
+        .single();
+
+      if (error) {
+        toast.error(error.message);
+        setLoading(false);
+        return;
+      }
+
+      projectId = data.id;
+      setDraftProjectId(data.id); // Save the ID so we don't create duplicates
+    }
+
+    // If user wants to save as draft only
+    if (asDraft) {
+      toast.success(t("projects.savedAsDraft"));
+      navigate(`/projects/${projectId}`);
       setLoading(false);
       return;
     }
 
     // If user wants to publish
-    if (!asDraft) {
-      // Check if we should show prefund modal (has budget_max and not skipping)
-      const hasBudgetMax = formData.budget_max && parseFloat(formData.budget_max) > 0;
-      
-      if (hasBudgetMax && !skipPrefund) {
-        // Save project ID and show prefund modal
-        setPendingProjectId(data.id);
-        setLoading(false);
-        setPrefundModalOpen(true);
-        return;
-      }
+    // Check if we should show prefund modal (has budget_max and not skipping)
+    const hasBudgetMax = formData.budget_max && parseFloat(formData.budget_max) > 0;
+    
+    if (hasBudgetMax && !skipPrefund) {
+      // Show prefund modal - project stays as draft until payment or skip
+      setLoading(false);
+      setPrefundModalOpen(true);
+      return;
+    }
 
-      // Publish the project
-      const publishResult = await publishProject(data.id);
-      
-      if (!publishResult.success) {
-        if (publishResult.error === 'COMPANY_PROFILE_INCOMPLETE') {
-          setShowProfileGateModal(true);
-          toast.info(t("projects.savedAsDraft"));
-          navigate(`/projects/${data.id}`);
-          setLoading(false);
-          return;
-        }
+    // Publish the project (either skipped prefund or no budget_max)
+    const publishResult = await publishProject(projectId!);
+    
+    if (!publishResult.success) {
+      if (publishResult.error === 'COMPANY_PROFILE_INCOMPLETE') {
+        setShowProfileGateModal(true);
         toast.info(t("projects.savedAsDraft"));
-        navigate(`/projects/${data.id}`);
+        navigate(`/projects/${projectId}`);
         setLoading(false);
         return;
       }
+      toast.info(t("projects.savedAsDraft"));
+      navigate(`/projects/${projectId}`);
+      setLoading(false);
+      return;
     }
     
-    toast.success(asDraft ? t("projects.savedAsDraft") : t("projects.published"));
-    navigate(`/projects/${data.id}`);
+    toast.success(t("projects.published"));
+    navigate(`/projects/${projectId}`);
     setLoading(false);
   };
 
   const handlePrefundComplete = async () => {
     setPrefundModalOpen(false);
-    if (pendingProjectId) {
-      await publishProject(pendingProjectId);
+    if (draftProjectId) {
+      await publishProject(draftProjectId);
       toast.success(t("projects.published"));
-      navigate(`/projects/${pendingProjectId}`);
+      navigate(`/projects/${draftProjectId}`);
     }
   };
 
   const handleSkipPrefund = async () => {
     setPrefundModalOpen(false);
-    if (pendingProjectId) {
-      await publishProject(pendingProjectId);
+    if (draftProjectId) {
+      await publishProject(draftProjectId);
       toast.success(t("projects.published"));
-      navigate(`/projects/${pendingProjectId}`);
+      navigate(`/projects/${draftProjectId}`);
     }
   };
 
@@ -529,11 +567,11 @@ export default function ProjectNew() {
       />
 
       {/* Prefund Modal */}
-      {pendingProjectId && (
+      {draftProjectId && (
         <ProjectPrefundModal
           open={prefundModalOpen}
           onOpenChange={setPrefundModalOpen}
-          projectId={pendingProjectId}
+          projectId={draftProjectId}
           budgetMax={formData.budget_max ? parseFloat(formData.budget_max) : 0}
           currency={formData.currency}
           onPrefundComplete={handlePrefundComplete}
