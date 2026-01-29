@@ -57,14 +57,16 @@ export function useProjectPrefund(projectId: string | null | undefined): UseProj
 }
 
 /**
- * Check if a project has verified payment (prefund > 0)
+ * Check if a project has verified payment (prefund with status 'paid')
  */
 export async function checkProjectHasPrefund(projectId: string): Promise<boolean> {
   try {
+    // Check unified_payments for paid project_prefund payments
     const { data, error } = await supabase
-      .from('ledger_transactions')
+      .from('unified_payments')
       .select('id')
-      .filter('metadata->>purpose', 'eq', 'project_prefund')
+      .eq('payment_type', 'project_prefund')
+      .eq('status', 'paid')
       .filter('metadata->>project_id', 'eq', projectId)
       .limit(1);
     
@@ -76,6 +78,7 @@ export async function checkProjectHasPrefund(projectId: string): Promise<boolean
 
 /**
  * Fetch prefund status for multiple projects at once
+ * Only considers payments with status 'paid'
  */
 export async function fetchProjectsPrefundStatus(
   projectIds: string[]
@@ -85,11 +88,12 @@ export async function fetchProjectsPrefundStatus(
   if (projectIds.length === 0) return result;
   
   try {
+    // Query unified_payments for project_prefund with status 'paid'
     const { data, error } = await supabase
-      .from('ledger_transactions')
+      .from('unified_payments')
       .select('metadata')
-      .filter('metadata->>purpose', 'eq', 'project_prefund')
-      .gt('amount', 0);
+      .eq('payment_type', 'project_prefund')
+      .eq('status', 'paid');
     
     if (!error && data) {
       data.forEach((row) => {
