@@ -283,6 +283,15 @@
       "error": "Erro ao excluir projeto",
       "onlyDrafts": "Apenas projetos em rascunho podem ser excluídos"
     },
+    "edit": {
+      "title": "Editar Projeto",
+      "save": "Salvar Alterações",
+      "success": "Projeto atualizado com sucesso",
+      "error": "Erro ao atualizar projeto",
+      "onlyDrafts": "Apenas projetos em rascunho podem ser editados",
+      "idealGreaterThanMin": "O orçamento ideal deve ser maior que o mínimo",
+      "idealLessThanMax": "O orçamento ideal deve ser menor que o máximo"
+    },
     "boost": {
       "title": "Projeto Destacado",
       "label": "Destacado",

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Briefcase, Clock, CheckCircle, FileText, Loader2, Rocket, Trash2 } from "lucide-react";
+import { Plus, Briefcase, Clock, CheckCircle, FileText, Loader2, Rocket, Trash2, Pencil } from "lucide-react";
 import { format, Locale, isAfter } from "date-fns";
 import { ptBR, enUS, es, fr, de, zhCN } from "date-fns/locale";
 import { ProjectBoostButton } from "@/components/projects/ProjectBoostButton";
@@ -106,8 +106,17 @@ export default function Projects() {
     return `${t("projects.upTo")} $${max?.toLocaleString()}`;
   };
 
+  const handleEditClick = (e: React.MouseEvent, project: Project) => {
+    e.stopPropagation();
+    if (project.status !== "draft") {
+      toast.error(t("projects.edit.onlyDrafts"));
+      return;
+    }
+    navigate(`/projects/${project.id}/edit`);
+  };
+
   const handleDeleteClick = (e: React.MouseEvent, project: Project) => {
-    e.stopPropagation(); // Prevent navigation
+    e.stopPropagation();
     if (project.status !== "draft") {
       toast.error(t("projects.delete.onlyDrafts"));
       return;
@@ -248,14 +257,24 @@ export default function Projects() {
                             />
                           )}
                           {project.status === "draft" && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                              onClick={(e) => handleDeleteClick(e, project)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-primary hover:text-primary hover:bg-primary/10"
+                                onClick={(e) => handleEditClick(e, project)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onClick={(e) => handleDeleteClick(e, project)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </>
                           )}
                         </div>
                       </div>
