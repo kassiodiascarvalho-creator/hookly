@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { 
   ArrowLeft, Briefcase, Clock, CheckCircle, FileText, Loader2, 
-  DollarSign, Calendar, Check, Flag, Sparkles, Building2
+  DollarSign, Calendar, Check, Flag, Sparkles, Building2, ShieldCheck, ShieldX
 } from "lucide-react";
 import { ReviewForm } from "@/components/reviews/ReviewForm";
 import { format } from "date-fns";
@@ -26,6 +26,8 @@ import { CompanyAvatar } from "@/components/company/CompanyAvatar";
 import { CompanyNameBadges } from "@/components/company/CompanyNameBadges";
 import { fetchCompanyBadges, CompanyPlanType } from "@/hooks/useCompanyPlanData";
 import { ProjectPrefundModal } from "@/components/projects/ProjectPrefundModal";
+import { checkProjectHasPrefund } from "@/hooks/useProjectPrefund";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface Project {
   id: string;
@@ -102,6 +104,7 @@ export default function ProjectDetail() {
   const [counterproposalModalOpen, setCounterproposalModalOpen] = useState(false);
   const [selectedCounterproposal, setSelectedCounterproposal] = useState<Proposal | null>(null);
   const [showPrefundModal, setShowPrefundModal] = useState(false);
+  const [hasVerifiedPayment, setHasVerifiedPayment] = useState<boolean | null>(null);
   
   // Profile gate for companies (to publish projects)
   const { allowed: profileAllowed, completionPercent, loading: gateLoading } = useProfileGate('company');
@@ -121,8 +124,15 @@ export default function ProjectDetail() {
       fetchProposals();
       fetchPayments();
       fetchContractAgreedAmount();
+      fetchPrefundStatus();
     }
   }, [id]);
+
+  const fetchPrefundStatus = async () => {
+    if (!id) return;
+    const hasPrefund = await checkProjectHasPrefund(id);
+    setHasVerifiedPayment(hasPrefund);
+  };
 
   // Handle payment success/cancel from Stripe redirect
   useEffect(() => {
@@ -441,6 +451,34 @@ export default function ProjectDetail() {
                       <StatusIcon className="h-3 w-3 mr-1" />
                       {config.label}
                     </Badge>
+                    {/* Payment Verification Badge */}
+                    {project.status !== "draft" && hasVerifiedPayment !== null && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            {hasVerifiedPayment ? (
+                              <div className="inline-flex items-center gap-1 text-green-600 dark:text-green-500">
+                                <ShieldCheck className="h-4 w-4" />
+                                <span className="text-xs font-medium">{t("projects.verifiedPayment", "Pagamento Verificado")}</span>
+                              </div>
+                            ) : (
+                              <div className="inline-flex items-center gap-1 text-muted-foreground">
+                                <ShieldX className="h-4 w-4" />
+                                <span className="text-xs font-medium">{t("projects.unverifiedPayment", "Pagamento Não Verificado")}</span>
+                              </div>
+                            )}
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="text-sm max-w-xs">
+                              {hasVerifiedPayment
+                                ? t("projects.verifiedPaymentTooltip", "Esta empresa adicionou fundos para este projeto, garantindo segurança no pagamento.")
+                                : t("projects.unverifiedPaymentTooltip", "Esta empresa ainda não adicionou fundos para este projeto.")
+                              }
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
                   </div>
                   <CardDescription className="flex items-center gap-4">
                     {project.category && <span>{project.category}</span>}
