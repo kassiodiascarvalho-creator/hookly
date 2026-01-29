@@ -26,7 +26,7 @@ import { CompanyAvatar } from "@/components/company/CompanyAvatar";
 import { CompanyNameBadges } from "@/components/company/CompanyNameBadges";
 import { fetchCompanyBadges, CompanyPlanType } from "@/hooks/useCompanyPlanData";
 import { ProjectPrefundModal } from "@/components/projects/ProjectPrefundModal";
-import { ContractApprovalCard } from "@/components/projects/ContractApprovalCard";
+
 import { checkProjectHasPrefund } from "@/hooks/useProjectPrefund";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -654,28 +654,6 @@ export default function ProjectDetail() {
             </Card>
           )}
 
-          {/* Contract Approval Card - Show for companies with verified payment and active contract */}
-          {isOwner && 
-           hasVerifiedPayment && 
-           (project.status === "in_progress" || project.status === "completed") && 
-           acceptedProposal && 
-           contractId && 
-           agreedAmountCents && (
-            <ContractApprovalCard
-              projectId={project.id}
-              projectTitle={project.title}
-              currency={project.currency || "USD"}
-              agreedAmountCents={agreedAmountCents}
-              hasVerifiedPayment={hasVerifiedPayment}
-              contractId={contractId}
-              freelancerUserId={acceptedProposal.freelancer_user_id}
-              onFundingComplete={() => {
-                fetchPayments();
-                fetchContractAgreedAmount();
-                fetchPrefundStatus();
-              }}
-            />
-          )}
 
           {/* Payment Section - Show for in_progress or completed projects */}
           {(project.status === "in_progress" || project.status === "completed") && acceptedProposal && (
@@ -687,6 +665,7 @@ export default function ProjectDetail() {
               isCompany={isOwner}
               payments={payments}
               currency={project.currency || "USD"}
+              hasVerifiedPayment={hasVerifiedPayment || false}
               onPaymentComplete={fetchPayments}
             />
           )}

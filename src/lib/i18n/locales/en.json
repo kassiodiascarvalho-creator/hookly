@@ -69,6 +69,7 @@
     "pending": "Pending",
     "milestone": "Milestone",
     "fund": "Fund",
+    "approvePayment": "Approve Payment",
     "release": "Release",
     "confirmRelease": "Confirm Payment Release",
     "confirmReleaseDesc": "This will release the escrowed funds to the freelancer. This action cannot be undone.",

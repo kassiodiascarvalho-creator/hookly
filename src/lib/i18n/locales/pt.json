@@ -69,6 +69,7 @@
     "pending": "Aguardando",
     "milestone": "Entrega",
     "fund": "Garantir",
+    "approvePayment": "Aprovar Pagamento",
     "release": "Liberar",
     "confirmRelease": "Confirmar Liberação",
     "confirmReleaseDesc": "Isso liberará o valor protegido para o freelancer. Esta ação não pode ser desfeita.",
