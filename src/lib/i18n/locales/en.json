@@ -1,4 +1,10 @@
 {
+  "projects": {
+    "verifiedPayment": "Verified Payment",
+    "verifiedPaymentTooltip": "This company has added funds for this project, ensuring payment security.",
+    "unverifiedPayment": "Unverified Payment",
+    "unverifiedPaymentTooltip": "This company has not yet added funds for this project."
+  },
   "payments": {
     "fees": {
       "international_card": "International Card",

@@ -8,13 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Briefcase, DollarSign, Calendar, Loader2, Filter, Rocket } from "lucide-react";
+import { Search, Briefcase, DollarSign, Calendar, Loader2, Filter, ShieldX } from "lucide-react";
 import { format, isAfter } from "date-fns";
 import { BoostedBadge } from "@/components/projects/BoostedBadge";
 import { CompanyAvatar } from "@/components/company/CompanyAvatar";
 import { CompanyNameBadges } from "@/components/company/CompanyNameBadges";
 import { fetchCompanyBadges, CompanyPlanType, CompanyBadgeInfo } from "@/hooks/useCompanyPlanData";
-
+import { VerifiedPaymentBadge } from "@/components/projects/VerifiedPaymentBadge";
+import { fetchProjectsPrefundStatus } from "@/hooks/useProjectPrefund";
 interface Project {
   id: string;
   title: string;
@@ -58,6 +59,7 @@ export default function FindProjects() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All Categories");
   const [myProposalIds, setMyProposalIds] = useState<Set<string>>(new Set());
+  const [prefundedProjects, setPrefundedProjects] = useState<Map<string, boolean>>(new Map());
 
   useEffect(() => {
     fetchProjects();
@@ -74,17 +76,20 @@ export default function FindProjects() {
     if (!error && data) {
       // Fetch company info for each project
       const companyUserIds = [...new Set(data.map((p) => p.company_user_id))];
+      const projectIds = data.map((p) => p.id);
       
-      // Use parallel fetching: company profiles + plan/verified badges via RPC
-      const [{ data: companies }, badgeMap] = await Promise.all([
+      // Use parallel fetching: company profiles + plan/verified badges via RPC + prefund status
+      const [{ data: companies }, badgeMap, prefundMap] = await Promise.all([
         supabase
           .from("company_profiles")
           .select("user_id, company_name, logo_url")
           .in("user_id", companyUserIds),
         fetchCompanyBadges(companyUserIds), // Uses SECURITY DEFINER RPC - works for freelancers
+        fetchProjectsPrefundStatus(projectIds), // Check which projects have verified payment
       ]);
 
       const companyMap = new Map(companies?.map((c) => [c.user_id, c]) || []);
+      setPrefundedProjects(prefundMap);
 
       const projectsWithCompany = data.map((project) => {
         const company = companyMap.get(project.company_user_id);
@@ -205,6 +210,7 @@ export default function FindProjects() {
             {filteredProjects.map((project) => {
               const hasProposal = myProposalIds.has(project.id);
               const isBoosted = project.boosted_until && isAfter(new Date(project.boosted_until), new Date());
+              const hasVerifiedPayment = prefundedProjects.get(project.id) || false;
               
               return (
                 <Card 
@@ -220,6 +226,14 @@ export default function FindProjects() {
                         <div className="flex items-center gap-3 mb-2 flex-wrap">
                           <h3 className="font-semibold text-lg">{project.title}</h3>
                           {isBoosted && <BoostedBadge />}
+                          {hasVerifiedPayment ? (
+                            <VerifiedPaymentBadge size="sm" showLabel />
+                          ) : (
+                            <Badge variant="outline" className="text-muted-foreground border-muted-foreground/30 gap-1">
+                              <ShieldX className="h-3 w-3" />
+                              {t("projects.unverifiedPayment", "Pagamento Não Verificado")}
+                            </Badge>
+                          )}
                           {hasProposal && (
                             <Badge variant="secondary">{t("findProjects.proposalSent")}</Badge>
                           )}
