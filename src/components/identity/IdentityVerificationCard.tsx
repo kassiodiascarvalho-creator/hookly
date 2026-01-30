@@ -18,8 +18,6 @@ export function IdentityVerificationCard({ subjectType }: IdentityVerificationCa
   const [modalOpen, setModalOpen] = useState(false);
   const {
     status,
-    attempts,
-    maxAttempts,
     canStartVerification,
     verifiedAt,
     failureReason,
@@ -50,8 +48,8 @@ export function IdentityVerificationCard({ subjectType }: IdentityVerificationCa
     }
   };
 
-  const canRetry = canStartVerification && ["not_started", "failed_soft"].includes(status);
-  const showAttemptsWarning = status === "failed_soft" && attempts >= maxAttempts - 1;
+  // Can only start if not_started, or retry if rejected/failed_soft
+  const canRetry = canStartVerification && ["not_started", "failed_soft", "rejected"].includes(status);
 
   return (
     <>
@@ -74,20 +72,6 @@ export function IdentityVerificationCard({ subjectType }: IdentityVerificationCa
           ) : (
             <>
               <p className="text-sm text-muted-foreground">{getStatusMessage()}</p>
-
-              {showAttemptsWarning && (
-                <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-sm">
-                  <p className="text-destructive font-medium">
-                    {t("identity.lastAttemptWarning")}
-                  </p>
-                </div>
-              )}
-
-              {attempts > 0 && status !== "verified" && (
-                <p className="text-xs text-muted-foreground">
-                  {t("identity.attemptsUsed", { attempts, maxAttempts })}
-                </p>
-              )}
 
               <div className="flex gap-2">
                 {canRetry && (

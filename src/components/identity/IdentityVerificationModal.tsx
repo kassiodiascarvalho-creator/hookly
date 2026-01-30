@@ -72,8 +72,6 @@ export function IdentityVerificationModal({
     uploadFile, 
     finalizeUploads, 
     refetch,
-    attempts,
-    maxAttempts,
     failureReason: existingFailureReason,
   } = useIdentityVerification({
     subjectType,
@@ -97,10 +95,6 @@ export function IdentityVerificationModal({
   const selectedCountry = COUNTRIES.find(c => c.code === country);
   const availableDocuments = selectedCountry?.documents || ["passport"];
   const hasBackSide = !NO_BACK_DOCUMENTS.includes(documentType);
-
-  // Attempts info
-  const isLastAttempt = attempts >= maxAttempts - 1;
-  const remainingAttempts = maxAttempts - attempts;
 
   // Reset document when country changes
   const handleCountryChange = (value: string) => {
@@ -233,21 +227,9 @@ export function IdentityVerificationModal({
               <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>Último erro:</strong> {existingFailureReason}
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {/* Attempts counter */}
-            {attempts > 0 && (
-              <Alert variant={isLastAttempt ? "destructive" : "default"}>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  {isLastAttempt ? (
-                    <strong>⚠️ Esta é sua última tentativa!</strong>
-                  ) : (
-                    <>Tentativa {attempts + 1} de {maxAttempts} ({remainingAttempts} restantes)</>
-                  )}
+                  <strong>Motivo da reprovação anterior:</strong> {existingFailureReason}
+                  <br />
+                  <span className="text-sm">Por favor, corrija os problemas e envie novamente.</span>
                 </AlertDescription>
               </Alert>
             )}
@@ -397,15 +379,6 @@ export function IdentityVerificationModal({
               />
             </div>
 
-            {/* Attempts warning */}
-            {isLastAttempt && (
-              <Alert variant="destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>Atenção:</strong> Esta é sua última tentativa. Certifique-se de enviar fotos nítidas e legíveis.
-                </AlertDescription>
-              </Alert>
-            )}
 
             <div className="flex gap-3">
               <Button variant="outline" onClick={() => setStep("consent")} className="flex-1">
