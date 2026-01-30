@@ -2839,6 +2839,15 @@ export type Database = {
         Args: { p_freelancer_user_id: string }
         Returns: Json
       }
+      get_project_categories: {
+        Args: { p_project_id: string }
+        Returns: {
+          id: string
+          name_en: string
+          name_pt: string
+          slug: string
+        }[]
+      }
       get_projects_prefund_status: {
         Args: { project_ids: string[] }
         Returns: {
