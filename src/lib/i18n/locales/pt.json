@@ -1017,7 +1017,12 @@
     "noPaymentMethods": "Nenhum método de pagamento salvo",
     "addPaymentMethod": "Adicionar Método de Pagamento",
     "preferredPayoutCurrency": "Moeda de Recebimento Preferida",
-    "preferredPayoutCurrencyDesc": "Esta é sua preferência para exibição e recebimento manual de pagamentos"
+    "preferredPayoutCurrencyDesc": "Esta é sua preferência para exibição e recebimento manual de pagamentos",
+    "documentType": "Tipo de Documento",
+    "selectDocumentType": "Selecione CPF ou CNPJ",
+    "documentNumber": "Número do Documento",
+    "cpfDesc": "CPF deve ter 11 dígitos",
+    "cnpjDesc": "CNPJ deve ter 14 dígitos"
   },
   "talentPool": {
     "title": "Pool de Talentos",
