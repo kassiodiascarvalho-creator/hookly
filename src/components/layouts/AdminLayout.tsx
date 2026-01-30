@@ -15,6 +15,7 @@ import {
   Wallet,
   Menu,
   Star,
+  Layout,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ReactNode, useState, useEffect } from "react";
@@ -30,6 +31,7 @@ const navItems = [
   { path: "/admin/finances", icon: Wallet, labelKey: "admin.finances" },
   { path: "/admin/tiers", icon: Star, labelKey: "admin.tiers" },
   { path: "/admin/payment-providers", icon: CreditCard, labelKey: "admin.paymentProviders" },
+  { path: "/admin/landing-page", icon: Layout, labelKey: "admin.landingPage" },
 ];
 
 interface AdminLayoutProps {
