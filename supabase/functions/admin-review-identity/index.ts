@@ -124,11 +124,10 @@ Deno.serve(async (req) => {
 
       console.log(`[IDENTITY ADMIN] Resetting verification ${verificationId}`);
 
-      const { data: result, error: resetError } = await supabaseAdmin
+      const { data: result, error: resetError } = await supabase
         .rpc("admin_reset_identity_verification", {
           p_verification_id: verificationId,
           p_notes: notes,
-          p_admin_id: authUser.id,
         });
 
       if (resetError) {
@@ -164,12 +163,11 @@ Deno.serve(async (req) => {
 
     console.log(`[IDENTITY ADMIN] ${decision} verification ${verificationId}`);
 
-    const { data: result, error: reviewError } = await supabaseAdmin
+    const { data: result, error: reviewError } = await supabase
       .rpc("admin_review_identity", {
         p_verification_id: verificationId,
         p_decision: decision,
         p_notes: notes,
-        p_admin_id: authUser.id,
       });
 
     if (reviewError) {
