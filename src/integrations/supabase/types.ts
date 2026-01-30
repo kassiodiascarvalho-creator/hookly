@@ -3374,6 +3374,40 @@ export type Database = {
         Args: { p_subject_type: string; p_user_id: string }
         Returns: Json
       }
+      get_identity_verifications_admin: {
+        Args: {
+          p_limit?: number
+          p_offset?: number
+          p_search?: string
+          p_status_filter?: string
+        }
+        Returns: {
+          admin_decision: string
+          admin_decision_at: string
+          admin_notes: string
+          attempts: number
+          avatar_url: string
+          country: string
+          created_at: string
+          display_name: string
+          document_type: string
+          email: string
+          failure_reason: string
+          files_count: number
+          id: string
+          max_attempts: number
+          provider: string
+          reviewed_by_admin_id: string
+          risk_level: string
+          risk_score: number
+          status: string
+          subject_type: string
+          total_count: number
+          updated_at: string
+          user_id: string
+          verified_at: string
+        }[]
+      }
       get_identity_verifications_for_cleanup: {
         Args: { p_days_old?: number }
         Returns: {
