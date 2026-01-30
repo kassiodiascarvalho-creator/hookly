@@ -58,7 +58,6 @@ export default function FreelancerDashboard() {
         conversationsResult,
         balanceResult,
         activeContractsResult,
-        paidWithdrawalsResult,
         freelancerProfileResult,
         portfolioCountResult,
         payoutCountResult
@@ -98,12 +97,8 @@ export default function FreelancerDashboard() {
           .eq("freelancer_user_id", user.id)
           .eq("status", "active"),
         
-        // Paid withdrawals (already received)
-        supabase
-          .from("withdrawal_requests")
-          .select("amount")
-          .eq("freelancer_user_id", user.id)
-          .eq("status", "paid"),
+        // Note: We don't fetch paid withdrawals here
+        // Total Earnings = earnings_available + escrow (current liquidity, matching Earnings page)
         
         // Freelancer profile for real-time completion calculation
         supabase
@@ -131,19 +126,15 @@ export default function FreelancerDashboard() {
       const conversations = conversationsResult.count || 0;
       
       // user_balances stores values in MAJOR UNITS (numeric with decimals)
-      // contracts.amount_cents and withdrawal_requests.amount are in MINOR UNITS (cents)
       const earningsAvailableMajor = Number(balanceResult.data?.earnings_available || 0);
       
       // contracts.amount_cents is stored in MINOR UNITS (cents)
       const contractsEscrowCents = (activeContractsResult.data || [])
         .reduce((sum, c) => sum + (c.amount_cents || 0), 0);
       
-      // withdrawal_requests.amount is stored in MAJOR UNITS
-      const paidWithdrawalsMajor = (paidWithdrawalsResult.data || [])
-        .reduce((sum, w) => sum + (Number(w.amount) || 0), 0);
-      
-      // Total earnings in MAJOR UNITS = available + contracts escrow (converted) + already withdrawn
-      const totalEarningsMajor = earningsAvailableMajor + (contractsEscrowCents / 100) + paidWithdrawalsMajor;
+      // Total earnings = earnings_available + escrow (matches Earnings page calculation)
+      // This shows current liquidity, NOT career total (which would include paid withdrawals)
+      const totalEarningsMajor = earningsAvailableMajor + (contractsEscrowCents / 100);
       const currency = balanceResult.data?.currency || "BRL";
       
       // Calculate profile completion in real-time (not from stale database value)
