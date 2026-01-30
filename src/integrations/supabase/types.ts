@@ -2724,6 +2724,10 @@ export type Database = {
         Args: { p_company_user_id: string }
         Returns: string
       }
+      ensure_freelancer_plan_exists: {
+        Args: { p_freelancer_user_id: string }
+        Returns: undefined
+      }
       ensure_user_balance: {
         Args: { p_user_id: string; p_user_type: string }
         Returns: string
@@ -2753,6 +2757,10 @@ export type Database = {
           is_verified: boolean
           plan_type: string
         }[]
+      }
+      get_freelancer_proposal_usage: {
+        Args: { p_freelancer_user_id: string }
+        Returns: Json
       }
       get_projects_prefund_status: {
         Args: { project_ids: string[] }
@@ -2790,11 +2798,19 @@ export type Database = {
         Args: { p_company_user_id: string }
         Returns: boolean
       }
+      increment_freelancer_proposal_count: {
+        Args: { p_freelancer_user_id: string }
+        Returns: Json
+      }
       initialize_freelancer_achievements: {
         Args: { p_freelancer_user_id: string }
         Returns: undefined
       }
       is_admin: { Args: never; Returns: boolean }
+      maybe_reset_monthly_proposals: {
+        Args: { p_freelancer_user_id: string }
+        Returns: undefined
+      }
       process_withdrawal: {
         Args: {
           p_admin_id: string
