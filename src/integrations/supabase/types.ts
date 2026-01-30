@@ -1049,6 +1049,36 @@ export type Database = {
           },
         ]
       }
+      landing_faq_items: {
+        Row: {
+          answer: string
+          created_at: string | null
+          display_order: number
+          id: string
+          is_visible: boolean
+          question: string
+          updated_at: string | null
+        }
+        Insert: {
+          answer: string
+          created_at?: string | null
+          display_order?: number
+          id?: string
+          is_visible?: boolean
+          question: string
+          updated_at?: string | null
+        }
+        Update: {
+          answer?: string
+          created_at?: string | null
+          display_order?: number
+          id?: string
+          is_visible?: boolean
+          question?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       landing_sections: {
         Row: {
           background_color: string | null
