@@ -108,6 +108,33 @@ export default function CompanyFinances() {
       console.error("Error fetching payments:", error);
     }
 
+    // Fetch freelancer names for payments history (avoid "unknown freelancer")
+    const freelancerIds = [
+      ...new Set(
+        (paymentsData || [])
+          .map((p: any) => p.freelancer_user_id)
+          .filter(Boolean)
+      ),
+    ] as string[];
+
+    let freelancerNames: Record<string, string> = {};
+    if (freelancerIds.length > 0) {
+      const { data: freelancers, error: freelancersError } = await supabase
+        .from("freelancer_profiles")
+        .select("user_id, full_name")
+        .in("user_id", freelancerIds);
+
+      if (freelancersError) {
+        console.error("Error fetching freelancer profiles:", freelancersError);
+      }
+
+      freelancers?.forEach((f) => {
+        if (f.user_id && f.full_name) {
+          freelancerNames[f.user_id] = f.full_name;
+        }
+      });
+    }
+
     // Fetch unified_payments for escrow calculations (project_prefund and contract_funding)
     const { data: unifiedPayments } = await supabase
       .from("unified_payments")
@@ -162,7 +189,11 @@ export default function CompanyFinances() {
       const mapped = paymentsData.map(p => ({
         ...p,
         project: p.project as { title: string } | undefined,
-        freelancer: null as { full_name: string } | null
+        freelancer: p.freelancer_user_id
+          ? ({ full_name: freelancerNames[p.freelancer_user_id] || null } as {
+              full_name: string;
+            })
+          : (null as { full_name: string } | null),
       }));
       setPayments(mapped);
     }
