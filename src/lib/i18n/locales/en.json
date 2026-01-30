@@ -1196,7 +1196,12 @@
     "retry": "Retry",
     "verified": "Verified",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "more": "more",
+    "contracts": "contracts",
+    "projects": "projects",
+    "continue": "Continue",
+    "close": "Close"
   },
   "profileGate": {
     "title": "Complete Your Profile",
@@ -1756,16 +1761,6 @@
       "amountToAdd": "Amount to add",
       "noProjects": "No projects without protection."
     }
-  },
-  "common": {
-    "more": "more",
-    "contracts": "contracts",
-    "projects": "projects",
-    "continue": "Continue",
-    "back": "Back",
-    "close": "Close",
-    "loading": "Loading...",
-    "error": "Error"
   },
   "identity": {
     "modalTitle": "Identity Verification",
