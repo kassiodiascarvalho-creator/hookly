@@ -128,6 +128,7 @@ Deno.serve(async (req) => {
         .rpc("admin_reset_identity_verification", {
           p_verification_id: verificationId,
           p_notes: notes,
+          p_admin_id: authUser.id,
         });
 
       if (resetError) {
@@ -168,6 +169,7 @@ Deno.serve(async (req) => {
         p_verification_id: verificationId,
         p_decision: decision,
         p_notes: notes,
+        p_admin_id: authUser.id,
       });
 
     if (reviewError) {
