@@ -779,13 +779,18 @@ export default function AdminFinances() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right font-mono font-bold">
-                      {formatMoney(
-                        withdrawal.amount_usd_minor ? withdrawal.amount_usd_minor / 100 : Number(withdrawal.amount), 
-                        "USD"
+                      <div>
+                        <span>{formatMoney(Number(withdrawal.amount), withdrawal.currency)}</span>
+                        <Badge variant="outline" className="ml-1 text-xs">{withdrawal.currency}</Badge>
+                      </div>
+                      {withdrawal.amount_usd_minor && withdrawal.currency !== 'USD' && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          ≈ {formatMoney(withdrawal.amount_usd_minor / 100, "USD")}
+                        </p>
                       )}
                     </TableCell>
                     <TableCell className="text-right">
-                      {withdrawal.payment_amount_minor && withdrawal.payment_currency && withdrawal.payment_currency !== 'USD' ? (
+                      {withdrawal.payment_amount_minor && withdrawal.payment_currency ? (
                         <div>
                           <span className="font-mono text-sm">
                             {formatMoneyFromCents(withdrawal.payment_amount_minor, withdrawal.payment_currency)}
