@@ -1259,7 +1259,12 @@
     "retry": "Tentar novamente",
     "verified": "Verificado",
     "yes": "Sim",
-    "no": "Não"
+    "no": "Não",
+    "more": "mais",
+    "contracts": "contratos",
+    "projects": "projetos",
+    "continue": "Continuar",
+    "close": "Fechar"
   },
   "profileGate": {
     "title": "Complete seu Perfil",
@@ -1864,16 +1869,6 @@
       "amountToAdd": "Valor a adicionar",
       "noProjects": "Nenhum projeto sem proteção."
     }
-  },
-  "common": {
-    "more": "mais",
-    "contracts": "contratos",
-    "projects": "projetos",
-    "continue": "Continuar",
-    "back": "Voltar",
-    "close": "Fechar",
-    "loading": "Carregando...",
-    "error": "Erro"
   },
   "identity": {
     "modalTitle": "Verificação de Identidade",
