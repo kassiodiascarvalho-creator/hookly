@@ -100,18 +100,23 @@ export function SelfieCameraCapture({ onCapture, disabled = false }: SelfieCamer
 
     if (!ctx) return;
 
-    // Set canvas size to video size
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    // Use higher resolution for better quality (minimum 1280x960)
+    const targetWidth = Math.max(video.videoWidth, 1280);
+    const targetHeight = Math.max(video.videoHeight, 960);
+    
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
 
-    // Draw the current video frame (mirror for selfie)
+    // Draw the current video frame (mirror for selfie) with high quality
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
     ctx.save();
     ctx.scale(-1, 1);
-    ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
+    ctx.drawImage(video, -targetWidth, 0, targetWidth, targetHeight);
     ctx.restore();
 
-    // Convert to data URL
-    const imageDataUrl = canvas.toDataURL("image/jpeg", 0.9);
+    // Convert to data URL with maximum quality (1.0)
+    const imageDataUrl = canvas.toDataURL("image/jpeg", 1.0);
     setCapturedImage(imageDataUrl);
     setCameraState("captured");
 
@@ -275,20 +280,32 @@ export function SelfieCameraCapture({ onCapture, disabled = false }: SelfieCamer
             className="w-full h-64 object-cover scale-x-[-1]"
           />
           
-          {/* Face guide overlay */}
+          {/* Face guide overlay with glowing effect */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-40 h-52 border-2 border-white/50 rounded-[50%] relative">
-              <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-white text-xs bg-black/50 px-2 py-1 rounded">
-                Centralize seu rosto
+            {/* Outer glow rings */}
+            <div className="absolute w-48 h-60 rounded-[50%] bg-white/5 blur-xl" />
+            <div className="absolute w-44 h-56 rounded-[50%] bg-white/10 blur-lg" />
+            <div className="absolute w-42 h-54 rounded-[50%] bg-white/15 blur-md" />
+            
+            {/* Main face guide with animated glow */}
+            <div className="w-40 h-52 border-[3px] border-white/70 rounded-[50%] relative shadow-[0_0_30px_rgba(255,255,255,0.4),0_0_60px_rgba(255,255,255,0.2),inset_0_0_20px_rgba(255,255,255,0.1)]">
+              <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-white text-xs bg-black/70 px-3 py-1.5 rounded-full font-medium whitespace-nowrap">
+                Centralize seu rosto aqui
               </div>
             </div>
           </div>
 
+          {/* Corner brightness indicators */}
+          <div className="absolute top-0 left-0 w-16 h-16 border-l-2 border-t-2 border-white/40 rounded-tl-lg" />
+          <div className="absolute top-0 right-0 w-16 h-16 border-r-2 border-t-2 border-white/40 rounded-tr-lg" />
+          <div className="absolute bottom-0 left-0 w-16 h-16 border-l-2 border-b-2 border-white/40 rounded-bl-lg" />
+          <div className="absolute bottom-0 right-0 w-16 h-16 border-r-2 border-b-2 border-white/40 rounded-br-lg" />
+
           {/* Tips overlay */}
           <div className="absolute top-2 left-2 right-2 flex items-center justify-center">
-            <div className="bg-black/60 text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1">
-              <Lightbulb className="h-3 w-3" />
-              Boa iluminação e olhe para a câmera
+            <div className="bg-black/70 text-white text-xs px-4 py-2 rounded-full flex items-center gap-2 font-medium">
+              <Lightbulb className="h-4 w-4 text-yellow-300" />
+              Procure boa iluminação e olhe para a câmera
             </div>
           </div>
         </div>
