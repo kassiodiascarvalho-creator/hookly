@@ -353,13 +353,20 @@ export function SelfieCameraCapture({ onCapture, disabled = false }: SelfieCamer
           </div>
         </div>
 
-        <Button className="w-full" onClick={capturePhoto}>
+        {error && (
+          <div className="flex items-center gap-2 text-sm text-destructive">
+            <AlertCircle className="h-4 w-4" />
+            {error}
+          </div>
+        )}
+
+        <Button className="w-full" onClick={() => capturePhoto()}>
           <Camera className="h-4 w-4 mr-2" />
           Tirar foto
         </Button>
 
-        {/* Hidden canvas for capture */}
-        <canvas ref={canvasRef} className="hidden" />
+        {/* Hidden canvas for capture - must be in DOM */}
+        <canvas ref={canvasRef} style={{ position: 'absolute', left: '-9999px', top: '-9999px' }} />
       </div>
     );
   }
