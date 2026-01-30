@@ -42,8 +42,9 @@ export function useAdminPermissions() {
       }
 
       try {
+        // Use raw query to bypass type issues with new table
         const { data, error } = await supabase
-          .from("admin_permissions")
+          .from("admin_permissions" as any)
           .select("*")
           .eq("user_id", user.id)
           .maybeSingle();
@@ -53,10 +54,10 @@ export function useAdminPermissions() {
           setPermissions(null);
           setIsOwner(false);
         } else if (data) {
-          setPermissions(data as AdminPermissions);
-          setIsOwner(data.is_owner === true);
+          const typedData = data as unknown as AdminPermissions;
+          setPermissions(typedData);
+          setIsOwner(typedData.is_owner === true);
         } else {
-          // No permissions found - might be admin without permissions record
           setPermissions(null);
           setIsOwner(false);
         }
@@ -89,22 +90,25 @@ export function useAllAdmins() {
   const fetchAdmins = async () => {
     setLoading(true);
     try {
-      // Fetch all admin permissions
+      // Fetch all admin permissions using raw query
       const { data: permissionsData, error: permError } = await supabase
-        .from("admin_permissions")
+        .from("admin_permissions" as any)
         .select("*")
         .order("is_owner", { ascending: false })
         .order("created_at", { ascending: true });
 
       if (permError) throw permError;
 
-      if (!permissionsData || permissionsData.length === 0) {
+      const typedPermissions = (permissionsData || []) as unknown as AdminPermissions[];
+
+      if (typedPermissions.length === 0) {
         setAdmins([]);
+        setLoading(false);
         return;
       }
 
       // Fetch profiles for all admins
-      const userIds = permissionsData.map((p) => p.user_id);
+      const userIds = typedPermissions.map((p) => p.user_id);
       const { data: profilesData, error: profError } = await supabase
         .from("profiles")
         .select("user_id, email")
@@ -125,13 +129,13 @@ export function useAllAdmins() {
         .in("user_id", userIds);
 
       // Merge data
-      const adminsWithProfiles: AdminWithProfile[] = permissionsData.map((perm) => {
+      const adminsWithProfiles: AdminWithProfile[] = typedPermissions.map((perm) => {
         const profile = profilesData?.find((p) => p.user_id === perm.user_id);
         const freelancer = freelancerData?.find((f) => f.user_id === perm.user_id);
         const company = companyData?.find((c) => c.user_id === perm.user_id);
 
         return {
-          ...(perm as AdminPermissions),
+          ...perm,
           email: profile?.email || "Unknown",
           full_name: freelancer?.full_name || company?.contact_name || company?.company_name,
         };
@@ -162,14 +166,14 @@ export function useAdminActions() {
   ): Promise<{ success: boolean; error?: string }> => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc("add_sub_admin", {
+      const { data, error } = await supabase.rpc("add_sub_admin" as any, {
         p_email: email,
         p_permissions: permissions,
       });
 
       if (error) throw error;
 
-      const result = data as { success: boolean; error?: string };
+      const result = data as unknown as { success: boolean; error?: string };
       return result;
     } catch (err) {
       console.error("Error adding sub-admin:", err);
@@ -184,13 +188,13 @@ export function useAdminActions() {
   ): Promise<{ success: boolean; error?: string }> => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc("remove_sub_admin", {
+      const { data, error } = await supabase.rpc("remove_sub_admin" as any, {
         p_user_id: userId,
       });
 
       if (error) throw error;
 
-      const result = data as { success: boolean; error?: string };
+      const result = data as unknown as { success: boolean; error?: string };
       return result;
     } catch (err) {
       console.error("Error removing sub-admin:", err);
@@ -206,14 +210,14 @@ export function useAdminActions() {
   ): Promise<{ success: boolean; error?: string }> => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc("update_sub_admin_permissions", {
+      const { data, error } = await supabase.rpc("update_sub_admin_permissions" as any, {
         p_user_id: userId,
         p_permissions: permissions,
       });
 
       if (error) throw error;
 
-      const result = data as { success: boolean; error?: string };
+      const result = data as unknown as { success: boolean; error?: string };
       return result;
     } catch (err) {
       console.error("Error updating sub-admin permissions:", err);

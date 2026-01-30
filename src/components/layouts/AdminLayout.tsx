@@ -1,6 +1,7 @@
 import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAdminPermissions } from "@/hooks/useAdminPermissions";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -16,22 +17,33 @@ import {
   Menu,
   Star,
   Layout,
+  Shield,
+  Crown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode, useState, useEffect, useMemo } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-const navItems = [
+interface NavItem {
+  path: string;
+  icon: typeof LayoutDashboard;
+  labelKey: string;
+  ownerOnly?: boolean;
+  permissionKey?: string;
+}
+
+const navItems: NavItem[] = [
   { path: "/admin", icon: LayoutDashboard, labelKey: "admin.dashboard" },
-  { path: "/admin/users", icon: Users, labelKey: "admin.users" },
-  { path: "/admin/freelancers", icon: UserCheck, labelKey: "admin.freelancers" },
-  { path: "/admin/companies", icon: Building2, labelKey: "admin.companies" },
-  { path: "/admin/projects", icon: FolderOpen, labelKey: "admin.projects" },
-  { path: "/admin/payments", icon: CreditCard, labelKey: "admin.payments" },
-  { path: "/admin/finances", icon: Wallet, labelKey: "admin.finances" },
-  { path: "/admin/tiers", icon: Star, labelKey: "admin.tiers" },
-  { path: "/admin/payment-providers", icon: CreditCard, labelKey: "admin.paymentProviders" },
-  { path: "/admin/landing-page", icon: Layout, labelKey: "admin.landingPage" },
+  { path: "/admin/users", icon: Users, labelKey: "admin.users", permissionKey: "can_manage_users" },
+  { path: "/admin/freelancers", icon: UserCheck, labelKey: "admin.freelancers", permissionKey: "can_manage_freelancers" },
+  { path: "/admin/companies", icon: Building2, labelKey: "admin.companies", permissionKey: "can_manage_companies" },
+  { path: "/admin/projects", icon: FolderOpen, labelKey: "admin.projects", permissionKey: "can_manage_projects" },
+  { path: "/admin/payments", icon: CreditCard, labelKey: "admin.payments", permissionKey: "can_manage_payments" },
+  { path: "/admin/finances", icon: Wallet, labelKey: "admin.finances", permissionKey: "can_manage_finances" },
+  { path: "/admin/tiers", icon: Star, labelKey: "admin.tiers", permissionKey: "can_manage_tiers" },
+  { path: "/admin/payment-providers", icon: CreditCard, labelKey: "admin.paymentProviders", permissionKey: "can_manage_payment_providers" },
+  { path: "/admin/landing-page", icon: Layout, labelKey: "admin.landingPage", permissionKey: "can_manage_landing_page" },
+  { path: "/admin/management", icon: Shield, labelKey: "admin.adminManagement", ownerOnly: true },
 ];
 
 interface AdminLayoutProps {
@@ -56,6 +68,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const location = useLocation();
   const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { isOwner, hasPermission, loading: permLoading } = useAdminPermissions();
 
   // Close mobile menu when route changes
   useEffect(() => {
@@ -69,18 +82,43 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   const pageTitle = getPageTitle(location.pathname, t);
 
+  // Filter nav items based on permissions
+  const filteredNavItems = useMemo(() => {
+    // If still loading permissions, show all items (will be filtered once loaded)
+    if (permLoading) return navItems;
+
+    return navItems.filter((item) => {
+      // Owner sees everything
+      if (isOwner) return true;
+      
+      // Owner-only items are hidden for non-owners
+      if (item.ownerOnly) return false;
+      
+      // Dashboard is always visible
+      if (item.path === "/admin") return true;
+      
+      // Check specific permission
+      if (item.permissionKey) {
+        return hasPermission(item.permissionKey as any);
+      }
+      
+      return true;
+    });
+  }, [isOwner, permLoading, hasPermission]);
+
   // Sidebar content - shared between desktop and mobile
   const SidebarContent = () => (
     <>
       <div className="p-4 border-b">
         <Logo />
-        <div className="mt-2 px-2 py-1 bg-destructive/10 text-destructive text-xs font-medium rounded">
+        <div className="mt-2 px-2 py-1 bg-destructive/10 text-destructive text-xs font-medium rounded flex items-center gap-1">
+          {isOwner && <Crown className="h-3 w-3" />}
           {t("admin.adminPanel")}
         </div>
       </div>
 
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        {navItems.map((item) => (
+        {filteredNavItems.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
@@ -91,7 +129,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
                 isActive
                   ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                item.ownerOnly && "text-yellow-600 dark:text-yellow-500"
               )
             }
           >
