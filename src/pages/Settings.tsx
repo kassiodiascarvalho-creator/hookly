@@ -40,6 +40,7 @@ interface Profile {
   email: string;
   preferred_language: string;
   user_type: "company" | "freelancer" | null;
+  profile_completion_percent?: number | null;
 }
 
 interface CompanyProfile {
@@ -88,6 +89,7 @@ export default function Settings() {
     }
   }, [searchParams, t]);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [lastCompletionPercent, setLastCompletionPercent] = useState<number>(0);
   const [companyProfile, setCompanyProfile] = useState<CompanyProfile | null>(null);
   const [freelancerProfile, setFreelancerProfile] = useState<FreelancerProfile | null>(null);
   
@@ -131,12 +133,13 @@ export default function Settings() {
     // Fetch main profile
     const { data: profileData } = await supabase
       .from("profiles")
-      .select("email, preferred_language, user_type")
+      .select("email, preferred_language, user_type, profile_completion_percent")
       .eq("user_id", user.id)
       .single();
 
     if (profileData) {
       setProfile(profileData);
+      setLastCompletionPercent(profileData.profile_completion_percent ?? 0);
       
       // Fetch type-specific profile
       if (profileData.user_type === "company") {
@@ -171,6 +174,8 @@ export default function Settings() {
     setSaving(true);
 
     try {
+      const previousCompletionPercent = lastCompletionPercent;
+
       // Update main profile
       const { error: profileError } = await supabase
         .from("profiles")
@@ -255,11 +260,15 @@ export default function Settings() {
 
       toast.success(t("settings.saved"));
 
-      // Check if profile just reached 100% and trigger celebration
-      if (completionPercent >= 100 && profile.user_type) {
+      // Trigger celebration ONLY when crossing the threshold (<100% -> 100%)
+      const justCompleted = previousCompletionPercent < 100 && completionPercent >= 100;
+      if (justCompleted && profile.user_type) {
         console.log("[SETTINGS] Profile is 100% complete, triggering celebration...");
         await triggerCelebration(completionPercent, profile.user_type);
       }
+
+      // Keep local baseline up-to-date so the next save can detect transitions
+      setLastCompletionPercent(completionPercent);
 
     } catch (error) {
       console.error("Error saving profile:", error);

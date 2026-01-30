@@ -36,9 +36,14 @@ export function useProfileCelebration(): ProfileCelebrationData {
         .single();
 
       if (profile?.profile_completion_bonus_claimed) {
-        console.log("[CELEBRATION] Bonus already claimed - not showing celebration");
+        // Important: the celebration UI should still appear whenever the user
+        // reaches 100% completion again, but credits must not be granted twice.
+        console.log("[CELEBRATION] Bonus already claimed - showing celebration without credits");
         setBonusAlreadyClaimed(true);
-        return false;
+        setBonusCredits(0);
+        setUserType(type);
+        setShowCelebration(true);
+        return true;
       }
 
       // Get bonus amount from config
