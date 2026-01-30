@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, Briefcase, DollarSign, Calendar, Loader2, ShieldX } from "lucide-react";
+import { Search, Briefcase, DollarSign, Calendar, Loader2, ShieldX, Filter, X } from "lucide-react";
 import { format, isAfter } from "date-fns";
 import { BoostedBadge } from "@/components/projects/BoostedBadge";
 import { CompanyAvatar } from "@/components/company/CompanyAvatar";
@@ -18,6 +18,13 @@ import { fetchProjectsPrefundStatus } from "@/hooks/useProjectPrefund";
 import { CategoryFilterSelect } from "@/components/projects/CategoryFilterSelect";
 import { CategoryChips } from "@/components/projects/CategoryChips";
 import { fetchProjectsCategoriesMap, type Category } from "@/hooks/useCategories";
+import { CurrencySelect } from "@/components/CurrencySelect";
+import { getCurrencySymbol } from "@/lib/formatMoney";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 interface Project {
   id: string;
@@ -25,6 +32,7 @@ interface Project {
   description: string | null;
   budget_min: number | null;
   budget_max: number | null;
+  currency: string | null;
   created_at: string;
   company_user_id: string;
   boosted_until: string | null;
@@ -49,6 +57,12 @@ export default function FindProjects() {
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [myProposalIds, setMyProposalIds] = useState<Set<string>>(new Set());
   const [prefundedProjects, setPrefundedProjects] = useState<Map<string, boolean>>(new Map());
+  
+  // New filters
+  const [selectedCurrency, setSelectedCurrency] = useState<string>("");
+  const [budgetMin, setBudgetMin] = useState<string>("");
+  const [budgetMax, setBudgetMax] = useState<string>("");
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   useEffect(() => {
     fetchProjects();
@@ -112,8 +126,21 @@ export default function FindProjects() {
     }
   };
 
+  // Check if any filters are active
+  const hasActiveFilters = selectedCategoryIds.length > 0 || selectedCurrency !== "" || budgetMin !== "" || budgetMax !== "";
+
+  const clearAllFilters = () => {
+    setSelectedCategoryIds([]);
+    setSelectedCurrency("");
+    setBudgetMin("");
+    setBudgetMax("");
+  };
+
   // Filter and sort: boosted projects first, then by category match
   const filteredProjects = useMemo(() => {
+    const minBudget = budgetMin ? parseFloat(budgetMin) : null;
+    const maxBudget = budgetMax ? parseFloat(budgetMax) : null;
+
     return projects
       .filter((project) => {
         const matchesSearch = searchQuery === "" || 
@@ -124,7 +151,22 @@ export default function FindProjects() {
         const matchesCategory = selectedCategoryIds.length === 0 || 
           (project.categories?.some(cat => selectedCategoryIds.includes(cat.id)) ?? false);
         
-        return matchesSearch && matchesCategory;
+        // Filter by currency
+        const matchesCurrency = selectedCurrency === "" || 
+          (project.currency || "USD") === selectedCurrency;
+        
+        // Filter by budget range
+        let matchesBudget = true;
+        if (minBudget !== null) {
+          // Project must have a max budget >= filter min
+          matchesBudget = matchesBudget && (project.budget_max !== null && project.budget_max >= minBudget);
+        }
+        if (maxBudget !== null) {
+          // Project must have a min budget <= filter max
+          matchesBudget = matchesBudget && (project.budget_min !== null && project.budget_min <= maxBudget);
+        }
+        
+        return matchesSearch && matchesCategory && matchesCurrency && matchesBudget;
       })
       .sort((a, b) => {
         const aIsBoosted = a.boosted_until && isAfter(new Date(a.boosted_until), new Date());
@@ -137,13 +179,14 @@ export default function FindProjects() {
         // Then sort by created_at
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
-  }, [projects, searchQuery, selectedCategoryIds]);
+  }, [projects, searchQuery, selectedCategoryIds, selectedCurrency, budgetMin, budgetMax]);
 
-  const formatBudget = (min: number | null, max: number | null) => {
+  const formatBudget = (min: number | null, max: number | null, currency: string = "USD") => {
+    const symbol = getCurrencySymbol(currency);
     if (!min && !max) return t("projects.budgetNegotiable");
-    if (min && max) return `$${min.toLocaleString()} - $${max.toLocaleString()}`;
-    if (min) return `${t("projects.from")} $${min.toLocaleString()}`;
-    return `${t("projects.upTo")} $${max?.toLocaleString()}`;
+    if (min && max) return `${symbol}${min.toLocaleString()} - ${symbol}${max.toLocaleString()}`;
+    if (min) return `${t("projects.from")} ${symbol}${min.toLocaleString()}`;
+    return `${t("projects.upTo")} ${symbol}${max?.toLocaleString()}`;
   };
 
   if (loading) {
@@ -161,21 +204,111 @@ export default function FindProjects() {
         <p className="text-muted-foreground">{t("findProjects.subtitle")}</p>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder={t("findProjects.searchPlaceholder")}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+      {/* Main Filters */}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder={t("findProjects.searchPlaceholder")}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <CategoryFilterSelect
+            value={selectedCategoryIds}
+            onChange={setSelectedCategoryIds}
           />
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            className={showAdvancedFilters ? "bg-primary/10 border-primary" : ""}
+          >
+            <Filter className="h-4 w-4" />
+          </Button>
         </div>
-        <CategoryFilterSelect
-          value={selectedCategoryIds}
-          onChange={setSelectedCategoryIds}
-        />
+
+        {/* Advanced Filters */}
+        <Collapsible open={showAdvancedFilters} onOpenChange={setShowAdvancedFilters}>
+          <CollapsibleContent className="space-y-4">
+            <Card className="border-dashed">
+              <CardContent className="p-4">
+                <div className="flex flex-col md:flex-row gap-4">
+                  {/* Currency Filter */}
+                  <div className="flex-1 min-w-[150px]">
+                    <label className="text-sm font-medium mb-2 block">
+                      {t("findProjects.currency", "Moeda")}
+                    </label>
+                    <CurrencySelect
+                      value={selectedCurrency}
+                      onValueChange={setSelectedCurrency}
+                      className="w-full"
+                    />
+                  </div>
+                  
+                  {/* Budget Range */}
+                  <div className="flex-1">
+                    <label className="text-sm font-medium mb-2 block">
+                      {t("findProjects.budgetRange", "Faixa de Orçamento")}
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        placeholder={t("findProjects.min", "Mín")}
+                        value={budgetMin}
+                        onChange={(e) => setBudgetMin(e.target.value)}
+                        className="w-full"
+                        min={0}
+                      />
+                      <span className="text-muted-foreground">-</span>
+                      <Input
+                        type="number"
+                        placeholder={t("findProjects.max", "Máx")}
+                        value={budgetMax}
+                        onChange={(e) => setBudgetMax(e.target.value)}
+                        className="w-full"
+                        min={0}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </CollapsibleContent>
+        </Collapsible>
+
+        {/* Active Filters Summary */}
+        {hasActiveFilters && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm text-muted-foreground">{t("findProjects.activeFilters", "Filtros ativos")}:</span>
+            {selectedCategoryIds.length > 0 && (
+              <Badge variant="secondary" className="gap-1">
+                {t("findProjects.categories", "Categorias")}: {selectedCategoryIds.length}
+              </Badge>
+            )}
+            {selectedCurrency && (
+              <Badge variant="secondary" className="gap-1">
+                {t("findProjects.currency", "Moeda")}: {selectedCurrency}
+              </Badge>
+            )}
+            {(budgetMin || budgetMax) && (
+              <Badge variant="secondary" className="gap-1">
+                {t("findProjects.budget", "Orçamento")}: {budgetMin || "0"} - {budgetMax || "∞"}
+              </Badge>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearAllFilters}
+              className="h-6 px-2 text-xs"
+            >
+              <X className="h-3 w-3 mr-1" />
+              {t("findProjects.clearFilters", "Limpar")}
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Results */}
@@ -243,7 +376,7 @@ export default function FindProjects() {
                           )}
                           <span className="flex items-center gap-1 text-muted-foreground">
                             <DollarSign className="h-3 w-3" />
-                            {formatBudget(project.budget_min, project.budget_max)}
+                            {formatBudget(project.budget_min, project.budget_max, project.currency || "USD")}
                           </span>
                           <span className="flex items-center gap-1 text-muted-foreground">
                             <Calendar className="h-3 w-3" />
