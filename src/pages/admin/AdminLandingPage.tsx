@@ -12,6 +12,7 @@ import {
   useLandingSections, 
   useLandingFaqItems, 
   useLandingStats,
+  useLandingSocialLinks,
   useUpdateLandingSection,
   useUpdateLandingFaq,
   useCreateLandingFaq,
@@ -19,9 +20,13 @@ import {
   useUpdateLandingStat,
   useCreateLandingStat,
   useDeleteLandingStat,
+  useUpdateLandingSocialLink,
+  useCreateLandingSocialLink,
+  useDeleteLandingSocialLink,
   LandingSection,
   LandingFaqItem,
   LandingStat,
+  LandingSocialLink,
 } from "@/hooks/useLandingContent";
 import { 
   Eye, 
@@ -36,6 +41,10 @@ import {
   HelpCircle,
   BarChart3,
   Palette,
+  Share2,
+  Instagram,
+  Facebook,
+  MessageCircle,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -56,6 +65,17 @@ import {
 
 const AVAILABLE_ICONS = [
   "Users", "Briefcase", "Star", "Globe", "Shield", "Zap", "Award", "Clock", "Check", "Heart"
+];
+
+const SOCIAL_ICONS = [
+  { value: "twitter", label: "Twitter/X" },
+  { value: "linkedin", label: "LinkedIn" },
+  { value: "github", label: "GitHub" },
+  { value: "instagram", label: "Instagram" },
+  { value: "facebook", label: "Facebook" },
+  { value: "whatsapp", label: "WhatsApp" },
+  { value: "youtube", label: "YouTube" },
+  { value: "tiktok", label: "TikTok" },
 ];
 
 function SectionEditor({ section }: { section: LandingSection }) {
@@ -485,6 +505,174 @@ function StatsManager() {
   );
 }
 
+function SocialLinksManager() {
+  const { data: links, isLoading } = useLandingSocialLinks();
+  const updateLink = useUpdateLandingSocialLink();
+  const createLink = useCreateLandingSocialLink();
+  const deleteLink = useDeleteLandingSocialLink();
+  
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [newLink, setNewLink] = useState({ platform: "", url: "", icon: "instagram" });
+
+  const handleAddLink = () => {
+    if (!newLink.platform.trim()) return;
+    
+    createLink.mutate({
+      platform: newLink.platform,
+      url: newLink.url || null,
+      icon: newLink.icon,
+      display_order: (links?.length || 0) + 1,
+      is_visible: true,
+    }, {
+      onSuccess: () => {
+        setNewLink({ platform: "", url: "", icon: "instagram" });
+        setIsAddDialogOpen(false);
+      }
+    });
+  };
+
+  if (isLoading) {
+    return <div className="grid grid-cols-2 md:grid-cols-3 gap-4">{[1,2,3,4,5,6].map(i => <Skeleton key={i} className="h-32" />)}</div>;
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold">Redes Sociais ({links?.length || 0})</h3>
+        <Button onClick={() => setIsAddDialogOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Adicionar Rede Social
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {links?.map((link) => (
+          <Card key={link.id} className={link.is_visible ? "" : "opacity-50"}>
+            <CardContent className="pt-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {link.icon === 'instagram' && <Instagram className="h-5 w-5 text-pink-500" />}
+                  {link.icon === 'facebook' && <Facebook className="h-5 w-5 text-blue-600" />}
+                  {link.icon === 'whatsapp' && <MessageCircle className="h-5 w-5 text-green-500" />}
+                  {link.icon === 'twitter' && <Share2 className="h-5 w-5 text-sky-500" />}
+                  {link.icon === 'linkedin' && <Share2 className="h-5 w-5 text-blue-700" />}
+                  {link.icon === 'github' && <Share2 className="h-5 w-5" />}
+                  {link.icon === 'youtube' && <Share2 className="h-5 w-5 text-red-500" />}
+                  {link.icon === 'tiktok' && <Share2 className="h-5 w-5" />}
+                  <span className="font-medium">{link.platform}</span>
+                </div>
+                <Switch
+                  checked={link.is_visible}
+                  onCheckedChange={(checked) => updateLink.mutate({ id: link.id, is_visible: checked })}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Ícone</Label>
+                <Select
+                  value={link.icon}
+                  onValueChange={(value) => updateLink.mutate({ id: link.id, icon: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SOCIAL_ICONS.map((icon) => (
+                      <SelectItem key={icon.value} value={icon.value}>{icon.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Nome da Plataforma</Label>
+                <Input
+                  value={link.platform}
+                  onChange={(e) => updateLink.mutate({ id: link.id, platform: e.target.value })}
+                  placeholder="Instagram"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>URL</Label>
+                <Input
+                  value={link.url || ""}
+                  onChange={(e) => updateLink.mutate({ id: link.id, url: e.target.value })}
+                  placeholder="https://instagram.com/hookly"
+                />
+              </div>
+
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="w-full text-destructive hover:text-destructive"
+                onClick={() => deleteLink.mutate(link.id)}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Remover
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Add Social Link Dialog */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Adicionar Rede Social</DialogTitle>
+            <DialogDescription>
+              Adicione um novo link de rede social ao footer da landing page.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Plataforma</Label>
+              <Input 
+                value={newLink.platform}
+                onChange={(e) => setNewLink(prev => ({ ...prev, platform: e.target.value }))}
+                placeholder="Instagram"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>URL</Label>
+              <Input 
+                value={newLink.url}
+                onChange={(e) => setNewLink(prev => ({ ...prev, url: e.target.value }))}
+                placeholder="https://instagram.com/hookly"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Ícone</Label>
+              <Select
+                value={newLink.icon}
+                onValueChange={(value) => setNewLink(prev => ({ ...prev, icon: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SOCIAL_ICONS.map((icon) => (
+                    <SelectItem key={icon.value} value={icon.value}>{icon.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleAddLink} disabled={createLink.isPending}>
+              Adicionar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
 export default function AdminLandingPage() {
   const { t } = useTranslation();
   const { data: sections, isLoading } = useLandingSections();
@@ -507,7 +695,7 @@ export default function AdminLandingPage() {
       </div>
 
       <Tabs defaultValue="sections" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="sections" className="gap-2">
             <FileText className="h-4 w-4" />
             Seções
@@ -519,6 +707,10 @@ export default function AdminLandingPage() {
           <TabsTrigger value="stats" className="gap-2">
             <BarChart3 className="h-4 w-4" />
             Estatísticas
+          </TabsTrigger>
+          <TabsTrigger value="social" className="gap-2">
+            <Share2 className="h-4 w-4" />
+            Redes Sociais
           </TabsTrigger>
         </TabsList>
 
@@ -566,6 +758,23 @@ export default function AdminLandingPage() {
             </CardHeader>
             <CardContent>
               <StatsManager />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="social">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Share2 className="h-5 w-5" />
+                Gerenciar Redes Sociais
+              </CardTitle>
+              <CardDescription>
+                Edite os links e ícones das redes sociais no footer
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <SocialLinksManager />
             </CardContent>
           </Card>
         </TabsContent>

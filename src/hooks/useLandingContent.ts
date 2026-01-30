@@ -37,6 +37,17 @@ export interface LandingStat {
   updated_at: string;
 }
 
+export interface LandingSocialLink {
+  id: string;
+  platform: string;
+  url: string | null;
+  icon: string;
+  display_order: number;
+  is_visible: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export function useLandingSections() {
   return useQuery({
     queryKey: ["landing-sections"],
@@ -252,6 +263,96 @@ export function useDeleteLandingStat() {
     onError: (error) => {
       console.error("Error deleting stat:", error);
       toast.error("Erro ao remover estatística");
+    },
+  });
+}
+
+// Social Links hooks
+export function useLandingSocialLinks() {
+  return useQuery({
+    queryKey: ["landing-social-links"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("landing_social_links" as any)
+        .select("*")
+        .order("display_order", { ascending: true });
+      
+      if (error) throw error;
+      return (data || []) as unknown as LandingSocialLink[];
+    },
+  });
+}
+
+export function useUpdateLandingSocialLink() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<LandingSocialLink> & { id: string }) => {
+      const { data, error } = await supabase
+        .from("landing_social_links" as any)
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq("id", id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["landing-social-links"] });
+      toast.success("Rede social atualizada com sucesso!");
+    },
+    onError: (error) => {
+      console.error("Error updating social link:", error);
+      toast.error("Erro ao atualizar rede social");
+    },
+  });
+}
+
+export function useCreateLandingSocialLink() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (link: Omit<LandingSocialLink, "id" | "created_at" | "updated_at">) => {
+      const { data, error } = await supabase
+        .from("landing_social_links" as any)
+        .insert(link as any)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["landing-social-links"] });
+      toast.success("Rede social criada com sucesso!");
+    },
+    onError: (error) => {
+      console.error("Error creating social link:", error);
+      toast.error("Erro ao criar rede social");
+    },
+  });
+}
+
+export function useDeleteLandingSocialLink() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("landing_social_links" as any)
+        .delete()
+        .eq("id", id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["landing-social-links"] });
+      toast.success("Rede social removida com sucesso!");
+    },
+    onError: (error) => {
+      console.error("Error deleting social link:", error);
+      toast.error("Erro ao remover rede social");
     },
   });
 }
