@@ -106,9 +106,10 @@ function SectionEditor({ section }: { section: LandingSection }) {
               size="sm" 
               onClick={handleSave}
               disabled={updateSection.isPending}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-lg"
             >
               <Save className="h-4 w-4 mr-2" />
-              Salvar
+              {updateSection.isPending ? "Salvando..." : "Salvar Alterações"}
             </Button>
           </div>
         </div>
