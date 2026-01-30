@@ -69,18 +69,33 @@ export function AchievementsCard({ freelancerUserId }: AchievementsCardProps) {
         setAchievements(achievementsData);
       }
 
-      // Fetch real revenue from user_balances (escrow + earnings, stored in cents)
-      const { data: balanceData } = await supabase
-        .from("user_balances")
-        .select("earnings_available, escrow_held")
-        .eq("user_id", targetUserId)
-        .eq("user_type", "freelancer")
-        .maybeSingle();
+      // Fetch real revenue: earnings_available + escrow_held + paid withdrawals
+      // user_balances stores values in MAJOR UNITS (numeric with decimals)
+      const [balanceResult, withdrawalsResult] = await Promise.all([
+        supabase
+          .from("user_balances")
+          .select("earnings_available, escrow_held")
+          .eq("user_id", targetUserId)
+          .eq("user_type", "freelancer")
+          .maybeSingle(),
+        supabase
+          .from("withdrawal_requests")
+          .select("amount")
+          .eq("freelancer_user_id", targetUserId)
+          .eq("status", "paid")
+      ]);
 
-      if (balanceData) {
-        // Convert from cents to currency units
-        const earningsCents = Number(balanceData.earnings_available || 0) + Number(balanceData.escrow_held || 0);
-        setTotalRevenue(earningsCents / 100);
+      // All values in MAJOR UNITS
+      const earningsAvailable = Number(balanceResult.data?.earnings_available || 0);
+      const escrowHeld = Number(balanceResult.data?.escrow_held || 0);
+      const paidWithdrawals = (withdrawalsResult.data || [])
+        .reduce((sum, w) => sum + (Number(w.amount) || 0), 0);
+
+      // Total revenue = available + escrow + already withdrawn
+      const total = earningsAvailable + escrowHeld + paidWithdrawals;
+      
+      if (total > 0) {
+        setTotalRevenue(total);
       } else {
         // Fallback to freelancer_profiles total_revenue if no balance record
         const { data: profileData } = await supabase
