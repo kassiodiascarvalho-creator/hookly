@@ -187,11 +187,12 @@ export default function Earnings() {
       .maybeSingle();
 
     if (balanceData) {
-      // Values are stored in cents - use formatMoneyFromCents for display
+      // IMPORTANT: user_balances stores values in MAJOR UNITS (not cents)
+      // Convert to cents for internal consistency with formatMoneyFromCents
       setUserBalance({
-        earnings_available: Number(balanceData.earnings_available) || 0, // Keep in cents
+        earnings_available: Math.round((Number(balanceData.earnings_available) || 0) * 100), // Convert major to minor
         credits_available: Number(balanceData.credits_available) || 0, // credits stay as units
-        escrow_held: Number(balanceData.escrow_held) || 0, // Keep in cents
+        escrow_held: Math.round((Number(balanceData.escrow_held) || 0) * 100), // Convert major to minor
         currency: balanceData.currency || "BRL"
       });
     }
@@ -218,11 +219,11 @@ export default function Earnings() {
 
     if (withdrawalsData) {
       setWithdrawalRequests(withdrawalsData);
-      // Calculate total paid withdrawals (values are stored in cents)
+      // IMPORTANT: withdrawal_requests.amount is in MAJOR UNITS - convert to cents
       const paidWithdrawals = withdrawalsData
         .filter(w => w.status === 'paid')
-        .reduce((sum, w) => sum + (Number(w.amount) || 0), 0);
-      setTotalPaidWithdrawals(paidWithdrawals); // Keep in cents
+        .reduce((sum, w) => sum + Math.round((Number(w.amount) || 0) * 100), 0);
+      setTotalPaidWithdrawals(paidWithdrawals); // Now in cents
     }
 
     setLoading(false);
