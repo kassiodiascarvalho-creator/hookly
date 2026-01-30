@@ -1178,6 +1178,13 @@ export type Database = {
             referencedRelation: "identity_verifications"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "identity_audit_logs_identity_verification_id_fkey"
+            columns: ["identity_verification_id"]
+            isOneToOne: false
+            referencedRelation: "identity_verifications_admin"
+            referencedColumns: ["id"]
+          },
         ]
       }
       identity_verification_files: {
@@ -1220,6 +1227,13 @@ export type Database = {
             columns: ["identity_verification_id"]
             isOneToOne: false
             referencedRelation: "identity_verifications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "identity_verification_files_identity_verification_id_fkey"
+            columns: ["identity_verification_id"]
+            isOneToOne: false
+            referencedRelation: "identity_verifications_admin"
             referencedColumns: ["id"]
           },
         ]
@@ -3079,6 +3093,34 @@ export type Database = {
         }
         Relationships: []
       }
+      identity_verifications_admin: {
+        Row: {
+          admin_decision: string | null
+          admin_decision_at: string | null
+          admin_notes: string | null
+          attempts: number | null
+          avatar_url: string | null
+          country: string | null
+          created_at: string | null
+          display_name: string | null
+          document_type: string | null
+          email: string | null
+          failure_reason: string | null
+          files_count: number | null
+          id: string | null
+          max_attempts: number | null
+          provider: string | null
+          reviewed_by_admin_id: string | null
+          risk_level: string | null
+          risk_score: number | null
+          status: string | null
+          subject_type: string | null
+          updated_at: string | null
+          user_id: string | null
+          verified_at: string | null
+        }
+        Relationships: []
+      }
       profiles_public: {
         Row: {
           created_at: string | null
@@ -3246,6 +3288,10 @@ export type Database = {
         Returns: string
       }
       ensure_user_wallet: { Args: { p_user_id: string }; Returns: string }
+      finalize_identity_uploads: {
+        Args: { p_verification_id: string }
+        Returns: Json
+      }
       finalize_proposal_acceptance: {
         Args: { p_proposal_id: string }
         Returns: string
@@ -3274,6 +3320,17 @@ export type Database = {
       get_freelancer_proposal_usage: {
         Args: { p_freelancer_user_id: string }
         Returns: Json
+      }
+      get_identity_files_for_review: {
+        Args: { p_verification_id: string }
+        Returns: {
+          created_at: string
+          file_id: string
+          file_type: string
+          quality_issues: string[]
+          quality_score: number
+          storage_path: string
+        }[]
       }
       get_identity_status: {
         Args: { p_subject_type: string; p_user_id: string }
@@ -3338,6 +3395,17 @@ export type Database = {
       maybe_reset_monthly_proposals: {
         Args: { p_freelancer_user_id: string }
         Returns: undefined
+      }
+      process_identity_verification: {
+        Args: {
+          p_failure_reason?: string
+          p_quality_results?: Json
+          p_risk_level?: string
+          p_risk_score?: number
+          p_status: string
+          p_verification_id: string
+        }
+        Returns: boolean
       }
       process_withdrawal: {
         Args: {
