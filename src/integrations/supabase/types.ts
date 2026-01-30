@@ -2551,7 +2551,39 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      profiles_public: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          onboarding_completed: boolean | null
+          preferred_language: string | null
+          profile_completion_percent: number | null
+          role: Database["public"]["Enums"]["app_role"] | null
+          user_id: string | null
+          user_type: Database["public"]["Enums"]["user_type"] | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          onboarding_completed?: boolean | null
+          preferred_language?: string | null
+          profile_completion_percent?: number | null
+          role?: Database["public"]["Enums"]["app_role"] | null
+          user_id?: string | null
+          user_type?: Database["public"]["Enums"]["user_type"] | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          onboarding_completed?: boolean | null
+          preferred_language?: string | null
+          profile_completion_percent?: number | null
+          role?: Database["public"]["Enums"]["app_role"] | null
+          user_id?: string | null
+          user_type?: Database["public"]["Enums"]["user_type"] | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       add_credits: {
