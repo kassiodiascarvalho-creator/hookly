@@ -26,6 +26,20 @@ export function useFreelancerPlan() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const getRecentProposalsCount = useCallback(async (freelancerUserId: string) => {
+    // Source of truth for UI + blocking: count proposals rows in last 30 days.
+    // This avoids relying on cached counters/RPCs that might be out of sync.
+    const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { count, error: countError } = await supabase
+      .from("proposals")
+      .select("id", { count: "exact", head: true })
+      .eq("freelancer_user_id", freelancerUserId)
+      .gte("created_at", since);
+
+    if (countError) throw countError;
+    return count ?? 0;
+  }, []);
+
   const checkSubscription = useCallback(async () => {
     if (!user) {
       setPlan(null);
@@ -72,6 +86,20 @@ export function useFreelancerPlan() {
         console.log("[useFreelancerPlan] RPC not available, using fallback");
       }
 
+      // Always try to compute proposals_used from actual proposals table (last 30 days)
+      // so the UI in Settings/Billing and the blocking in ProjectView are correct.
+      let proposalsUsedFromDb: number | null = null;
+      if (!isUnlimitedTier) {
+        try {
+          proposalsUsedFromDb = await getRecentProposalsCount(user.id);
+        } catch (countErr) {
+          // Non-fatal: keep using RPC/cached values
+          console.log(
+            "[useFreelancerPlan] Could not count proposals from table, using RPC/cached values"
+          );
+        }
+      }
+
       // Fallback: get limit from plan definition
       let proposalsLimit: number | null = null;
       if (!usage && !isUnlimitedTier) {
@@ -87,10 +115,14 @@ export function useFreelancerPlan() {
 
       // If no plan exists, return default free plan
       if (!planData) {
+        const proposalsUsed = Math.max(
+          usage?.proposals_used ?? 0,
+          proposalsUsedFromDb ?? 0
+        );
         setPlan({
           plan_type: "free",
           status: "active",
-          proposals_used: usage?.proposals_used ?? 0,
+          proposals_used: proposalsUsed,
           proposals_limit: usage?.proposals_limit ?? proposalsLimit ?? 5,
           subscription_end: null,
           cancel_at_period_end: false,
@@ -102,10 +134,15 @@ export function useFreelancerPlan() {
         return;
       }
 
+      const proposalsUsed = Math.max(
+        proposalsUsedFromDb ?? 0,
+        usage?.proposals_used ?? planData.proposals_this_month ?? 0
+      );
+
       setPlan({
         plan_type: planData.plan_type,
         status: planData.status,
-        proposals_used: usage?.proposals_used ?? planData.proposals_this_month ?? 0,
+        proposals_used: proposalsUsed,
         proposals_limit: usage?.proposals_limit ?? proposalsLimit,
         subscription_end: planData.current_period_end,
         cancel_at_period_end: planData.cancel_at_period_end || false,
@@ -130,7 +167,7 @@ export function useFreelancerPlan() {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, getRecentProposalsCount]);
 
   const openCustomerPortal = useCallback(async () => {
     const { data, error } = await supabase.functions.invoke("freelancer-customer-portal");
