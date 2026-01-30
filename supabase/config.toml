@@ -101,3 +101,9 @@ verify_jwt = false
 
 [functions.billing-company-summary]
 verify_jwt = false
+
+[functions.create-identity-session]
+verify_jwt = false
+
+[functions.identity-webhook]
+verify_jwt = false
