@@ -409,6 +409,9 @@ export default function Settings() {
 
         {/* Profile Tab */}
         <TabsContent value="profile" className="space-y-6">
+          {/* Identity Verification - shown in profile tab for visibility */}
+          <IdentityVerificationCard subjectType={isCompany ? "company" : "freelancer"} />
+          
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
