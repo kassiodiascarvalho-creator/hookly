@@ -292,6 +292,8 @@ export type Database = {
           document_number: string | null
           document_type: string | null
           id: string
+          identity_status: string | null
+          identity_verified_at: string | null
           industry: string | null
           is_verified: boolean | null
           location: string | null
@@ -313,6 +315,8 @@ export type Database = {
           document_number?: string | null
           document_type?: string | null
           id?: string
+          identity_status?: string | null
+          identity_verified_at?: string | null
           industry?: string | null
           is_verified?: boolean | null
           location?: string | null
@@ -334,6 +338,8 @@ export type Database = {
           document_number?: string | null
           document_type?: string | null
           id?: string
+          identity_status?: string | null
+          identity_verified_at?: string | null
           industry?: string | null
           is_verified?: boolean | null
           location?: string | null
@@ -866,6 +872,8 @@ export type Database = {
           full_name: string | null
           hourly_rate: number | null
           id: string
+          identity_status: string | null
+          identity_verified_at: string | null
           languages: string[] | null
           location: string | null
           preferred_payout_currency: string | null
@@ -893,6 +901,8 @@ export type Database = {
           full_name?: string | null
           hourly_rate?: number | null
           id?: string
+          identity_status?: string | null
+          identity_verified_at?: string | null
           languages?: string[] | null
           location?: string | null
           preferred_payout_currency?: string | null
@@ -920,6 +930,8 @@ export type Database = {
           full_name?: string | null
           hourly_rate?: number | null
           id?: string
+          identity_status?: string | null
+          identity_verified_at?: string | null
           languages?: string[] | null
           location?: string | null
           preferred_payout_currency?: string | null
@@ -1117,6 +1129,140 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      identity_audit_logs: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_type: string
+          created_at: string
+          id: string
+          identity_verification_id: string | null
+          ip_address: string | null
+          metadata: Json | null
+          new_status: string | null
+          previous_status: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_type: string
+          created_at?: string
+          id?: string
+          identity_verification_id?: string | null
+          ip_address?: string | null
+          metadata?: Json | null
+          new_status?: string | null
+          previous_status?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_type?: string
+          created_at?: string
+          id?: string
+          identity_verification_id?: string | null
+          ip_address?: string | null
+          metadata?: Json | null
+          new_status?: string | null
+          previous_status?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "identity_audit_logs_identity_verification_id_fkey"
+            columns: ["identity_verification_id"]
+            isOneToOne: false
+            referencedRelation: "identity_verifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      identity_verifications: {
+        Row: {
+          admin_decision: string | null
+          admin_decision_at: string | null
+          admin_notes: string | null
+          attempts: number
+          consent_given: boolean
+          consent_given_at: string | null
+          country: string
+          created_at: string
+          document_type: string
+          failure_code: string | null
+          failure_reason: string | null
+          id: string
+          max_attempts: number
+          metadata: Json | null
+          provider: string
+          provider_report_id: string | null
+          provider_session_id: string | null
+          reviewed_by_admin_id: string | null
+          risk_level: string | null
+          status: string
+          subject_type: string
+          updated_at: string
+          user_id: string
+          verification_score: number | null
+          verified_at: string | null
+        }
+        Insert: {
+          admin_decision?: string | null
+          admin_decision_at?: string | null
+          admin_notes?: string | null
+          attempts?: number
+          consent_given?: boolean
+          consent_given_at?: string | null
+          country?: string
+          created_at?: string
+          document_type: string
+          failure_code?: string | null
+          failure_reason?: string | null
+          id?: string
+          max_attempts?: number
+          metadata?: Json | null
+          provider?: string
+          provider_report_id?: string | null
+          provider_session_id?: string | null
+          reviewed_by_admin_id?: string | null
+          risk_level?: string | null
+          status?: string
+          subject_type: string
+          updated_at?: string
+          user_id: string
+          verification_score?: number | null
+          verified_at?: string | null
+        }
+        Update: {
+          admin_decision?: string | null
+          admin_decision_at?: string | null
+          admin_notes?: string | null
+          attempts?: number
+          consent_given?: boolean
+          consent_given_at?: string | null
+          country?: string
+          created_at?: string
+          document_type?: string
+          failure_code?: string | null
+          failure_reason?: string | null
+          id?: string
+          max_attempts?: number
+          metadata?: Json | null
+          provider?: string
+          provider_report_id?: string | null
+          provider_session_id?: string | null
+          reviewed_by_admin_id?: string | null
+          risk_level?: string | null
+          status?: string
+          subject_type?: string
+          updated_at?: string
+          user_id?: string
+          verification_score?: number | null
+          verified_at?: string | null
+        }
+        Relationships: []
       }
       landing_faq_items: {
         Row: {
