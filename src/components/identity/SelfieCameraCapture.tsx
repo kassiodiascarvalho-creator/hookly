@@ -24,7 +24,8 @@ export function SelfieCameraCapture({ onCapture, disabled = false }: SelfieCamer
   const streamRef = useRef<MediaStream | null>(null);
   
   const [cameraState, setCameraState] = useState<"idle" | "requesting" | "active" | "captured" | "uploading" | "uploaded" | "error">("idle");
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [capturedFile, setCapturedFile] = useState<File | null>(null);
+  const [capturedPreviewUrl, setCapturedPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Cleanup on unmount
@@ -33,11 +34,11 @@ export function SelfieCameraCapture({ onCapture, disabled = false }: SelfieCamer
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
-      if (capturedImage) {
-        URL.revokeObjectURL(capturedImage);
+      if (capturedPreviewUrl) {
+        URL.revokeObjectURL(capturedPreviewUrl);
       }
     };
-  }, [capturedImage]);
+  }, [capturedPreviewUrl]);
 
   const startCamera = useCallback(async () => {
     setCameraState("requesting");
@@ -91,7 +92,7 @@ export function SelfieCameraCapture({ onCapture, disabled = false }: SelfieCamer
     }
   }, []);
 
-  const capturePhoto = useCallback(() => {
+  const capturePhoto = useCallback(async () => {
     if (!videoRef.current || !canvasRef.current) return;
 
     const video = videoRef.current;
@@ -100,10 +101,19 @@ export function SelfieCameraCapture({ onCapture, disabled = false }: SelfieCamer
 
     if (!ctx) return;
 
-    // Use higher resolution for better quality (minimum 1280x960)
-    const targetWidth = Math.max(video.videoWidth, 1280);
-    const targetHeight = Math.max(video.videoHeight, 960);
-    
+    // Ensure video metadata is ready
+    if (!video.videoWidth || !video.videoHeight) {
+      setError("A câmera ainda está carregando. Aguarde 1 segundo e tente novamente.");
+      return;
+    }
+
+    setError(null);
+
+    // Force a sufficiently large image so it passes the 50KB minimum validation
+    // (even on devices where the camera stream comes in at a low resolution)
+    const targetWidth = Math.max(video.videoWidth, 1920);
+    const targetHeight = Math.max(video.videoHeight, 1440);
+
     canvas.width = targetWidth;
     canvas.height = targetHeight;
 
@@ -115,53 +125,96 @@ export function SelfieCameraCapture({ onCapture, disabled = false }: SelfieCamer
     ctx.drawImage(video, -targetWidth, 0, targetWidth, targetHeight);
     ctx.restore();
 
-    // Convert to data URL with maximum quality (1.0)
-    const imageDataUrl = canvas.toDataURL("image/jpeg", 1.0);
-    setCapturedImage(imageDataUrl);
-    setCameraState("captured");
+    const minBytes = 50 * 1024;
 
-    // Stop camera after capture
-    stopCamera();
-  }, [stopCamera]);
+    const makeFileFromBlob = (blob: Blob, name: string) =>
+      new File([blob], name, { type: blob.type });
+
+    const createFile = async (): Promise<File> => {
+      const jpegBlob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, "image/jpeg", 0.98)
+      );
+
+      if (jpegBlob && jpegBlob.size >= minBytes) return makeFileFromBlob(jpegBlob, "selfie.jpg");
+
+      // Fallback: PNG can be larger in some edge cases
+      const pngBlob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, "image/png")
+      );
+
+      if (pngBlob && pngBlob.size >= minBytes) return makeFileFromBlob(pngBlob, "selfie.png");
+
+      // Last resort: upscale the captured frame and export at max JPEG quality
+      const scale = 1.5;
+      const upCanvas = document.createElement("canvas");
+      upCanvas.width = Math.min(Math.round(targetWidth * scale), 2560);
+      upCanvas.height = Math.min(Math.round(targetHeight * scale), 1920);
+      const upCtx = upCanvas.getContext("2d");
+
+      if (upCtx) {
+        upCtx.imageSmoothingEnabled = true;
+        upCtx.imageSmoothingQuality = "high";
+        upCtx.drawImage(canvas, 0, 0, upCanvas.width, upCanvas.height);
+      }
+
+      const upJpegBlob = await new Promise<Blob | null>((resolve) =>
+        upCanvas.toBlob(resolve, "image/jpeg", 1.0)
+      );
+
+      if (upJpegBlob) return makeFileFromBlob(upJpegBlob, "selfie.jpg");
+
+      throw new Error("Falha ao gerar a foto. Tente novamente.");
+    };
+
+    try {
+      // Cleanup previous preview if any
+      if (capturedPreviewUrl) URL.revokeObjectURL(capturedPreviewUrl);
+
+      const file = await createFile();
+      const previewUrl = URL.createObjectURL(file);
+
+      setCapturedFile(file);
+      setCapturedPreviewUrl(previewUrl);
+      setCameraState("captured");
+
+      // Stop camera after capture
+      stopCamera();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha ao capturar a selfie");
+    }
+  }, [capturedPreviewUrl, stopCamera]);
 
   const retakePhoto = useCallback(() => {
-    if (capturedImage) {
-      URL.revokeObjectURL(capturedImage);
-    }
-    setCapturedImage(null);
+    if (capturedPreviewUrl) URL.revokeObjectURL(capturedPreviewUrl);
+    setCapturedFile(null);
+    setCapturedPreviewUrl(null);
     setCameraState("idle");
     startCamera();
-  }, [capturedImage, startCamera]);
+  }, [capturedPreviewUrl, startCamera]);
 
   const confirmPhoto = useCallback(async () => {
-    if (!capturedImage) return;
+    if (!capturedFile) return;
 
     setCameraState("uploading");
     setError(null);
 
     try {
-      // Convert data URL to File
-      const response = await fetch(capturedImage);
-      const blob = await response.blob();
-      const file = new File([blob], "selfie.jpg", { type: "image/jpeg" });
-
-      await onCapture(file);
+      await onCapture(capturedFile);
       setCameraState("uploaded");
     } catch (err) {
       console.error("[SELFIE] Upload error:", err);
       setError(err instanceof Error ? err.message : "Falha no envio da selfie");
       setCameraState("captured"); // Allow retry
     }
-  }, [capturedImage, onCapture]);
+  }, [capturedFile, onCapture]);
 
   const cancelCapture = useCallback(() => {
     stopCamera();
-    if (capturedImage) {
-      URL.revokeObjectURL(capturedImage);
-    }
-    setCapturedImage(null);
+    if (capturedPreviewUrl) URL.revokeObjectURL(capturedPreviewUrl);
+    setCapturedFile(null);
+    setCapturedPreviewUrl(null);
     setCameraState("idle");
-  }, [stopCamera, capturedImage]);
+  }, [stopCamera, capturedPreviewUrl]);
 
   // Render idle state - start button
   if (cameraState === "idle") {
@@ -280,37 +333,22 @@ export function SelfieCameraCapture({ onCapture, disabled = false }: SelfieCamer
             className="w-full h-64 object-cover scale-x-[-1]"
           />
           
-          {/* Bright overlay around face guide - fills the whole area */}
+          {/* Subtle blur outside the face guide (keeps camera "open", no white overlay) */}
           <div className="absolute inset-0 pointer-events-none">
-            {/* Semi-transparent bright overlay covering everything */}
-            <div className="absolute inset-0 bg-white/30" />
-            
-            {/* Dark cutout in the center for the face (using clip-path would be ideal but using layers) */}
+            <div className="absolute inset-0 backdrop-blur-sm bg-background/5 [mask-image:radial-gradient(ellipse_160px_210px_at_center,transparent_0%,transparent_72%,black_80%)]" />
             <div className="absolute inset-0 flex items-center justify-center">
-              {/* Main face guide hole - darker center */}
-              <div 
-                className="w-44 h-56 rounded-[50%] relative"
-                style={{
-                  background: 'radial-gradient(ellipse at center, transparent 0%, transparent 85%, rgba(255,255,255,0.4) 100%)',
-                  boxShadow: '0 0 0 9999px rgba(255,255,255,0.35), inset 0 0 30px rgba(255,255,255,0.3)'
-                }}
-              >
-                {/* Glowing border */}
-                <div className="absolute inset-0 rounded-[50%] border-4 border-white shadow-[0_0_20px_rgba(255,255,255,0.8),0_0_40px_rgba(255,255,255,0.5)]" />
-                
-                {/* Label */}
-                <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-white text-xs bg-black/80 px-4 py-2 rounded-full font-medium whitespace-nowrap shadow-lg">
-                  Centralize seu rosto aqui
+              <div className="w-40 h-52 rounded-[50%] border-2 border-white/60 shadow-[0_0_24px_rgba(255,255,255,0.18)] relative">
+                <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-white text-xs bg-black/70 px-3 py-1.5 rounded-full font-medium whitespace-nowrap">
+                  Centralize seu rosto
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Tips overlay */}
-          <div className="absolute top-3 left-3 right-3 flex items-center justify-center">
-            <div className="bg-black/80 text-white text-xs px-4 py-2 rounded-full flex items-center gap-2 font-medium shadow-lg">
-              <Lightbulb className="h-4 w-4 text-yellow-300" />
-              Procure boa iluminação e olhe para a câmera
+            <div className="absolute top-2 left-2 right-2 flex items-center justify-center">
+              <div className="bg-black/70 text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-2">
+                <Lightbulb className="h-4 w-4 text-primary" />
+                Boa iluminação e olhe para a câmera
+              </div>
             </div>
           </div>
         </div>
@@ -340,9 +378,9 @@ export function SelfieCameraCapture({ onCapture, disabled = false }: SelfieCamer
       </div>
 
       <div className="relative rounded-lg overflow-hidden bg-muted">
-        {capturedImage && (
+        {capturedPreviewUrl && (
           <img
-            src={capturedImage}
+            src={capturedPreviewUrl}
             alt="Selfie capturada"
             className="w-full h-64 object-cover"
           />
