@@ -2551,6 +2551,57 @@ export type Database = {
       }
     }
     Views: {
+      company_profiles_public: {
+        Row: {
+          about: string | null
+          company_name: string | null
+          company_size: string | null
+          contact_name: string | null
+          country: string | null
+          created_at: string | null
+          id: string | null
+          industry: string | null
+          is_verified: boolean | null
+          location: string | null
+          logo_url: string | null
+          user_id: string | null
+          verified_at: string | null
+          website: string | null
+        }
+        Insert: {
+          about?: string | null
+          company_name?: string | null
+          company_size?: string | null
+          contact_name?: string | null
+          country?: string | null
+          created_at?: string | null
+          id?: string | null
+          industry?: string | null
+          is_verified?: boolean | null
+          location?: string | null
+          logo_url?: string | null
+          user_id?: string | null
+          verified_at?: string | null
+          website?: string | null
+        }
+        Update: {
+          about?: string | null
+          company_name?: string | null
+          company_size?: string | null
+          contact_name?: string | null
+          country?: string | null
+          created_at?: string | null
+          id?: string | null
+          industry?: string | null
+          is_verified?: boolean | null
+          location?: string | null
+          logo_url?: string | null
+          user_id?: string | null
+          verified_at?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
       profiles_public: {
         Row: {
           created_at: string | null
