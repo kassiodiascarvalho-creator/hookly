@@ -17,6 +17,7 @@ import {
 
 export type IdentityStatus = 
   | "not_started" 
+  | "uploading"
   | "pending" 
   | "processing" 
   | "verified" 
@@ -40,6 +41,13 @@ const statusConfig: Record<IdentityStatus, {
   tooltipKey: string;
 }> = {
   not_started: {
+    icon: Shield,
+    colorClass: "text-muted-foreground",
+    bgClass: "bg-muted",
+    labelKey: "identity.status.notStarted",
+    tooltipKey: "identity.tooltip.notStarted",
+  },
+  uploading: {
     icon: Shield,
     colorClass: "text-muted-foreground",
     bgClass: "bg-muted",
