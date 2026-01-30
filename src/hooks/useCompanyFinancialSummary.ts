@@ -77,14 +77,30 @@ export function useCompanyFinancialSummary(): CompanyFinancialSummary {
           amount_cents,
           currency,
           milestones,
-          freelancer_user_id,
-          freelancer:freelancer_profiles!contracts_freelancer_user_id_fkey(full_name)
+          freelancer_user_id
         `)
         .eq("company_user_id", user.id)
         .in("status", ["active", "in_progress"]);
 
       if (contractsError) {
         console.error("[useCompanyFinancialSummary] Error fetching contracts:", contractsError);
+      }
+
+      // 1b. Fetch freelancer profiles for contracts
+      const freelancerIds = [...new Set(contracts?.map((c) => c.freelancer_user_id).filter(Boolean) || [])];
+      let freelancerNames: Record<string, string> = {};
+
+      if (freelancerIds.length > 0) {
+        const { data: freelancers } = await supabase
+          .from("freelancer_profiles")
+          .select("user_id, full_name")
+          .in("user_id", freelancerIds);
+
+        freelancers?.forEach((f) => {
+          if (f.user_id && f.full_name) {
+            freelancerNames[f.user_id] = f.full_name;
+          }
+        });
       }
 
       // 2. Fetch ledger transactions for contract funding/release
@@ -137,10 +153,6 @@ export function useCompanyFinancialSummary(): CompanyFinancialSummary {
         const missing = Math.max(0, contractTotalMajor - protectedCurrent);
         
         if (missing > 0) {
-          const freelancerData = Array.isArray(contract.freelancer) 
-            ? contract.freelancer[0] 
-            : contract.freelancer;
-          
           pendingContracts.push({
             id: contract.id,
             title: contract.title,
@@ -148,7 +160,7 @@ export function useCompanyFinancialSummary(): CompanyFinancialSummary {
             protectedCurrent,
             missing,
             currency: contract.currency,
-            freelancerName: freelancerData?.full_name || null,
+            freelancerName: freelancerNames[contract.freelancer_user_id] || null,
             freelancerUserId: contract.freelancer_user_id,
           });
 
