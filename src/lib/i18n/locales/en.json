@@ -954,7 +954,12 @@
     "noPaymentMethods": "No payment methods saved",
     "addPaymentMethod": "Add Payment Method",
     "preferredPayoutCurrency": "Preferred Payout Currency",
-    "preferredPayoutCurrencyDesc": "This is your preference for display and manual payment receipt"
+    "preferredPayoutCurrencyDesc": "This is your preference for display and manual payment receipt",
+    "documentType": "Document Type",
+    "selectDocumentType": "Select CPF or CNPJ",
+    "documentNumber": "Document Number",
+    "cpfDesc": "CPF must have 11 digits",
+    "cnpjDesc": "CNPJ must have 14 digits"
   },
   "talentPool": {
     "title": "Talent Pool",

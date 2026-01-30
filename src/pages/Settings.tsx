@@ -54,6 +54,8 @@ interface CompanyProfile {
   website: string | null;
   about: string | null;
   logo_url: string | null;
+  document_type: "cpf" | "cnpj" | null;
+  document_number: string | null;
 }
 
 interface FreelancerProfile {
@@ -68,6 +70,8 @@ interface FreelancerProfile {
   avatar_url: string | null;
   preferred_payout_currency: string | null;
   tier?: FreelancerTier | null;
+  document_type: "cpf" | "cnpj" | null;
+  document_number: string | null;
 }
 
 export default function Settings() {
@@ -149,7 +153,22 @@ export default function Settings() {
           .eq("user_id", user.id)
           .single();
         if (companyData) {
-          setCompanyProfile(companyData);
+          // Cast to any to access new columns not yet in generated types
+          const data = companyData as any;
+          setCompanyProfile({
+            company_name: data.company_name,
+            contact_name: data.contact_name,
+            phone: data.phone,
+            location: data.location,
+            country: data.country,
+            industry: data.industry,
+            company_size: data.company_size,
+            website: data.website,
+            about: data.about,
+            logo_url: data.logo_url,
+            document_type: data.document_type || null,
+            document_number: data.document_number || null,
+          });
         }
       } else if (profileData.user_type === "freelancer") {
         const { data: freelancerData } = await supabase
@@ -158,9 +177,22 @@ export default function Settings() {
           .eq("user_id", user.id)
           .single();
         if (freelancerData) {
+          // Cast to any to access new columns not yet in generated types
+          const data = freelancerData as any;
           setFreelancerProfile({
-            ...freelancerData,
-            tier: (freelancerData.tier as FreelancerTier) || "standard"
+            full_name: data.full_name,
+            title: data.title,
+            bio: data.bio,
+            hourly_rate: data.hourly_rate,
+            location: data.location,
+            country: data.country,
+            skills: data.skills,
+            languages: data.languages,
+            avatar_url: data.avatar_url,
+            preferred_payout_currency: data.preferred_payout_currency,
+            tier: (data.tier as FreelancerTier) || "standard",
+            document_type: data.document_type || null,
+            document_number: data.document_number || null,
           });
         }
       }
@@ -199,6 +231,8 @@ export default function Settings() {
           website: companyProfile.website,
           about: companyProfile.about,
           logo_url: companyProfile.logo_url,
+          document_type: companyProfile.document_type,
+          document_number: companyProfile.document_number,
         };
         const { error } = await supabase
           .from("company_profiles")
@@ -222,6 +256,8 @@ export default function Settings() {
           languages: freelancerProfile.languages,
           avatar_url: freelancerProfile.avatar_url,
           preferred_payout_currency: freelancerProfile.preferred_payout_currency,
+          document_type: freelancerProfile.document_type,
+          document_number: freelancerProfile.document_number,
         };
         const { error } = await supabase
           .from("freelancer_profiles")
@@ -546,6 +582,36 @@ export default function Settings() {
                       onChange={(e) => setCompanyProfile({ ...companyProfile, website: e.target.value })}
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label>{t("settings.documentType")}</Label>
+                    <Select
+                      value={companyProfile.document_type || ""}
+                      onValueChange={(value) => setCompanyProfile({ ...companyProfile, document_type: value as "cpf" | "cnpj" })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={t("settings.selectDocumentType")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cpf">CPF (Pessoa Física)</SelectItem>
+                        <SelectItem value="cnpj">CNPJ (Pessoa Jurídica)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t("settings.documentNumber")}</Label>
+                    <Input
+                      value={companyProfile.document_number || ""}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, "");
+                        setCompanyProfile({ ...companyProfile, document_number: value });
+                      }}
+                      placeholder={companyProfile.document_type === "cpf" ? "000.000.000-00" : "00.000.000/0000-00"}
+                      maxLength={companyProfile.document_type === "cpf" ? 11 : 14}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {companyProfile.document_type === "cpf" ? t("settings.cpfDesc") : t("settings.cnpjDesc")}
+                    </p>
+                  </div>
                   <div className="space-y-2 md:col-span-2">
                     <Label>{t("settings.about")}</Label>
                     <Textarea
@@ -648,6 +714,36 @@ export default function Settings() {
                       className="w-48"
                     />
                     <p className="text-xs text-muted-foreground">{t("settings.preferredPayoutCurrencyDesc")}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t("settings.documentType")}</Label>
+                    <Select
+                      value={freelancerProfile.document_type || ""}
+                      onValueChange={(value) => setFreelancerProfile({ ...freelancerProfile, document_type: value as "cpf" | "cnpj" })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={t("settings.selectDocumentType")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cpf">CPF (Pessoa Física)</SelectItem>
+                        <SelectItem value="cnpj">CNPJ (Pessoa Jurídica)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t("settings.documentNumber")}</Label>
+                    <Input
+                      value={freelancerProfile.document_number || ""}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, "");
+                        setFreelancerProfile({ ...freelancerProfile, document_number: value });
+                      }}
+                      placeholder={freelancerProfile.document_type === "cpf" ? "000.000.000-00" : "00.000.000/0000-00"}
+                      maxLength={freelancerProfile.document_type === "cpf" ? 11 : 14}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {freelancerProfile.document_type === "cpf" ? t("settings.cpfDesc") : t("settings.cnpjDesc")}
+                    </p>
                   </div>
                 </div>
               ) : null}
