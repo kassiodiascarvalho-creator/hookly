@@ -574,6 +574,11 @@ export default function Earnings() {
                     userBalance.currency
                   )}
                 </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {t("earnings.received")}: {formatMoney(userBalance.earnings_available, userBalance.currency)} 
+                  {contractsEscrow > 0 && ` + ${t("earnings.inEscrow")}: ${formatMoneyFromCents(contractsEscrow, userBalance.currency)}`}
+                  {totalPaidWithdrawals > 0 && ` + ${t("earnings.withdrawn")}: ${formatMoney(totalPaidWithdrawals, userBalance.currency)}`}
+                </p>
               </div>
             </div>
           </CardContent>
