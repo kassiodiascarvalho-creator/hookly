@@ -27,6 +27,7 @@ export function SelfieCameraCapture({ onCapture, disabled = false }: SelfieCamer
   const [capturedFile, setCapturedFile] = useState<File | null>(null);
   const [capturedPreviewUrl, setCapturedPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [playBlocked, setPlayBlocked] = useState(false);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -40,9 +41,31 @@ export function SelfieCameraCapture({ onCapture, disabled = false }: SelfieCamer
     };
   }, [capturedPreviewUrl]);
 
+  // Ensure stream is attached to the <video> whenever it mounts.
+  // (Fixes the "black video" issue when getUserMedia resolves while we're still in the 'requesting' UI)
+  useEffect(() => {
+    if (cameraState !== "active") return;
+    const video = videoRef.current;
+    const stream = streamRef.current;
+    if (!video || !stream) return;
+
+    if (video.srcObject !== stream) {
+      video.srcObject = stream;
+    }
+
+    const p = video.play();
+    if (p && typeof (p as Promise<void>).catch === "function") {
+      (p as Promise<void>).catch(() => {
+        // Some browsers require user interaction to start video playback.
+        setPlayBlocked(true);
+      });
+    }
+  }, [cameraState]);
+
   const startCamera = useCallback(async () => {
     setCameraState("requesting");
     setError(null);
+    setPlayBlocked(false);
 
     try {
       // Request camera with minimal constraints for faster startup
@@ -52,15 +75,6 @@ export function SelfieCameraCapture({ onCapture, disabled = false }: SelfieCamer
       });
 
       streamRef.current = stream;
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        // Don't await play - autoPlay handles it, just set state immediately
-        videoRef.current.play().catch(() => {
-          // Autoplay might be blocked, but we'll handle via video element autoPlay attribute
-        });
-      }
-
       setCameraState("active");
     } catch (err) {
       console.error("[SELFIE] Camera error:", err);
@@ -89,6 +103,16 @@ export function SelfieCameraCapture({ onCapture, disabled = false }: SelfieCamer
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
+    setPlayBlocked(false);
+  }, []);
+
+  const requestVideoPlay = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    setPlayBlocked(false);
+    video.play().catch(() => {
+      setPlayBlocked(true);
+    });
   }, []);
 
   const capturePhoto = useCallback(async () => {
@@ -331,6 +355,20 @@ export function SelfieCameraCapture({ onCapture, disabled = false }: SelfieCamer
             muted
             className="w-full h-64 object-cover scale-x-[-1]"
           />
+
+          {playBlocked && (
+            <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-sm">
+              <div className="text-center space-y-2">
+                <p className="text-sm text-foreground font-medium">
+                  Toque para iniciar a câmera
+                </p>
+                <Button variant="outline" size="sm" onClick={requestVideoPlay}>
+                  <Camera className="h-4 w-4 mr-2" />
+                  Iniciar
+                </Button>
+              </div>
+            </div>
+          )}
           
           {/* Subtle blur outside the face guide (keeps camera "open", no white overlay) */}
           <div className="absolute inset-0 pointer-events-none">
