@@ -46,6 +46,9 @@ export function IdentityVerificationCard({ subjectType }: IdentityVerificationCa
         return failureReason || t("identity.failedSoftMessage");
       case "rejected":
         return t("identity.rejectedMessage");
+      case "uploading":
+        // Uploading is treated as not started visually - user hasn't submitted yet
+        return t("identity.notStartedMessage");
       default:
         return t("identity.notStartedMessage");
     }
@@ -54,8 +57,8 @@ export function IdentityVerificationCard({ subjectType }: IdentityVerificationCa
   // Check if max attempts reached
   const maxAttemptsReached = attempts >= maxAttempts;
   
-  // Can only start if not_started, or retry if rejected/failed_soft AND not reached max attempts
-  const canRetry = canStartVerification && !maxAttemptsReached && ["not_started", "failed_soft", "rejected"].includes(status);
+  // Can only start if not_started, uploading (incomplete upload), or retry if rejected/failed_soft AND not reached max attempts
+  const canRetry = canStartVerification && !maxAttemptsReached && ["not_started", "uploading", "failed_soft", "rejected"].includes(status);
 
   return (
     <>
@@ -116,7 +119,7 @@ export function IdentityVerificationCard({ subjectType }: IdentityVerificationCa
               <div className="flex gap-2">
                 {canRetry && (
                   <Button onClick={() => setModalOpen(true)} className="flex-1">
-                    {status === "not_started" ? (
+                    {status === "not_started" || status === "uploading" ? (
                       <>
                         <Shield className="h-4 w-4 mr-2" />
                         {t("identity.startVerification")}
