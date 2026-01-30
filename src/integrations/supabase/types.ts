@@ -1049,6 +1049,48 @@ export type Database = {
           },
         ]
       }
+      landing_sections: {
+        Row: {
+          background_color: string | null
+          background_image_url: string | null
+          content: Json | null
+          created_at: string | null
+          id: string
+          is_visible: boolean
+          section_key: string
+          section_order: number
+          subtitle: string | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          background_color?: string | null
+          background_image_url?: string | null
+          content?: Json | null
+          created_at?: string | null
+          id?: string
+          is_visible?: boolean
+          section_key: string
+          section_order?: number
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          background_color?: string | null
+          background_image_url?: string | null
+          content?: Json | null
+          created_at?: string | null
+          id?: string
+          is_visible?: boolean
+          section_key?: string
+          section_order?: number
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           created_at: string
