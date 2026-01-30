@@ -3374,6 +3374,10 @@ export type Database = {
         Args: { p_subject_type: string; p_user_id: string }
         Returns: Json
       }
+      get_identity_verification_detail: {
+        Args: { p_verification_id: string }
+        Returns: Json
+      }
       get_identity_verifications_admin: {
         Args: {
           p_limit?: number
