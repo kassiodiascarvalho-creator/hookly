@@ -2941,6 +2941,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      add_sub_admin: {
+        Args: { p_email: string; p_permissions: Json }
+        Returns: Json
+      }
       check_and_grant_monthly_credits: {
         Args: { p_user_id: string; p_user_type: string }
         Returns: Json
@@ -3064,6 +3068,7 @@ export type Database = {
         Args: { p_user_id: string; p_user_type: string }
         Returns: boolean
       }
+      has_admin_permission: { Args: { p_permission: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -3088,6 +3093,7 @@ export type Database = {
         Returns: undefined
       }
       is_admin: { Args: never; Returns: boolean }
+      is_admin_owner: { Args: never; Returns: boolean }
       maybe_reset_monthly_proposals: {
         Args: { p_freelancer_user_id: string }
         Returns: undefined
@@ -3124,6 +3130,7 @@ export type Database = {
             }
             Returns: boolean
           }
+      remove_sub_admin: { Args: { p_user_id: string }; Returns: Json }
       request_withdrawal: {
         Args: {
           p_amount: number
@@ -3155,6 +3162,10 @@ export type Database = {
       update_freelancer_revenue_and_achievements: {
         Args: { p_freelancer_user_id: string }
         Returns: undefined
+      }
+      update_sub_admin_permissions: {
+        Args: { p_permissions: Json; p_user_id: string }
+        Returns: Json
       }
     }
     Enums: {
