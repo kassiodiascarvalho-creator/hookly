@@ -1,5 +1,5 @@
 -- Add 'uploading' as an intermediate status before 'pending'
--- Status flow: not_started -> uploading (during file upload) -> pending (after finalize)
+-- Status flow: not_started -> uploading (during file upload) -> processing (after finalize)
 
 -- 1. Update create_identity_verification_with_uploads to use 'uploading' instead of 'pending'
 CREATE OR REPLACE FUNCTION public.create_identity_verification_with_uploads(
@@ -157,10 +157,9 @@ BEGIN
 END;
 $$;
 
--- 2. Update finalize_identity_uploads to change status from 'uploading' to 'pending'
+-- 2. Update finalize_identity_uploads to change status from 'uploading' to 'processing'
 CREATE OR REPLACE FUNCTION public.finalize_identity_uploads(
-  p_verification_id uuid,
-  p_user_id uuid
+  p_verification_id uuid
 )
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -169,28 +168,22 @@ SET search_path TO 'public'
 AS $$
 DECLARE
   v_verification RECORD;
-  v_files_count integer;
   v_required_files text[];
   v_uploaded_files text[];
   v_missing_files text[];
-  v_subject_type text;
 BEGIN
-  -- Get verification
+  -- Get verification (user-scoped)
   SELECT * INTO v_verification
   FROM identity_verifications
-  WHERE id = p_verification_id AND user_id = p_user_id;
+  WHERE id = p_verification_id AND user_id = auth.uid();
 
   IF v_verification IS NULL THEN
-    RETURN jsonb_build_object('success', false, 'error', 'verification_not_found');
+    RETURN jsonb_build_object('success', false, 'error', 'not_found');
   END IF;
 
-  -- Must be in 'uploading' status to finalize
-  IF v_verification.status NOT IN ('uploading', 'failed_soft') THEN
-    RETURN jsonb_build_object(
-      'success', false, 
-      'error', 'invalid_status',
-      'message', 'Verification must be in uploading or failed_soft status to finalize'
-    );
+  -- Must be in 'uploading' (new flow) or 'pending' (legacy) or failed_soft
+  IF v_verification.status NOT IN ('uploading', 'pending', 'failed_soft') THEN
+    RETURN jsonb_build_object('success', false, 'error', 'invalid_status', 'status', v_verification.status);
   END IF;
 
   -- Get required files
@@ -204,34 +197,26 @@ BEGIN
   WHERE identity_verification_id = p_verification_id;
 
   -- Check for missing files
-  SELECT ARRAY_AGG(rf) INTO v_missing_files
-  FROM unnest(v_required_files) AS rf
-  WHERE rf NOT IN (SELECT unnest(COALESCE(v_uploaded_files, ARRAY[]::text[])));
+  v_missing_files := ARRAY(
+    SELECT unnest(v_required_files)
+    EXCEPT
+    SELECT unnest(COALESCE(v_uploaded_files, ARRAY[]::text[]))
+  );
 
-  IF v_missing_files IS NOT NULL AND array_length(v_missing_files, 1) > 0 THEN
-    RETURN jsonb_build_object(
-      'success', false,
-      'error', 'missing_files',
-      'missing', v_missing_files,
-      'message', 'Please upload all required files: ' || array_to_string(v_missing_files, ', ')
-    );
+  IF array_length(v_missing_files, 1) > 0 THEN
+    RETURN jsonb_build_object('success', false, 'error', 'missing_files', 'missing', v_missing_files);
   END IF;
 
-  -- Get subject type for profile update
-  v_subject_type := v_verification.subject_type;
-
-  -- Update status to 'pending' (now it's officially submitted for analysis)
+  -- Update status to 'processing' (this is the moment user clicked "Enviar para análise")
   UPDATE identity_verifications
-  SET 
-    status = 'pending',
-    updated_at = now()
+  SET status = 'processing', updated_at = now()
   WHERE id = p_verification_id;
 
-  -- NOW update profile status to pending (after user clicked "Enviar para análise")
-  IF v_subject_type = 'freelancer' THEN
-    UPDATE freelancer_profiles SET identity_status = 'pending' WHERE user_id = p_user_id;
+  -- Update profile status
+  IF v_verification.subject_type = 'freelancer' THEN
+    UPDATE freelancer_profiles SET identity_status = 'processing' WHERE user_id = v_verification.user_id;
   ELSE
-    UPDATE company_profiles SET identity_status = 'pending' WHERE user_id = p_user_id;
+    UPDATE company_profiles SET identity_status = 'processing' WHERE user_id = v_verification.user_id;
   END IF;
 
   -- Audit log
@@ -245,18 +230,18 @@ BEGIN
     metadata
   ) VALUES (
     p_verification_id,
-    p_user_id,
+    auth.uid(),
     'user',
     'uploads_finalized',
-    'uploading',
-    'pending',
-    jsonb_build_object('files_count', array_length(v_uploaded_files, 1))
+    v_verification.status,
+    'processing',
+    jsonb_build_object('uploaded_files', v_uploaded_files)
   );
 
   RETURN jsonb_build_object(
     'success', true,
-    'status', 'pending',
-    'message', 'Documentos enviados para análise'
+    'status', 'processing',
+    'message', 'Verificação iniciada. Você receberá uma notificação quando a análise for concluída.'
   );
 END;
 $$;

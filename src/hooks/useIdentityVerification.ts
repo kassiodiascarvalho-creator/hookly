@@ -76,12 +76,20 @@ export function useIdentityVerification({ subjectType }: UseIdentityVerification
 
       const result = data as RpcResult;
 
+      // IMPORTANT UX RULE:
+      // Backend currently uses 'pending' right after session creation.
+      // For the UI, user only considers it "pending / under analysis" after clicking "Enviar para análise".
+      // So we normalize: pending => uploading (treated as not_started in UI components).
+      const rawStatus = (result.status || "not_started") as IdentityStatus;
+      const normalizedStatus: IdentityStatus = rawStatus === "pending" ? "uploading" : rawStatus;
+      const normalizedCanStart = rawStatus === "pending" ? true : (result.can_start_verification ?? true);
+
       setState({
-        status: (result.status || "not_started") as IdentityStatus,
+        status: normalizedStatus,
         verificationId: result.verification_id || null,
         attempts: result.attempts || 0,
-        maxAttempts: result.max_attempts || 2,
-        canStartVerification: result.can_start_verification ?? true,
+        maxAttempts: result.max_attempts || 5,
+        canStartVerification: normalizedCanStart,
         verifiedAt: result.verified_at || null,
         failureReason: result.failure_reason || null,
         riskScore: result.risk_score ?? null,
