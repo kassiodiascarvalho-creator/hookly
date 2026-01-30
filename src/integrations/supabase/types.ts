@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_permissions: {
+        Row: {
+          added_by_user_id: string | null
+          can_manage_admins: boolean
+          can_manage_companies: boolean
+          can_manage_finances: boolean
+          can_manage_freelancers: boolean
+          can_manage_landing_page: boolean
+          can_manage_payment_providers: boolean
+          can_manage_payments: boolean
+          can_manage_projects: boolean
+          can_manage_tiers: boolean
+          can_manage_users: boolean
+          created_at: string
+          id: string
+          is_owner: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          added_by_user_id?: string | null
+          can_manage_admins?: boolean
+          can_manage_companies?: boolean
+          can_manage_finances?: boolean
+          can_manage_freelancers?: boolean
+          can_manage_landing_page?: boolean
+          can_manage_payment_providers?: boolean
+          can_manage_payments?: boolean
+          can_manage_projects?: boolean
+          can_manage_tiers?: boolean
+          can_manage_users?: boolean
+          created_at?: string
+          id?: string
+          is_owner?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          added_by_user_id?: string | null
+          can_manage_admins?: boolean
+          can_manage_companies?: boolean
+          can_manage_finances?: boolean
+          can_manage_freelancers?: boolean
+          can_manage_landing_page?: boolean
+          can_manage_payment_providers?: boolean
+          can_manage_payments?: boolean
+          can_manage_projects?: boolean
+          can_manage_tiers?: boolean
+          can_manage_users?: boolean
+          created_at?: string
+          id?: string
+          is_owner?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string
