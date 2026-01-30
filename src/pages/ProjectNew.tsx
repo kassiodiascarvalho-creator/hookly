@@ -210,13 +210,18 @@ export default function ProjectNew() {
       setDraftProjectId(data.id); // Save the ID so we don't create duplicates
     }
 
-    // If user wants to save as draft only
-    if (asDraft) {
-      toast.success(t("projects.savedAsDraft"));
-      navigate(`/projects/${projectId}`);
-      setLoading(false);
-      return;
-    }
+      // Save categories via RPC
+      if (selectedCategoryIds.length > 0) {
+        await setProjectCategories(projectId!, selectedCategoryIds);
+      }
+
+      // If user wants to save as draft only
+      if (asDraft) {
+        toast.success(t("projects.savedAsDraft"));
+        navigate(`/projects/${projectId}`);
+        setLoading(false);
+        return;
+      }
 
     // If user wants to publish
     // Check if we should show prefund modal (has budget_max and not skipping)

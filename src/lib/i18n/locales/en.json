@@ -1,4 +1,20 @@
 {
+  "findProjects": {
+    "title": "Find Projects",
+    "subtitle": "Browse available projects and submit proposals",
+    "searchPlaceholder": "Search by title or description...",
+    "projectsFound": "projects found",
+    "noProjects": "No projects found",
+    "noProjectsDesc": "Try adjusting your search filters",
+    "proposalSent": "Proposal Sent",
+    "viewProposal": "View Proposal",
+    "sendProposal": "Send Proposal",
+    "unknownCompany": "Unknown Company",
+    "allCategories": "All Categories",
+    "clearFilters": "Clear filters",
+    "showingAll": "Showing all projects",
+    "filteringBy": "Filtering by {{count}} category(ies)"
+  },
   "contractApproval": {
     "title": "Approval & Guarantee",
     "fullyProtected": "100% Protected",
