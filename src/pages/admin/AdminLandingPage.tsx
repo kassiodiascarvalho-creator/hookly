@@ -597,7 +597,7 @@ export default function AdminLandingPage() {
             </div>
           ) : (
             sections?.map((section) => (
-              <SectionEditor key={section.id} section={section} />
+              <SectionEditorRouter key={section.id} section={section} />
             ))
           )}
         </TabsContent>
