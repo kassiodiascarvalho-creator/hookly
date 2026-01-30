@@ -1,11 +1,14 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { Resend } from "https://esm.sh/resend@2.0.0";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { 
+  SAFE_CORS_HEADERS, 
+  safeLog, 
+  isValidEmail, 
+  isValidUUID,
+  jsonResponse,
+  errorResponse 
+} from "../_shared/security.ts";
 
 interface SendCodeRequest {
   email: string;
@@ -16,9 +19,11 @@ function generateOTP(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+const RATE_LIMIT_SECONDS = 60; // 1 request per minute per email
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: SAFE_CORS_HEADERS });
   }
 
   try {
@@ -28,12 +33,36 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { email, userId }: SendCodeRequest = await req.json();
+    const body = await req.json();
+    const { email, userId } = body as SendCodeRequest;
 
-    if (!email || !userId) {
-      return new Response(
-        JSON.stringify({ error: "Email and userId are required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    // Input validation
+    if (!email || !isValidEmail(email)) {
+      return errorResponse("Invalid email format", 400, SAFE_CORS_HEADERS);
+    }
+
+    if (!userId || !isValidUUID(userId)) {
+      return errorResponse("Invalid userId format", 400, SAFE_CORS_HEADERS);
+    }
+
+    safeLog("SEND-VERIFICATION", "Request received", { email, userId });
+
+    // RATE LIMITING: Check if code was sent recently
+    const rateLimitWindow = new Date(Date.now() - RATE_LIMIT_SECONDS * 1000).toISOString();
+    
+    const { data: recentCode } = await supabase
+      .from("email_verification_codes")
+      .select("created_at")
+      .eq("email", email.toLowerCase())
+      .gte("created_at", rateLimitWindow)
+      .maybeSingle();
+
+    if (recentCode) {
+      safeLog("SEND-VERIFICATION", "Rate limit hit", { email });
+      return jsonResponse(
+        { error: `Please wait ${RATE_LIMIT_SECONDS} seconds before requesting a new code` },
+        429,
+        SAFE_CORS_HEADERS
       );
     }
 
@@ -57,11 +86,8 @@ const handler = async (req: Request): Promise<Response> => {
       });
 
     if (insertError) {
-      console.error("Error inserting verification code:", insertError);
-      return new Response(
-        JSON.stringify({ error: "Failed to create verification code" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      safeLog("SEND-VERIFICATION", "Insert error", { errorType: insertError.code });
+      return errorResponse("Failed to create verification code", 500, SAFE_CORS_HEADERS);
     }
 
     // Send email with OTP using Resend
@@ -98,18 +124,16 @@ const handler = async (req: Request): Promise<Response> => {
       `,
     });
 
-    console.log("Email sent successfully:", emailResponse);
+    safeLog("SEND-VERIFICATION", "Email sent", { success: true });
 
-    return new Response(
-      JSON.stringify({ success: true, message: "Verification code sent" }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    return jsonResponse(
+      { success: true, message: "Verification code sent" },
+      200,
+      SAFE_CORS_HEADERS
     );
-  } catch (error: any) {
-    console.error("Error in send-verification-code:", error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+  } catch (error) {
+    safeLog("SEND-VERIFICATION", "Error", { errorType: (error as Error).constructor.name });
+    return errorResponse("Failed to send verification code", 500, SAFE_CORS_HEADERS);
   }
 };
 
