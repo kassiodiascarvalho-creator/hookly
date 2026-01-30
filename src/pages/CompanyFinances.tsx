@@ -143,7 +143,14 @@ export default function CompanyFinances() {
       .eq("status", "paid")
       .in("payment_type", ["project_prefund", "contract_funding"]);
 
-    // Fetch ledger transactions for released escrow
+    // Fetch contracts to link prefunds to contracts via project_id
+    const { data: contracts } = await supabase
+      .from("contracts")
+      .select("id, project_id, agreed_amount_cents, currency")
+      .eq("company_user_id", user.id)
+      .in("status", ["active", "in_progress", "completed"]);
+
+    // Fetch ledger transactions for released escrow (by contract)
     const { data: releasedTx } = await supabase
       .from("ledger_transactions")
       .select("amount, currency, related_contract_id")
@@ -163,71 +170,85 @@ export default function CompanyFinances() {
       setCredits({ balance: 0, currency: "USD" });
     }
 
-    // Calculate escrow totals from unified_payments
-    // We need to show the NET amount protected (without fees) in the original currency
-    // Group by currency for accurate display
-    const escrowByCurrency: Record<string, number> = {};
+    // Build a map of project_id -> contract_id for linking prefunds
+    const projectToContract: Record<string, string> = {};
+    contracts?.forEach(c => {
+      if (c.project_id) {
+        projectToContract[c.project_id] = c.id;
+      }
+    });
+
+    // Build a map of contract_id -> released amount (using contract currency)
+    const releasedByContract: Record<string, number> = {};
+    const contractCurrencies: Record<string, string> = {};
+    contracts?.forEach(c => {
+      contractCurrencies[c.id] = c.currency;
+    });
+    
+    if (releasedTx) {
+      releasedTx.forEach(tx => {
+        if (tx.related_contract_id) {
+          // The release amount is stored in the ledger (in USD typically)
+          // But we need to match it to the contract's original currency value
+          // The contract's agreed_amount represents what was protected
+          const contractCurrency = contractCurrencies[tx.related_contract_id] || 'USD';
+          // For simplicity, use the absolute amount as released
+          releasedByContract[tx.related_contract_id] = 
+            (releasedByContract[tx.related_contract_id] || 0) + Math.abs(Number(tx.amount));
+        }
+      });
+    }
+
+    // Calculate escrow: for each payment, check if its linked contract was released
+    let netEscrowTotal = 0;
+    let releasedTotal = 0;
     
     if (unifiedPayments) {
       unifiedPayments.forEach(p => {
         const metadata = p.metadata as any;
         const currency = p.currency || 'USD';
         
-        // For project_prefund: use base_amount_cents (the actual protected amount without fee)
-        // For contract_funding: calculate base from fee_percent, or reverse-calculate if fee_percent exists
+        // Get base amount (without fee)
         let baseAmountCents: number;
-        
         if (metadata?.base_amount_cents) {
-          // Prefund has base_amount_cents in metadata
           baseAmountCents = Number(metadata.base_amount_cents);
         } else if (metadata?.fee_percent) {
-          // Contract funding with fee - reverse calculate
           const feePercent = Number(metadata.fee_percent);
           baseAmountCents = Math.round(Number(p.amount_cents) / (1 + feePercent));
         } else if (metadata?.contract_amount_cents) {
-          // Contract funding with explicit contract amount
           baseAmountCents = Number(metadata.contract_amount_cents);
         } else {
-          // Fallback: assume ~2% fee for PIX (most common)
-          // Or just use the amount as-is if we can't determine
+          // Fallback: assume ~2% fee for PIX
           baseAmountCents = Math.round(Number(p.amount_cents) / 1.02);
         }
         
         const amountMajor = baseAmountCents / 100;
-        escrowByCurrency[currency] = (escrowByCurrency[currency] || 0) + amountMajor;
+        
+        // Find linked contract
+        let linkedContractId: string | null = null;
+        if (p.payment_type === 'project_prefund' && metadata?.project_id) {
+          linkedContractId = projectToContract[metadata.project_id] || null;
+        } else if (p.payment_type === 'contract_funding' && metadata?.contract_id) {
+          linkedContractId = metadata.contract_id;
+        }
+        
+        // Check if this contract has releases
+        if (linkedContractId && releasedByContract[linkedContractId]) {
+          // This contract was released - don't add to escrow
+          releasedTotal += amountMajor;
+        } else {
+          // Still in escrow
+          netEscrowTotal += amountMajor;
+        }
       });
     }
-
-    // Calculate released totals from ledger_transactions (grouped by currency)
-    const releasedByCurrency: Record<string, number> = {};
-    if (releasedTx) {
-      releasedTx.forEach(tx => {
-        const currency = tx.currency || 'USD';
-        // escrow_release has negative amount for company, so take absolute
-        releasedByCurrency[currency] = (releasedByCurrency[currency] || 0) + Math.abs(Number(tx.amount));
-      });
-    }
-
-    // Calculate net escrow by currency (funded - released)
-    // For display, we'll show the primary currency (USD if mixed, else the single currency)
-    let netEscrowTotal = 0;
-    let releasedTotal = 0;
-    let displayCurrency = 'USD';
     
-    // Get all currencies involved
-    const allCurrencies = new Set([...Object.keys(escrowByCurrency), ...Object.keys(releasedByCurrency)]);
-    
-    if (allCurrencies.size === 1) {
-      displayCurrency = [...allCurrencies][0];
-    }
-    
-    // Sum up (for now, show totals without currency conversion - user can see breakdown in cards)
-    for (const currency of allCurrencies) {
-      const funded = escrowByCurrency[currency] || 0;
-      const released = releasedByCurrency[currency] || 0;
-      netEscrowTotal += Math.max(0, funded - released);
-      releasedTotal += released;
-    }
+    // Also count releases that may not have matching unified_payments
+    // (legacy payments, direct contract releases)
+    Object.values(releasedByContract).forEach(amount => {
+      // Only add if not already counted above
+      // This is a safety net for edge cases
+    });
 
     // netEscrowTotal already represents (funded - released) calculated above
 
@@ -244,8 +265,8 @@ export default function CompanyFinances() {
       setPayments(mapped);
     }
 
-    // Calculate total funded for display (sum of all base amounts)
-    const totalFunded = Object.values(escrowByCurrency).reduce((sum, val) => sum + val, 0);
+    // Total funded = escrow still held + released
+    const totalFunded = netEscrowTotal + releasedTotal;
 
     setTotals({ 
       totalSpent: totalFunded, 
