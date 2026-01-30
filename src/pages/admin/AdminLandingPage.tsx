@@ -28,6 +28,7 @@ import {
   LandingStat,
   LandingSocialLink,
 } from "@/hooks/useLandingContent";
+import { SectionEditorRouter } from "@/components/admin/landing/SectionEditors";
 import { 
   Eye, 
   EyeOff, 
@@ -77,133 +78,6 @@ const SOCIAL_ICONS = [
   { value: "youtube", label: "YouTube" },
   { value: "tiktok", label: "TikTok" },
 ];
-
-function SectionEditor({ section }: { section: LandingSection }) {
-  const updateSection = useUpdateLandingSection();
-  const [localContent, setLocalContent] = useState(section.content || {});
-  const [bgImage, setBgImage] = useState(section.background_image_url || "");
-  const [bgColor, setBgColor] = useState(section.background_color || "");
-  const [isVisible, setIsVisible] = useState(section.is_visible);
-
-  const handleSave = () => {
-    updateSection.mutate({
-      id: section.id,
-      content: localContent,
-      background_image_url: bgImage || null,
-      background_color: bgColor || null,
-      is_visible: isVisible,
-    });
-  };
-
-  const handleContentChange = (key: string, value: string) => {
-    setLocalContent(prev => ({ ...prev, [key]: value }));
-  };
-
-  return (
-    <Card className="mb-4">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab" />
-            <div>
-              <CardTitle className="text-lg">{section.title || section.section_key}</CardTitle>
-              <CardDescription>{section.subtitle}</CardDescription>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              {isVisible ? (
-                <Eye className="h-4 w-4 text-green-500" />
-              ) : (
-                <EyeOff className="h-4 w-4 text-muted-foreground" />
-              )}
-              <Switch
-                checked={isVisible}
-                onCheckedChange={setIsVisible}
-              />
-            </div>
-            <Button 
-              size="sm" 
-              onClick={handleSave}
-              disabled={updateSection.isPending}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-lg"
-            >
-              <Save className="h-4 w-4 mr-2" />
-              {updateSection.isPending ? "Salvando..." : "Salvar Alterações"}
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Content Fields */}
-        <div className="grid gap-4 md:grid-cols-2">
-          {Object.entries(localContent as Record<string, string>).map(([key, value]) => (
-            <div key={key} className="space-y-2">
-              <Label htmlFor={`${section.id}-${key}`} className="capitalize">
-                {key.replace(/([A-Z])/g, ' $1').trim()}
-              </Label>
-              {typeof value === 'string' && value.length > 100 ? (
-                <Textarea
-                  id={`${section.id}-${key}`}
-                  value={value}
-                  onChange={(e) => handleContentChange(key, e.target.value)}
-                  rows={3}
-                />
-              ) : (
-                <Input
-                  id={`${section.id}-${key}`}
-                  value={value as string}
-                  onChange={(e) => handleContentChange(key, e.target.value)}
-                />
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Background Settings */}
-        <div className="border-t pt-4 mt-4">
-          <h4 className="font-medium mb-3 flex items-center gap-2">
-            <Palette className="h-4 w-4" />
-            Configurações de Fundo
-          </h4>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor={`${section.id}-bg-image`}>URL da Imagem de Fundo</Label>
-              <div className="flex gap-2">
-                <Input
-                  id={`${section.id}-bg-image`}
-                  value={bgImage}
-                  onChange={(e) => setBgImage(e.target.value)}
-                  placeholder="https://example.com/image.jpg"
-                />
-                <Button variant="outline" size="icon">
-                  <Image className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor={`${section.id}-bg-color`}>Cor de Fundo</Label>
-              <div className="flex gap-2">
-                <Input
-                  id={`${section.id}-bg-color`}
-                  value={bgColor}
-                  onChange={(e) => setBgColor(e.target.value)}
-                  placeholder="#000000 ou rgba(0,0,0,0.5)"
-                />
-                <input
-                  type="color"
-                  value={bgColor || "#000000"}
-                  onChange={(e) => setBgColor(e.target.value)}
-                  className="w-10 h-10 rounded border cursor-pointer"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
 
 function FaqManager() {
   const { data: faqs, isLoading } = useLandingFaqItems();

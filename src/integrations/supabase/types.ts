@@ -1121,6 +1121,39 @@ export type Database = {
         }
         Relationships: []
       }
+      landing_social_links: {
+        Row: {
+          created_at: string | null
+          display_order: number
+          icon: string
+          id: string
+          is_visible: boolean
+          platform: string
+          updated_at: string | null
+          url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number
+          icon: string
+          id?: string
+          is_visible?: boolean
+          platform: string
+          updated_at?: string | null
+          url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number
+          icon?: string
+          id?: string
+          is_visible?: boolean
+          platform?: string
+          updated_at?: string | null
+          url?: string | null
+        }
+        Relationships: []
+      }
       landing_stats: {
         Row: {
           created_at: string | null
