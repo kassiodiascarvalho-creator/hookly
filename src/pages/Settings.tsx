@@ -24,9 +24,10 @@ import {
 } from "@/lib/profileCompletion";
 import { formatDocument, unformatDocument } from "@/lib/formatDocument";
 import { IdentityVerificationCard } from "@/components/identity/IdentityVerificationCard";
+import { PasswordRequirements, isStrongPassword } from "@/components/auth/PasswordRequirements";
 import { 
   User, Lock, Bell, CreditCard, Building, Briefcase, 
-  Loader2, Save, Upload, Folder, Award, Wallet, Shield
+  Loader2, Save, Upload, Folder, Award, Wallet, Shield, Eye, EyeOff
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import PortfolioManager from "@/components/settings/PortfolioManager";
@@ -104,6 +105,7 @@ export default function Settings() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   
   // Notification preferences
   const [notifications, setNotifications] = useState({
@@ -322,7 +324,7 @@ export default function Settings() {
       return;
     }
     
-    if (newPassword.length < 8) {
+    if (!isStrongPassword(newPassword)) {
       toast.error(t("auth.errors.weakPassword"));
       return;
     }
@@ -812,11 +814,26 @@ export default function Settings() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>{t("settings.newPassword")}</Label>
-                <Input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                />
+                <div className="relative">
+                  <Input
+                    type={showNewPassword ? "text" : "password"}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                  >
+                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </div>
+                {newPassword.length > 0 && (
+                  <PasswordRequirements password={newPassword} />
+                )}
               </div>
               <div className="space-y-2">
                 <Label>{t("settings.confirmPassword")}</Label>
@@ -825,10 +842,13 @@ export default function Settings() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                 />
+                {confirmPassword.length > 0 && newPassword !== confirmPassword && (
+                  <p className="text-sm text-destructive">{t("auth.passwordMismatch")}</p>
+                )}
               </div>
               <Button 
                 onClick={handleChangePassword} 
-                disabled={changingPassword || !newPassword || !confirmPassword}
+                disabled={changingPassword || !newPassword || !confirmPassword || !isStrongPassword(newPassword) || newPassword !== confirmPassword}
                 className="gap-2"
               >
                 {changingPassword ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
