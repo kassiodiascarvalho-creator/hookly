@@ -50,7 +50,7 @@ export function useIdentityVerification({ subjectType }: UseIdentityVerification
     status: "not_started",
     verificationId: null,
     attempts: 0,
-    maxAttempts: 2,
+    maxAttempts: 5,
     canStartVerification: true,
     verifiedAt: null,
     failureReason: null,
