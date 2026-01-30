@@ -3103,6 +3103,18 @@ export type Database = {
         Args: { p_email: string; p_permissions: Json }
         Returns: Json
       }
+      admin_reset_identity_verification: {
+        Args: { p_notes?: string; p_verification_id: string }
+        Returns: boolean
+      }
+      admin_review_identity: {
+        Args: {
+          p_decision: string
+          p_notes?: string
+          p_verification_id: string
+        }
+        Returns: boolean
+      }
       check_and_grant_monthly_credits: {
         Args: { p_user_id: string; p_user_type: string }
         Returns: Json
