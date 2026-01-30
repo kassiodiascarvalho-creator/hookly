@@ -236,9 +236,9 @@ export default function AdminFinances() {
       { total_earnings_usd: 0, total_escrow_usd: 0 }
     );
     
-    // For withdrawals, use amount_usd_minor if available, fallback to amount
+    // For withdrawals, amount is in MAJOR UNITS; amount_usd_minor is in cents if present
     const calcWithdrawalAmount = (withdrawals: any[]) => 
-      withdrawals.reduce((sum, w) => sum + Number(w.amount_usd_minor || w.amount), 0);
+      withdrawals.reduce((sum, w) => sum + (w.amount_usd_minor ? w.amount_usd_minor / 100 : Number(w.amount)), 0);
     
     setSummary({
       total_credits_usd: totalPlatformCreditsUsd, // In dollars (1 credit = $1), not cents
@@ -706,13 +706,13 @@ export default function AdminFinances() {
                       {!balance.country_code && <span className="text-muted-foreground text-sm">—</span>}
                     </TableCell>
                     <TableCell className="text-right font-mono">
-                      {formatMoneyFromCents(Number(balance.credits_available), "USD")}
+                      {formatMoney(Number(balance.credits_available), "USD")}
                     </TableCell>
                     <TableCell className="text-right font-mono text-green-600">
-                      {formatMoneyFromCents(Number(balance.earnings_available), "USD")}
+                      {formatMoney(Number(balance.earnings_available), balance.currency || "USD")}
                     </TableCell>
                     <TableCell className="text-right font-mono text-blue-600">
-                      {formatMoneyFromCents(Number(balance.escrow_held), "USD")}
+                      {formatMoney(Number(balance.escrow_held), balance.currency || "USD")}
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
                       {new Date(balance.updated_at).toLocaleDateString("pt-BR")}
@@ -779,8 +779,8 @@ export default function AdminFinances() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right font-mono font-bold">
-                      {formatMoneyFromCents(
-                        withdrawal.amount_usd_minor || Number(withdrawal.amount), 
+                      {formatMoney(
+                        withdrawal.amount_usd_minor ? withdrawal.amount_usd_minor / 100 : Number(withdrawal.amount), 
                         "USD"
                       )}
                     </TableCell>

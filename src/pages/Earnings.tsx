@@ -569,12 +569,12 @@ export default function Earnings() {
               <div>
                 <p className="text-sm text-muted-foreground">{t("earnings.totalEarnings")}</p>
                 <p className="text-2xl font-bold text-primary">
-                  {formatMoneyFromCents(userBalance.earnings_available + contractsEscrow + totalPaidWithdrawals, userBalance.currency)}
+                  {formatMoney(userBalance.earnings_available, userBalance.currency)} {contractsEscrow > 0 && `+ ${formatMoneyFromCents(contractsEscrow, userBalance.currency)}`} {totalPaidWithdrawals > 0 && `+ ${formatMoney(totalPaidWithdrawals, userBalance.currency)}`}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {t("earnings.received")}: {formatMoneyFromCents(userBalance.earnings_available, userBalance.currency)} 
+                  {t("earnings.received")}: {formatMoney(userBalance.earnings_available, userBalance.currency)} 
                   {contractsEscrow > 0 && ` + ${t("earnings.inEscrow")}: ${formatMoneyFromCents(contractsEscrow, userBalance.currency)}`}
-                  {totalPaidWithdrawals > 0 && ` + ${t("earnings.withdrawn")}: ${formatMoneyFromCents(totalPaidWithdrawals, userBalance.currency)}`}
+                  {totalPaidWithdrawals > 0 && ` + ${t("earnings.withdrawn")}: ${formatMoney(totalPaidWithdrawals, userBalance.currency)}`}
                 </p>
               </div>
             </div>
@@ -671,7 +671,7 @@ export default function Earnings() {
                           {config.icon}
                           <div>
                             <p className="font-medium">
-                              {t("earnings.withdrawalRequest")} - {formatMoneyFromCents(Number(withdrawal.amount), withdrawal.currency)}
+                              {t("earnings.withdrawalRequest")} - {formatMoney(Number(withdrawal.amount), withdrawal.currency)}
                             </p>
                             <p className="text-sm text-muted-foreground">
                               {format(new Date(withdrawal.created_at), "MMM d, yyyy HH:mm")}
