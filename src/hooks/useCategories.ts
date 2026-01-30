@@ -80,6 +80,9 @@ export function useCategories() {
   };
 }
 
+// Alias for fetchProjectCategories - used by ProjectEdit
+export const getProjectCategories = fetchProjectCategories;
+
 // Fetch project categories by project ID
 export async function fetchProjectCategories(projectId: string): Promise<Category[]> {
   try {

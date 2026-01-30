@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,20 +7,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Briefcase, DollarSign, Calendar, Loader2, Filter, ShieldX } from "lucide-react";
+import { Search, Briefcase, DollarSign, Calendar, Loader2, ShieldX } from "lucide-react";
 import { format, isAfter } from "date-fns";
 import { BoostedBadge } from "@/components/projects/BoostedBadge";
 import { CompanyAvatar } from "@/components/company/CompanyAvatar";
 import { CompanyNameBadges } from "@/components/company/CompanyNameBadges";
-import { fetchCompanyBadges, CompanyPlanType, CompanyBadgeInfo } from "@/hooks/useCompanyPlanData";
+import { fetchCompanyBadges, CompanyPlanType } from "@/hooks/useCompanyPlanData";
 import { VerifiedPaymentBadge } from "@/components/projects/VerifiedPaymentBadge";
 import { fetchProjectsPrefundStatus } from "@/hooks/useProjectPrefund";
+import { CategoryFilterSelect } from "@/components/projects/CategoryFilterSelect";
+import { CategoryChips } from "@/components/projects/CategoryChips";
+import { fetchProjectsCategoriesMap, type Category } from "@/hooks/useCategories";
+
 interface Project {
   id: string;
   title: string;
   description: string | null;
-  category: string | null;
   budget_min: number | null;
   budget_max: number | null;
   created_at: string;
@@ -32,22 +34,9 @@ interface Project {
     plan_type?: CompanyPlanType;
     is_verified?: boolean;
   };
+  categories?: Category[];
   _hasProposal?: boolean;
 }
-
-const categories = [
-  "All Categories",
-  "Development",
-  "Design",
-  "Marketing",
-  "Writing",
-  "Data Science",
-  "Video & Photo",
-  "Consulting",
-  "Finance",
-  "Legal",
-  "Other",
-];
 
 export default function FindProjects() {
   const { t } = useTranslation();
@@ -57,7 +46,7 @@ export default function FindProjects() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All Categories");
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [myProposalIds, setMyProposalIds] = useState<Set<string>>(new Set());
   const [prefundedProjects, setPrefundedProjects] = useState<Map<string, boolean>>(new Map());
 
@@ -74,36 +63,38 @@ export default function FindProjects() {
       .order("created_at", { ascending: false });
 
     if (!error && data) {
-      // Fetch company info for each project
       const companyUserIds = [...new Set(data.map((p) => p.company_user_id))];
       const projectIds = data.map((p) => p.id);
       
-      // Use parallel fetching: company profiles + plan/verified badges via RPC + prefund status
-      const [{ data: companies }, badgeMap, prefundMap] = await Promise.all([
+      // Parallel fetching: company profiles, badges, prefund status, and categories
+      const [{ data: companies }, badgeMap, prefundMap, categoriesMap] = await Promise.all([
         supabase
           .from("company_profiles")
           .select("user_id, company_name, logo_url")
           .in("user_id", companyUserIds),
-        fetchCompanyBadges(companyUserIds), // Uses SECURITY DEFINER RPC - works for freelancers
-        fetchProjectsPrefundStatus(projectIds), // Check which projects have verified payment
+        fetchCompanyBadges(companyUserIds),
+        fetchProjectsPrefundStatus(projectIds),
+        fetchProjectsCategoriesMap(projectIds),
       ]);
 
       const companyMap = new Map(companies?.map((c) => [c.user_id, c]) || []);
       setPrefundedProjects(prefundMap);
 
-      const projectsWithCompany = data.map((project) => {
+      const projectsWithData = data.map((project) => {
         const company = companyMap.get(project.company_user_id);
         const badge = badgeMap.get(project.company_user_id) || { plan_type: "free", is_verified: false };
+        const projectCategories = categoriesMap.get(project.id) || [];
 
         return {
           ...project,
           company: company
             ? { ...company, plan_type: badge.plan_type, is_verified: badge.is_verified }
             : undefined,
+          categories: projectCategories,
         };
       });
       
-      setProjects(projectsWithCompany);
+      setProjects(projectsWithData);
     }
     setLoading(false);
   };
@@ -121,29 +112,32 @@ export default function FindProjects() {
     }
   };
 
-  // Filter and sort: boosted projects first
-  const filteredProjects = projects
-    .filter((project) => {
-      const matchesSearch = searchQuery === "" || 
-        project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        project.description?.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      const matchesCategory = selectedCategory === "All Categories" || 
-        project.category === selectedCategory;
-      
-      return matchesSearch && matchesCategory;
-    })
-    .sort((a, b) => {
-      const aIsBoosted = a.boosted_until && isAfter(new Date(a.boosted_until), new Date());
-      const bIsBoosted = b.boosted_until && isAfter(new Date(b.boosted_until), new Date());
-      
-      // Boosted projects come first
-      if (aIsBoosted && !bIsBoosted) return -1;
-      if (!aIsBoosted && bIsBoosted) return 1;
-      
-      // Then sort by created_at
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-    });
+  // Filter and sort: boosted projects first, then by category match
+  const filteredProjects = useMemo(() => {
+    return projects
+      .filter((project) => {
+        const matchesSearch = searchQuery === "" || 
+          project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          project.description?.toLowerCase().includes(searchQuery.toLowerCase());
+        
+        // Filter by categories (OR logic - match any selected category)
+        const matchesCategory = selectedCategoryIds.length === 0 || 
+          (project.categories?.some(cat => selectedCategoryIds.includes(cat.id)) ?? false);
+        
+        return matchesSearch && matchesCategory;
+      })
+      .sort((a, b) => {
+        const aIsBoosted = a.boosted_until && isAfter(new Date(a.boosted_until), new Date());
+        const bIsBoosted = b.boosted_until && isAfter(new Date(b.boosted_until), new Date());
+        
+        // Boosted projects come first
+        if (aIsBoosted && !bIsBoosted) return -1;
+        if (!aIsBoosted && bIsBoosted) return 1;
+        
+        // Then sort by created_at
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+  }, [projects, searchQuery, selectedCategoryIds]);
 
   const formatBudget = (min: number | null, max: number | null) => {
     if (!min && !max) return t("projects.budgetNegotiable");
@@ -178,17 +172,10 @@ export default function FindProjects() {
             className="pl-10"
           />
         </div>
-        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-          <SelectTrigger className="w-full sm:w-[200px]">
-            <Filter className="h-4 w-4 mr-2" />
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {categories.map((cat) => (
-              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <CategoryFilterSelect
+          value={selectedCategoryIds}
+          onChange={setSelectedCategoryIds}
+        />
       </div>
 
       {/* Results */}
@@ -246,8 +233,13 @@ export default function FindProjects() {
                         )}
                         
                         <div className="flex flex-wrap items-center gap-4 text-sm">
-                          {project.category && (
-                            <Badge variant="outline">{project.category}</Badge>
+                          {/* Category chips */}
+                          {project.categories && project.categories.length > 0 && (
+                            <CategoryChips 
+                              categories={project.categories} 
+                              maxVisible={2} 
+                              size="sm" 
+                            />
                           )}
                           <span className="flex items-center gap-1 text-muted-foreground">
                             <DollarSign className="h-3 w-3" />

@@ -1,4 +1,20 @@
 {
+  "findProjects": {
+    "title": "Encontrar Projetos",
+    "subtitle": "Navegue pelos projetos disponíveis e envie propostas",
+    "searchPlaceholder": "Buscar por título ou descrição...",
+    "projectsFound": "projetos encontrados",
+    "noProjects": "Nenhum projeto encontrado",
+    "noProjectsDesc": "Tente ajustar seus filtros de busca",
+    "proposalSent": "Proposta Enviada",
+    "viewProposal": "Ver Proposta",
+    "sendProposal": "Enviar Proposta",
+    "unknownCompany": "Empresa Desconhecida",
+    "allCategories": "Todas as Categorias",
+    "clearFilters": "Limpar filtros",
+    "showingAll": "Mostrando todos os projetos",
+    "filteringBy": "Filtrando por {{count}} categoria(s)"
+  },
   "contractApproval": {
     "title": "Aprovação e Garantia",
     "fullyProtected": "100% Protegido",
