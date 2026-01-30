@@ -16,6 +16,12 @@ import { TieredAvatar } from "@/components/freelancer/TieredAvatar";
 import { CompanyAvatar } from "@/components/company/CompanyAvatar";
 import type { FreelancerTier } from "@/components/freelancer/TierBadge";
 import { useCompanyPlanData } from "@/hooks/useCompanyPlanData";
+import { useProfileCelebration } from "@/hooks/useProfileCelebration";
+import { ProfileCelebrationModal } from "@/components/profile/ProfileCelebrationModal";
+import { 
+  computeFreelancerCompletion, 
+  computeCompanyCompletion 
+} from "@/lib/profileCompletion";
 import { 
   User, Lock, Bell, CreditCard, Building, Briefcase, 
   Loader2, Save, Upload, Folder, Award, Wallet
@@ -104,6 +110,15 @@ export default function Settings() {
     profile?.user_type === "company" ? user?.id : undefined
   );
 
+  // Profile celebration hook
+  const { 
+    showCelebration, 
+    bonusCredits, 
+    userType: celebrationUserType, 
+    triggerCelebration, 
+    closeCelebration 
+  } = useProfileCelebration();
+
   useEffect(() => {
     if (user) {
       fetchProfiles();
@@ -164,6 +179,8 @@ export default function Settings() {
 
       if (profileError) throw profileError;
 
+      let completionPercent = 0;
+
       // Update type-specific profile - only send editable fields
       if (profile.user_type === "company" && companyProfile) {
         const companyUpdateData = {
@@ -183,6 +200,11 @@ export default function Settings() {
           .update(companyUpdateData)
           .eq("user_id", user.id);
         if (error) throw error;
+
+        // Calculate completion for company
+        const completion = computeCompanyCompletion(companyProfile);
+        completionPercent = completion.percent;
+
       } else if (profile.user_type === "freelancer" && freelancerProfile) {
         const freelancerUpdateData = {
           full_name: freelancerProfile.full_name,
@@ -201,9 +223,44 @@ export default function Settings() {
           .update(freelancerUpdateData)
           .eq("user_id", user.id);
         if (error) throw error;
+
+        // Check portfolio and payout methods for completion calculation
+        const [portfolioResult, payoutResult] = await Promise.all([
+          supabase
+            .from("portfolio_items")
+            .select("*", { count: "exact", head: true })
+            .eq("freelancer_user_id", user.id),
+          supabase
+            .from("payout_methods")
+            .select("*", { count: "exact", head: true })
+            .eq("freelancer_user_id", user.id)
+        ]);
+
+        const hasPortfolio = (portfolioResult.count || 0) > 0;
+        const hasPayout = (payoutResult.count || 0) > 0;
+        
+        // Calculate completion for freelancer
+        const completion = computeFreelancerCompletion(freelancerProfile, hasPortfolio, hasPayout);
+        completionPercent = completion.percent;
       }
 
+      // Update completion percentage in profiles table
+      await supabase
+        .from("profiles")
+        .update({
+          profile_completion_percent: completionPercent,
+          profile_completion_updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", user.id);
+
       toast.success(t("settings.saved"));
+
+      // Check if profile just reached 100% and trigger celebration
+      if (completionPercent >= 100 && profile.user_type) {
+        console.log("[SETTINGS] Profile is 100% complete, triggering celebration...");
+        await triggerCelebration(completionPercent, profile.user_type);
+      }
+
     } catch (error) {
       console.error("Error saving profile:", error);
       toast.error(t("common.error"));
@@ -254,11 +311,22 @@ export default function Settings() {
   const isCompany = profile?.user_type === "company";
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">{t("settings.title")}</h1>
-        <p className="text-muted-foreground">{t("settings.subtitle")}</p>
-      </div>
+    <>
+      {/* Profile Celebration Modal */}
+      {showCelebration && celebrationUserType && (
+        <ProfileCelebrationModal
+          open={showCelebration}
+          onClose={closeCelebration}
+          bonusCredits={bonusCredits}
+          userType={celebrationUserType}
+        />
+      )}
+
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">{t("settings.title")}</h1>
+          <p className="text-muted-foreground">{t("settings.subtitle")}</p>
+        </div>
 
       <Tabs defaultValue={defaultTab} className="space-y-6">
         <TabsList className={`grid w-full ${!isCompany ? 'grid-cols-6' : 'grid-cols-4'} lg:w-auto lg:inline-grid`}>
@@ -728,5 +796,6 @@ export default function Settings() {
         </TabsContent>
       </Tabs>
     </div>
+    </>
   );
 }
