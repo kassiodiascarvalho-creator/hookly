@@ -764,6 +764,19 @@
   "onboarding": {
     "title": "Bem-vindo ao HOOKLY!",
     "subtitle": "Conte-nos como você usará a plataforma",
+    "companyTitle": "Sou uma Empresa",
+    "companyDescription": "Quero contratar freelancers talentosos para meus projetos",
+    "freelancerTitle": "Sou Freelancer",
+    "freelancerDescription": "Quero encontrar projetos e trabalhar com ótimos clientes",
+    "companyFeature1": "Acesso a freelancers verificados",
+    "companyFeature2": "Pagamentos protegidos por escrow",
+    "companyFeature3": "Suporte dedicado",
+    "freelancerFeature1": "Projetos de qualidade",
+    "freelancerFeature2": "Pagamentos garantidos",
+    "freelancerFeature3": "Construa sua reputação",
+    "getStarted": "Começar",
+    "companyCreated": "Perfil de empresa criado!",
+    "freelancerCreated": "Perfil de freelancer criado!",
     "company": {
       "title": "Sou uma Empresa",
       "description": "Quero contratar freelancers talentosos para meus projetos"
