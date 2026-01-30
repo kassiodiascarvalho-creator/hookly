@@ -105,6 +105,11 @@ interface EscrowByCurrency {
   balance: number; // Major units (prefunded - released)
 }
 
+interface EarningsByCurrency {
+  currency: string;
+  amount: number; // Major units
+}
+
 interface FinancialSummary {
   total_credits_usd: number;
   total_earnings_usd: number;
@@ -117,6 +122,7 @@ interface FinancialSummary {
   paid_withdrawal_amount_usd: number;
   total_fx_spread_usd: number;
   escrowByCurrency: EscrowByCurrency[];
+  earningsByCurrency: EarningsByCurrency[];
 }
 
 type DateFilterOption = "today" | "7days" | "30days" | "90days" | "1year" | "all";
@@ -137,6 +143,7 @@ export default function AdminFinances() {
     paid_withdrawal_amount_usd: 0,
     total_fx_spread_usd: 0,
     escrowByCurrency: [],
+    earningsByCurrency: [],
   });
   const [balances, setBalances] = useState<UserBalance[]>([]);
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
@@ -236,14 +243,22 @@ export default function AdminFinances() {
       sum + Number(w.fx_spread_amount_usd_minor || 0), 0);
     
     // All amounts in user_balances are in MAJOR UNITS (e.g., 398.38 = $398.38)
-    const totals = (balanceData || []).reduce(
-      (acc, b) => ({
-        total_earnings_usd: acc.total_earnings_usd + Number(b.earnings_available || 0),
-        // Only count escrow from companies - values are already in major units
-        total_escrow_usd: acc.total_escrow_usd + (b.user_type === 'company' ? Number(b.escrow_held || 0) : 0),
-      }),
-      { total_earnings_usd: 0, total_escrow_usd: 0 }
-    );
+    // Group earnings by currency (values are in MAJOR UNITS)
+    const earningsByCurrencyMap: Record<string, number> = {};
+    (balanceData || []).forEach((b) => {
+      const currency = b.currency || "USD";
+      const amount = Number(b.earnings_available || 0);
+      if (amount > 0) {
+        earningsByCurrencyMap[currency] = (earningsByCurrencyMap[currency] || 0) + amount;
+      }
+    });
+    
+    const earningsByCurrency: EarningsByCurrency[] = Object.entries(earningsByCurrencyMap)
+      .map(([currency, amount]) => ({ currency, amount }))
+      .sort((a, b) => b.amount - a.amount);
+    
+    // Calculate total (for display purposes - note: mixed currencies, not a true sum)
+    const totalEarnings = earningsByCurrency.reduce((sum, e) => sum + e.amount, 0);
     
     // For withdrawals, amount is in MAJOR UNITS; amount_usd_minor is in cents if present
     const calcWithdrawalAmount = (withdrawals: any[]) => 
@@ -317,7 +332,7 @@ export default function AdminFinances() {
     
     setSummary({
       total_credits_usd: totalPlatformCreditsUsd, // In dollars (1 credit = $1), not cents
-      total_earnings_usd: totals.total_earnings_usd, // Major units
+      total_earnings_usd: totalEarnings, // Major units (sum of all currencies for display)
       total_escrow_usd: totalEscrowFromPrefunds, // Major units from verified projects
       pending_withdrawals: pendingWithdrawals.length,
       pending_withdrawal_amount_usd: calcWithdrawalAmount(pendingWithdrawals),
@@ -327,6 +342,7 @@ export default function AdminFinances() {
       paid_withdrawal_amount_usd: calcWithdrawalAmount(paidWithdrawals),
       total_fx_spread_usd: totalFxSpread,
       escrowByCurrency,
+      earningsByCurrency,
     });
   };
 
@@ -624,8 +640,19 @@ export default function AdminFinances() {
             <Wallet className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{formatMoney(summary.total_earnings_usd, "USD")}</div>
-            <p className="text-xs text-muted-foreground">Sacáveis (Major Units)</p>
+            <p className="text-xs text-muted-foreground mb-2">Sacáveis por moeda:</p>
+            {summary.earningsByCurrency.length > 0 ? (
+              <div className="space-y-2">
+                {summary.earningsByCurrency.map((e) => (
+                  <div key={e.currency} className="flex items-center justify-between">
+                    <Badge variant="outline" className="text-xs">{e.currency}</Badge>
+                    <span className="font-mono font-bold text-green-600">{formatMoney(e.amount, e.currency)}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Nenhum ganho disponível</p>
+            )}
           </CardContent>
         </Card>
         
