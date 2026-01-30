@@ -136,12 +136,15 @@
   "comparison": {
     "title": "HOOKLY vs 传统平台",
     "subtitle": "了解为什么领先公司选择 HOOKLY",
+    "feature": "功能",
     "features": {
       "verifiedTalent": "验证人才",
       "resultsBased": "按成果付费",
       "noHiddenFees": "无隐藏费用",
       "escrowProtection": "托管保护",
-      "platformFee": "平台费用"
+      "platformFee": "平台费用",
+      "multiCurrency": "多币种",
+      "integration": "集成工具包"
     },
     "hookly": "HOOKLY",
     "upwork": "Upwork",

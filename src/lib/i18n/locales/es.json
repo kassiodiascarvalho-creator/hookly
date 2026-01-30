@@ -136,12 +136,15 @@
   "comparison": {
     "title": "HOOKLY vs Plataformas Tradicionales",
     "subtitle": "Descubre por qué las empresas líderes eligen HOOKLY",
+    "feature": "Característica",
     "features": {
       "verifiedTalent": "Talento Verificado",
       "resultsBased": "Pago por Resultados",
       "noHiddenFees": "Sin Tarifas Ocultas",
       "escrowProtection": "Protección de Escrow",
-      "platformFee": "Tarifa de Plataforma"
+      "platformFee": "Tarifa de Plataforma",
+      "multiCurrency": "Multi-Moneda",
+      "integration": "Kit de Integración"
     },
     "hookly": "HOOKLY",
     "upwork": "Upwork",
