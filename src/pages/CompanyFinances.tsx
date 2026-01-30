@@ -150,12 +150,13 @@ export default function CompanyFinances() {
       .eq("company_user_id", user.id)
       .in("status", ["active", "in_progress", "completed"]);
 
-    // Fetch ledger transactions for released escrow (by contract)
-    const { data: releasedTx } = await supabase
-      .from("ledger_transactions")
-      .select("amount, currency, related_contract_id")
-      .eq("user_id", user.id)
-      .eq("tx_type", "escrow_release");
+    /**
+     * IMPORTANT:
+     * For the company-facing "Reserved Budget" we must show ONLY the protected amount (without fees)
+     * and decrease it by the released amount in the ORIGINAL currency.
+     * The ledger stores releases in internal currency, so for this card we use the legacy `payments`
+     * table (status=released), which reflects the original amount/currency shown to the company.
+     */
 
     // Fetch platform credits
     const { data: creditsData } = await supabase
@@ -178,37 +179,34 @@ export default function CompanyFinances() {
       }
     });
 
-    // Build a map of contract_id -> released amount (using contract currency)
-    const releasedByContract: Record<string, number> = {};
-    const contractCurrencies: Record<string, string> = {};
-    contracts?.forEach(c => {
-      contractCurrencies[c.id] = c.currency;
+    // Released totals (by currency) based on legacy payments history
+    const releasedByCurrency: Record<string, number> = {};
+    (paymentsData || []).forEach((p: any) => {
+      if (p?.status !== "released") return;
+      const currency = p.currency || "USD";
+      releasedByCurrency[currency] = (releasedByCurrency[currency] || 0) + Math.abs(Number(p.amount));
     });
-    
-    if (releasedTx) {
-      releasedTx.forEach(tx => {
-        if (tx.related_contract_id) {
-          // The release amount is stored in the ledger (in USD typically)
-          // But we need to match it to the contract's original currency value
-          // The contract's agreed_amount represents what was protected
-          const contractCurrency = contractCurrencies[tx.related_contract_id] || 'USD';
-          // For simplicity, use the absolute amount as released
-          releasedByContract[tx.related_contract_id] = 
-            (releasedByContract[tx.related_contract_id] || 0) + Math.abs(Number(tx.amount));
-        }
-      });
-    }
 
-    // Calculate escrow: for each payment, check if its linked contract was released
-    let netEscrowTotal = 0;
-    let releasedTotal = 0;
-    
+    // Funded totals (by currency) from unified_payments, only when we can link to a contract/project
+    const fundedByCurrency: Record<string, number> = {};
+
     if (unifiedPayments) {
-      unifiedPayments.forEach(p => {
+      unifiedPayments.forEach((p) => {
         const metadata = p.metadata as any;
-        const currency = p.currency || 'USD';
-        
-        // Get base amount (without fee)
+        const currency = p.currency || "USD";
+
+        // Determine linkage; if we can't link, don't count it for the company Reserved Budget card
+        // (otherwise it looks like "extra money" that the company can't reconcile).
+        let linked = false;
+        if (p.payment_type === "project_prefund" && metadata?.project_id) {
+          linked = Boolean(projectToContract[metadata.project_id]);
+        }
+        if (p.payment_type === "contract_funding" && metadata?.contract_id) {
+          linked = true;
+        }
+        if (!linked) return;
+
+        // Base (without fee)
         let baseAmountCents: number;
         if (metadata?.base_amount_cents) {
           baseAmountCents = Number(metadata.base_amount_cents);
@@ -218,37 +216,26 @@ export default function CompanyFinances() {
         } else if (metadata?.contract_amount_cents) {
           baseAmountCents = Number(metadata.contract_amount_cents);
         } else {
-          // Fallback: assume ~2% fee for PIX
+          // Fallback: assume ~2% (PIX) if missing fee metadata
           baseAmountCents = Math.round(Number(p.amount_cents) / 1.02);
         }
-        
+
         const amountMajor = baseAmountCents / 100;
-        
-        // Find linked contract
-        let linkedContractId: string | null = null;
-        if (p.payment_type === 'project_prefund' && metadata?.project_id) {
-          linkedContractId = projectToContract[metadata.project_id] || null;
-        } else if (p.payment_type === 'contract_funding' && metadata?.contract_id) {
-          linkedContractId = metadata.contract_id;
-        }
-        
-        // Check if this contract has releases
-        if (linkedContractId && releasedByContract[linkedContractId]) {
-          // This contract was released - don't add to escrow
-          releasedTotal += amountMajor;
-        } else {
-          // Still in escrow
-          netEscrowTotal += amountMajor;
-        }
+        fundedByCurrency[currency] = (fundedByCurrency[currency] || 0) + amountMajor;
       });
     }
-    
-    // Also count releases that may not have matching unified_payments
-    // (legacy payments, direct contract releases)
-    Object.values(releasedByContract).forEach(amount => {
-      // Only add if not already counted above
-      // This is a safety net for edge cases
-    });
+
+    // Net escrow by currency: max(0, funded - released)
+    const allCurrencies = new Set([...Object.keys(fundedByCurrency), ...Object.keys(releasedByCurrency)]);
+
+    let netEscrowTotal = 0;
+    let releasedTotal = 0;
+    for (const currency of allCurrencies) {
+      const funded = fundedByCurrency[currency] || 0;
+      const released = releasedByCurrency[currency] || 0;
+      netEscrowTotal += Math.max(0, funded - released);
+      releasedTotal += released;
+    }
 
     // netEscrowTotal already represents (funded - released) calculated above
 
