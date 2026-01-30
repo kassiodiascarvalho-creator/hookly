@@ -3204,6 +3204,16 @@ export type Database = {
         }
         Returns: string
       }
+      create_identity_verification_with_uploads: {
+        Args: {
+          p_country: string
+          p_document_type: string
+          p_has_back_side?: boolean
+          p_subject_type: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       credit_company_wallet: {
         Args: {
           p_amount_cents: number
@@ -3339,6 +3349,16 @@ export type Database = {
         Returns: boolean
       }
       publish_project: { Args: { p_project_id: string }; Returns: Json }
+      register_identity_file: {
+        Args: {
+          p_file_type: string
+          p_mime_type: string
+          p_size_bytes: number
+          p_storage_path: string
+          p_verification_id: string
+        }
+        Returns: Json
+      }
       release_escrow_to_earnings:
         | {
             Args: {
