@@ -1202,6 +1202,8 @@
     "adminPanel": "Admin Panel",
     "paymentProviders": "Payment Providers",
     "finances": "Finances",
+    "tiers": "Tiers",
+    "landingPage": "Landing Page",
     "users": "Users",
     "usersDescription": "Manage all registered users",
     "allUsers": "All Users",
