@@ -570,14 +570,13 @@ export default function Earnings() {
                 <p className="text-sm text-muted-foreground">{t("earnings.totalEarnings")}</p>
                 <p className="text-2xl font-bold text-primary">
                   {formatMoney(
-                    userBalance.earnings_available + (contractsEscrow / 100) + totalPaidWithdrawals, 
+                    userBalance.earnings_available + (contractsEscrow / 100), 
                     userBalance.currency
                   )}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
                   {t("earnings.received")}: {formatMoney(userBalance.earnings_available, userBalance.currency)} 
                   {contractsEscrow > 0 && ` + ${t("earnings.inEscrow")}: ${formatMoneyFromCents(contractsEscrow, userBalance.currency)}`}
-                  {totalPaidWithdrawals > 0 && ` + ${t("earnings.withdrawn")}: ${formatMoney(totalPaidWithdrawals, userBalance.currency)}`}
                 </p>
               </div>
             </div>
