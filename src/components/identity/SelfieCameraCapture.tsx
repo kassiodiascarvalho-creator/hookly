@@ -45,13 +45,9 @@ export function SelfieCameraCapture({ onCapture, disabled = false }: SelfieCamer
     setError(null);
 
     try {
-      // Request camera with front-facing preference
+      // Request camera with minimal constraints for faster startup
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: "user",
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
+        video: { facingMode: "user" },
         audio: false,
       });
 
@@ -59,7 +55,10 @@ export function SelfieCameraCapture({ onCapture, disabled = false }: SelfieCamer
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+        // Don't await play - autoPlay handles it, just set state immediately
+        videoRef.current.play().catch(() => {
+          // Autoplay might be blocked, but we'll handle via video element autoPlay attribute
+        });
       }
 
       setCameraState("active");
