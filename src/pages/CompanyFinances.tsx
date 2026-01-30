@@ -163,47 +163,73 @@ export default function CompanyFinances() {
       setCredits({ balance: 0, currency: "USD" });
     }
 
-    // Calculate escrow totals from unified_payments (grouped by currency, then converted to USD)
-    // The escrow values in ledger_transactions are already in USD (internal currency)
-    let inEscrowTotalUSD = 0;
+    // Calculate escrow totals from unified_payments
+    // We need to show the NET amount protected (without fees) in the original currency
+    // Group by currency for accurate display
+    const escrowByCurrency: Record<string, number> = {};
+    
     if (unifiedPayments) {
-      // Sum paid prefunds and contract fundings
-      // For project_prefund: base_amount_cents is the actual value (before fee)
-      // For contract_funding: amount_cents is the full amount
       unifiedPayments.forEach(p => {
         const metadata = p.metadata as any;
-        // Use base_amount_cents if available (for prefunds), otherwise amount_cents
-        const baseAmountCents = metadata?.base_amount_cents || p.amount_cents;
-        const amountMajor = Number(baseAmountCents) / 100;
+        const currency = p.currency || 'USD';
         
-        // The ledger stores values in USD. For now, assume USD (the release is in USD).
-        // If currency is BRL, we need the original USD value that was stored in the ledger.
-        // The ledger_transactions for escrow_release use USD, so we match that.
-        // For accurate tracking, use metadata.base_amount_usd if available, else estimate
-        if (metadata?.base_amount_usd) {
-          inEscrowTotalUSD += Number(metadata.base_amount_usd);
-        } else if (p.currency === 'USD') {
-          inEscrowTotalUSD += amountMajor;
+        // For project_prefund: use base_amount_cents (the actual protected amount without fee)
+        // For contract_funding: calculate base from fee_percent, or reverse-calculate if fee_percent exists
+        let baseAmountCents: number;
+        
+        if (metadata?.base_amount_cents) {
+          // Prefund has base_amount_cents in metadata
+          baseAmountCents = Number(metadata.base_amount_cents);
+        } else if (metadata?.fee_percent) {
+          // Contract funding with fee - reverse calculate
+          const feePercent = Number(metadata.fee_percent);
+          baseAmountCents = Math.round(Number(p.amount_cents) / (1 + feePercent));
+        } else if (metadata?.contract_amount_cents) {
+          // Contract funding with explicit contract amount
+          baseAmountCents = Number(metadata.contract_amount_cents);
         } else {
-          // For non-USD payments, the escrow was likely recorded at a converted rate
-          // Use a rough estimate or the amount if no USD reference is available
-          // In practice, the release tx uses the contract's agreed_amount in USD
-          inEscrowTotalUSD += amountMajor;
+          // Fallback: assume ~2% fee for PIX (most common)
+          // Or just use the amount as-is if we can't determine
+          baseAmountCents = Math.round(Number(p.amount_cents) / 1.02);
         }
+        
+        const amountMajor = baseAmountCents / 100;
+        escrowByCurrency[currency] = (escrowByCurrency[currency] || 0) + amountMajor;
       });
     }
 
-    // Calculate released totals from ledger_transactions
-    let releasedTotal = 0;
+    // Calculate released totals from ledger_transactions (grouped by currency)
+    const releasedByCurrency: Record<string, number> = {};
     if (releasedTx) {
       releasedTx.forEach(tx => {
+        const currency = tx.currency || 'USD';
         // escrow_release has negative amount for company, so take absolute
-        releasedTotal += Math.abs(Number(tx.amount));
+        releasedByCurrency[currency] = (releasedByCurrency[currency] || 0) + Math.abs(Number(tx.amount));
       });
     }
 
-    // Adjust escrow: inEscrow = total funded - released
-    const netInEscrow = Math.max(0, inEscrowTotalUSD - releasedTotal);
+    // Calculate net escrow by currency (funded - released)
+    // For display, we'll show the primary currency (USD if mixed, else the single currency)
+    let netEscrowTotal = 0;
+    let releasedTotal = 0;
+    let displayCurrency = 'USD';
+    
+    // Get all currencies involved
+    const allCurrencies = new Set([...Object.keys(escrowByCurrency), ...Object.keys(releasedByCurrency)]);
+    
+    if (allCurrencies.size === 1) {
+      displayCurrency = [...allCurrencies][0];
+    }
+    
+    // Sum up (for now, show totals without currency conversion - user can see breakdown in cards)
+    for (const currency of allCurrencies) {
+      const funded = escrowByCurrency[currency] || 0;
+      const released = releasedByCurrency[currency] || 0;
+      netEscrowTotal += Math.max(0, funded - released);
+      releasedTotal += released;
+    }
+
+    // netEscrowTotal already represents (funded - released) calculated above
 
     if (paymentsData) {
       const mapped = paymentsData.map(p => ({
@@ -218,9 +244,12 @@ export default function CompanyFinances() {
       setPayments(mapped);
     }
 
+    // Calculate total funded for display (sum of all base amounts)
+    const totalFunded = Object.values(escrowByCurrency).reduce((sum, val) => sum + val, 0);
+
     setTotals({ 
-      totalSpent: inEscrowTotalUSD, 
-      inEscrow: netInEscrow, 
+      totalSpent: totalFunded, 
+      inEscrow: netEscrowTotal, 
       released: releasedTotal 
     });
 
