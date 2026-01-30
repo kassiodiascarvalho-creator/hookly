@@ -130,14 +130,12 @@ export default function FreelancerDashboard() {
       const pendingProposals = proposalsResult.count || 0;
       const conversations = conversationsResult.count || 0;
       
-      // user_balances.earnings_available is stored in CENTS (minor units)
+      // All values are stored in cents - keep in cents for proper formatting
       const earningsAvailable = Number(balanceResult.data?.earnings_available || 0);
-      // contracts.amount_cents is in CENTS
       const contractsEscrow = (activeContractsResult.data || [])
         .reduce((sum, c) => sum + (c.amount_cents || 0), 0);
-      // withdrawal_requests.amount is in MAJOR UNITS - convert to cents
       const paidWithdrawals = (paidWithdrawalsResult.data || [])
-        .reduce((sum, w) => sum + Math.round((Number(w.amount) || 0) * 100), 0);
+        .reduce((sum, w) => sum + (Number(w.amount) || 0), 0);
       
       // Total earnings in cents = available + contracts escrow + already withdrawn
       const totalEarningsCents = earningsAvailable + contractsEscrow + paidWithdrawals;
