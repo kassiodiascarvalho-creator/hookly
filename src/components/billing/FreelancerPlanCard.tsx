@@ -234,7 +234,7 @@ export function FreelancerPlanCard() {
           </div>
 
           {/* Proposals usage - show limit for standard, unlimited for pro/elite */}
-          {isPaidTier ? (
+          {isPaidTier || plan?.unlimited_proposals ? (
             <div className="p-3 rounded-lg bg-primary/10 flex items-center gap-2">
               <Infinity className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium text-primary">Propostas ilimitadas</span>
@@ -244,17 +244,22 @@ export function FreelancerPlanCard() {
               <div className="flex justify-between text-sm mb-1">
                 <span>Propostas este mês</span>
                 <span className="font-medium">
-                  {plan?.proposals_used || 0} / {proposalsLimit}
+                  {plan?.proposals_used ?? 0} / {plan?.proposals_limit ?? proposalsLimit ?? 5}
                 </span>
               </div>
               <div className="h-2 bg-muted rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-primary transition-all"
                   style={{ 
-                    width: `${Math.min(100, ((plan?.proposals_used || 0) / (proposalsLimit || 5)) * 100)}%` 
+                    width: `${Math.min(100, ((plan?.proposals_used ?? 0) / (plan?.proposals_limit ?? proposalsLimit ?? 5)) * 100)}%` 
                   }}
                 />
               </div>
+              {plan?.reset_at && (
+                <div className="text-xs text-muted-foreground mt-1">
+                  Renova em {format(new Date(plan.reset_at), "d 'de' MMMM", { locale: ptBR })}
+                </div>
+              )}
             </div>
           )}
 
