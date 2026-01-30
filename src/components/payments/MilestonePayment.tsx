@@ -182,21 +182,53 @@ export default function MilestonePayment({
     setConfirmReleaseId(null);
 
     try {
-      const { data, error } = await supabase.functions.invoke("release-payment", {
-        body: { paymentId },
-      });
-
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-
-      // Handle idempotent response - still show success
-      if (data?.alreadyReleased) {
-        console.log('[MilestonePayment] Payment was already released (idempotent)');
-        toast.success(t("payments.released"));
-      } else {
-        toast.success(t("payments.released"));
-      }
+      // Find the payment to check if it has a Stripe payment intent
+      const payment = payments.find(p => p.id === paymentId);
       
+      if (payment?.stripe_payment_intent_id) {
+        // Has Stripe payment intent - use the edge function
+        const { data, error } = await supabase.functions.invoke("release-payment", {
+          body: { paymentId },
+        });
+
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+
+        if (data?.alreadyReleased) {
+          console.log('[MilestonePayment] Payment was already released (idempotent)');
+        }
+      } else {
+        // No Stripe payment intent (prefunded project) - use RPC directly
+        if (!contractId || !user?.id) {
+          throw new Error("Contract or user not found");
+        }
+
+        // Call the RPC to release escrow to freelancer earnings
+        const { error: rpcError } = await supabase.rpc('release_escrow_to_earnings', {
+          p_company_user_id: user.id,
+          p_freelancer_user_id: freelancerUserId,
+          p_contract_id: contractId,
+          p_amount: Number(payment?.amount || 0),
+          p_context: 'milestone_approved:' + paymentId,
+          p_payment_id: paymentId
+        });
+
+        if (rpcError) throw rpcError;
+
+        // Update payment status to released
+        const { error: updateError } = await supabase
+          .from("payments")
+          .update({ 
+            status: "released", 
+            released_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", paymentId);
+
+        if (updateError) throw updateError;
+      }
+
+      toast.success(t("payments.released"));
       onPaymentComplete();
     } catch (error) {
       console.error("Release error:", error);
