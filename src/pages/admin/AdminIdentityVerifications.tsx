@@ -270,12 +270,23 @@ export default function AdminIdentityVerifications() {
         if (detail) {
           setDetail({ ...detail, files: [] });
         }
+      } else if (actionType === "reset") {
+        // Reset attempts - uses separate action endpoint
+        const response = await supabase.functions.invoke("admin-review-identity?action=reset", {
+          body: {
+            verificationId: selectedId,
+            notes: actionNotes,
+          },
+        });
+
+        if (response.error) throw new Error(response.error.message);
+        if (!response.data.success) throw new Error(response.data.message);
       } else {
-        // Approve/Reject/Reset
+        // Approve/Reject
         const response = await supabase.functions.invoke("admin-review-identity", {
           body: {
             verificationId: selectedId,
-            decision: actionType === "reset" ? "reset" : actionType === "approve" ? "approved" : "rejected",
+            decision: actionType === "approve" ? "approved" : "rejected",
             notes: actionNotes,
           },
         });
