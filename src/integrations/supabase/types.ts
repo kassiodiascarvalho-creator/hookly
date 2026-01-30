@@ -1187,6 +1187,27 @@ export type Database = {
           },
         ]
       }
+      identity_rate_limits: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       identity_verification_files: {
         Row: {
           created_at: string
@@ -3224,6 +3245,15 @@ export type Database = {
         Args: { p_freelancer_user_id: string }
         Returns: Json
       }
+      check_identity_rate_limit: {
+        Args: {
+          p_action: string
+          p_max_requests?: number
+          p_user_id: string
+          p_window_minutes?: number
+        }
+        Returns: boolean
+      }
       check_platform_credits: {
         Args: { p_action_key: string; p_user_id: string }
         Returns: boolean
@@ -3273,6 +3303,10 @@ export type Database = {
           p_session_id: string
           p_user_id: string
         }
+        Returns: boolean
+      }
+      delete_identity_storage_file: {
+        Args: { p_storage_path: string }
         Returns: boolean
       }
       ensure_company_wallet: {
