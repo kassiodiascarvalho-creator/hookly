@@ -70,6 +70,11 @@
     "milestone": "Milestone",
     "fund": "Fund",
     "approvePayment": "Approve Payment",
+    "paymentApproved": "Payment approved successfully!",
+    "paymentApprovedBadge": "Payment Approved",
+    "approvalError": "Failed to approve payment",
+    "confirmApproval": "Approve Payment",
+    "confirmApprovalDesc": "Do you want to approve this payment? The amount will be held for the freelancer and released after the delivery is completed.",
     "release": "Release",
     "confirmRelease": "Confirm Payment Release",
     "confirmReleaseDesc": "This will release the escrowed funds to the freelancer. This action cannot be undone.",
@@ -1132,7 +1137,9 @@
     "days": "days",
     "later": "Later",
     "retry": "Retry",
-    "verified": "Verified"
+    "verified": "Verified",
+    "yes": "Yes",
+    "no": "No"
   },
   "profileGate": {
     "title": "Complete Your Profile",

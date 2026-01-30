@@ -70,6 +70,11 @@
     "milestone": "Entrega",
     "fund": "Garantir",
     "approvePayment": "Aprovar Pagamento",
+    "paymentApproved": "Pagamento aprovado com sucesso!",
+    "paymentApprovedBadge": "Pagamento Aprovado",
+    "approvalError": "Falha ao aprovar pagamento",
+    "confirmApproval": "Aprovar Pagamento",
+    "confirmApprovalDesc": "Deseja aprovar este pagamento? O valor será reservado para o freelancer e liberado após a conclusão da entrega.",
     "release": "Liberar",
     "confirmRelease": "Confirmar Liberação",
     "confirmReleaseDesc": "Isso liberará o valor protegido para o freelancer. Esta ação não pode ser desfeita.",
@@ -1195,7 +1200,9 @@
     "days": "dias",
     "later": "Depois",
     "retry": "Tentar novamente",
-    "verified": "Verificado"
+    "verified": "Verificado",
+    "yes": "Sim",
+    "no": "Não"
   },
   "profileGate": {
     "title": "Complete seu Perfil",

@@ -67,6 +67,8 @@ export default function MilestonePayment({
   const [loadingMilestone, setLoadingMilestone] = useState<number | null>(null);
   const [releasingPayment, setReleasingPayment] = useState<string | null>(null);
   const [confirmReleaseId, setConfirmReleaseId] = useState<string | null>(null);
+  const [confirmApprovalMilestone, setConfirmApprovalMilestone] = useState<{ index: number; milestone: Milestone } | null>(null);
+  const [approvingMilestone, setApprovingMilestone] = useState<number | null>(null);
   
   // Funding modal state
   const [fundingModalOpen, setFundingModalOpen] = useState(false);
@@ -111,14 +113,56 @@ export default function MilestonePayment({
     fetchContractAndCountry();
   }, [user, projectId]);
 
-  // Always use transparent checkout modal (for any currency)
-  const handleFundMilestone = (milestoneIndex: number, milestone: Milestone) => {
+  // Handle click on fund/approve button
+  const handleFundOrApproveClick = (milestoneIndex: number, milestone: Milestone) => {
     if (!contractId) {
       toast.error("Contrato não encontrado");
       return;
     }
-    setSelectedMilestone({ index: milestoneIndex, milestone });
-    setFundingModalOpen(true);
+    
+    if (hasVerifiedPayment) {
+      // Show confirmation dialog for approval
+      setConfirmApprovalMilestone({ index: milestoneIndex, milestone });
+    } else {
+      // Open funding modal for regular fund
+      setSelectedMilestone({ index: milestoneIndex, milestone });
+      setFundingModalOpen(true);
+    }
+  };
+
+  // Handle approval confirmation (using prefund funds)
+  const handleApprovePayment = async () => {
+    if (!confirmApprovalMilestone || !contractId) return;
+    
+    const { index, milestone } = confirmApprovalMilestone;
+    setApprovingMilestone(index);
+    setConfirmApprovalMilestone(null);
+
+    try {
+      // Create payment record with "paid" status to mark as approved
+      const { error: paymentError } = await supabase
+        .from("payments")
+        .insert({
+          project_id: projectId,
+          company_user_id: user?.id,
+          freelancer_user_id: freelancerUserId,
+          amount: milestone.amount,
+          currency: currency,
+          status: "paid",
+          escrow_status: "held",
+          paid_at: new Date().toISOString(),
+        });
+
+      if (paymentError) throw paymentError;
+
+      toast.success(t("payments.paymentApproved", "Pagamento aprovado com sucesso!"));
+      onPaymentComplete();
+    } catch (error) {
+      console.error("Approval error:", error);
+      toast.error(t("payments.approvalError", "Falha ao aprovar pagamento"));
+    } finally {
+      setApprovingMilestone(null);
+    }
   };
 
   const handleFundingComplete = () => {
@@ -170,9 +214,18 @@ export default function MilestonePayment({
     );
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, isApproved: boolean = false) => {
     switch (status) {
       case "paid":
+        // If project has verified payment, show "Pagamento Aprovado" in green
+        if (hasVerifiedPayment || isApproved) {
+          return (
+            <Badge className="gap-1 bg-green-600 text-white hover:bg-green-600">
+              <CheckCircle className="h-3 w-3" />
+              {t("payments.paymentApprovedBadge", "Pagamento Aprovado")}
+            </Badge>
+          );
+        }
         return (
           <Badge variant="secondary" className="gap-1">
             <Clock className="h-3 w-3" />
@@ -313,11 +366,11 @@ export default function MilestonePayment({
                     
                     {canFund && (
                       <Button
-                        onClick={() => handleFundMilestone(idx, milestone)}
-                        disabled={loadingMilestone === idx}
+                        onClick={() => handleFundOrApproveClick(idx, milestone)}
+                        disabled={loadingMilestone === idx || approvingMilestone === idx}
                         className="gap-2"
                       >
-                        {loadingMilestone === idx ? (
+                        {(loadingMilestone === idx || approvingMilestone === idx) ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                           <DollarSign className="h-4 w-4" />
@@ -372,6 +425,27 @@ export default function MilestonePayment({
               className="bg-green-600 hover:bg-green-700"
             >
               {t("payments.confirmReleaseBtn")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Approval Confirmation Dialog */}
+      <AlertDialog open={!!confirmApprovalMilestone} onOpenChange={() => setConfirmApprovalMilestone(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("payments.confirmApproval", "Aprovar Pagamento")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("payments.confirmApprovalDesc", "Deseja aprovar este pagamento? O valor será reservado para o freelancer e liberado após a conclusão da entrega.")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.no", "Não")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleApprovePayment}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {t("common.yes", "Sim")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
