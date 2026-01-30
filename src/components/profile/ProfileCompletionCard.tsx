@@ -5,12 +5,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
 import { 
-  CheckCircle, Circle, ChevronRight, Award, Coins,
-  Camera, User, FileText, MapPin, Briefcase, DollarSign, Folder, CreditCard, Gift
+  CheckCircle, Circle, ChevronRight, Award,
+  Camera, User, FileText, MapPin, Briefcase, DollarSign, Folder, CreditCard, Gift, Coins
 } from "lucide-react";
 import { 
   computeFreelancerCompletion, 
@@ -19,7 +17,6 @@ import {
   getCompletionStatus,
   type ProfileCompletionResult 
 } from "@/lib/profileCompletion";
-import { ProfileCelebrationModal } from "./ProfileCelebrationModal";
 
 const iconMap: Record<string, React.ReactNode> = {
   avatar_url: <Camera className="h-4 w-4" />,
@@ -49,16 +46,13 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { toast } = useToast();
   
   const [completion, setCompletion] = useState<ProfileCompletionResult | null>(null);
   const [userType, setUserType] = useState<'company' | 'freelancer' | null>(null);
   const [loading, setLoading] = useState(true);
   const [bonusClaimed, setBonusClaimed] = useState(false);
-  const [showCelebrationModal, setShowCelebrationModal] = useState(false);
   const [bonusCredits, setBonusCredits] = useState(10);
   const [bonusEnabled, setBonusEnabled] = useState(true);
-  const [previousPercent, setPreviousPercent] = useState<number | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -127,9 +121,6 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
             (payoutCount || 0) > 0
           );
           setCompletion(result);
-          
-          // Update profile completion percent
-          await updateProfileCompletion(result.percent);
         }
       } else if (profile.user_type === "company") {
         // Fetch company profile
@@ -139,113 +130,15 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
           .eq("user_id", user.id)
           .single();
 
-        // Check for payment methods (not used for completion, but kept for future reference)
-        // const { count: paymentMethodCount } = await supabase
-        //   .from("payment_method_tokens")
-        //   .select("*", { count: "exact", head: true })
-        //   .eq("user_id", user.id);
-
         if (companyProfile) {
           const result = computeCompanyCompletion(companyProfile);
           setCompletion(result);
-          
-          // Update profile completion percent
-          await updateProfileCompletion(result.percent);
         }
       }
     } catch (error) {
       console.error("[PROFILE] Error fetching completion data:", error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const updateProfileCompletion = async (percent: number) => {
-    if (!user || !userType) return;
-    
-    console.log("[PROFILE] Attempting to update completion:", { 
-      percent, 
-      previousPercent,
-      userId: user.id, 
-      userType,
-      bonusClaimed 
-    });
-    
-    try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          profile_completion_percent: percent,
-          profile_completion_updated_at: new Date().toISOString(),
-        })
-        .eq("user_id", user.id);
-      
-      if (error) {
-        console.error("[PROFILE] Error updating completion in DB:", error);
-        return;
-      }
-      
-      console.log("[PROFILE] Completion saved successfully to DB:", { percent });
-      
-      // Check if just reached 100% (transition from <100 to 100)
-      const justCompleted = percent >= 100 && (previousPercent === null || previousPercent < 100);
-      
-      if (justCompleted) {
-        console.log("[PROFILE] Profile just completed! Showing celebration...");
-        
-        // Show celebration immediately
-        setShowCelebrationModal(true);
-        
-        // Try to claim bonus if not already claimed
-        if (!bonusClaimed) {
-          console.log("[PROFILE] Attempting to claim bonus...");
-          await claimCompletionBonus();
-        }
-      }
-      
-      // Update previous percent for next comparison
-      setPreviousPercent(percent);
-    } catch (error) {
-      console.error("[PROFILE] Error updating completion:", error);
-    }
-  };
-
-  const claimCompletionBonus = async () => {
-    if (!user || !userType) {
-      console.log("[PROFILE] Skipping bonus claim - no user or userType");
-      return;
-    }
-    
-    if (bonusClaimed) {
-      console.log("[PROFILE] Bonus already claimed in this session");
-      return;
-    }
-    
-    console.log("[PROFILE] Calling grant_profile_completion_bonus RPC...", {
-      userId: user.id,
-      userType
-    });
-    
-    try {
-      const { data, error } = await supabase.rpc('grant_profile_completion_bonus', {
-        p_user_id: user.id,
-        p_user_type: userType
-      });
-      
-      console.log("[PROFILE] RPC response:", { data, error });
-      
-      if (error) throw error;
-      
-      if (data === true) {
-        console.log("[PROFILE] Bonus granted successfully!");
-        setBonusClaimed(true);
-      } else {
-        console.log("[PROFILE] Bonus not granted - already claimed in database or disabled");
-        // Still mark as claimed to prevent retries
-        setBonusClaimed(true);
-      }
-    } catch (error) {
-      console.error("[PROFILE] Error claiming bonus:", error);
     }
   };
 
@@ -258,18 +151,6 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
       navigate("/settings?tab=profile");
     }
   };
-
-  // Always render the celebration modal when active (even if component would otherwise be hidden)
-  if (showCelebrationModal && userType) {
-    return (
-      <ProfileCelebrationModal
-        open={showCelebrationModal}
-        onClose={() => setShowCelebrationModal(false)}
-        bonusCredits={bonusCredits}
-        userType={userType}
-      />
-    );
-  }
 
   if (loading || !completion || !userType) {
     return null;
