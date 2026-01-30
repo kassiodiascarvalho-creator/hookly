@@ -2863,6 +2863,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      sync_freelancer_proposal_count: {
+        Args: { p_freelancer_user_id: string }
+        Returns: Json
+      }
       update_freelancer_revenue_and_achievements: {
         Args: { p_freelancer_user_id: string }
         Returns: undefined
