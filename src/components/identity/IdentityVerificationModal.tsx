@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Select,
   SelectContent,
@@ -20,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { 
   Loader2, Shield, CheckCircle2, AlertCircle, 
-  ChevronRight, ChevronLeft, Upload 
+  ChevronRight, ChevronLeft, Upload, AlertTriangle
 } from "lucide-react";
 import { IdentityFileUpload } from "./IdentityFileUpload";
 import { useIdentityVerification } from "@/hooks/useIdentityVerification";
@@ -65,7 +66,15 @@ export function IdentityVerificationModal({
   onVerificationStarted,
 }: IdentityVerificationModalProps) {
   const { t } = useTranslation();
-  const { startVerification, uploadFile, finalizeUploads, refetch } = useIdentityVerification({
+  const { 
+    startVerification, 
+    uploadFile, 
+    finalizeUploads, 
+    refetch,
+    attempts,
+    maxAttempts,
+    failureReason: existingFailureReason,
+  } = useIdentityVerification({
     subjectType,
   });
   
@@ -75,6 +84,7 @@ export function IdentityVerificationModal({
   const [consentGiven, setConsentGiven] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [failureReason, setFailureReason] = useState<string | null>(null);
   
   // Upload state
   const [verificationId, setVerificationId] = useState<string | null>(null);
@@ -86,6 +96,10 @@ export function IdentityVerificationModal({
   const selectedCountry = COUNTRIES.find(c => c.code === country);
   const availableDocuments = selectedCountry?.documents || ["passport"];
   const hasBackSide = !NO_BACK_DOCUMENTS.includes(documentType);
+
+  // Attempts info
+  const isLastAttempt = attempts >= maxAttempts - 1;
+  const remainingAttempts = maxAttempts - attempts;
 
   // Reset document when country changes
   const handleCountryChange = (value: string) => {
@@ -101,6 +115,7 @@ export function IdentityVerificationModal({
     setStep("select");
     setConsentGiven(false);
     setError(null);
+    setFailureReason(null);
     setVerificationId(null);
     setUploadPrefix(null);
     setRequiredFiles([]);
@@ -157,16 +172,25 @@ export function IdentityVerificationModal({
 
     setLoading(true);
     setError(null);
+    setFailureReason(null);
 
     try {
       const result = await finalizeUploads(verificationId);
       
       if (result.status === "failed_soft") {
-        setError(result.failureReason || "Problema com as imagens enviadas");
-        setStep("error");
+        // Show failure reason and allow retry
+        setFailureReason(result.failureReason || "Problema com as imagens enviadas");
+        setError(result.failureReason || "Houve um problema com as imagens. Por favor, tente novamente.");
+        // Stay on upload step to allow retry
+        setUploadedFiles(new Set());
+        toast.error("Problema nas imagens", {
+          description: result.failureReason || "Por favor, envie fotos mais nítidas.",
+        });
       } else {
         setStep("processing");
-        toast.success("Documentos enviados! Você será notificado quando a análise for concluída.");
+        toast.success("Documentos enviados!", {
+          description: "Você será notificado quando a análise for concluída.",
+        });
         
         // Wait a bit and close
         setTimeout(() => {
@@ -202,6 +226,30 @@ export function IdentityVerificationModal({
                 </p>
               </div>
             </div>
+
+            {/* Show existing failure reason if retrying */}
+            {existingFailureReason && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Último erro:</strong> {existingFailureReason}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Attempts counter */}
+            {attempts > 0 && (
+              <Alert variant={isLastAttempt ? "destructive" : "default"}>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  {isLastAttempt ? (
+                    <strong>⚠️ Esta é sua última tentativa!</strong>
+                  ) : (
+                    <>Tentativa {attempts + 1} de {maxAttempts} ({remainingAttempts} restantes)</>
+                  )}
+                </AlertDescription>
+              </Alert>
+            )}
 
             <div className="space-y-4">
               <div className="space-y-2">
@@ -305,6 +353,18 @@ export function IdentityVerificationModal({
       case "upload":
         return (
           <div className="space-y-6">
+            {/* Error alert for failed_soft */}
+            {failureReason && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Problema detectado:</strong> {failureReason}
+                  <br />
+                  <span className="text-sm">Por favor, envie novas fotos corrigindo os problemas acima.</span>
+                </AlertDescription>
+              </Alert>
+            )}
+
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span>Progresso do envio</span>
@@ -338,6 +398,16 @@ export function IdentityVerificationModal({
                 onUpload={(file) => handleFileUpload("selfie", file)}
               />
             </div>
+
+            {/* Attempts warning */}
+            {isLastAttempt && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Atenção:</strong> Esta é sua última tentativa. Certifique-se de enviar fotos nítidas e legíveis.
+                </AlertDescription>
+              </Alert>
+            )}
 
             <div className="flex gap-3">
               <Button variant="outline" onClick={() => setStep("consent")} className="flex-1">
