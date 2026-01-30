@@ -1972,6 +1972,39 @@ export type Database = {
           },
         ]
       }
+      project_categories: {
+        Row: {
+          category_id: string
+          created_at: string
+          project_id: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          project_id: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_categories_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_invites: {
         Row: {
           company_user_id: string
