@@ -280,30 +280,35 @@ export function SelfieCameraCapture({ onCapture, disabled = false }: SelfieCamer
             className="w-full h-64 object-cover scale-x-[-1]"
           />
           
-          {/* Face guide overlay with glowing effect */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            {/* Outer glow rings */}
-            <div className="absolute w-48 h-60 rounded-[50%] bg-white/5 blur-xl" />
-            <div className="absolute w-44 h-56 rounded-[50%] bg-white/10 blur-lg" />
-            <div className="absolute w-42 h-54 rounded-[50%] bg-white/15 blur-md" />
+          {/* Bright overlay around face guide - fills the whole area */}
+          <div className="absolute inset-0 pointer-events-none">
+            {/* Semi-transparent bright overlay covering everything */}
+            <div className="absolute inset-0 bg-white/30" />
             
-            {/* Main face guide with animated glow */}
-            <div className="w-40 h-52 border-[3px] border-white/70 rounded-[50%] relative shadow-[0_0_30px_rgba(255,255,255,0.4),0_0_60px_rgba(255,255,255,0.2),inset_0_0_20px_rgba(255,255,255,0.1)]">
-              <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-white text-xs bg-black/70 px-3 py-1.5 rounded-full font-medium whitespace-nowrap">
-                Centralize seu rosto aqui
+            {/* Dark cutout in the center for the face (using clip-path would be ideal but using layers) */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              {/* Main face guide hole - darker center */}
+              <div 
+                className="w-44 h-56 rounded-[50%] relative"
+                style={{
+                  background: 'radial-gradient(ellipse at center, transparent 0%, transparent 85%, rgba(255,255,255,0.4) 100%)',
+                  boxShadow: '0 0 0 9999px rgba(255,255,255,0.35), inset 0 0 30px rgba(255,255,255,0.3)'
+                }}
+              >
+                {/* Glowing border */}
+                <div className="absolute inset-0 rounded-[50%] border-4 border-white shadow-[0_0_20px_rgba(255,255,255,0.8),0_0_40px_rgba(255,255,255,0.5)]" />
+                
+                {/* Label */}
+                <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-white text-xs bg-black/80 px-4 py-2 rounded-full font-medium whitespace-nowrap shadow-lg">
+                  Centralize seu rosto aqui
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Corner brightness indicators */}
-          <div className="absolute top-0 left-0 w-16 h-16 border-l-2 border-t-2 border-white/40 rounded-tl-lg" />
-          <div className="absolute top-0 right-0 w-16 h-16 border-r-2 border-t-2 border-white/40 rounded-tr-lg" />
-          <div className="absolute bottom-0 left-0 w-16 h-16 border-l-2 border-b-2 border-white/40 rounded-bl-lg" />
-          <div className="absolute bottom-0 right-0 w-16 h-16 border-r-2 border-b-2 border-white/40 rounded-br-lg" />
-
           {/* Tips overlay */}
-          <div className="absolute top-2 left-2 right-2 flex items-center justify-center">
-            <div className="bg-black/70 text-white text-xs px-4 py-2 rounded-full flex items-center gap-2 font-medium">
+          <div className="absolute top-3 left-3 right-3 flex items-center justify-center">
+            <div className="bg-black/80 text-white text-xs px-4 py-2 rounded-full flex items-center gap-2 font-medium shadow-lg">
               <Lightbulb className="h-4 w-4 text-yellow-300" />
               Procure boa iluminação e olhe para a câmera
             </div>
