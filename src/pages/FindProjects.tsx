@@ -160,18 +160,18 @@ export default function FindProjects() {
         const matchesCurrency = selectedCurrency === "" || selectedCurrency === "all" || 
           (project.currency || "USD") === selectedCurrency;
         
-        // Filter by budget range - check if project budget overlaps with filter range
+        // Filter by budget range - project must be WITHIN the specified range
         let matchesBudget = true;
         const projectMin = project.budget_min ?? 0;
-        const projectMax = project.budget_max ?? project.budget_min ?? Infinity;
+        const projectMax = project.budget_max ?? project.budget_min ?? 0;
         
         if (minBudget !== null) {
-          // Project's max budget should be >= filter min (project can pay at least the minimum we want)
-          matchesBudget = matchesBudget && projectMax >= minBudget;
+          // Project's minimum budget should be >= filter min
+          matchesBudget = matchesBudget && projectMin >= minBudget;
         }
         if (maxBudget !== null) {
-          // Project's min budget should be <= filter max (project's minimum is within our budget)
-          matchesBudget = matchesBudget && projectMin <= maxBudget;
+          // Project's maximum budget should be <= filter max
+          matchesBudget = matchesBudget && projectMax <= maxBudget;
         }
         
         return matchesSearch && matchesCategory && matchesCurrency && matchesBudget;
