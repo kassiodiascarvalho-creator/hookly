@@ -3213,6 +3213,10 @@ export type Database = {
         Args: { p_email: string; p_permissions: Json }
         Returns: Json
       }
+      admin_delete_identity_evidence: {
+        Args: { p_verification_id: string }
+        Returns: Json
+      }
       admin_reset_identity_verification: {
         Args: { p_notes?: string; p_verification_id: string }
         Returns: boolean
@@ -3369,6 +3373,15 @@ export type Database = {
       get_identity_status: {
         Args: { p_subject_type: string; p_user_id: string }
         Returns: Json
+      }
+      get_identity_verifications_for_cleanup: {
+        Args: { p_days_old?: number }
+        Returns: {
+          status: string
+          storage_paths: string[]
+          user_id: string
+          verification_id: string
+        }[]
       }
       get_project_categories: {
         Args: { p_project_id: string }
