@@ -8,7 +8,7 @@ import { AchievementsCard } from "@/components/achievements";
 import { ProfileCompletionCard } from "@/components/profile/ProfileCompletionCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { formatMoney, formatMoneyFromCents } from "@/lib/formatMoney";
+import { formatMoney } from "@/lib/formatMoney";
 import { useLocalCurrencyDisplay } from "@/hooks/useLocalCurrencyDisplay";
 import { computeFreelancerCompletion } from "@/lib/profileCompletion";
 import { TrustMessage } from "@/components/trust/TrustBadge";
@@ -130,15 +130,20 @@ export default function FreelancerDashboard() {
       const pendingProposals = proposalsResult.count || 0;
       const conversations = conversationsResult.count || 0;
       
-      // All values are stored in cents - keep in cents for proper formatting
-      const earningsAvailable = Number(balanceResult.data?.earnings_available || 0);
-      const contractsEscrow = (activeContractsResult.data || [])
+      // user_balances stores values in MAJOR UNITS (numeric with decimals)
+      // contracts.amount_cents and withdrawal_requests.amount are in MINOR UNITS (cents)
+      const earningsAvailableMajor = Number(balanceResult.data?.earnings_available || 0);
+      
+      // contracts.amount_cents is stored in MINOR UNITS (cents)
+      const contractsEscrowCents = (activeContractsResult.data || [])
         .reduce((sum, c) => sum + (c.amount_cents || 0), 0);
-      const paidWithdrawals = (paidWithdrawalsResult.data || [])
+      
+      // withdrawal_requests.amount is stored in MAJOR UNITS
+      const paidWithdrawalsMajor = (paidWithdrawalsResult.data || [])
         .reduce((sum, w) => sum + (Number(w.amount) || 0), 0);
       
-      // Total earnings in cents = available + contracts escrow + already withdrawn
-      const totalEarningsCents = earningsAvailable + contractsEscrow + paidWithdrawals;
+      // Total earnings in MAJOR UNITS = available + contracts escrow (converted) + already withdrawn
+      const totalEarningsMajor = earningsAvailableMajor + (contractsEscrowCents / 100) + paidWithdrawalsMajor;
       const currency = balanceResult.data?.currency || "BRL";
       
       // Calculate profile completion in real-time (not from stale database value)
@@ -159,7 +164,7 @@ export default function FreelancerDashboard() {
         activeProjects,
         pendingProposals,
         conversations,
-        totalEarnings: totalEarningsCents, // Store in cents
+        totalEarnings: totalEarningsMajor, // Store in MAJOR UNITS
         currency,
         profileCompletion,
         tier,
@@ -171,14 +176,16 @@ export default function FreelancerDashboard() {
     }
   };
 
-  // Helper to render earnings with local currency approximation - uses dynamic decimals
+  // Helper to render earnings with local currency approximation - uses MAJOR UNITS
   const renderEarningsValue = () => {
     if (stats.totalEarnings === 0) {
       return { usdValue: "—", localValue: null };
     }
-    const usdValue = formatMoneyFromCents(stats.totalEarnings, stats.currency);
+    // totalEarnings is already in MAJOR UNITS, use formatMoney directly
+    const usdValue = formatMoney(stats.totalEarnings, stats.currency);
+    // For local currency conversion, convertToLocal expects cents so we multiply by 100
     const localValue = localCurrency !== "USD" && !fxLoading && stats.totalEarnings > 0
-      ? `≈ ${formatMoney(convertToLocal(stats.totalEarnings) || 0, localCurrency)}`
+      ? `≈ ${formatMoney(convertToLocal(stats.totalEarnings * 100) || 0, localCurrency)}`
       : null;
     
     return { usdValue, localValue };
