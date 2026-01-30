@@ -988,185 +988,148 @@
     }
   },
   "forCompanies": {
-    "title": "企业服务",
-    "subtitle": "发现 HOOKLY 如何帮助您找到完美的人才",
-    "hero": {
-      "title": "以成果为导向雇佣",
-      "subtitle": "接触顶级验证自由职业者，只为交付的成果付费",
-      "cta": "免费开始"
-    },
+    "badge": "企业服务",
+    "title": "自信地雇佣验证人才",
+    "subtitle": "HOOKLY 将您的企业与顶级自由职业者连接。按成果付费，而非按小时。",
+    "cta": "免费创建账户",
+    "ctaSecondary": "浏览人才",
+    "benefitsTitle": "为什么选择 HOOKLY？",
     "benefits": {
-      "title": "为什么企业选择 HOOKLY",
       "verified": {
         "title": "验证人才",
-        "description": "每位自由职业者都经过我们严格的验证过程"
+        "description": "所有自由职业者都经过严格的验证过程"
       },
       "escrow": {
-        "title": "托管保护",
-        "description": "资金安全保留，直到您批准工作"
+        "title": "安全付款",
+        "description": "资金受托管保护，直到工作获批"
       },
-      "results": {
-        "title": "按成果付费",
-        "description": "只为批准的交付物付款，而非工时"
+      "talent": {
+        "title": "全球人才库",
+        "description": "接触来自150多个国家的专业人士"
       },
-      "support": {
-        "title": "专业支持",
-        "description": "项目全程获得专业帮助"
+      "fast": {
+        "title": "快速匹配",
+        "description": "在24小时内找到理想的专业人士"
       }
     },
-    "howItWorks": {
-      "title": "如何运作",
-      "step1": {
+    "howItWorks": "如何运作",
+    "steps": {
+      "post": {
         "title": "发布您的项目",
         "description": "描述您的需求并设定预算"
       },
-      "step2": {
+      "receive": {
         "title": "接收提案",
-        "description": "获得验证自由职业者的提案"
+        "description": "验证的自由职业者将发送提案"
       },
-      "step3": {
-        "title": "雇佣并合作",
-        "description": "选择最佳人选并开始工作"
+      "hire": {
+        "title": "雇佣并追踪",
+        "description": "选择最佳人选并追踪进度"
       },
-      "step4": {
+      "pay": {
         "title": "按成果付费",
-        "description": "批准交付物并释放付款"
+        "description": "批准工作后释放付款"
       }
     },
-    "cta": {
-      "title": "准备好寻找您的完美人才了吗？",
-      "subtitle": "今天免费发布您的第一个项目",
-      "button": "发布项目"
-    }
+    "ctaTitle": "准备好开始了吗？",
+    "ctaSubtitle": "加入数千家已找到理想人才的企业",
+    "ctaButton": "免费注册"
   },
   "forFreelancers": {
-    "title": "自由职业者服务",
-    "subtitle": "发现 HOOKLY 如何帮助您发展事业",
-    "hero": {
-      "title": "与您合作的优质客户",
-      "subtitle": "接触验证企业的真实项目",
-      "cta": "加入 HOOKLY"
-    },
+    "badge": "自由职业者服务",
+    "title": "与优质客户一起发展您的事业",
+    "subtitle": "与重视您工作并为质量付费的正规企业建立联系。",
+    "cta": "免费创建档案",
+    "benefitsTitle": "HOOKLY 优势",
     "benefits": {
-      "title": "为什么自由职业者选择 HOOKLY",
+      "payment": {
+        "title": "付款保障",
+        "description": "批准的工作始终获得报酬"
+      },
+      "escrow": {
+        "title": "托管保护",
+        "description": "开始工作前资金已获保障"
+      },
       "clients": {
         "title": "验证客户",
-        "description": "与认真对待项目的真实企业合作"
-      },
-      "payment": {
-        "title": "安全付款",
-        "description": "您的付款受托管保护"
+        "description": "只与正规可靠的企业合作"
       },
       "growth": {
-        "title": "职业发展",
-        "description": "建立您的作品集并获得评价"
-      },
-      "support": {
-        "title": "社区支持",
-        "description": "加入专业人士网络"
+        "title": "发展事业",
+        "description": "在平台上建立您的作品集和声誉"
       }
     },
-    "howItWorks": {
-      "title": "如何运作",
-      "step1": {
+    "howItWorks": "如何运作",
+    "steps": {
+      "profile": {
         "title": "创建您的档案",
-        "description": "展示您的技能和作品集"
+        "description": "展示您的技能和经验"
       },
-      "step2": {
+      "browse": {
         "title": "寻找项目",
-        "description": "浏览并申请匹配您技能的项目"
+        "description": "浏览与您档案匹配的机会"
       },
-      "step3": {
-        "title": "提交提案",
-        "description": "发送个性化提案赢得项目"
+      "propose": {
+        "title": "发送提案",
+        "description": "用清晰的里程碑展示您的解决方案"
       },
-      "step4": {
-        "title": "获得付款",
-        "description": "完成工作并安全收取付款"
+      "earn": {
+        "title": "工作并赚钱",
+        "description": "交付成果并收取付款"
       }
     },
-    "cta": {
-      "title": "准备好开始赚钱了吗？",
-      "subtitle": "今天加入数千名成功的自由职业者",
-      "button": "创建档案"
-    }
+    "ctaTitle": "今天开始您的旅程",
+    "ctaSubtitle": "数千个项目正在等待像您这样的专业人士",
+    "ctaButton": "免费创建档案"
   },
   "pricingPage": {
-    "title": "定价",
-    "subtitle": "选择适合您需求的计划",
-    "monthly": "月付",
-    "yearly": "年付",
-    "yearlyDiscount": "年付节省20%",
-    "perMonth": "/月",
-    "perYear": "/年",
-    "getStarted": "开始使用",
-    "contactSales": "联系销售",
-    "popular": "最受欢迎",
-    "features": "功能",
-    "allPlans": "所有计划包括",
+    "title": "满足各种需求的灵活计划",
+    "subtitle": "免费开始，需要更多功能时升级",
+    "faqTitle": "定价常见问题",
+    "faqSubtitle": "获取关于我们计划的解答",
     "faq": {
-      "title": "常见问题",
-      "items": [
-        {
-          "question": "我可以随时取消吗？",
-          "answer": "是的，您可以随时取消订阅，不会受到任何处罚。"
-        },
-        {
-          "question": "积分是什么？",
-          "answer": "积分用于向项目提交提案。每份提案需要一定数量的积分。"
-        },
-        {
-          "question": "你们提供退款吗？",
-          "answer": "我们为年度计划提供30天退款保证。"
-        }
-      ]
-    }
+      "fees": {
+        "question": "平台费用是多少？",
+        "answer": "HOOKLY 对完成的交易收取10%的费用。没有隐藏费用或强制订阅。"
+      },
+      "payment": {
+        "question": "付款如何运作？",
+        "answer": "付款保留在托管账户中，直到您批准工作。批准后，我们将其释放给自由职业者。"
+      }
+    },
+    "ctaTitle": "准备好开始了吗？",
+    "ctaSubtitle": "创建您的免费账户并探索平台",
+    "ctaButton": "立即开始"
   },
   "howItWorksPage": {
-    "title": "如何运作",
-    "subtitle": "了解 HOOKLY 如何帮助您取得成功",
-    "forCompanies": {
-      "title": "企业专区",
-      "steps": [
-        {
-          "title": "发布您的项目",
-          "description": "描述您的需求、预算和时间表。发布是完全免费的。"
-        },
-        {
-          "title": "接收提案",
-          "description": "验证的自由职业者会发送根据您需求定制的提案。"
-        },
-        {
-          "title": "审核和雇佣",
-          "description": "比较提案、查看档案并选择最佳人选。"
-        },
-        {
-          "title": "按成果付费",
-          "description": "资金安全保留在托管账户。只有在批准交付物后才释放付款。"
-        }
-      ]
+    "title": "HOOKLY 如何运作",
+    "subtitle": "连接人才和企业的简单透明过程",
+    "step": "步骤",
+    "steps": {
+      "post": {
+        "title": "发布您的项目",
+        "description": "详细描述您的需求，设定预算和预期KPI。免费且只需几分钟。"
+      },
+      "match": {
+        "title": "接收合格提案",
+        "description": "验证的自由职业者分析您的项目并发送带里程碑和报价的提案。您可以比较和协商。"
+      },
+      "work": {
+        "title": "追踪进度",
+        "description": "直接与自由职业者沟通，追踪里程碑交付并保持对项目的完全控制。"
+      },
+      "pay": {
+        "title": "按成果付费",
+        "description": "批准每次交付并释放付款。托管确保双方的安全。"
+      }
     },
-    "forFreelancers": {
-      "title": "自由职业者专区",
-      "steps": [
-        {
-          "title": "创建您的档案",
-          "description": "展示您的技能、作品集和经验。"
-        },
-        {
-          "title": "寻找项目",
-          "description": "浏览验证企业发布的可用项目。"
-        },
-        {
-          "title": "提交提案",
-          "description": "发送个性化提案，提出您的方法和条款。"
-        },
-        {
-          "title": "完成工作并获得付款",
-          "description": "交付优质工作并安全收取付款。"
-        }
-      ]
-    }
+    "security": {
+      "title": "您的安全是我们的首要任务",
+      "description": "所有付款都受托管保护。您只在批准工作后付款。自由职业者经过验证和评级。"
+    },
+    "ctaTitle": "准备好开始了吗？",
+    "ctaSubtitle": "加入数千家成功的企业和自由职业者",
+    "ctaButton": "免费创建账户"
   },
   "dashboard": {
     "companySubtitle": "管理您的项目和招聘",
