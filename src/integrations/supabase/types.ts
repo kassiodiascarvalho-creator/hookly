@@ -2937,6 +2937,10 @@ export type Database = {
         }
         Returns: string
       }
+      set_project_categories: {
+        Args: { p_category_ids: string[]; p_project_id: string }
+        Returns: boolean
+      }
       spend_credits: {
         Args: { p_amount: number; p_context?: string; p_user_id: string }
         Returns: boolean
