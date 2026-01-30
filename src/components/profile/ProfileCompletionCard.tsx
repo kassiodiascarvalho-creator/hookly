@@ -19,6 +19,7 @@ import {
   getCompletionStatus,
   type ProfileCompletionResult 
 } from "@/lib/profileCompletion";
+import { ProfileCelebrationModal } from "./ProfileCelebrationModal";
 
 const iconMap: Record<string, React.ReactNode> = {
   avatar_url: <Camera className="h-4 w-4" />,
@@ -54,7 +55,7 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
   const [userType, setUserType] = useState<'company' | 'freelancer' | null>(null);
   const [loading, setLoading] = useState(true);
   const [bonusClaimed, setBonusClaimed] = useState(false);
-  const [showCelebration, setShowCelebration] = useState(false);
+  const [showCelebrationModal, setShowCelebrationModal] = useState(false);
   const [bonusCredits, setBonusCredits] = useState(10);
   const [bonusEnabled, setBonusEnabled] = useState(true);
 
@@ -222,14 +223,7 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
       if (data === true) {
         console.log("[PROFILE] Bonus granted successfully!");
         setBonusClaimed(true);
-        setShowCelebration(true);
-        toast({
-          title: t("profileCompletion.bonusClaimedTitle", "🎉 Parabéns!"),
-          description: t("profileCompletion.bonusClaimedDesc", { credits: bonusCredits }),
-        });
-        
-        // Hide celebration after 5 seconds
-        setTimeout(() => setShowCelebration(false), 5000);
+        setShowCelebrationModal(true);
       } else {
         console.log("[PROFILE] Bonus not granted - already claimed or disabled");
       }
@@ -252,32 +246,19 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
     return null;
   }
 
-  // Show celebration card if just completed
-  if (completion.percent >= 100 && showCelebration) {
+  // Show celebration modal when profile is completed
+  if (showCelebrationModal) {
     return (
-      <Card className="border-green-500/50 bg-gradient-to-br from-green-500/10 to-primary/5 animate-pulse">
-        <CardContent className="p-6 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="h-16 w-16 rounded-full bg-green-500/20 flex items-center justify-center">
-              <Gift className="h-8 w-8 text-green-500" />
-            </div>
-          </div>
-          <h3 className="text-lg font-bold text-green-600 mb-2">
-            {t("profileCompletion.celebrationTitle", "🎉 Perfil 100% Completo!")}
-          </h3>
-          <p className="text-sm text-muted-foreground mb-3">
-            {t("profileCompletion.celebrationDesc", { credits: bonusCredits })}
-          </p>
-          <Badge variant="default" className="gap-1">
-            <Coins className="h-3 w-3" />
-            +{bonusCredits} {t("profileCompletion.credits", "Créditos")}
-          </Badge>
-        </CardContent>
-      </Card>
+      <ProfileCelebrationModal
+        open={showCelebrationModal}
+        onClose={() => setShowCelebrationModal(false)}
+        bonusCredits={bonusCredits}
+        userType={userType}
+      />
     );
   }
 
-  // Hide if profile is complete and celebration ended
+  // Hide if profile is complete
   if (completion.percent >= 100) {
     return null;
   }
