@@ -2059,6 +2059,7 @@ export type Database = {
           description: string | null
           id: string
           kpis: Json | null
+          primary_category_id: string | null
           status: Database["public"]["Enums"]["project_status"]
           title: string
           updated_at: string
@@ -2075,6 +2076,7 @@ export type Database = {
           description?: string | null
           id?: string
           kpis?: Json | null
+          primary_category_id?: string | null
           status?: Database["public"]["Enums"]["project_status"]
           title: string
           updated_at?: string
@@ -2091,11 +2093,20 @@ export type Database = {
           description?: string | null
           id?: string
           kpis?: Json | null
+          primary_category_id?: string | null
           status?: Database["public"]["Enums"]["project_status"]
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "projects_primary_category_id_fkey"
+            columns: ["primary_category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       proposals: {
         Row: {
