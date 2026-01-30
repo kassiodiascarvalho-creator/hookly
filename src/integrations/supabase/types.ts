@@ -289,6 +289,8 @@ export type Database = {
           contact_name: string | null
           country: string | null
           created_at: string
+          document_number: string | null
+          document_type: string | null
           id: string
           industry: string | null
           is_verified: boolean | null
@@ -308,6 +310,8 @@ export type Database = {
           contact_name?: string | null
           country?: string | null
           created_at?: string
+          document_number?: string | null
+          document_type?: string | null
           id?: string
           industry?: string | null
           is_verified?: boolean | null
@@ -327,6 +331,8 @@ export type Database = {
           contact_name?: string | null
           country?: string | null
           created_at?: string
+          document_number?: string | null
+          document_type?: string | null
           id?: string
           industry?: string | null
           is_verified?: boolean | null
@@ -855,6 +861,8 @@ export type Database = {
           country_code: string | null
           created_at: string
           currency_code: string | null
+          document_number: string | null
+          document_type: string | null
           full_name: string | null
           hourly_rate: number | null
           id: string
@@ -880,6 +888,8 @@ export type Database = {
           country_code?: string | null
           created_at?: string
           currency_code?: string | null
+          document_number?: string | null
+          document_type?: string | null
           full_name?: string | null
           hourly_rate?: number | null
           id?: string
@@ -905,6 +915,8 @@ export type Database = {
           country_code?: string | null
           created_at?: string
           currency_code?: string | null
+          document_number?: string | null
+          document_type?: string | null
           full_name?: string | null
           hourly_rate?: number | null
           id?: string
