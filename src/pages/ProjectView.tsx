@@ -24,6 +24,7 @@ import { CreditCheckModal } from "@/components/credits/CreditCheckModal";
 import { ViewCompanyDataButton } from "@/components/company/ViewCompanyDataButton";
 import { GeniusProposalButton } from "@/components/genius";
 import { useProfileGate } from "@/hooks/useProfileGate";
+import { useFreelancerPlan } from "@/hooks/useFreelancerPlan";
 import { ProfileGateModal } from "@/components/profile/ProfileGateModal";
 import { ProfileGateAlert } from "@/components/profile/ProfileGateAlert";
 import { BudgetRangeDisplay, ProposalBudgetValidation, CounterproposalJustification, validateProposalBudget } from "@/components/proposals";
@@ -101,7 +102,9 @@ export default function ProjectView() {
 
   // Profile gate for freelancers
   const { allowed: profileAllowed, completionPercent, loading: gateLoading, checkMonthlyCredits } = useProfileGate('freelancer');
+  const { plan: freelancerPlan, canSendProposal, checkSubscription: refreshPlan } = useFreelancerPlan();
   const [gateModalOpen, setGateModalOpen] = useState(false);
+  const [proposalLimitReached, setProposalLimitReached] = useState(false);
 
   // Check monthly credits on mount
   useEffect(() => {
@@ -249,6 +252,13 @@ export default function ProjectView() {
       return;
     }
 
+    // Check proposal limit for new proposals (only for non-paid tiers)
+    if (isNewProposal && !canSendProposal) {
+      toast.error("Você atingiu o limite de propostas deste mês. Faça upgrade para enviar mais.");
+      setProposalLimitReached(true);
+      return;
+    }
+
     setSubmitting(true);
 
     // Spend credits for new proposals
@@ -316,6 +326,24 @@ export default function ProjectView() {
         toast.error(error.message);
       }
     } else {
+      // Increment proposal count for new proposals
+      if (isNewProposal) {
+        try {
+          // Try the RPC first (SECURITY DEFINER handles RLS)
+          const { error: rpcError } = await supabase.rpc("increment_freelancer_proposal_count" as any, {
+            p_freelancer_user_id: user.id,
+          });
+          if (rpcError) {
+            console.log("[ProjectView] RPC error, proposals count might not update:", rpcError.message);
+          }
+        } catch (rpcErr) {
+          // RPC might not exist yet - proposal was still sent successfully
+          console.log("[ProjectView] RPC not available, proposals count will update after migration");
+        }
+        // Refresh plan data to update UI
+        refreshPlan();
+      }
+
       // Create notification for company
       const notificationMessage = isCounterproposal 
         ? `Nova contraproposta recebida para "${project.title}"`
@@ -575,6 +603,32 @@ export default function ProjectView() {
                     userType="freelancer" 
                   />
                 </div>
+              ) : !canSendProposal ? (
+                <div className="space-y-3">
+                  <Button 
+                    className="w-full gap-2" 
+                    variant="outline"
+                    disabled
+                  >
+                    <Lock className="h-4 w-4" />
+                    {t("proposals.submitProposal")}
+                  </Button>
+                  <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm">
+                    <p className="font-medium text-destructive">
+                      Limite de propostas atingido
+                    </p>
+                    <p className="text-muted-foreground mt-1">
+                      Você usou {freelancerPlan?.proposals_used ?? 0} de {freelancerPlan?.proposals_limit ?? 5} propostas este mês.
+                      <Button 
+                        variant="link" 
+                        className="p-0 h-auto ml-1 text-primary"
+                        onClick={() => navigate('/settings?tab=billing')}
+                      >
+                        Faça upgrade para enviar mais
+                      </Button>
+                    </p>
+                  </div>
+                </div>
               ) : (
                 <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                   <DialogTrigger asChild>
@@ -589,6 +643,12 @@ export default function ProjectView() {
                       )}
                     </Button>
                   </DialogTrigger>
+                  {/* Show remaining proposals for free tier */}
+                  {freelancerPlan && !freelancerPlan.unlimited_proposals && freelancerPlan.proposals_limit && (
+                    <p className="text-xs text-muted-foreground text-center mt-2">
+                      {freelancerPlan.proposals_used}/{freelancerPlan.proposals_limit} propostas usadas este mês
+                    </p>
+                  )}
                   <ProposalDialog 
                     coverLetter={coverLetter}
                     setCoverLetter={setCoverLetter}

@@ -9,6 +9,15 @@ export interface FreelancerPlan {
   proposals_limit: number | null;
   subscription_end: string | null;
   cancel_at_period_end: boolean;
+  unlimited_proposals: boolean;
+  reset_at: string | null;
+}
+
+interface ProposalUsageResult {
+  proposals_used: number;
+  proposals_limit: number | null;
+  unlimited: boolean;
+  reset_at: string | null;
 }
 
 export function useFreelancerPlan() {
@@ -27,6 +36,16 @@ export function useFreelancerPlan() {
     try {
       setLoading(true);
 
+      // Fetch freelancer profile to check tier (pro/top_rated have unlimited)
+      const { data: profileData } = await supabase
+        .from("freelancer_profiles")
+        .select("tier")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const tier = profileData?.tier;
+      const isUnlimitedTier = tier === "pro" || tier === "top_rated";
+
       // Fetch freelancer plan from database
       const { data: planData, error: planError } = await supabase
         .from("freelancer_plans")
@@ -38,36 +57,60 @@ export function useFreelancerPlan() {
         throw planError;
       }
 
+      // Try to get proposal usage from RPC first (handles tier check and reset logic)
+      let usage: ProposalUsageResult | null = null;
+      try {
+        const { data: usageData, error: usageError } = await supabase.rpc(
+          "get_freelancer_proposal_usage" as any,
+          { p_freelancer_user_id: user.id }
+        );
+        if (!usageError && usageData) {
+          usage = usageData as unknown as ProposalUsageResult;
+        }
+      } catch (rpcErr) {
+        // RPC might not exist yet, fall back to direct query
+        console.log("[useFreelancerPlan] RPC not available, using fallback");
+      }
+
+      // Fallback: get limit from plan definition
+      let proposalsLimit: number | null = null;
+      if (!usage && !isUnlimitedTier) {
+        const planType = planData?.plan_type || "free";
+        const { data: defData } = await supabase
+          .from("freelancer_plan_definitions")
+          .select("proposals_limit")
+          .eq("plan_type", planType)
+          .eq("is_active", true)
+          .maybeSingle();
+        proposalsLimit = defData?.proposals_limit ?? 5;
+      }
+
       // If no plan exists, return default free plan
       if (!planData) {
         setPlan({
           plan_type: "free",
           status: "active",
-          proposals_used: 0,
-          proposals_limit: 5,
+          proposals_used: usage?.proposals_used ?? 0,
+          proposals_limit: usage?.proposals_limit ?? proposalsLimit ?? 5,
           subscription_end: null,
           cancel_at_period_end: false,
+          unlimited_proposals: usage?.unlimited ?? isUnlimitedTier,
+          reset_at: usage?.reset_at ?? null,
         });
         setError(null);
         setLoading(false);
         return;
       }
 
-      // Fetch plan definition to get proposals limit
-      const { data: planDef } = await supabase
-        .from("freelancer_plan_definitions")
-        .select("proposals_limit")
-        .eq("plan_type", planData.plan_type)
-        .eq("is_active", true)
-        .single();
-
       setPlan({
         plan_type: planData.plan_type,
         status: planData.status,
-        proposals_used: planData.proposals_this_month || 0,
-        proposals_limit: planDef?.proposals_limit ?? null,
+        proposals_used: usage?.proposals_used ?? planData.proposals_this_month ?? 0,
+        proposals_limit: usage?.proposals_limit ?? proposalsLimit,
         subscription_end: planData.current_period_end,
         cancel_at_period_end: planData.cancel_at_period_end || false,
+        unlimited_proposals: usage?.unlimited ?? isUnlimitedTier,
+        reset_at: usage?.reset_at ?? (planData.proposals_reset_at ? new Date(new Date(planData.proposals_reset_at).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString() : null),
       });
       setError(null);
     } catch (err) {
@@ -81,6 +124,8 @@ export function useFreelancerPlan() {
         proposals_limit: 5,
         subscription_end: null,
         cancel_at_period_end: false,
+        unlimited_proposals: false,
+        reset_at: null,
       });
     } finally {
       setLoading(false);
@@ -105,11 +150,15 @@ export function useFreelancerPlan() {
     return () => clearInterval(interval);
   }, [checkSubscription]);
 
+  const canSendProposal = plan?.unlimited_proposals || 
+    (plan?.proposals_limit !== null && (plan?.proposals_used ?? 0) < (plan?.proposals_limit ?? 0));
+
   return {
     plan,
     loading,
     error,
     isSubscribed: plan?.plan_type !== "free" && plan?.status === "active",
+    canSendProposal,
     checkSubscription,
     openCustomerPortal,
   };
