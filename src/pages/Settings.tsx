@@ -22,6 +22,7 @@ import {
   computeFreelancerCompletion, 
   computeCompanyCompletion 
 } from "@/lib/profileCompletion";
+import { formatDocument, unformatDocument } from "@/lib/formatDocument";
 import { 
   User, Lock, Bell, CreditCard, Building, Briefcase, 
   Loader2, Save, Upload, Folder, Award, Wallet
@@ -600,13 +601,13 @@ export default function Settings() {
                   <div className="space-y-2">
                     <Label>{t("settings.documentNumber")}</Label>
                     <Input
-                      value={companyProfile.document_number || ""}
+                      value={formatDocument(companyProfile.document_number || "", companyProfile.document_type)}
                       onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, "");
-                        setCompanyProfile({ ...companyProfile, document_number: value });
+                        const rawValue = unformatDocument(e.target.value);
+                        setCompanyProfile({ ...companyProfile, document_number: rawValue });
                       }}
                       placeholder={companyProfile.document_type === "cpf" ? "000.000.000-00" : "00.000.000/0000-00"}
-                      maxLength={companyProfile.document_type === "cpf" ? 11 : 14}
+                      maxLength={companyProfile.document_type === "cpf" ? 14 : 18}
                     />
                     <p className="text-xs text-muted-foreground">
                       {companyProfile.document_type === "cpf" ? t("settings.cpfDesc") : t("settings.cnpjDesc")}
@@ -733,13 +734,13 @@ export default function Settings() {
                   <div className="space-y-2">
                     <Label>{t("settings.documentNumber")}</Label>
                     <Input
-                      value={freelancerProfile.document_number || ""}
+                      value={formatDocument(freelancerProfile.document_number || "", freelancerProfile.document_type)}
                       onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, "");
-                        setFreelancerProfile({ ...freelancerProfile, document_number: value });
+                        const rawValue = unformatDocument(e.target.value);
+                        setFreelancerProfile({ ...freelancerProfile, document_number: rawValue });
                       }}
                       placeholder={freelancerProfile.document_type === "cpf" ? "000.000.000-00" : "00.000.000/0000-00"}
-                      maxLength={freelancerProfile.document_type === "cpf" ? 11 : 14}
+                      maxLength={freelancerProfile.document_type === "cpf" ? 14 : 18}
                     />
                     <p className="text-xs text-muted-foreground">
                       {freelancerProfile.document_type === "cpf" ? t("settings.cpfDesc") : t("settings.cnpjDesc")}
