@@ -30,8 +30,9 @@ import {
   Award,
   Clock,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { languages, LanguageCode } from "@/lib/i18n";
+import { useLandingFaqItems, useLandingStats, useLandingSections } from "@/hooks/useLandingContent";
 import i18n from "@/lib/i18n";
 import {
   DropdownMenu,
@@ -42,10 +43,45 @@ import {
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  Users,
+  Briefcase,
+  Star,
+  Globe,
+  Shield,
+  Zap,
+  Award,
+  Clock,
+  DollarSign,
+  Code,
+  Palette,
+  TrendingUp,
+};
+
 const Index = () => {
   const { t } = useTranslation();
   const [currentLang, setCurrentLang] = useState<LanguageCode>((i18n.language as LanguageCode) || "en");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // CMS Data
+  const { data: faqItems } = useLandingFaqItems();
+  const { data: landingStats } = useLandingStats();
+  const { data: landingSections } = useLandingSections();
+
+  // Get hero section content from CMS
+  const heroSection = useMemo(() => {
+    return landingSections?.find(s => s.section_key === 'hero');
+  }, [landingSections]);
+
+  // Get FAQ section content from CMS
+  const faqSection = useMemo(() => {
+    return landingSections?.find(s => s.section_key === 'faq');
+  }, [landingSections]);
+
+  // Get CTA section content from CMS
+  const ctaSection = useMemo(() => {
+    return landingSections?.find(s => s.section_key === 'cta');
+  }, [landingSections]);
 
   const changeLanguage = (lang: LanguageCode) => {
     i18n.changeLanguage(lang);
@@ -64,12 +100,23 @@ const Index = () => {
     { icon: Scale, key: "legal" },
   ];
 
-  const stats = [
-    { value: "2,500+", label: t("hero.stats.talents"), icon: Users },
-    { value: "8,400+", label: t("hero.stats.paid"), icon: Briefcase },
-    { value: "98%", label: t("hero.stats.satisfaction"), icon: Star },
-    { value: "45+", label: t("hero.stats.categories"), icon: Globe },
-  ];
+  // Use CMS stats if available, otherwise fallback to translations
+  const stats = useMemo(() => {
+    if (landingStats && landingStats.length > 0) {
+      return landingStats.map(stat => ({
+        value: stat.value,
+        label: stat.label,
+        icon: iconMap[stat.icon] || Users,
+      }));
+    }
+    // Fallback to translations
+    return [
+      { value: "2,500+", label: t("hero.stats.talents"), icon: Users },
+      { value: "8,400+", label: t("hero.stats.paid"), icon: Briefcase },
+      { value: "98%", label: t("hero.stats.satisfaction"), icon: Star },
+      { value: "45+", label: t("hero.stats.categories"), icon: Globe },
+    ];
+  }, [landingStats, t]);
 
   const comparisonFeatures = [
     { key: "kpiPayment", label: t("comparison.features.resultsBased") },
@@ -595,13 +642,17 @@ const Index = () => {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">{t("faq.title")}</h2>
-            <p className="text-muted-foreground text-lg">{t("faq.subtitle")}</p>
+            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
+              {(faqSection?.content as Record<string, string>)?.title || t("faq.title")}
+            </h2>
+            <p className="text-muted-foreground text-lg">
+              {(faqSection?.content as Record<string, string>)?.subtitle || t("faq.subtitle")}
+            </p>
           </motion.div>
 
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
             <Accordion type="single" collapsible className="w-full space-y-3">
-              {(t("faq.items", { returnObjects: true }) as Array<{ question: string; answer: string }>).map(
+              {(faqItems && faqItems.length > 0 ? faqItems : (t("faq.items", { returnObjects: true }) as Array<{ question: string; answer: string }>)).map(
                 (item, i) => (
                   <AccordionItem
                     key={i}
