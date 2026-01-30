@@ -18,12 +18,17 @@ import { fetchProjectsPrefundStatus } from "@/hooks/useProjectPrefund";
 import { CategoryFilterSelect } from "@/components/projects/CategoryFilterSelect";
 import { CategoryChips } from "@/components/projects/CategoryChips";
 import { fetchProjectsCategoriesMap, type Category } from "@/hooks/useCategories";
-import { CurrencySelect } from "@/components/CurrencySelect";
-import { getCurrencySymbol } from "@/lib/formatMoney";
+import { COMMON_CURRENCIES, getCurrencySymbol } from "@/lib/formatMoney";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Collapsible,
   CollapsibleContent,
-  CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 
 interface Project {
@@ -127,7 +132,7 @@ export default function FindProjects() {
   };
 
   // Check if any filters are active
-  const hasActiveFilters = selectedCategoryIds.length > 0 || selectedCurrency !== "" || budgetMin !== "" || budgetMax !== "";
+  const hasActiveFilters = selectedCategoryIds.length > 0 || (selectedCurrency !== "" && selectedCurrency !== "all") || budgetMin !== "" || budgetMax !== "";
 
   const clearAllFilters = () => {
     setSelectedCategoryIds([]);
@@ -152,7 +157,7 @@ export default function FindProjects() {
           (project.categories?.some(cat => selectedCategoryIds.includes(cat.id)) ?? false);
         
         // Filter by currency
-        const matchesCurrency = selectedCurrency === "" || 
+        const matchesCurrency = selectedCurrency === "" || selectedCurrency === "all" || 
           (project.currency || "USD") === selectedCurrency;
         
         // Filter by budget range
@@ -241,11 +246,19 @@ export default function FindProjects() {
                     <label className="text-sm font-medium mb-2 block">
                       {t("findProjects.currency", "Moeda")}
                     </label>
-                    <CurrencySelect
-                      value={selectedCurrency}
-                      onValueChange={setSelectedCurrency}
-                      className="w-full"
-                    />
+                    <Select value={selectedCurrency} onValueChange={setSelectedCurrency}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder={t("findProjects.allCurrencies", "Todas")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{t("findProjects.allCurrencies", "Todas as moedas")}</SelectItem>
+                        {COMMON_CURRENCIES.map((currency) => (
+                          <SelectItem key={currency} value={currency}>
+                            {getCurrencySymbol(currency)} {currency}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   
                   {/* Budget Range */}
