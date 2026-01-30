@@ -126,8 +126,8 @@ const Index = () => {
     { key: "escrow", label: t("comparison.features.escrowProtection") },
     { key: "certifications", label: t("comparison.features.verifiedTalent") },
     { key: "matching", label: t("comparison.features.noHiddenFees") },
-    { key: "multiCurrency", label: "Multi-Currency" },
-    { key: "integration", label: "1st Integration Kit" },
+    { key: "multiCurrency", label: t("comparison.features.multiCurrency") },
+    { key: "integration", label: t("comparison.features.integration") },
   ];
 
   const comparisonData = {
@@ -456,15 +456,15 @@ const Index = () => {
             <div className="surface-card overflow-hidden min-w-[600px]">
               {/* Header */}
               <div className="grid grid-cols-5 border-b border-border">
-                <div className="p-4 text-sm font-medium text-muted-foreground">Feature</div>
+                <div className="p-4 text-sm font-medium text-muted-foreground">{t("comparison.feature")}</div>
                 <div className="p-4 text-center">
                   <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 text-primary text-sm font-semibold">
-                    HOOKLY
+                    {t("comparison.hookly")}
                   </span>
                 </div>
-                <div className="p-4 text-center text-sm font-medium text-muted-foreground">Upwork</div>
-                <div className="p-4 text-center text-sm font-medium text-muted-foreground">Fiverr</div>
-                <div className="p-4 text-center text-sm font-medium text-muted-foreground">Others</div>
+                <div className="p-4 text-center text-sm font-medium text-muted-foreground">{t("comparison.upwork")}</div>
+                <div className="p-4 text-center text-sm font-medium text-muted-foreground">{t("comparison.fiverr")}</div>
+                <div className="p-4 text-center text-sm font-medium text-muted-foreground">{t("comparison.others")}</div>
               </div>
 
               {/* Rows */}
