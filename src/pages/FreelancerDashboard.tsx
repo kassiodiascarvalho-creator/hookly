@@ -252,7 +252,8 @@ export default function FreelancerDashboard() {
           <h1 className="text-3xl font-bold text-foreground">{t("freelancerDashboard.welcome")}</h1>
           <p className="text-muted-foreground mt-1">{t("freelancerDashboard.subtitle")}</p>
         </div>
-        {stats.tier !== "standard" && (
+        {/* Only show tier badge for paid tiers (pro, top_rated) */}
+        {(stats.tier === "pro" || stats.tier === "top_rated") && (
           <TierBadge tier={stats.tier} size="lg" />
         )}
       </div>
@@ -318,23 +319,23 @@ export default function FreelancerDashboard() {
         </Card>
       )}
 
-      {/* Tier Status Card (show current tier or upgrade hint) */}
-      {stats.profileCompletion === 100 && stats.tier === "standard" && (
-        <Card className="border-amber-500/20 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20">
+      {/* Tier Status Card - only show for paid tiers (pro, top_rated) */}
+      {(stats.tier === "pro" || stats.tier === "top_rated") && (
+        <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
           <CardContent className="py-4">
             <div className="flex items-center gap-4">
-              <div className="p-2 rounded-lg bg-amber-500/10">
-                <Star className="h-5 w-5 text-amber-600" />
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Star className="h-5 w-5 text-primary" />
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <TierBadge tier={stats.tier} size="sm" />
-                  <span className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                    {t("dashboard.freelancer.tierUpgrade.currentTier")}
+                  <span className="text-sm font-medium">
+                    Seu plano atual
                   </span>
                 </div>
-                <p className="text-xs text-amber-700/70 dark:text-amber-300/70">
-                  {t("dashboard.freelancer.tierUpgrade.upgradeHint")}
+                <p className="text-xs text-muted-foreground">
+                  {stats.tier === "pro" ? "Propostas ilimitadas e taxas reduzidas" : "Benefícios exclusivos Elite"}
                 </p>
               </div>
             </div>
