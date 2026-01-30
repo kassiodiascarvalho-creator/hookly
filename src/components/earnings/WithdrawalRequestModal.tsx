@@ -17,7 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Wallet, Building, AlertCircle, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
-import { formatMoneyFromCents, minorToMajor, majorToMinor, getCurrencyDecimals } from "@/lib/formatMoney";
+import { formatMoney, getCurrencyDecimals } from "@/lib/formatMoney";
 
 interface PayoutMethod {
   id: string;
@@ -36,8 +36,8 @@ interface PayoutMethod {
 interface WithdrawalRequestModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Available earnings in MINOR UNITS (cents) */
-  earningsAvailableMinor: number;
+  /** Available earnings in MAJOR UNITS (e.g., 3.00 = R$3,00) */
+  earningsAvailableMajor: number;
   currency: string;
   payoutMethods: PayoutMethod[];
   onSuccess: () => void;
@@ -46,7 +46,7 @@ interface WithdrawalRequestModalProps {
 export function WithdrawalRequestModal({
   open,
   onOpenChange,
-  earningsAvailableMinor,
+  earningsAvailableMajor,
   currency,
   payoutMethods,
   onSuccess
@@ -54,14 +54,12 @@ export function WithdrawalRequestModal({
   const { t } = useTranslation();
   const { user } = useAuth();
   
-  // UI displays major units (e.g., "2.00"), but we track minor units internally
+  // UI displays major units (e.g., "2.00") - RPC also expects major units
   const [amountInput, setAmountInput] = useState("");
   const [selectedMethodId, setSelectedMethodId] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Convert available balance to major units for display
-  const earningsAvailableMajor = minorToMajor(earningsAvailableMinor, currency);
   const decimals = getCurrencyDecimals(currency);
 
   useEffect(() => {
@@ -92,24 +90,23 @@ export function WithdrawalRequestModal({
     setError(null);
   };
 
-  // Parse input as major units and convert to minor for validation/submission
-  const getAmountMinor = (): number => {
+  // Parse input as major units
+  const getMajorAmount = (): number => {
     const majorAmount = parseFloat(amountInput);
     if (isNaN(majorAmount)) return 0;
-    return majorToMinor(majorAmount, currency);
+    return majorAmount;
   };
 
   const validateForm = (): boolean => {
-    const majorAmount = parseFloat(amountInput);
-    const minorAmount = getAmountMinor();
+    const majorAmount = getMajorAmount();
     
     if (!amountInput || isNaN(majorAmount) || majorAmount <= 0) {
       setError(t("earnings.withdrawal.invalidAmount"));
       return false;
     }
     
-    // Compare in minor units to avoid floating point issues
-    if (minorAmount > earningsAvailableMinor) {
+    // Compare in major units
+    if (majorAmount > earningsAvailableMajor) {
       setError(t("earnings.withdrawal.exceedsBalance"));
       return false;
     }
@@ -135,19 +132,19 @@ export function WithdrawalRequestModal({
     setError(null);
 
     try {
-      // Send the minor unit amount to the RPC
-      const amountMinor = getAmountMinor();
+      // Send the MAJOR UNIT amount to the RPC (RPC expects major units)
+      const amountMajor = getMajorAmount();
       
       console.log('[WithdrawalRequest] Submitting:', {
         amountInput,
-        amountMinor,
-        earningsAvailableMinor,
+        amountMajor,
+        earningsAvailableMajor,
         currency
       });
       
       const { data, error: rpcError } = await supabase.rpc("request_withdrawal", {
         p_freelancer_user_id: user.id,
-        p_amount: amountMinor, // Send minor units to RPC
+        p_amount: amountMajor, // Send MAJOR units to RPC
         p_payout_method_id: selectedMethodId
       });
 
@@ -180,8 +177,7 @@ export function WithdrawalRequestModal({
   };
 
   const majorAmount = parseFloat(amountInput) || 0;
-  const amountMinor = getAmountMinor();
-  const isValid = amountMinor > 0 && amountMinor <= earningsAvailableMinor && selectedMethodId;
+  const isValid = majorAmount > 0 && majorAmount <= earningsAvailableMajor && selectedMethodId;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -204,7 +200,7 @@ export function WithdrawalRequestModal({
                 {t("earnings.withdrawal.availableBalance")}
               </span>
               <span className="text-xl font-bold text-green-600">
-                {formatMoneyFromCents(earningsAvailableMinor, currency)}
+                {formatMoney(earningsAvailableMajor, currency)}
               </span>
             </div>
           </div>
@@ -302,7 +298,7 @@ export function WithdrawalRequestModal({
                 <CheckCircle className="h-4 w-4" />
                 <span className="text-sm font-medium">
                   {t("earnings.withdrawal.summary", { 
-                    amount: formatMoneyFromCents(amountMinor, currency)
+                    amount: formatMoney(majorAmount, currency)
                   })}
                 </span>
               </div>
