@@ -15,9 +15,12 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Wallet, Building, AlertCircle, CheckCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2, Wallet, Building, AlertCircle, CheckCircle, Shield, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { formatMoney, getCurrencyDecimals } from "@/lib/formatMoney";
+import { useIdentityVerification } from "@/hooks/useIdentityVerification";
+import { IdentityVerificationModal } from "@/components/identity/IdentityVerificationModal";
 
 interface PayoutMethod {
   id: string;
@@ -53,6 +56,17 @@ export function WithdrawalRequestModal({
 }: WithdrawalRequestModalProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
+  
+  // Identity verification check
+  const { status: identityStatus, isLoading: identityLoading, refetch: refetchIdentity } = useIdentityVerification({
+    subjectType: "freelancer",
+  });
+  const [showIdentityModal, setShowIdentityModal] = useState(false);
+  
+  // Check if identity is verified
+  const isIdentityVerified = identityStatus === "verified";
+  const isIdentityPending = identityStatus === "pending" || identityStatus === "processing" || identityStatus === "manual_review";
+  const isIdentityRejected = identityStatus === "rejected" || identityStatus === "failed_hard";
   
   // UI displays major units (e.g., "2.00") - RPC also expects major units
   const [amountInput, setAmountInput] = useState("");
@@ -179,6 +193,102 @@ export function WithdrawalRequestModal({
   const majorAmount = parseFloat(amountInput) || 0;
   const isValid = majorAmount > 0 && majorAmount <= earningsAvailableMajor && selectedMethodId;
 
+  // If identity verification is still loading, show loading state
+  if (identityLoading) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md">
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // If identity is NOT verified, show verification required screen
+  if (!isIdentityVerified) {
+    return (
+      <>
+        <Dialog open={open} onOpenChange={onOpenChange}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <ShieldAlert className="h-5 w-5 text-amber-500" />
+                {t("earnings.withdrawal.identityRequired")}
+              </DialogTitle>
+              <DialogDescription>
+                {t("earnings.withdrawal.identityRequiredDesc")}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 py-4">
+              {/* Security explanation */}
+              <Alert className="border-amber-500/50 bg-amber-500/10">
+                <Shield className="h-4 w-4 text-amber-600" />
+                <AlertDescription className="text-amber-800 dark:text-amber-200">
+                  <strong>{t("earnings.withdrawal.whyVerify")}</strong>
+                  <ul className="mt-2 space-y-1 text-sm list-disc list-inside">
+                    <li>{t("earnings.withdrawal.whyVerifyReason1")}</li>
+                    <li>{t("earnings.withdrawal.whyVerifyReason2")}</li>
+                    <li>{t("earnings.withdrawal.whyVerifyReason3")}</li>
+                  </ul>
+                </AlertDescription>
+              </Alert>
+
+              {/* Current status info */}
+              {isIdentityPending && (
+                <Alert className="border-blue-500/50 bg-blue-500/10">
+                  <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />
+                  <AlertDescription className="text-blue-800 dark:text-blue-200">
+                    <strong>{t("earnings.withdrawal.identityPending")}</strong>
+                    <p className="text-sm mt-1">{t("earnings.withdrawal.identityPendingDesc")}</p>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {isIdentityRejected && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>{t("earnings.withdrawal.identityRejected")}</strong>
+                    <p className="text-sm mt-1">{t("earnings.withdrawal.identityRejectedDesc")}</p>
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                {t("common.cancel")}
+              </Button>
+              {!isIdentityPending && (
+                <Button onClick={() => setShowIdentityModal(true)} className="gap-2">
+                  <Shield className="h-4 w-4" />
+                  {t("earnings.withdrawal.verifyNow")}
+                </Button>
+              )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Identity Verification Modal */}
+        <IdentityVerificationModal
+          open={showIdentityModal}
+          onClose={() => {
+            setShowIdentityModal(false);
+            refetchIdentity();
+          }}
+          subjectType="freelancer"
+          onVerificationStarted={() => {
+            refetchIdentity();
+          }}
+        />
+      </>
+    );
+  }
+
+  // Identity is verified - show normal withdrawal form
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
