@@ -24,6 +24,7 @@ import {
   ChevronRight, ChevronLeft, Upload, AlertTriangle
 } from "lucide-react";
 import { IdentityFileUpload } from "./IdentityFileUpload";
+import { SelfieCameraCapture } from "./SelfieCameraCapture";
 import { useIdentityVerification } from "@/hooks/useIdentityVerification";
 import { Progress } from "@/components/ui/progress";
 
@@ -391,11 +392,8 @@ export function IdentityVerificationModal({
                 />
               )}
 
-              <IdentityFileUpload
-                fileType="selfie"
-                label="Selfie"
-                description="Foto do seu rosto"
-                onUpload={(file) => handleFileUpload("selfie", file)}
+              <SelfieCameraCapture
+                onCapture={(file) => handleFileUpload("selfie", file)}
               />
             </div>
 

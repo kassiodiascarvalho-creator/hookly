@@ -2,3 +2,4 @@ export { IdentityVerificationBadge, type IdentityStatus } from "./IdentityVerifi
 export { IdentityVerificationModal } from "./IdentityVerificationModal";
 export { IdentityVerificationCard } from "./IdentityVerificationCard";
 export { IdentityFileUpload } from "./IdentityFileUpload";
+export { SelfieCameraCapture } from "./SelfieCameraCapture";
