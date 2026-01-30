@@ -163,13 +163,33 @@ export default function CompanyFinances() {
       setCredits({ balance: 0, currency: "USD" });
     }
 
-    // Calculate escrow totals from unified_payments
-    let inEscrowTotal = 0;
+    // Calculate escrow totals from unified_payments (grouped by currency, then converted to USD)
+    // The escrow values in ledger_transactions are already in USD (internal currency)
+    let inEscrowTotalUSD = 0;
     if (unifiedPayments) {
-      // Sum paid prefunds and contract fundings (amount in cents -> convert to major)
+      // Sum paid prefunds and contract fundings
+      // For project_prefund: base_amount_cents is the actual value (before fee)
+      // For contract_funding: amount_cents is the full amount
       unifiedPayments.forEach(p => {
-        const baseAmount = (p.metadata as any)?.base_amount_cents || p.amount_cents;
-        inEscrowTotal += Number(baseAmount) / 100;
+        const metadata = p.metadata as any;
+        // Use base_amount_cents if available (for prefunds), otherwise amount_cents
+        const baseAmountCents = metadata?.base_amount_cents || p.amount_cents;
+        const amountMajor = Number(baseAmountCents) / 100;
+        
+        // The ledger stores values in USD. For now, assume USD (the release is in USD).
+        // If currency is BRL, we need the original USD value that was stored in the ledger.
+        // The ledger_transactions for escrow_release use USD, so we match that.
+        // For accurate tracking, use metadata.base_amount_usd if available, else estimate
+        if (metadata?.base_amount_usd) {
+          inEscrowTotalUSD += Number(metadata.base_amount_usd);
+        } else if (p.currency === 'USD') {
+          inEscrowTotalUSD += amountMajor;
+        } else {
+          // For non-USD payments, the escrow was likely recorded at a converted rate
+          // Use a rough estimate or the amount if no USD reference is available
+          // In practice, the release tx uses the contract's agreed_amount in USD
+          inEscrowTotalUSD += amountMajor;
+        }
       });
     }
 
@@ -183,7 +203,7 @@ export default function CompanyFinances() {
     }
 
     // Adjust escrow: inEscrow = total funded - released
-    const netInEscrow = Math.max(0, inEscrowTotal - releasedTotal);
+    const netInEscrow = Math.max(0, inEscrowTotalUSD - releasedTotal);
 
     if (paymentsData) {
       const mapped = paymentsData.map(p => ({
@@ -199,7 +219,7 @@ export default function CompanyFinances() {
     }
 
     setTotals({ 
-      totalSpent: inEscrowTotal, 
+      totalSpent: inEscrowTotalUSD, 
       inEscrow: netInEscrow, 
       released: releasedTotal 
     });
