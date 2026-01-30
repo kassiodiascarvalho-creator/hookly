@@ -12,7 +12,8 @@ interface SelfieCameraCaptureProps {
 const QUALITY_TIPS = [
   "Olhe diretamente para a câmera",
   "Mantenha o rosto bem iluminado",
-  "Remova óculos de sol ou chapéus",
+  "Remova óculos (de grau ou sol)",
+  "Retire bonés, chapéus ou toucas",
   "Fundo neutro de preferência",
   "Centralize seu rosto no círculo",
 ];
