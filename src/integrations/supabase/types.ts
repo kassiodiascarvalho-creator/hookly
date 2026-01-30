@@ -3135,6 +3135,16 @@ export type Database = {
         Args: { p_company_user_id: string; p_proposal_id: string }
         Returns: Json
       }
+      create_identity_session: {
+        Args: {
+          p_country: string
+          p_document_type: string
+          p_provider_session_id: string
+          p_subject_type: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       credit_company_wallet: {
         Args: {
           p_amount_cents: number
@@ -3194,6 +3204,10 @@ export type Database = {
       }
       get_freelancer_proposal_usage: {
         Args: { p_freelancer_user_id: string }
+        Returns: Json
+      }
+      get_identity_status: {
+        Args: { p_subject_type: string; p_user_id: string }
         Returns: Json
       }
       get_project_categories: {
@@ -3320,6 +3334,19 @@ export type Database = {
       update_freelancer_revenue_and_achievements: {
         Args: { p_freelancer_user_id: string }
         Returns: undefined
+      }
+      update_identity_from_webhook: {
+        Args: {
+          p_failure_code?: string
+          p_failure_reason?: string
+          p_metadata?: Json
+          p_provider_session_id: string
+          p_report_id?: string
+          p_risk_level?: string
+          p_score?: number
+          p_status: string
+        }
+        Returns: boolean
       }
       update_sub_admin_permissions: {
         Args: { p_permissions: Json; p_user_id: string }
