@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, Loader2, Check, X, Plus } from "lucide-react";
 import { z } from "zod";
@@ -22,19 +21,9 @@ import { BudgetSuggestion } from "@/components/projects/BudgetSuggestion";
 import { BudgetRangeInput } from "@/components/projects/BudgetRangeInput";
 import { KpiSuggestion } from "@/components/projects/KpiSuggestion";
 import { ProjectPrefundModal } from "@/components/projects/ProjectPrefundModal";
-
-const categoryKeys = [
-  "development",
-  "design",
-  "marketing",
-  "writing",
-  "dataScience",
-  "videoPhoto",
-  "consulting",
-  "finance",
-  "legal",
-  "other",
-];
+import { CategoryMultiSelect } from "@/components/projects/CategoryMultiSelect";
+import { setProjectCategories } from "@/hooks/useCategories";
+import { useCategories } from "@/hooks/useCategories";
 
 interface KPI {
   id: string;
@@ -72,12 +61,14 @@ export default function ProjectNew() {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    category: "",
     budget_min: "",
     budget_ideal: "",
     budget_max: "",
     currency: "USD",
   });
+  
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
+  const { categories, getLocalizedName } = useCategories();
   
   const [kpis, setKpis] = useState<KPI[]>([]);
   const [newKpi, setNewKpi] = useState({ name: "", target: "" });
@@ -113,8 +104,11 @@ export default function ProjectNew() {
     if (formData.description.length < 20) {
       newErrors.description = t("projects.validation.descriptionMin");
     }
-    if (!formData.category) {
-      newErrors.category = t("projects.validation.categoryRequired");
+    if (selectedCategoryIds.length === 0) {
+      newErrors.category = t("categories.minError", "Selecione pelo menos 1 categoria");
+    }
+    if (selectedCategoryIds.length > 5) {
+      newErrors.category = t("categories.maxError", { max: 5 });
     }
     
     setErrors(newErrors);
@@ -164,7 +158,6 @@ export default function ProjectNew() {
     const projectData = {
       title: formData.title,
       description: formData.description,
-      category: formData.category,
       budget_min: formData.budget_min ? parseFloat(formData.budget_min) : null,
       budget_ideal: formData.budget_ideal ? parseFloat(formData.budget_ideal) : null,
       budget_max: formData.budget_max ? parseFloat(formData.budget_max) : null,
@@ -183,7 +176,6 @@ export default function ProjectNew() {
         .update({
           title: projectData.title,
           description: projectData.description,
-          category: projectData.category,
           budget_min: projectData.budget_min,
           budget_ideal: projectData.budget_ideal,
           budget_max: projectData.budget_max,
@@ -333,18 +325,13 @@ export default function ProjectNew() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="category">{t("projects.category")} *</Label>
-              <Select value={formData.category} onValueChange={(v) => handleChange("category", v)}>
-                <SelectTrigger className={errors.category ? "border-destructive" : ""}>
-                  <SelectValue placeholder={t("projects.selectCategory")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {categoryKeys.map((key) => (
-                    <SelectItem key={key} value={key}>{t(`categories.${key}`)}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.category && <p className="text-sm text-destructive">{errors.category}</p>}
+              <Label>{t("projects.categories", "Categorias")} *</Label>
+              <CategoryMultiSelect
+                value={selectedCategoryIds}
+                onChange={setSelectedCategoryIds}
+                maxCategories={5}
+                error={errors.category}
+              />
             </div>
 
             <div className="space-y-2">
@@ -385,7 +372,7 @@ export default function ProjectNew() {
             <BudgetSuggestion
               title={formData.title}
               description={formData.description}
-              category={formData.category}
+              category={categories.find(c => c.id === selectedCategoryIds[0])?.slug || ""}
               currency={formData.currency}
               currentMin={formData.budget_min}
               currentMax={formData.budget_max}
@@ -425,7 +412,7 @@ export default function ProjectNew() {
               <KpiSuggestion
                 title={formData.title}
                 description={formData.description}
-                category={formData.category}
+                category={categories.find(c => c.id === selectedCategoryIds[0])?.slug || ""}
                 existingKpis={kpis}
                 onAddKpi={(name, target) => {
                   setKpis(prev => [...prev, { id: crypto.randomUUID(), name, target }]);
@@ -494,8 +481,20 @@ export default function ProjectNew() {
               </div>
               
               <div>
-                <p className="text-sm text-muted-foreground">{t("projects.category")}</p>
-                <p>{formData.category ? t(`categories.${formData.category}`) : "-"}</p>
+                <p className="text-sm text-muted-foreground">{t("projects.categories", "Categorias")}</p>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {selectedCategoryIds.length > 0 ? (
+                    categories
+                      .filter(c => selectedCategoryIds.includes(c.id))
+                      .map(c => (
+                        <span key={c.id} className="px-2 py-0.5 bg-muted rounded text-sm">
+                          {getLocalizedName(c)}
+                        </span>
+                      ))
+                  ) : (
+                    <span className="text-muted-foreground">-</span>
+                  )}
+                </div>
               </div>
               
               <div>
