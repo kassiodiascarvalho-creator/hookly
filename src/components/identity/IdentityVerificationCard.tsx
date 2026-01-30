@@ -2,10 +2,11 @@ import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Shield, RefreshCw, ExternalLink, Loader2 } from "lucide-react";
+import { Shield, RefreshCw, ExternalLink, Loader2, Mail, MessageCircle } from "lucide-react";
 import { IdentityVerificationBadge } from "./IdentityVerificationBadge";
 import { IdentityVerificationModal } from "./IdentityVerificationModal";
 import { useIdentityVerification } from "@/hooks/useIdentityVerification";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { format } from "date-fns";
 import { ptBR, enUS } from "date-fns/locale";
 
@@ -18,6 +19,8 @@ export function IdentityVerificationCard({ subjectType }: IdentityVerificationCa
   const [modalOpen, setModalOpen] = useState(false);
   const {
     status,
+    attempts,
+    maxAttempts,
     canStartVerification,
     verifiedAt,
     failureReason,
@@ -48,8 +51,11 @@ export function IdentityVerificationCard({ subjectType }: IdentityVerificationCa
     }
   };
 
-  // Can only start if not_started, or retry if rejected/failed_soft
-  const canRetry = canStartVerification && ["not_started", "failed_soft", "rejected"].includes(status);
+  // Check if max attempts reached
+  const maxAttemptsReached = attempts >= maxAttempts;
+  
+  // Can only start if not_started, or retry if rejected/failed_soft AND not reached max attempts
+  const canRetry = canStartVerification && !maxAttemptsReached && ["not_started", "failed_soft", "rejected"].includes(status);
 
   return (
     <>
@@ -72,6 +78,40 @@ export function IdentityVerificationCard({ subjectType }: IdentityVerificationCa
           ) : (
             <>
               <p className="text-sm text-muted-foreground">{getStatusMessage()}</p>
+
+              {/* Show contact options when max attempts reached */}
+              {maxAttemptsReached && status !== "verified" && (
+                <Alert className="border-warning/50 bg-warning/10">
+                  <AlertDescription className="space-y-3">
+                    <p className="font-medium text-foreground">
+                      Você atingiu o limite de tentativas de verificação.
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Entre em contato conosco para resolver sua situação:
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => window.open("mailto:suporte@hookly.com?subject=Verificação de Identidade", "_blank")}
+                      >
+                        <Mail className="h-4 w-4 mr-2" />
+                        E-mail
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => window.open("https://wa.me/5511999999999?text=Olá, preciso de ajuda com minha verificação de identidade", "_blank")}
+                      >
+                        <MessageCircle className="h-4 w-4 mr-2" />
+                        WhatsApp
+                      </Button>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
 
               <div className="flex gap-2">
                 {canRetry && (
@@ -104,13 +144,6 @@ export function IdentityVerificationCard({ subjectType }: IdentityVerificationCa
                   </Button>
                 )}
               </div>
-
-              {status === "rejected" && (
-                <Button variant="link" className="p-0 h-auto text-sm">
-                  <ExternalLink className="h-3 w-3 mr-1" />
-                  {t("identity.contactSupport")}
-                </Button>
-              )}
             </>
           )}
         </CardContent>
