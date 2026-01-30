@@ -1180,6 +1180,50 @@ export type Database = {
           },
         ]
       }
+      identity_verification_files: {
+        Row: {
+          created_at: string
+          file_type: string
+          id: string
+          identity_verification_id: string
+          mime_type: string
+          quality_issues: string[] | null
+          quality_score: number | null
+          size_bytes: number
+          storage_path: string
+        }
+        Insert: {
+          created_at?: string
+          file_type: string
+          id?: string
+          identity_verification_id: string
+          mime_type: string
+          quality_issues?: string[] | null
+          quality_score?: number | null
+          size_bytes: number
+          storage_path: string
+        }
+        Update: {
+          created_at?: string
+          file_type?: string
+          id?: string
+          identity_verification_id?: string
+          mime_type?: string
+          quality_issues?: string[] | null
+          quality_score?: number | null
+          size_bytes?: number
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "identity_verification_files_identity_verification_id_fkey"
+            columns: ["identity_verification_id"]
+            isOneToOne: false
+            referencedRelation: "identity_verifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       identity_verifications: {
         Row: {
           admin_decision: string | null
@@ -1201,6 +1245,7 @@ export type Database = {
           provider_session_id: string | null
           reviewed_by_admin_id: string | null
           risk_level: string | null
+          risk_score: number | null
           status: string
           subject_type: string
           updated_at: string
@@ -1228,6 +1273,7 @@ export type Database = {
           provider_session_id?: string | null
           reviewed_by_admin_id?: string | null
           risk_level?: string | null
+          risk_score?: number | null
           status?: string
           subject_type: string
           updated_at?: string
@@ -1255,6 +1301,7 @@ export type Database = {
           provider_session_id?: string | null
           reviewed_by_admin_id?: string | null
           risk_level?: string | null
+          risk_score?: number | null
           status?: string
           subject_type?: string
           updated_at?: string
