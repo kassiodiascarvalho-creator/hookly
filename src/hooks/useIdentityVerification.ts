@@ -11,12 +11,37 @@ interface VerificationState {
   canStartVerification: boolean;
   verifiedAt: string | null;
   failureReason: string | null;
+  riskScore: number | null;
+  riskLevel: string | null;
+  adminDecision: string | null;
   isLoading: boolean;
   error: string | null;
 }
 
 interface UseIdentityVerificationProps {
   subjectType: "freelancer" | "company";
+}
+
+interface RpcResult {
+  status: string;
+  verification_id?: string;
+  attempts: number;
+  max_attempts: number;
+  can_start_verification: boolean;
+  verified_at?: string;
+  failure_reason?: string;
+  risk_score?: number;
+  risk_level?: string;
+  admin_decision?: string;
+}
+
+// Type-safe RPC caller
+async function callIdentityRpc<T>(
+  rpcName: string,
+  params: Record<string, unknown>
+): Promise<{ data: T | null; error: Error | null }> {
+  const { data, error } = await supabase.rpc(rpcName as any, params);
+  return { data: data as T | null, error: error ? new Error(error.message) : null };
 }
 
 export function useIdentityVerification({ subjectType }: UseIdentityVerificationProps) {
@@ -29,6 +54,9 @@ export function useIdentityVerification({ subjectType }: UseIdentityVerification
     canStartVerification: true,
     verifiedAt: null,
     failureReason: null,
+    riskScore: null,
+    riskLevel: null,
+    adminDecision: null,
     isLoading: true,
     error: null,
   });
@@ -39,23 +67,14 @@ export function useIdentityVerification({ subjectType }: UseIdentityVerification
     try {
       setState(prev => ({ ...prev, isLoading: true, error: null }));
 
-      // Use type assertion since this RPC is created by migration
-      const { data, error } = await (supabase.rpc as any)("get_identity_status", {
+      const { data, error } = await callIdentityRpc<RpcResult>("get_identity_status", {
         p_user_id: user.id,
         p_subject_type: subjectType,
       });
 
       if (error) throw error;
 
-      const result = data as {
-        status: string;
-        verification_id?: string;
-        attempts: number;
-        max_attempts: number;
-        can_start_verification: boolean;
-        verified_at?: string;
-        failure_reason?: string;
-      };
+      const result = data as RpcResult;
 
       setState({
         status: (result.status || "not_started") as IdentityStatus,
@@ -65,6 +84,9 @@ export function useIdentityVerification({ subjectType }: UseIdentityVerification
         canStartVerification: result.can_start_verification ?? true,
         verifiedAt: result.verified_at || null,
         failureReason: result.failure_reason || null,
+        riskScore: result.risk_score ?? null,
+        riskLevel: result.risk_level || null,
+        adminDecision: result.admin_decision || null,
         isLoading: false,
         error: null,
       });
@@ -131,7 +153,14 @@ export function useIdentityVerification({ subjectType }: UseIdentityVerification
       const data = response.data;
 
       if (!data.success) {
-        throw new Error(data.message || data.code);
+        const errorMessages: Record<string, string> = {
+          rate_limit_exceeded: "Muitas tentativas. Aguarde alguns minutos.",
+          already_verified: "Você já foi verificado.",
+          blocked_manual_review: "Sua verificação está em análise manual.",
+          rejected: "Sua verificação foi rejeitada.",
+          max_attempts_reached: "Número máximo de tentativas atingido.",
+        };
+        throw new Error(errorMessages[data.code] || data.message || data.code);
       }
 
       await fetchStatus();
@@ -156,8 +185,12 @@ export function useIdentityVerification({ subjectType }: UseIdentityVerification
 
       // Validate file
       const maxSize = 10 * 1024 * 1024; // 10MB
+      const minSize = 50 * 1024; // 50KB minimum
       if (file.size > maxSize) {
         throw new Error("Arquivo muito grande. Máximo 10MB.");
+      }
+      if (file.size < minSize) {
+        throw new Error("Arquivo muito pequeno. Mínimo 50KB.");
       }
 
       const validTypes = ["image/jpeg", "image/png", "image/webp"];
@@ -165,9 +198,11 @@ export function useIdentityVerification({ subjectType }: UseIdentityVerification
         throw new Error("Formato inválido. Use JPG, PNG ou WebP.");
       }
 
-      // Upload to storage
-      const filePath = `${uploadPrefix}${fileType}.${file.name.split(".").pop()}`;
+      // Generate unique filename
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const filePath = `${uploadPrefix}${fileType}.${ext}`;
       
+      // Upload to storage (upsert replaces existing)
       const { error: uploadError } = await supabase.storage
         .from("identity_private")
         .upload(filePath, file, {
@@ -179,8 +214,11 @@ export function useIdentityVerification({ subjectType }: UseIdentityVerification
         throw new Error(`Upload falhou: ${uploadError.message}`);
       }
 
-      // Register file in database (use type assertion since this RPC is created by migration)
-      const { error: registerError } = await (supabase.rpc as any)("register_identity_file", {
+      // Register file in database and get old path for cleanup
+      const { data: registerData, error: registerError } = await callIdentityRpc<{
+        file_id: string;
+        old_storage_path: string | null;
+      }>("register_identity_file", {
         p_verification_id: verificationId,
         p_file_type: fileType,
         p_storage_path: filePath,
@@ -190,6 +228,18 @@ export function useIdentityVerification({ subjectType }: UseIdentityVerification
 
       if (registerError) {
         throw new Error(`Registro falhou: ${registerError.message}`);
+      }
+
+      // If there was an old file, delete it from storage
+      if (registerData?.old_storage_path && registerData.old_storage_path !== filePath) {
+        try {
+          await supabase.storage
+            .from("identity_private")
+            .remove([registerData.old_storage_path]);
+        } catch (e) {
+          // Non-critical - log but don't fail
+          console.warn("[Identity] Failed to delete old file:", e);
+        }
       }
 
       return filePath;
@@ -209,13 +259,14 @@ export function useIdentityVerification({ subjectType }: UseIdentityVerification
 
       const data = response.data;
 
-      if (!data.success) {
-        throw new Error(data.message || data.code);
-      }
-
       await fetchStatus();
 
-      return data;
+      return {
+        success: data.success,
+        status: data.status,
+        failureReason: data.failureReason,
+        message: data.message,
+      };
     },
     [fetchStatus]
   );

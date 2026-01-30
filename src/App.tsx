@@ -52,6 +52,7 @@ import AdminFinances from "./pages/admin/AdminFinances";
 import AdminTierManager from "./pages/admin/AdminTierManager";
 import AdminLandingPage from "./pages/admin/AdminLandingPage";
 import AdminManagement from "./pages/admin/AdminManagement";
+import AdminIdentityVerifications from "./pages/admin/AdminIdentityVerifications";
 
 // Public pages
 import VerifiedCompanies from "./pages/VerifiedCompanies";
@@ -94,6 +95,7 @@ const App = () => (
               <Route path="/admin/companies" element={<AdminCompanies />} />
               <Route path="/admin/companies/:userId" element={<AdminCompanyDetail />} />
               <Route path="/admin/projects" element={<AdminProjects />} />
+              <Route path="/admin/identity" element={<AdminIdentityVerifications />} />
               <Route path="/admin/payments" element={<AdminPayments />} />
               <Route path="/admin/payment-providers" element={<AdminPaymentProviders />} />
               <Route path="/admin/leads" element={<AdminLeads />} />
