@@ -60,16 +60,15 @@ Deno.serve(async (req) => {
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
-    const url = new URL(req.url);
-    const action = url.searchParams.get("action") || "review";
-
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Parse body to determine action
+    const body = await req.json();
+    const action = body.action || "review";
 
     if (action === "get-files") {
       // Get files with signed URLs for admin review
-      const body: GetFilesBody = await req.json();
-      const { verificationId } = body;
+      const { verificationId } = body as GetFilesBody;
 
       if (!verificationId) {
         return new Response(
@@ -114,8 +113,7 @@ Deno.serve(async (req) => {
 
     if (action === "reset") {
       // Reset verification to allow new attempt
-      const body: ResetBody = await req.json();
-      const { verificationId, notes } = body;
+      const { verificationId, notes } = body as ResetBody;
 
       if (!verificationId) {
         return new Response(
@@ -147,8 +145,7 @@ Deno.serve(async (req) => {
     }
 
     // Default: review (approve/reject)
-    const body: RequestBody = await req.json();
-    const { verificationId, decision, notes } = body;
+    const { verificationId, decision, notes } = body as RequestBody;
 
     if (!verificationId || !decision) {
       return new Response(

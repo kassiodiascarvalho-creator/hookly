@@ -271,9 +271,10 @@ export default function AdminIdentityVerifications() {
           setDetail({ ...detail, files: [] });
         }
       } else if (actionType === "reset") {
-        // Reset attempts - uses separate action endpoint
-        const response = await supabase.functions.invoke("admin-review-identity?action=reset", {
+        // Reset attempts
+        const response = await supabase.functions.invoke("admin-review-identity", {
           body: {
+            action: "reset",
             verificationId: selectedId,
             notes: actionNotes,
           },
