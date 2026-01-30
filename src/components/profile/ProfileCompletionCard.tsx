@@ -58,6 +58,7 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
   const [showCelebrationModal, setShowCelebrationModal] = useState(false);
   const [bonusCredits, setBonusCredits] = useState(10);
   const [bonusEnabled, setBonusEnabled] = useState(true);
+  const [previousPercent, setPreviousPercent] = useState<number | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -164,6 +165,7 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
     
     console.log("[PROFILE] Attempting to update completion:", { 
       percent, 
+      previousPercent,
       userId: user.id, 
       userType,
       bonusClaimed 
@@ -185,23 +187,37 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
       
       console.log("[PROFILE] Completion saved successfully to DB:", { percent });
       
-      // Check if 100% and bonus not claimed
-      if (percent >= 100 && !bonusClaimed) {
-        console.log("[PROFILE] Profile complete! Attempting to claim bonus...");
-        await claimCompletionBonus();
+      // Check if just reached 100% (transition from <100 to 100)
+      const justCompleted = percent >= 100 && (previousPercent === null || previousPercent < 100);
+      
+      if (justCompleted) {
+        console.log("[PROFILE] Profile just completed! Showing celebration...");
+        
+        // Show celebration immediately
+        setShowCelebrationModal(true);
+        
+        // Try to claim bonus if not already claimed
+        if (!bonusClaimed) {
+          console.log("[PROFILE] Attempting to claim bonus...");
+          await claimCompletionBonus();
+        }
       }
+      
+      // Update previous percent for next comparison
+      setPreviousPercent(percent);
     } catch (error) {
       console.error("[PROFILE] Error updating completion:", error);
     }
   };
 
   const claimCompletionBonus = async () => {
-    if (!user || !userType || bonusClaimed) {
-      console.log("[PROFILE] Skipping bonus claim:", { 
-        hasUser: !!user, 
-        userType, 
-        bonusClaimed 
-      });
+    if (!user || !userType) {
+      console.log("[PROFILE] Skipping bonus claim - no user or userType");
+      return;
+    }
+    
+    if (bonusClaimed) {
+      console.log("[PROFILE] Bonus already claimed in this session");
       return;
     }
     
@@ -223,9 +239,10 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
       if (data === true) {
         console.log("[PROFILE] Bonus granted successfully!");
         setBonusClaimed(true);
-        setShowCelebrationModal(true);
       } else {
-        console.log("[PROFILE] Bonus not granted - already claimed or disabled");
+        console.log("[PROFILE] Bonus not granted - already claimed in database or disabled");
+        // Still mark as claimed to prevent retries
+        setBonusClaimed(true);
       }
     } catch (error) {
       console.error("[PROFILE] Error claiming bonus:", error);
@@ -242,12 +259,8 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
     }
   };
 
-  if (loading || !completion || !userType) {
-    return null;
-  }
-
-  // Show celebration modal when profile is completed
-  if (showCelebrationModal) {
+  // Always render the celebration modal when active (even if component would otherwise be hidden)
+  if (showCelebrationModal && userType) {
     return (
       <ProfileCelebrationModal
         open={showCelebrationModal}
@@ -258,7 +271,11 @@ export function ProfileCompletionCard({ compact = false }: ProfileCompletionCard
     );
   }
 
-  // Hide if profile is complete
+  if (loading || !completion || !userType) {
+    return null;
+  }
+
+  // Hide if profile is complete and celebration already shown
   if (completion.percent >= 100) {
     return null;
   }
