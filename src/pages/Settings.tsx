@@ -23,9 +23,10 @@ import {
   computeCompanyCompletion 
 } from "@/lib/profileCompletion";
 import { formatDocument, unformatDocument } from "@/lib/formatDocument";
+import { IdentityVerificationCard } from "@/components/identity/IdentityVerificationCard";
 import { 
   User, Lock, Bell, CreditCard, Building, Briefcase, 
-  Loader2, Save, Upload, Folder, Award, Wallet
+  Loader2, Save, Upload, Folder, Award, Wallet, Shield
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import PortfolioManager from "@/components/settings/PortfolioManager";
@@ -796,6 +797,10 @@ export default function Settings() {
 
         {/* Security Tab */}
         <TabsContent value="security" className="space-y-6">
+          {/* Identity Verification */}
+          <IdentityVerificationCard subjectType={isCompany ? "company" : "freelancer"} />
+
+          {/* Password Change */}
           <Card>
             <CardHeader>
               <CardTitle>{t("settings.changePassword")}</CardTitle>
