@@ -187,11 +187,11 @@ export default function Earnings() {
       .maybeSingle();
 
     if (balanceData) {
-      // Values are stored in cents - use formatMoneyFromCents for display
+      // user_balances stores values in MAJOR UNITS (numeric with decimals), not cents!
       setUserBalance({
-        earnings_available: Number(balanceData.earnings_available) || 0, // Keep in cents
+        earnings_available: Number(balanceData.earnings_available) || 0, // Major units (e.g., 2.00 = R$2,00)
         credits_available: Number(balanceData.credits_available) || 0, // credits stay as units
-        escrow_held: Number(balanceData.escrow_held) || 0, // Keep in cents
+        escrow_held: Number(balanceData.escrow_held) || 0, // Major units
         currency: balanceData.currency || "BRL"
       });
     }
@@ -218,11 +218,11 @@ export default function Earnings() {
 
     if (withdrawalsData) {
       setWithdrawalRequests(withdrawalsData);
-      // Calculate total paid withdrawals (values are stored in cents)
+      // withdrawal_requests.amount stores values in MAJOR UNITS (numeric)
       const paidWithdrawals = withdrawalsData
         .filter(w => w.status === 'paid')
         .reduce((sum, w) => sum + (Number(w.amount) || 0), 0);
-      setTotalPaidWithdrawals(paidWithdrawals); // Keep in cents
+      setTotalPaidWithdrawals(paidWithdrawals); // Major units
     }
 
     setLoading(false);
@@ -355,7 +355,7 @@ export default function Earnings() {
       <WithdrawalRequestModal
         open={withdrawalModalOpen}
         onOpenChange={setWithdrawalModalOpen}
-        earningsAvailableMinor={userBalance.earnings_available} // Pass minor units directly
+        earningsAvailableMinor={userBalance.earnings_available * 100} // Convert major to minor units for the modal
         currency={userBalance.currency}
         payoutMethods={payoutMethods}
         onSuccess={fetchData}
@@ -373,13 +373,13 @@ export default function Earnings() {
               <div>
                 <p className="text-sm text-muted-foreground">{t("earnings.withdrawableBalance")}</p>
                 <p className={`text-3xl font-bold ${userBalance.earnings_available > 0 ? 'text-green-600' : 'text-muted-foreground'}`}>
-                  {formatMoneyFromCents(userBalance.earnings_available, userBalance.currency)}
+                  {formatMoney(userBalance.earnings_available, userBalance.currency)}
                 </p>
                 {/* Approximate local currency value */}
                 {localCurrency !== "USD" && !fxLoading && userBalance.earnings_available > 0 && (
                   <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
                     <span>≈</span>
-                    <span>{formatMoney(convertToLocal(userBalance.earnings_available) || 0, localCurrency)}</span>
+                    <span>{formatMoney(convertToLocal(userBalance.earnings_available * 100) || 0, localCurrency)}</span>
                   </p>
                 )}
                 <p className="text-xs text-muted-foreground mt-1">
@@ -423,13 +423,13 @@ export default function Earnings() {
               <div>
                 <p className="text-sm text-muted-foreground">{t("earnings.received")}</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {formatMoneyFromCents(userBalance.earnings_available, userBalance.currency)}
+                  {formatMoney(userBalance.earnings_available, userBalance.currency)}
                 </p>
                 {/* Approximate local currency value */}
                 {localCurrency !== "USD" && !fxLoading && userBalance.earnings_available > 0 && (
                   <p className="text-xs text-muted-foreground flex items-center gap-1">
                     <span>≈</span>
-                    <span>{formatMoney(convertToLocal(userBalance.earnings_available) || 0, localCurrency)}</span>
+                    <span>{formatMoney(convertToLocal(userBalance.earnings_available * 100) || 0, localCurrency)}</span>
                   </p>
                 )}
                 <p className="text-xs text-muted-foreground mt-1">
