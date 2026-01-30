@@ -98,10 +98,17 @@ interface LedgerTransaction {
   fx_spread_amount_usd_minor?: number;
 }
 
+interface EscrowByCurrency {
+  currency: string;
+  totalPrefunded: number; // Major units
+  totalReleased: number; // Major units
+  balance: number; // Major units (prefunded - released)
+}
+
 interface FinancialSummary {
   total_credits_usd: number;
   total_earnings_usd: number;
-  total_escrow_usd: number;
+  total_escrow_usd: number; // Major units
   pending_withdrawals: number;
   pending_withdrawal_amount_usd: number;
   approved_withdrawals: number;
@@ -109,6 +116,7 @@ interface FinancialSummary {
   paid_withdrawals: number;
   paid_withdrawal_amount_usd: number;
   total_fx_spread_usd: number;
+  escrowByCurrency: EscrowByCurrency[];
 }
 
 type DateFilterOption = "today" | "7days" | "30days" | "90days" | "1year" | "all";
@@ -128,6 +136,7 @@ export default function AdminFinances() {
     paid_withdrawals: 0,
     paid_withdrawal_amount_usd: 0,
     total_fx_spread_usd: 0,
+    escrowByCurrency: [],
   });
   const [balances, setBalances] = useState<UserBalance[]>([]);
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
@@ -226,11 +235,11 @@ export default function AdminFinances() {
     const totalFxSpread = (allWithdrawals || []).reduce((sum, w) => 
       sum + Number(w.fx_spread_amount_usd_minor || 0), 0);
     
-    // All amounts in user_balances are already in cents (or minor units)
+    // All amounts in user_balances are in MAJOR UNITS (e.g., 398.38 = $398.38)
     const totals = (balanceData || []).reduce(
       (acc, b) => ({
         total_earnings_usd: acc.total_earnings_usd + Number(b.earnings_available || 0),
-        // Only count escrow from companies
+        // Only count escrow from companies - values are already in major units
         total_escrow_usd: acc.total_escrow_usd + (b.user_type === 'company' ? Number(b.escrow_held || 0) : 0),
       }),
       { total_earnings_usd: 0, total_escrow_usd: 0 }
@@ -240,10 +249,76 @@ export default function AdminFinances() {
     const calcWithdrawalAmount = (withdrawals: any[]) => 
       withdrawals.reduce((sum, w) => sum + (w.amount_usd_minor ? w.amount_usd_minor / 100 : Number(w.amount)), 0);
     
+    // Fetch escrow by currency from verified project prefunds
+    const { data: prefundData } = await supabase
+      .from("unified_payments")
+      .select("currency, amount_cents, metadata")
+      .eq("payment_type", "project_prefund")
+      .eq("status", "paid");
+    
+    // Group prefunds by currency and get project IDs
+    const prefundsByCurrency: Record<string, { totalCents: number; projectIds: string[] }> = {};
+    (prefundData || []).forEach((p) => {
+      const currency = p.currency || "USD";
+      const baseCents = Number((p.metadata as any)?.base_amount_cents || p.amount_cents) || 0;
+      const projectId = (p.metadata as any)?.project_id;
+      
+      if (!prefundsByCurrency[currency]) {
+        prefundsByCurrency[currency] = { totalCents: 0, projectIds: [] };
+      }
+      prefundsByCurrency[currency].totalCents += baseCents;
+      if (projectId) {
+        prefundsByCurrency[currency].projectIds.push(projectId);
+      }
+    });
+    
+    // Fetch releases for each currency's projects
+    const escrowByCurrency: EscrowByCurrency[] = [];
+    for (const [currency, data] of Object.entries(prefundsByCurrency)) {
+      let totalReleased = 0;
+      
+      if (data.projectIds.length > 0) {
+        // Get contract IDs for these projects
+        const { data: contracts } = await supabase
+          .from("contracts")
+          .select("id")
+          .in("project_id", data.projectIds);
+        
+        const contractIds = contracts?.map((c) => c.id) || [];
+        
+        if (contractIds.length > 0) {
+          // Get releases for these contracts
+          const { data: releases } = await supabase
+            .from("ledger_transactions")
+            .select("amount")
+            .in("related_contract_id", contractIds)
+            .eq("tx_type", "escrow_release");
+          
+          totalReleased = (releases || []).reduce((sum, r) => sum + Math.abs(Number(r.amount) || 0), 0);
+        }
+      }
+      
+      const totalPrefunded = data.totalCents / 100; // Convert cents to major units
+      const balance = Math.max(0, totalPrefunded - totalReleased);
+      
+      escrowByCurrency.push({
+        currency,
+        totalPrefunded,
+        totalReleased,
+        balance,
+      });
+    }
+    
+    // Sort by balance descending
+    escrowByCurrency.sort((a, b) => b.balance - a.balance);
+    
+    // Calculate total escrow in USD equivalent (simplified: sum all balances)
+    const totalEscrowFromPrefunds = escrowByCurrency.reduce((sum, e) => sum + e.balance, 0);
+    
     setSummary({
       total_credits_usd: totalPlatformCreditsUsd, // In dollars (1 credit = $1), not cents
-      total_earnings_usd: totals.total_earnings_usd,
-      total_escrow_usd: totals.total_escrow_usd,
+      total_earnings_usd: totals.total_earnings_usd, // Major units
+      total_escrow_usd: totalEscrowFromPrefunds, // Major units from verified projects
       pending_withdrawals: pendingWithdrawals.length,
       pending_withdrawal_amount_usd: calcWithdrawalAmount(pendingWithdrawals),
       approved_withdrawals: approvedWithdrawals.length,
@@ -251,6 +326,7 @@ export default function AdminFinances() {
       paid_withdrawals: paidWithdrawals.length,
       paid_withdrawal_amount_usd: calcWithdrawalAmount(paidWithdrawals),
       total_fx_spread_usd: totalFxSpread,
+      escrowByCurrency,
     });
   };
 
@@ -548,19 +624,39 @@ export default function AdminFinances() {
             <Wallet className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{formatMoneyFromCents(summary.total_earnings_usd, "USD")}</div>
-            <p className="text-xs text-muted-foreground">Sacáveis</p>
+            <div className="text-2xl font-bold text-green-600">{formatMoney(summary.total_earnings_usd, "USD")}</div>
+            <p className="text-xs text-muted-foreground">Sacáveis (Major Units)</p>
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Em Escrow</CardTitle>
+            <CardTitle className="text-sm font-medium">Em Escrow (Verificado)</CardTitle>
             <Lock className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{formatMoneyFromCents(summary.total_escrow_usd, "USD")}</div>
-            <p className="text-xs text-muted-foreground">Total em contratos</p>
+            <div className="text-2xl font-bold text-blue-600">{formatMoney(summary.total_escrow_usd, "USD")}</div>
+            <p className="text-xs text-muted-foreground">De projetos pré-financiados</p>
+            {summary.escrowByCurrency.length > 0 && (
+              <div className="mt-3 pt-3 border-t space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">Por moeda:</p>
+                {summary.escrowByCurrency.map((e) => (
+                  <div key={e.currency} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs">{e.currency}</Badge>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-mono font-bold">{formatMoney(e.balance, e.currency)}</span>
+                      {e.totalReleased > 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          {formatMoney(e.totalPrefunded, e.currency)} - {formatMoney(e.totalReleased, e.currency)} lib.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
         
@@ -572,7 +668,7 @@ export default function AdminFinances() {
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">{summary.pending_withdrawals}</div>
             <p className="text-xs text-muted-foreground">
-              {formatMoneyFromCents(summary.pending_withdrawal_amount_usd, "USD")} total
+              {formatMoney(summary.pending_withdrawal_amount_usd, "USD")} total
             </p>
           </CardContent>
         </Card>
@@ -585,7 +681,7 @@ export default function AdminFinances() {
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">{summary.approved_withdrawals}</div>
             <p className="text-xs text-muted-foreground">
-              {formatMoneyFromCents(summary.approved_withdrawal_amount_usd, "USD")} total
+              {formatMoney(summary.approved_withdrawal_amount_usd, "USD")} total
             </p>
           </CardContent>
         </Card>
