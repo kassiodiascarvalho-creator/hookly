@@ -1,7 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -20,7 +18,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Shield, Camera, FileText, CheckCircle2, AlertCircle } from "lucide-react";
+import { 
+  Loader2, Shield, CheckCircle2, AlertCircle, 
+  ChevronRight, ChevronLeft, Upload 
+} from "lucide-react";
+import { IdentityFileUpload } from "./IdentityFileUpload";
+import { useIdentityVerification } from "@/hooks/useIdentityVerification";
+import { Progress } from "@/components/ui/progress";
 
 interface IdentityVerificationModalProps {
   open: boolean;
@@ -49,7 +53,10 @@ const DOCUMENT_LABELS: Record<string, string> = {
   residence_permit: "Autorização de Residência",
 };
 
-type Step = "select" | "consent" | "verifying" | "success" | "error";
+// Documents that don't have a back side
+const NO_BACK_DOCUMENTS = ["passport"];
+
+type Step = "select" | "consent" | "upload" | "processing" | "success" | "error";
 
 export function IdentityVerificationModal({
   open,
@@ -58,7 +65,9 @@ export function IdentityVerificationModal({
   onVerificationStarted,
 }: IdentityVerificationModalProps) {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { startVerification, uploadFile, finalizeUploads, refetch } = useIdentityVerification({
+    subjectType,
+  });
   
   const [step, setStep] = useState<Step>("select");
   const [country, setCountry] = useState("BR");
@@ -66,89 +75,118 @@ export function IdentityVerificationModal({
   const [consentGiven, setConsentGiven] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [verificationUrl, setVerificationUrl] = useState<string | null>(null);
+  
+  // Upload state
+  const [verificationId, setVerificationId] = useState<string | null>(null);
+  const [uploadPrefix, setUploadPrefix] = useState<string | null>(null);
+  const [requiredFiles, setRequiredFiles] = useState<string[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<Set<string>>(new Set());
 
   // Get available documents for selected country
   const selectedCountry = COUNTRIES.find(c => c.code === country);
   const availableDocuments = selectedCountry?.documents || ["passport"];
+  const hasBackSide = !NO_BACK_DOCUMENTS.includes(documentType);
 
   // Reset document when country changes
-  useEffect(() => {
-    if (availableDocuments.length > 0 && !availableDocuments.includes(documentType)) {
-      setDocumentType(availableDocuments[0]);
+  const handleCountryChange = (value: string) => {
+    setCountry(value);
+    const newCountry = COUNTRIES.find(c => c.code === value);
+    if (newCountry && !newCountry.documents.includes(documentType)) {
+      setDocumentType(newCountry.documents[0]);
     }
-  }, [country, availableDocuments, documentType]);
+  };
 
   // Reset state when modal opens
-  useEffect(() => {
-    if (open) {
-      setStep("select");
-      setConsentGiven(false);
-      setError(null);
-      setVerificationUrl(null);
-    }
-  }, [open]);
+  const resetState = useCallback(() => {
+    setStep("select");
+    setConsentGiven(false);
+    setError(null);
+    setVerificationId(null);
+    setUploadPrefix(null);
+    setRequiredFiles([]);
+    setUploadedFiles(new Set());
+  }, []);
 
-  const handleStartVerification = async () => {
-    if (!user || !consentGiven) return;
+  const handleClose = () => {
+    resetState();
+    onClose();
+  };
+
+  const handleStartSession = async () => {
+    if (!consentGiven) return;
     
     setLoading(true);
     setError(null);
 
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData?.session?.access_token;
-
-      if (!accessToken) {
-        throw new Error("Not authenticated");
-      }
-
-      const response = await supabase.functions.invoke("create-identity-session", {
-        body: {
-          country,
-          documentType,
-          subjectType,
-        },
+      const result = await startVerification({
+        country,
+        documentType,
+        hasBackSide,
       });
 
-      if (response.error) {
-        throw new Error(response.error.message || "Failed to create session");
-      }
-
-      const data = response.data;
-
-      if (!data.success) {
-        if (data.code === "ALREADY_VERIFIED") {
-          toast.info(t("identity.alreadyVerified"));
-          onClose();
-          return;
-        }
-        if (data.code === "MAX_ATTEMPTS") {
-          setError(t("identity.maxAttemptsReached"));
-          setStep("error");
-          return;
-        }
-        throw new Error(data.error || "Unknown error");
-      }
-
-      // Open Stripe Identity modal or redirect
-      if (data.url) {
-        setVerificationUrl(data.url);
-        setStep("verifying");
-        onVerificationStarted?.();
-        
-        // Open in new window
-        window.open(data.url, "_blank", "width=500,height=700");
-      }
-
-    } catch (err: any) {
+      setVerificationId(result.verificationId);
+      setUploadPrefix(result.uploadPrefix);
+      setRequiredFiles(result.requiredFiles);
+      setStep("upload");
+      onVerificationStarted?.();
+    } catch (err) {
       console.error("[IDENTITY] Error:", err);
-      setError(err.message || t("common.error"));
+      setError(err instanceof Error ? err.message : t("common.error"));
       setStep("error");
     } finally {
       setLoading(false);
     }
   };
+
+  const handleFileUpload = async (fileType: string, file: File) => {
+    if (!verificationId || !uploadPrefix) return;
+
+    await uploadFile({
+      verificationId,
+      uploadPrefix,
+      fileType: fileType as "document_front" | "document_back" | "selfie",
+      file,
+    });
+
+    setUploadedFiles(prev => new Set([...prev, fileType]));
+  };
+
+  const handleFinalize = async () => {
+    if (!verificationId) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await finalizeUploads(verificationId);
+      
+      if (result.status === "failed_soft") {
+        setError(result.failureReason || "Problema com as imagens enviadas");
+        setStep("error");
+      } else {
+        setStep("processing");
+        toast.success("Documentos enviados! Você será notificado quando a análise for concluída.");
+        
+        // Wait a bit and close
+        setTimeout(() => {
+          handleClose();
+          refetch();
+        }, 3000);
+      }
+    } catch (err) {
+      console.error("[IDENTITY] Finalize error:", err);
+      setError(err instanceof Error ? err.message : t("common.error"));
+      setStep("error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const canFinalize = requiredFiles.every(f => uploadedFiles.has(f));
+  const uploadProgress = requiredFiles.length > 0 
+    ? (uploadedFiles.size / requiredFiles.length) * 100 
+    : 0;
 
   const renderStep = () => {
     switch (step) {
@@ -156,7 +194,7 @@ export function IdentityVerificationModal({
         return (
           <div className="space-y-6">
             <div className="flex items-center gap-4 p-4 bg-primary/5 rounded-lg">
-              <Shield className="h-10 w-10 text-primary" />
+              <Shield className="h-10 w-10 text-primary shrink-0" />
               <div>
                 <h3 className="font-semibold">{t("identity.whyVerify")}</h3>
                 <p className="text-sm text-muted-foreground">
@@ -168,7 +206,7 @@ export function IdentityVerificationModal({
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>{t("identity.selectCountry")}</Label>
-                <Select value={country} onValueChange={setCountry}>
+                <Select value={country} onValueChange={handleCountryChange}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -186,7 +224,7 @@ export function IdentityVerificationModal({
                 <Label>{t("identity.selectDocument")}</Label>
                 <Select value={documentType} onValueChange={setDocumentType}>
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Selecione o documento" />
                   </SelectTrigger>
                   <SelectContent>
                     {availableDocuments.map((doc) => (
@@ -199,24 +237,13 @@ export function IdentityVerificationModal({
               </div>
             </div>
 
-            <div className="flex items-start gap-3 p-4 bg-muted rounded-lg">
-              <FileText className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
-              <div className="text-sm text-muted-foreground">
-                <p className="font-medium mb-1">{t("identity.whatYouNeed")}</p>
-                <ul className="list-disc list-inside space-y-1">
-                  <li>{t("identity.needDocument")}</li>
-                  <li>{t("identity.needSelfie")}</li>
-                  <li>{t("identity.needLighting")}</li>
-                </ul>
-              </div>
-            </div>
-
             <Button 
               className="w-full" 
               onClick={() => setStep("consent")}
               disabled={!documentType}
             >
               {t("common.continue")}
+              <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
         );
@@ -251,10 +278,11 @@ export function IdentityVerificationModal({
 
             <div className="flex gap-3">
               <Button variant="outline" onClick={() => setStep("select")} className="flex-1">
+                <ChevronLeft className="mr-2 h-4 w-4" />
                 {t("common.back")}
               </Button>
               <Button 
-                onClick={handleStartVerification} 
+                onClick={handleStartSession} 
                 disabled={!consentGiven || loading}
                 className="flex-1"
               >
@@ -265,8 +293,8 @@ export function IdentityVerificationModal({
                   </>
                 ) : (
                   <>
-                    <Camera className="h-4 w-4 mr-2" />
-                    {t("identity.startVerification")}
+                    <Upload className="h-4 w-4 mr-2" />
+                    {t("identity.startUpload")}
                   </>
                 )}
               </Button>
@@ -274,27 +302,84 @@ export function IdentityVerificationModal({
           </div>
         );
 
-      case "verifying":
+      case "upload":
+        return (
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span>Progresso do envio</span>
+                <span className="text-muted-foreground">
+                  {uploadedFiles.size}/{requiredFiles.length} arquivos
+                </span>
+              </div>
+              <Progress value={uploadProgress} className="h-2" />
+            </div>
+
+            <div className="space-y-4">
+              <IdentityFileUpload
+                fileType="document_front"
+                label="Documento (Frente)"
+                description={DOCUMENT_LABELS[documentType]}
+                onUpload={(file) => handleFileUpload("document_front", file)}
+              />
+
+              {hasBackSide && (
+                <IdentityFileUpload
+                  fileType="document_back"
+                  label="Documento (Verso)"
+                  onUpload={(file) => handleFileUpload("document_back", file)}
+                />
+              )}
+
+              <IdentityFileUpload
+                fileType="selfie"
+                label="Selfie"
+                description="Foto do seu rosto"
+                onUpload={(file) => handleFileUpload("selfie", file)}
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => setStep("consent")} className="flex-1">
+                <ChevronLeft className="mr-2 h-4 w-4" />
+                {t("common.back")}
+              </Button>
+              <Button 
+                onClick={handleFinalize} 
+                disabled={!canFinalize || loading}
+                className="flex-1"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Processando...
+                  </>
+                ) : (
+                  <>
+                    Enviar para análise
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        );
+
+      case "processing":
         return (
           <div className="text-center space-y-6 py-8">
-            <Loader2 className="h-16 w-16 mx-auto animate-spin text-primary" />
-            <div>
-              <h3 className="text-lg font-semibold mb-2">{t("identity.verifyingTitle")}</h3>
-              <p className="text-muted-foreground">{t("identity.verifyingDesc")}</p>
+            <div className="relative">
+              <Loader2 className="h-16 w-16 mx-auto animate-spin text-primary" />
+              <CheckCircle2 className="h-6 w-6 absolute bottom-0 right-1/2 translate-x-8 text-primary" />
             </div>
-            <p className="text-sm text-muted-foreground">
-              {t("identity.verifyingHint")}
-            </p>
-            {verificationUrl && (
-              <Button
-                variant="outline"
-                onClick={() => window.open(verificationUrl, "_blank", "width=500,height=700")}
-              >
-                {t("identity.reopenWindow")}
-              </Button>
-            )}
-            <Button variant="ghost" onClick={onClose}>
-              {t("identity.continueInBackground")}
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Documentos enviados!</h3>
+              <p className="text-muted-foreground">
+                Sua verificação está em análise. Você receberá uma notificação quando concluirmos.
+              </p>
+            </div>
+            <Button variant="outline" onClick={handleClose}>
+              Fechar
             </Button>
           </div>
         );
@@ -302,12 +387,12 @@ export function IdentityVerificationModal({
       case "success":
         return (
           <div className="text-center space-y-6 py-8">
-            <CheckCircle2 className="h-16 w-16 mx-auto text-emerald-500" />
+            <CheckCircle2 className="h-16 w-16 mx-auto text-primary" />
             <div>
               <h3 className="text-lg font-semibold mb-2">{t("identity.successTitle")}</h3>
               <p className="text-muted-foreground">{t("identity.successDesc")}</p>
             </div>
-            <Button onClick={onClose}>{t("common.close")}</Button>
+            <Button onClick={handleClose}>{t("common.close")}</Button>
           </div>
         );
 
@@ -320,10 +405,13 @@ export function IdentityVerificationModal({
               <p className="text-muted-foreground">{error || t("common.error")}</p>
             </div>
             <div className="flex gap-3 justify-center">
-              <Button variant="outline" onClick={onClose}>
+              <Button variant="outline" onClick={handleClose}>
                 {t("common.close")}
               </Button>
-              <Button onClick={() => setStep("select")}>
+              <Button onClick={() => {
+                resetState();
+                setStep("select");
+              }}>
                 {t("identity.tryAgain")}
               </Button>
             </div>
@@ -333,8 +421,8 @@ export function IdentityVerificationModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-primary" />
@@ -342,6 +430,7 @@ export function IdentityVerificationModal({
           </DialogTitle>
           <DialogDescription>
             {step === "select" && t("identity.modalDesc")}
+            {step === "upload" && "Envie as fotos do seu documento e uma selfie"}
           </DialogDescription>
         </DialogHeader>
         {renderStep()}

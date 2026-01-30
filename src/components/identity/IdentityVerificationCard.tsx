@@ -1,180 +1,133 @@
-import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { IdentityVerificationBadge, type IdentityStatus } from "./IdentityVerificationBadge";
+import { Button } from "@/components/ui/button";
+import { Shield, RefreshCw, ExternalLink, Loader2 } from "lucide-react";
+import { IdentityVerificationBadge } from "./IdentityVerificationBadge";
 import { IdentityVerificationModal } from "./IdentityVerificationModal";
-import { Shield, ShieldCheck, Clock, AlertCircle, Loader2 } from "lucide-react";
+import { useIdentityVerification } from "@/hooks/useIdentityVerification";
 import { format } from "date-fns";
+import { ptBR, enUS } from "date-fns/locale";
 
 interface IdentityVerificationCardProps {
   subjectType: "freelancer" | "company";
-  identityStatus?: IdentityStatus | null;
-  identityVerifiedAt?: string | null;
 }
 
-export function IdentityVerificationCard({
-  subjectType,
-  identityStatus: initialStatus,
-  identityVerifiedAt,
-}: IdentityVerificationCardProps) {
-  const { t } = useTranslation();
-  const { user } = useAuth();
-  
+export function IdentityVerificationCard({ subjectType }: IdentityVerificationCardProps) {
+  const { t, i18n } = useTranslation();
   const [modalOpen, setModalOpen] = useState(false);
-  const [status, setStatus] = useState<IdentityStatus>(initialStatus || "not_started");
-  const [loading, setLoading] = useState(false);
+  const {
+    status,
+    attempts,
+    maxAttempts,
+    canStartVerification,
+    verifiedAt,
+    failureReason,
+    isLoading,
+    refetch,
+  } = useIdentityVerification({ subjectType });
 
-  // Subscribe to realtime updates
-  useEffect(() => {
-    if (!user) return;
-
-    const channel = supabase
-      .channel(`identity-${user.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "identity_verifications",
-          filter: `user_id=eq.${user.id}`,
-        },
-        (payload) => {
-          console.log("[IDENTITY] Realtime update:", payload.new);
-          if (payload.new?.status) {
-            setStatus(payload.new.status as IdentityStatus);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user]);
-
-  // Sync with prop changes
-  useEffect(() => {
-    if (initialStatus) {
-      setStatus(initialStatus);
-    }
-  }, [initialStatus]);
-
-  const canStartVerification = ["not_started", "failed_soft"].includes(status);
-  const isVerified = status === "verified";
-  const isPending = ["pending", "processing"].includes(status);
-  const needsManualReview = status === "manual_review";
-  const isFailed = ["failed_hard", "rejected"].includes(status);
+  const dateLocale = i18n.language.startsWith("pt") ? ptBR : enUS;
 
   const getStatusMessage = () => {
     switch (status) {
       case "verified":
-        return {
-          icon: ShieldCheck,
-          title: t("identity.card.verifiedTitle"),
-          description: identityVerifiedAt 
-            ? t("identity.card.verifiedAt", { date: format(new Date(identityVerifiedAt), "dd/MM/yyyy") })
-            : t("identity.card.verifiedDesc"),
-          color: "text-emerald-600",
-        };
+        return verifiedAt
+          ? t("identity.verifiedAt", { date: format(new Date(verifiedAt), "PP", { locale: dateLocale }) })
+          : t("identity.verified");
       case "pending":
+        return t("identity.pendingMessage");
       case "processing":
-        return {
-          icon: Clock,
-          title: t("identity.card.pendingTitle"),
-          description: t("identity.card.pendingDesc"),
-          color: "text-amber-600",
-        };
+        return t("identity.processingMessage");
       case "manual_review":
-        return {
-          icon: AlertCircle,
-          title: t("identity.card.reviewTitle"),
-          description: t("identity.card.reviewDesc"),
-          color: "text-yellow-600",
-        };
+        return t("identity.manualReviewMessage");
       case "failed_soft":
-        return {
-          icon: AlertCircle,
-          title: t("identity.card.failedSoftTitle"),
-          description: t("identity.card.failedSoftDesc"),
-          color: "text-orange-600",
-        };
-      case "failed_hard":
+        return failureReason || t("identity.failedSoftMessage");
       case "rejected":
-        return {
-          icon: AlertCircle,
-          title: t("identity.card.rejectedTitle"),
-          description: t("identity.card.rejectedDesc"),
-          color: "text-red-600",
-        };
+        return t("identity.rejectedMessage");
       default:
-        return {
-          icon: Shield,
-          title: t("identity.card.notStartedTitle"),
-          description: t("identity.card.notStartedDesc"),
-          color: "text-muted-foreground",
-        };
+        return t("identity.notStartedMessage");
     }
   };
 
-  const statusInfo = getStatusMessage();
-  const StatusIcon = statusInfo.icon;
+  const canRetry = canStartVerification && ["not_started", "failed_soft"].includes(status);
+  const showAttemptsWarning = status === "failed_soft" && attempts >= maxAttempts - 1;
 
   return (
     <>
-      <Card className={isVerified ? "border-emerald-200 bg-emerald-50/30" : ""}>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center justify-between text-base">
-            <span className="flex items-center gap-2">
-              <StatusIcon className={`h-5 w-5 ${statusInfo.color}`} />
-              {statusInfo.title}
-            </span>
-            <IdentityVerificationBadge status={status} size="sm" />
-          </CardTitle>
-          <CardDescription>{statusInfo.description}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {canStartVerification && (
-            <Button 
-              onClick={() => setModalOpen(true)} 
-              className="w-full"
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  {t("common.loading")}
-                </>
-              ) : (
-                <>
-                  <Shield className="h-4 w-4 mr-2" />
-                  {status === "failed_soft" 
-                    ? t("identity.tryAgain") 
-                    : t("identity.verifyIdentity")}
-                </>
-              )}
-            </Button>
-          )}
-
-          {isPending && (
-            <div className="flex items-center gap-2 text-sm text-amber-600">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              {t("identity.checkingStatus")}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Shield className="h-5 w-5 text-primary" />
+              <CardTitle className="text-lg">{t("identity.cardTitle")}</CardTitle>
             </div>
-          )}
+            <IdentityVerificationBadge status={status} size="md" />
+          </div>
+          <CardDescription>{t("identity.cardDescription")}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <>
+              <p className="text-sm text-muted-foreground">{getStatusMessage()}</p>
 
-          {needsManualReview && (
-            <p className="text-sm text-yellow-600">
-              {t("identity.manualReviewInfo")}
-            </p>
-          )}
+              {showAttemptsWarning && (
+                <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-sm">
+                  <p className="text-destructive font-medium">
+                    {t("identity.lastAttemptWarning")}
+                  </p>
+                </div>
+              )}
 
-          {isFailed && (
-            <p className="text-sm text-red-600">
-              {t("identity.contactSupport")}
-            </p>
+              {attempts > 0 && status !== "verified" && (
+                <p className="text-xs text-muted-foreground">
+                  {t("identity.attemptsUsed", { attempts, maxAttempts })}
+                </p>
+              )}
+
+              <div className="flex gap-2">
+                {canRetry && (
+                  <Button onClick={() => setModalOpen(true)} className="flex-1">
+                    {status === "not_started" ? (
+                      <>
+                        <Shield className="h-4 w-4 mr-2" />
+                        {t("identity.startVerification")}
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        {t("identity.tryAgain")}
+                      </>
+                    )}
+                  </Button>
+                )}
+
+                {status === "verified" && (
+                  <Button variant="outline" className="flex-1" disabled>
+                    <Shield className="h-4 w-4 mr-2" />
+                    {t("identity.verified")}
+                  </Button>
+                )}
+
+                {["pending", "processing", "manual_review"].includes(status) && (
+                  <Button variant="outline" className="flex-1" onClick={refetch}>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    {t("identity.checkStatus")}
+                  </Button>
+                )}
+              </div>
+
+              {status === "rejected" && (
+                <Button variant="link" className="p-0 h-auto text-sm">
+                  <ExternalLink className="h-3 w-3 mr-1" />
+                  {t("identity.contactSupport")}
+                </Button>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
@@ -183,9 +136,7 @@ export function IdentityVerificationCard({
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         subjectType={subjectType}
-        onVerificationStarted={() => {
-          setStatus("pending");
-        }}
+        onVerificationStarted={refetch}
       />
     </>
   );

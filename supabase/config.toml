@@ -105,5 +105,8 @@ verify_jwt = false
 [functions.create-identity-session]
 verify_jwt = false
 
-[functions.identity-webhook]
+[functions.finalize-identity-uploads]
+verify_jwt = false
+
+[functions.admin-review-identity]
 verify_jwt = false
