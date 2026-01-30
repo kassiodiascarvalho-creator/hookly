@@ -1,14 +1,15 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { 
+  WEBHOOK_CORS_HEADERS,
+  safeLog,
+  verifyMercadoPagoSignature 
+} from "../_shared/security.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const corsHeaders = WEBHOOK_CORS_HEADERS;
 
 const logStep = (step: string, details?: unknown) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[MP-WEBHOOK] ${step}${detailsStr}`);
+  safeLog("MP-WEBHOOK", step, details as Record<string, unknown> | undefined);
 };
 
 // ============ Currency Conversion Logic (inline) ============
@@ -153,9 +154,38 @@ serve(async (req) => {
   try {
     logStep("Webhook received");
 
+    // === SIGNATURE VERIFICATION ===
+    const webhookSecret = Deno.env.get("MERCADOPAGO_WEBHOOK_SECRET");
+    const xSignature = req.headers.get("x-signature");
+    const xRequestId = req.headers.get("x-request-id");
+
     const url = new URL(req.url);
     const topic = url.searchParams.get("topic") || url.searchParams.get("type");
     const id = url.searchParams.get("id") || url.searchParams.get("data.id");
+
+    // Verify signature if secret is configured
+    if (webhookSecret && webhookSecret.length > 0) {
+      const dataId = id || "";
+      
+      const isValidSignature = await verifyMercadoPagoSignature(
+        xSignature,
+        xRequestId,
+        dataId,
+        webhookSecret
+      );
+
+      if (!isValidSignature) {
+        logStep("Invalid webhook signature", { hasSignature: !!xSignature, hasRequestId: !!xRequestId });
+        return new Response(JSON.stringify({ error: "Invalid signature" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 401,
+        });
+      }
+      logStep("Signature verified successfully");
+    } else {
+      logStep("WARNING: No webhook secret configured - signature verification skipped");
+    }
+    // === END SIGNATURE VERIFICATION ===
 
     let body: Record<string, unknown> = {};
     try {
