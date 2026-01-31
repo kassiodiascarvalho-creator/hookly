@@ -71,10 +71,11 @@ export default function AdminProjects() {
     
     setDeleting(true);
     try {
-      const { error } = await supabase
-        .from("projects")
-        .delete()
-        .eq("id", projectToDelete.id);
+      // Use RPC to delete project with all related data
+      // Type assertion needed as RPC is dynamically created
+      const { error } = await (supabase.rpc as Function)('admin_delete_project_cascade', {
+        p_project_id: projectToDelete.id
+      });
 
       if (error) throw error;
       
