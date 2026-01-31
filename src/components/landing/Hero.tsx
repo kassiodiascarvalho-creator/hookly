@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { ArrowRight, Shield, Users, Zap } from "lucide-react";
@@ -7,6 +8,8 @@ interface HeroProps {
 }
 
 export const Hero = ({ onOpenSignup }: HeroProps) => {
+  const { t } = useTranslation();
+
   return (
     <section className="pt-32 pb-20 px-4">
       <div className="container mx-auto text-center">
@@ -16,11 +19,10 @@ export const Hero = ({ onOpenSignup }: HeroProps) => {
           transition={{ duration: 0.6 }}
         >
           <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            Conecte-se com os Melhores Talentos
+            {t("hero.title")} {t("hero.titleLine2")}
           </h1>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Plataforma segura para contratar freelancers ou encontrar projetos. 
-            Pagamentos protegidos, contratos transparentes.
+            {t("hero.subtitle")}
           </p>
         </motion.div>
 
@@ -31,10 +33,10 @@ export const Hero = ({ onOpenSignup }: HeroProps) => {
           className="flex flex-col sm:flex-row gap-4 justify-center mb-16"
         >
           <Button size="lg" onClick={() => onOpenSignup("company")} className="gap-2">
-            Contratar Talentos <ArrowRight className="w-4 h-4" />
+            {t("hero.cta")} <ArrowRight className="w-4 h-4" />
           </Button>
           <Button size="lg" variant="outline" onClick={() => onOpenSignup("freelancer")}>
-            Sou Freelancer
+            {t("hero.ctaSecondary")}
           </Button>
         </motion.div>
 
@@ -46,18 +48,18 @@ export const Hero = ({ onOpenSignup }: HeroProps) => {
         >
           <div className="bg-card p-6 rounded-xl border border-border">
             <Shield className="w-10 h-10 text-primary mb-4 mx-auto" />
-            <h3 className="font-semibold mb-2">Pagamentos Seguros</h3>
-            <p className="text-sm text-muted-foreground">Sistema de escrow protege ambas as partes</p>
+            <h3 className="font-semibold mb-2">{t("whyHookly.features.escrowTitle")}</h3>
+            <p className="text-sm text-muted-foreground">{t("whyHookly.features.escrowDesc")}</p>
           </div>
           <div className="bg-card p-6 rounded-xl border border-border">
             <Users className="w-10 h-10 text-primary mb-4 mx-auto" />
-            <h3 className="font-semibold mb-2">Talentos Verificados</h3>
-            <p className="text-sm text-muted-foreground">Profissionais qualificados e avaliados</p>
+            <h3 className="font-semibold mb-2">{t("whyHookly.features.verified.title")}</h3>
+            <p className="text-sm text-muted-foreground">{t("whyHookly.features.verified.description")}</p>
           </div>
           <div className="bg-card p-6 rounded-xl border border-border">
             <Zap className="w-10 h-10 text-primary mb-4 mx-auto" />
-            <h3 className="font-semibold mb-2">Rápido e Fácil</h3>
-            <p className="text-sm text-muted-foreground">Encontre o profissional ideal em minutos</p>
+            <h3 className="font-semibold mb-2">{t("whyHookly.features.matchingTitle")}</h3>
+            <p className="text-sm text-muted-foreground">{t("whyHookly.features.matchingDesc")}</p>
           </div>
         </motion.div>
       </div>

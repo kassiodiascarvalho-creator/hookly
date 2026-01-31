@@ -32,7 +32,7 @@ import {
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { languages, LanguageCode } from "@/lib/i18n";
-import { useLandingFaqItems, useLandingStats, useLandingSections, useLandingSocialLinks } from "@/hooks/useLandingContent";
+import { useLandingStats, useLandingSocialLinks } from "@/hooks/useLandingContent";
 import i18n from "@/lib/i18n";
 import {
   DropdownMenu,
@@ -63,28 +63,9 @@ const Index = () => {
   const [currentLang, setCurrentLang] = useState<LanguageCode>((i18n.language as LanguageCode) || "en");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // CMS Data
-  const { data: faqItems } = useLandingFaqItems();
+  // CMS Data - only for stats and social links (not text content which uses i18n)
   const { data: landingStats } = useLandingStats();
-  const { data: landingSections } = useLandingSections();
   const { data: socialLinks } = useLandingSocialLinks();
-
-  // Helper to get section content with fallback
-  const getSectionContent = (sectionKey: string): Record<string, string> => {
-    const section = landingSections?.find(s => s.section_key === sectionKey);
-    return (section?.content as Record<string, string>) || {};
-  };
-
-  // Get hero section content from CMS
-  const heroSection = useMemo(() => getSectionContent('hero'), [landingSections]);
-  const categoriesSection = useMemo(() => getSectionContent('categories'), [landingSections]);
-  const howItWorksSection = useMemo(() => getSectionContent('howItWorks'), [landingSections]);
-  const comparisonSection = useMemo(() => getSectionContent('comparison'), [landingSections]);
-  const pricingSection = useMemo(() => getSectionContent('pricing'), [landingSections]);
-  const testimonialsSection = useMemo(() => getSectionContent('testimonials'), [landingSections]);
-  const faqSection = useMemo(() => getSectionContent('faq'), [landingSections]);
-  const ctaSection = useMemo(() => getSectionContent('cta'), [landingSections]);
-  const footerSection = useMemo(() => getSectionContent('footer'), [landingSections]);
 
   const changeLanguage = (lang: LanguageCode) => {
     i18n.changeLanguage(lang);
@@ -290,18 +271,18 @@ const Index = () => {
             className="text-center max-w-4xl mx-auto"
           >
             <h1 className="font-display text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight mb-6">
-              <span className="text-gradient-primary">{heroSection.title || t("hero.title")}</span>
+              <span className="text-gradient-primary">{t("hero.title")}</span>
               <br />
-              <span className="text-gradient-primary">{heroSection.titleLine2 || t("hero.titleLine2")}</span>
+              <span className="text-gradient-primary">{t("hero.titleLine2")}</span>
             </h1>
-            <p className="text-xl md:text-2xl text-primary font-semibold mb-4">{heroSection.titleLine3 || t("hero.titleLine3")}</p>
-            <p className="text-lg text-muted-foreground mb-10 max-w-2xl mx-auto">{heroSection.subtitle || t("hero.subtitle")}</p>
+            <p className="text-xl md:text-2xl text-primary font-semibold mb-4">{t("hero.titleLine3")}</p>
+            <p className="text-lg text-muted-foreground mb-10 max-w-2xl mx-auto">{t("hero.subtitle")}</p>
 
             {/* CTA Buttons */}
             <div className="flex flex-wrap justify-center gap-4 mb-16">
               <Link to="/auth">
                 <Button size="lg" className="btn-gradient text-lg px-8 py-6 rounded-xl gap-2">
-                  {heroSection.ctaPrimary || t("hero.cta")}
+                  {t("hero.cta")}
                   <ChevronRight className="h-5 w-5" />
                 </Button>
               </Link>
@@ -311,7 +292,7 @@ const Index = () => {
                   variant="outline"
                   className="text-lg px-8 py-6 rounded-xl border-border hover:bg-accent"
                 >
-                  {heroSection.ctaSecondary || t("hero.ctaSecondary")}
+                  {t("hero.ctaSecondary")}
                 </Button>
               </Link>
             </div>
@@ -347,8 +328,8 @@ const Index = () => {
             viewport={{ once: true }}
             className="text-center mb-12"
           >
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">{categoriesSection.title || t("categories.title")}</h2>
-            <p className="text-muted-foreground text-lg">{categoriesSection.subtitle || t("categories.subtitle")}</p>
+            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">{t("categories.title")}</h2>
+            <p className="text-muted-foreground text-lg">{t("categories.subtitle")}</p>
           </motion.div>
 
           <motion.div
@@ -398,16 +379,12 @@ const Index = () => {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">{howItWorksSection.title || t("howItWorks.title")}</h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">{howItWorksSection.subtitle || t("howItWorks.subtitle")}</p>
+            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">{t("howItWorks.title")}</h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">{t("howItWorks.subtitle")}</p>
           </motion.div>
 
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {["post", "receive", "hire"].map((step, i) => {
-              const stepNumber = i + 1;
-              const cmsTitle = howItWorksSection[`step${stepNumber}Title`];
-              const cmsDescription = howItWorksSection[`step${stepNumber}Description`];
-              
               return (
                 <motion.div
                   key={step}
@@ -422,9 +399,9 @@ const Index = () => {
                     {i === 1 && <Users className="h-7 w-7 text-primary" />}
                     {i === 2 && <Sparkles className="h-7 w-7 text-primary" />}
                   </div>
-                  <h3 className="font-display text-xl font-semibold mb-3">{cmsTitle || t(`howItWorks.steps.${step}.title`)}</h3>
+                  <h3 className="font-display text-xl font-semibold mb-3">{t(`howItWorks.steps.${step}.title`)}</h3>
                   <p className="text-muted-foreground text-sm leading-relaxed">
-                    {cmsDescription || t(`howItWorks.steps.${step}.description`)}
+                    {t(`howItWorks.steps.${step}.description`)}
                   </p>
                 </motion.div>
               );
@@ -442,8 +419,8 @@ const Index = () => {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">{comparisonSection.title || t("whyHookly.title")}</h2>
-            <p className="text-muted-foreground text-lg">{comparisonSection.subtitle || t("comparison.subtitle")}</p>
+            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">{t("comparison.title")}</h2>
+            <p className="text-muted-foreground text-lg">{t("comparison.subtitle")}</p>
           </motion.div>
 
           {/* Comparison Table */}
@@ -520,8 +497,8 @@ const Index = () => {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">{pricingSection.title || t("pricing.title")}</h2>
-            <p className="text-muted-foreground text-lg">{pricingSection.subtitle || t("pricing.subtitle")}</p>
+            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">{t("pricing.title")}</h2>
+            <p className="text-muted-foreground text-lg">{t("pricing.subtitle")}</p>
           </motion.div>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
@@ -532,10 +509,10 @@ const Index = () => {
               viewport={{ once: true }}
               className="surface-card p-8"
             >
-              <h3 className="font-display text-2xl font-bold mb-2">{pricingSection.starterName || t("pricing.starter.name")}</h3>
-              <p className="text-muted-foreground text-sm mb-6">{pricingSection.starterDescription || t("pricing.starter.description")}</p>
+              <h3 className="font-display text-2xl font-bold mb-2">{t("pricing.starter.name")}</h3>
+              <p className="text-muted-foreground text-sm mb-6">{t("pricing.starter.description")}</p>
               <div className="mb-6">
-                <span className="text-4xl font-bold text-primary">{pricingSection.starterPrice || t("pricing.starter.price")}</span>
+                <span className="text-4xl font-bold text-primary">{t("pricing.starter.price")}</span>
               </div>
               <ul className="space-y-3 mb-8">
                 {(t("pricing.starter.features", { returnObjects: true }) as string[]).map((feature, i) => (
@@ -547,7 +524,7 @@ const Index = () => {
               </ul>
               <Link to="/auth">
                 <Button variant="outline" className="w-full border-border hover:bg-accent">
-                  {pricingSection.starterCta || t("pricing.starter.cta")}
+                  {t("pricing.starter.cta")}
                 </Button>
               </Link>
             </motion.div>
@@ -562,13 +539,13 @@ const Index = () => {
             >
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                 <span className="px-4 py-1 rounded-full text-xs font-semibold bg-primary text-primary-foreground">
-                  {pricingSection.businessPopular || t("pricing.business.popular")}
+                  {t("pricing.business.popular")}
                 </span>
               </div>
-              <h3 className="font-display text-2xl font-bold mb-2">{pricingSection.businessName || t("pricing.business.name")}</h3>
-              <p className="text-muted-foreground text-sm mb-6">{pricingSection.businessDescription || t("pricing.business.description")}</p>
+              <h3 className="font-display text-2xl font-bold mb-2">{t("pricing.business.name")}</h3>
+              <p className="text-muted-foreground text-sm mb-6">{t("pricing.business.description")}</p>
               <div className="mb-6">
-                <span className="text-4xl font-bold text-primary">{pricingSection.businessPrice || t("pricing.business.price")}</span>
+                <span className="text-4xl font-bold text-primary">{t("pricing.business.price")}</span>
               </div>
               <ul className="space-y-3 mb-8">
                 {(t("pricing.business.features", { returnObjects: true }) as string[]).map((feature, i) => (
@@ -579,7 +556,7 @@ const Index = () => {
                 ))}
               </ul>
               <Link to="/auth">
-                <Button className="w-full btn-gradient">{pricingSection.businessCta || t("pricing.business.cta")}</Button>
+                <Button className="w-full btn-gradient">{t("pricing.business.cta")}</Button>
               </Link>
             </motion.div>
           </div>
@@ -595,8 +572,8 @@ const Index = () => {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">{testimonialsSection.title || t("testimonials.title")}</h2>
-            <p className="text-muted-foreground text-lg">{testimonialsSection.subtitle || t("testimonials.subtitle")}</p>
+            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">{t("testimonials.title")}</h2>
+            <p className="text-muted-foreground text-lg">{t("testimonials.subtitle")}</p>
           </motion.div>
 
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
@@ -652,16 +629,16 @@ const Index = () => {
             className="text-center mb-16"
           >
             <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-              {faqSection.title || t("faq.title")}
+              {t("faq.title")}
             </h2>
             <p className="text-muted-foreground text-lg">
-              {faqSection.subtitle || t("faq.subtitle")}
+              {t("faq.subtitle")}
             </p>
           </motion.div>
 
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
             <Accordion type="single" collapsible className="w-full space-y-3">
-              {(faqItems && faqItems.length > 0 ? faqItems : (t("faq.items", { returnObjects: true }) as Array<{ question: string; answer: string }>)).map(
+              {(t("faq.items", { returnObjects: true }) as Array<{ question: string; answer: string }>).map(
                 (item, i) => (
                   <AccordionItem
                     key={i}
@@ -690,12 +667,12 @@ const Index = () => {
             className="text-center max-w-3xl mx-auto"
           >
             <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-6 text-gradient-primary">
-              {ctaSection.title || t("cta.title")}
+              {t("cta.title")}
             </h2>
-            <p className="text-muted-foreground text-lg mb-10">{ctaSection.subtitle || t("cta.subtitle")}</p>
+            <p className="text-muted-foreground text-lg mb-10">{t("cta.subtitle")}</p>
             <Link to="/auth">
               <Button size="lg" className="btn-gradient text-lg px-10 py-6 rounded-xl">
-                {ctaSection.ctaPrimary || t("cta.primary")}
+                {t("cta.primary")}
               </Button>
             </Link>
           </motion.div>
@@ -708,7 +685,7 @@ const Index = () => {
           <div className="grid md:grid-cols-5 gap-8 mb-12">
             <div className="md:col-span-2">
               <Logo className="mb-4" />
-              <p className="text-muted-foreground text-sm max-w-xs leading-relaxed">{footerSection.description || t("footer.description")}</p>
+              <p className="text-muted-foreground text-sm max-w-xs leading-relaxed">{t("footer.description")}</p>
               <div className="flex gap-3 mt-6 flex-wrap">
                 {socialLinks && socialLinks.length > 0 ? (
                   socialLinks.map((link) => (
@@ -856,7 +833,7 @@ const Index = () => {
 
           {/* Bottom Bar */}
           <div className="border-t border-border pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-muted-foreground">{footerSection.copyright || t("footer.copyright")}</p>
+            <p className="text-sm text-muted-foreground">{t("footer.copyright")}</p>
             <div className="flex items-center gap-4">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
