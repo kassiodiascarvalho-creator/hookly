@@ -7,11 +7,22 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Loader2, FileText } from "lucide-react";
+import { Search, Loader2, FileText, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileDataCard, MobileDataRow } from "@/components/admin/MobileDataCard";
 import { AdminContractModal } from "@/components/admin/AdminContractModal";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Project {
   id: string;
@@ -41,10 +52,42 @@ export default function AdminProjects() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [contractModalOpen, setContractModalOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const handleViewContract = (project: Project) => {
     setSelectedProject(project);
     setContractModalOpen(true);
+  };
+
+  const handleDeleteClick = (project: Project) => {
+    setProjectToDelete(project);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!projectToDelete) return;
+    
+    setDeleting(true);
+    try {
+      const { error } = await supabase
+        .from("projects")
+        .delete()
+        .eq("id", projectToDelete.id);
+
+      if (error) throw error;
+      
+      toast.success(t("admin.projectDeleted", "Projeto excluído com sucesso"));
+      setProjects(prev => prev.filter(p => p.id !== projectToDelete.id));
+    } catch (error: any) {
+      console.error("Error deleting project:", error);
+      toast.error(t("admin.projectDeleteError", "Erro ao excluir projeto"));
+    } finally {
+      setDeleting(false);
+      setDeleteDialogOpen(false);
+      setProjectToDelete(null);
+    }
   };
 
   useEffect(() => {
@@ -137,15 +180,22 @@ export default function AdminProjects() {
                   <MobileDataRow label={t("admin.createdAt")}>
                     {format(new Date(project.created_at), "PP")}
                   </MobileDataRow>
-                  <div className="mt-3 pt-3 border-t">
+                  <div className="mt-3 pt-3 border-t flex gap-2">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleViewContract(project)}
-                      className="w-full"
+                      className="flex-1"
                     >
                       <FileText className="h-4 w-4 mr-2" />
-                      Ver Contrato
+                      {t("admin.viewContract", "Ver Contrato")}
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDeleteClick(project)}
+                    >
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </MobileDataCard>
@@ -195,14 +245,23 @@ export default function AdminProjects() {
                     <TableCell>
                       {format(new Date(project.created_at), "PP")}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right space-x-1">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleViewContract(project)}
-                        title="Ver Contrato"
+                        title={t("admin.viewContract", "Ver Contrato")}
                       >
                         <FileText className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteClick(project)}
+                        title={t("admin.deleteProject", "Excluir Projeto")}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -229,6 +288,29 @@ export default function AdminProjects() {
           projectTitle={selectedProject.title}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("admin.confirmDeleteProject", "Confirmar Exclusão")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("admin.confirmDeleteProjectMessage", "Tem certeza que deseja excluir o projeto \"{{title}}\"? Esta ação não pode ser desfeita.", { title: projectToDelete?.title || "" })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>{t("common.cancel", "Cancelar")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              {t("common.delete", "Excluir")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
