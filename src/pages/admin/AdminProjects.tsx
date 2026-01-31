@@ -71,19 +71,20 @@ export default function AdminProjects() {
     
     setDeleting(true);
     try {
-      // Use RPC to delete project with all related data
-      // Type assertion needed as RPC is dynamically created
-      const { error } = await (supabase.rpc as Function)('admin_delete_project_cascade', {
-        p_project_id: projectToDelete.id
+      const { data, error } = await supabase.functions.invoke("admin-delete-project", {
+        body: { projectId: projectToDelete.id },
       });
 
       if (error) throw error;
+      if (!data?.success) {
+        throw new Error(data?.error || "Falha ao excluir projeto");
+      }
       
       toast.success(t("admin.projectDeleted", "Projeto excluído com sucesso"));
       setProjects(prev => prev.filter(p => p.id !== projectToDelete.id));
     } catch (error: any) {
       console.error("Error deleting project:", error);
-      toast.error(t("admin.projectDeleteError", "Erro ao excluir projeto"));
+      toast.error(error?.message || t("admin.projectDeleteError", "Erro ao excluir projeto"));
     } finally {
       setDeleting(false);
       setDeleteDialogOpen(false);
