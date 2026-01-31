@@ -58,7 +58,9 @@ export function IdentityVerificationCard({ subjectType }: IdentityVerificationCa
   const maxAttemptsReached = attempts >= maxAttempts;
   
   // Can only start if not_started, uploading (incomplete upload), or retry if rejected/failed_soft AND not reached max attempts
-  const canRetry = canStartVerification && !maxAttemptsReached && ["not_started", "uploading", "failed_soft", "rejected"].includes(status);
+  // IMPORTANT: "processing" and "manual_review" are under analysis - user cannot retry until resolved
+  const retryableStatuses = ["not_started", "uploading", "failed_soft", "rejected"];
+  const canRetry = canStartVerification && !maxAttemptsReached && retryableStatuses.includes(status);
 
   return (
     <>
