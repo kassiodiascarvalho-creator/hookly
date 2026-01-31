@@ -1,28 +1,31 @@
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { Star } from "lucide-react";
 
-const testimonials = [
-  {
-    name: "Maria Silva",
-    role: "CEO, TechStartup",
-    content: "Encontrei desenvolvedores incríveis para meu projeto. O processo foi rápido e seguro.",
-    rating: 5
-  },
-  {
-    name: "João Santos",
-    role: "Freelancer",
-    content: "Finalmente uma plataforma que valoriza o trabalho do freelancer. Pagamentos sempre em dia!",
-    rating: 5
-  },
-  {
-    name: "Ana Costa",
-    role: "Gerente de Projetos",
-    content: "A proteção de escrow nos dá tranquilidade para contratar sem preocupações.",
-    rating: 5
-  }
-];
-
 export const Testimonials = () => {
+  const { t } = useTranslation();
+
+  const testimonials = [
+    {
+      name: t("testimonials.items.0.author"),
+      role: t("testimonials.items.0.role"),
+      content: t("testimonials.items.0.quote"),
+      rating: 5
+    },
+    {
+      name: t("testimonials.items.1.author"),
+      role: t("testimonials.items.1.role"),
+      content: t("testimonials.items.1.quote"),
+      rating: 5
+    },
+    {
+      name: t("testimonials.items.2.author"),
+      role: t("testimonials.items.2.role"),
+      content: t("testimonials.items.2.quote"),
+      rating: 5
+    }
+  ];
+
   return (
     <section className="py-20 px-4 bg-muted/30">
       <div className="container mx-auto">
@@ -32,9 +35,9 @@ export const Testimonials = () => {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">O que Dizem Nossos Usuários</h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">{t("testimonials.title")}</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Histórias reais de sucesso na nossa plataforma
+            {t("testimonials.subtitle")}
           </p>
         </motion.div>
 

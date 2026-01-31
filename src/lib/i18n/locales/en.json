@@ -533,9 +533,21 @@
         "title": "Receive proposals",
         "description": "Get proposals from verified freelancers who match your requirements."
       },
+      "choose": {
+        "title": "Choose and Negotiate",
+        "description": "Chat with candidates and choose the best fit for you."
+      },
       "hire": {
         "title": "Pay for results",
         "description": "Approve deliverables and release payment. Simple as that."
+      }
+    }
+  },
+  "landingHowItWorks": {
+    "steps": {
+      "choose": {
+        "title": "Choose and Negotiate",
+        "description": "Chat with candidates and choose the best fit for you"
       }
     }
   },
@@ -1833,5 +1845,20 @@
       "verifiedDesc": "Your identity has been confirmed",
       "verifiedAt": "Verified on {{date}}"
     }
+  },
+  "signupModal": {
+    "companyTitle": "Sign Up as a Company",
+    "freelancerTitle": "Sign Up as a Freelancer",
+    "companyDescription": "Find the best talent for your projects with security and convenience.",
+    "freelancerDescription": "Access amazing opportunities and receive payments securely.",
+    "companyBenefitsTitle": "Benefits for Companies",
+    "freelancerBenefitsTitle": "Benefits for Freelancers",
+    "companyBenefit1": "Access to verified freelancers",
+    "companyBenefit2": "Payments protected by escrow",
+    "companyBenefit3": "Dedicated support",
+    "freelancerBenefit1": "Quality projects",
+    "freelancerBenefit2": "Guaranteed payments",
+    "freelancerBenefit3": "Build your reputation",
+    "continue": "Continue Sign Up"
   }
 }

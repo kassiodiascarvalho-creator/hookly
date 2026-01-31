@@ -1,30 +1,33 @@
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { FileText, Search, MessageSquare, CheckCircle } from "lucide-react";
 
-const steps = [
-  {
-    icon: FileText,
-    title: "Publique seu Projeto",
-    description: "Descreva o que você precisa e defina seu orçamento"
-  },
-  {
-    icon: Search,
-    title: "Receba Propostas",
-    description: "Freelancers qualificados enviam propostas para seu projeto"
-  },
-  {
-    icon: MessageSquare,
-    title: "Escolha e Negocie",
-    description: "Converse com candidatos e escolha o melhor para você"
-  },
-  {
-    icon: CheckCircle,
-    title: "Trabalho Concluído",
-    description: "Aprove o trabalho e libere o pagamento com segurança"
-  }
-];
-
 export const HowItWorks = () => {
+  const { t } = useTranslation();
+
+  const steps = [
+    {
+      icon: FileText,
+      title: t("howItWorks.steps.post.title"),
+      description: t("howItWorks.steps.post.description")
+    },
+    {
+      icon: Search,
+      title: t("howItWorks.steps.receive.title"),
+      description: t("howItWorks.steps.receive.description")
+    },
+    {
+      icon: MessageSquare,
+      title: t("howItWorks.steps.choose.title"),
+      description: t("howItWorks.steps.choose.description")
+    },
+    {
+      icon: CheckCircle,
+      title: t("howItWorks.steps.hire.title"),
+      description: t("howItWorks.steps.hire.description")
+    }
+  ];
+
   return (
     <section className="py-20 px-4 bg-muted/30">
       <div className="container mx-auto">
@@ -34,9 +37,9 @@ export const HowItWorks = () => {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Como Funciona</h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">{t("howItWorks.title")}</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Processo simples e transparente para conectar empresas e freelancers
+            {t("howItWorks.subtitle")}
           </p>
         </motion.div>
 
@@ -53,7 +56,9 @@ export const HowItWorks = () => {
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <step.icon className="w-8 h-8 text-primary" />
               </div>
-              <div className="text-sm text-primary font-medium mb-2">Passo {index + 1}</div>
+              <div className="text-sm text-primary font-medium mb-2">
+                {t("howItWorksPage.step")} {index + 1}
+              </div>
               <h3 className="font-semibold mb-2">{step.title}</h3>
               <p className="text-sm text-muted-foreground">{step.description}</p>
             </motion.div>
