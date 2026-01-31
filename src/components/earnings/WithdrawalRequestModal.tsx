@@ -191,6 +191,7 @@ export function WithdrawalRequestModal({
   };
 
   const majorAmount = parseFloat(amountInput) || 0;
+  const netAmount = majorAmount * 0.80; // 20% platform fee deducted
   const isValid = majorAmount > 0 && majorAmount <= earningsAvailableMajor && selectedMethodId;
 
   // If identity verification is still loading, show loading state
@@ -394,11 +395,11 @@ export function WithdrawalRequestModal({
           {/* Summary */}
           {majorAmount > 0 && isValid && (
             <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/30">
-              <div className="flex items-center gap-2 text-green-700">
+              <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
                 <CheckCircle className="h-4 w-4" />
                 <span className="text-sm font-medium">
                   {t("earnings.withdrawal.summary", { 
-                    amount: formatMoney(majorAmount, currency)
+                    amount: formatMoney(netAmount, currency)
                   })}
                 </span>
               </div>
