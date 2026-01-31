@@ -7,14 +7,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
-import { FileText, Calendar, Loader2, CheckCircle, XCircle, Clock, AlertTriangle, MessageCircle, Infinity, Rocket } from "lucide-react";
+import { FileText, Calendar, Loader2, CheckCircle, XCircle, Clock, AlertTriangle, MessageCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { FreelancerCounterproposalResponseModal } from "@/components/proposals/FreelancerCounterproposalResponseModal";
 import { formatMoney, formatMoneyFromCents } from "@/lib/formatMoney";
-import { useFreelancerPlan } from "@/hooks/useFreelancerPlan";
 interface Proposal {
   id: string;
   cover_letter: string | null;
@@ -55,7 +53,7 @@ export default function MyProposals() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { plan: freelancerPlan, loading: planLoading } = useFreelancerPlan();
+  
   
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -136,50 +134,6 @@ export default function MyProposals() {
           <p className="text-muted-foreground">{t("myProposals.subtitle")}</p>
         </div>
         
-        {/* Proposal usage card */}
-        {!planLoading && freelancerPlan && (
-          <Card className="w-full md:w-auto">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-4">
-                {freelancerPlan.unlimited_proposals ? (
-                  <div className="flex items-center gap-2 text-primary">
-                    <Infinity className="h-5 w-5" />
-                    <span className="font-medium">Propostas ilimitadas</span>
-                  </div>
-                ) : (
-                  <div className="flex-1 min-w-[200px]">
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>Propostas este mês</span>
-                      <span className="font-medium">
-                        {freelancerPlan.proposals_used} / {freelancerPlan.proposals_limit}
-                      </span>
-                    </div>
-                    <Progress 
-                      value={(freelancerPlan.proposals_used / (freelancerPlan.proposals_limit || 5)) * 100} 
-                      className="h-2"
-                    />
-                    {freelancerPlan.reset_at && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Renova em {format(new Date(freelancerPlan.reset_at), "d 'de' MMMM", { locale: ptBR })}
-                      </p>
-                    )}
-                  </div>
-                )}
-                {!freelancerPlan.unlimited_proposals && (
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => navigate('/settings?tab=billing')}
-                    className="gap-1"
-                  >
-                    <Rocket className="h-4 w-4" />
-                    Upgrade
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>

@@ -149,7 +149,6 @@ export function FreelancerPlanCard() {
   // Get tier-specific benefits from plan definition
   const monthlyCredits = currentPlanConfig?.monthly_credits || 0;
   const creditCap = currentPlanConfig?.credit_cap || null;
-  const proposalsLimit = isPaidTier ? null : (currentPlanConfig?.proposals_limit || 5);
   const features = currentPlanConfig?.features || [];
 
   return (
@@ -233,35 +232,6 @@ export function FreelancerPlanCard() {
             )}
           </div>
 
-          {/* Proposals usage - show limit for standard, unlimited for pro/elite */}
-          {isPaidTier || plan?.unlimited_proposals ? (
-            <div className="p-3 rounded-lg bg-primary/10 flex items-center gap-2">
-              <Infinity className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-primary">Propostas ilimitadas</span>
-            </div>
-          ) : (
-            <div className="p-3 rounded-lg bg-muted/50">
-              <div className="flex justify-between text-sm mb-1">
-                <span>Propostas este mês</span>
-                <span className="font-medium">
-                  {plan?.proposals_used ?? 0} / {plan?.proposals_limit ?? proposalsLimit ?? 5}
-                </span>
-              </div>
-              <div className="h-2 bg-muted rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-primary transition-all"
-                  style={{ 
-                    width: `${Math.min(100, ((plan?.proposals_used ?? 0) / (plan?.proposals_limit ?? proposalsLimit ?? 5)) * 100)}%` 
-                  }}
-                />
-              </div>
-              {plan?.reset_at && (
-                <div className="text-xs text-muted-foreground mt-1">
-                  Renova em {format(new Date(plan.reset_at), "d 'de' MMMM", { locale: ptBR })}
-                </div>
-              )}
-            </div>
-          )}
 
           {/* Subscription info */}
           {hasStripeSubscription && plan?.subscription_end && (
