@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -20,7 +21,6 @@ import { Loader2, Wallet, Building, AlertCircle, CheckCircle, Shield, ShieldAler
 import { toast } from "sonner";
 import { formatMoney, getCurrencyDecimals } from "@/lib/formatMoney";
 import { useIdentityVerification } from "@/hooks/useIdentityVerification";
-import { IdentityVerificationModal } from "@/components/identity/IdentityVerificationModal";
 
 interface PayoutMethod {
   id: string;
@@ -56,12 +56,12 @@ export function WithdrawalRequestModal({
 }: WithdrawalRequestModalProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const navigate = useNavigate();
   
   // Identity verification check
-  const { status: identityStatus, isLoading: identityLoading, refetch: refetchIdentity } = useIdentityVerification({
+  const { status: identityStatus, isLoading: identityLoading } = useIdentityVerification({
     subjectType: "freelancer",
   });
-  const [showIdentityModal, setShowIdentityModal] = useState(false);
   
   // Check if identity is verified
   const isIdentityVerified = identityStatus === "verified";
@@ -206,85 +206,75 @@ export function WithdrawalRequestModal({
     );
   }
 
-  // If identity is NOT verified, show verification required screen
+  // If identity is NOT verified, show verification required screen with redirect
   if (!isIdentityVerified) {
-    return (
-      <>
-        <Dialog open={open} onOpenChange={onOpenChange}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <ShieldAlert className="h-5 w-5 text-amber-500" />
-                {t("earnings.withdrawal.identityRequired")}
-              </DialogTitle>
-              <DialogDescription>
-                {t("earnings.withdrawal.identityRequiredDesc")}
-              </DialogDescription>
-            </DialogHeader>
+    const handleGoToSettings = () => {
+      onOpenChange(false);
+      navigate("/settings?tab=security");
+    };
 
-            <div className="space-y-4 py-4">
-              {/* Security explanation */}
-              <Alert className="border-amber-500/50 bg-amber-500/10">
-                <Shield className="h-4 w-4 text-amber-600" />
-                <AlertDescription className="text-amber-800 dark:text-amber-200">
-                  <strong>{t("earnings.withdrawal.whyVerify")}</strong>
-                  <ul className="mt-2 space-y-1 text-sm list-disc list-inside">
-                    <li>{t("earnings.withdrawal.whyVerifyReason1")}</li>
-                    <li>{t("earnings.withdrawal.whyVerifyReason2")}</li>
-                    <li>{t("earnings.withdrawal.whyVerifyReason3")}</li>
-                  </ul>
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldAlert className="h-5 w-5 text-amber-500" />
+              {t("earnings.withdrawal.identityRequired")}
+            </DialogTitle>
+            <DialogDescription>
+              {t("earnings.withdrawal.identityRequiredDesc")}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* Security explanation */}
+            <Alert className="border-amber-500/50 bg-amber-500/10">
+              <Shield className="h-4 w-4 text-amber-600" />
+              <AlertDescription className="text-amber-800 dark:text-amber-200">
+                <strong>{t("earnings.withdrawal.whyVerify")}</strong>
+                <ul className="mt-2 space-y-1 text-sm list-disc list-inside">
+                  <li>{t("earnings.withdrawal.whyVerifyReason1")}</li>
+                  <li>{t("earnings.withdrawal.whyVerifyReason2")}</li>
+                  <li>{t("earnings.withdrawal.whyVerifyReason3")}</li>
+                </ul>
+              </AlertDescription>
+            </Alert>
+
+            {/* Current status info */}
+            {isIdentityPending && (
+              <Alert className="border-blue-500/50 bg-blue-500/10">
+                <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />
+                <AlertDescription className="text-blue-800 dark:text-blue-200">
+                  <strong>{t("earnings.withdrawal.identityPending")}</strong>
+                  <p className="text-sm mt-1">{t("earnings.withdrawal.identityPendingDesc")}</p>
                 </AlertDescription>
               </Alert>
+            )}
 
-              {/* Current status info */}
-              {isIdentityPending && (
-                <Alert className="border-blue-500/50 bg-blue-500/10">
-                  <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />
-                  <AlertDescription className="text-blue-800 dark:text-blue-200">
-                    <strong>{t("earnings.withdrawal.identityPending")}</strong>
-                    <p className="text-sm mt-1">{t("earnings.withdrawal.identityPendingDesc")}</p>
-                  </AlertDescription>
-                </Alert>
-              )}
+            {isIdentityRejected && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>{t("earnings.withdrawal.identityRejected")}</strong>
+                  <p className="text-sm mt-1">{t("earnings.withdrawal.identityRejectedDesc")}</p>
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
 
-              {isIdentityRejected && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    <strong>{t("earnings.withdrawal.identityRejected")}</strong>
-                    <p className="text-sm mt-1">{t("earnings.withdrawal.identityRejectedDesc")}</p>
-                  </AlertDescription>
-                </Alert>
-              )}
-            </div>
-
-            <DialogFooter className="gap-2 sm:gap-0">
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
-                {t("common.cancel")}
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              {t("common.cancel")}
+            </Button>
+            {!isIdentityPending && (
+              <Button onClick={handleGoToSettings} className="gap-2">
+                <Shield className="h-4 w-4" />
+                {t("earnings.withdrawal.verifyNow")}
               </Button>
-              {!isIdentityPending && (
-                <Button onClick={() => setShowIdentityModal(true)} className="gap-2">
-                  <Shield className="h-4 w-4" />
-                  {t("earnings.withdrawal.verifyNow")}
-                </Button>
-              )}
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Identity Verification Modal */}
-        <IdentityVerificationModal
-          open={showIdentityModal}
-          onClose={() => {
-            setShowIdentityModal(false);
-            refetchIdentity();
-          }}
-          subjectType="freelancer"
-          onVerificationStarted={() => {
-            refetchIdentity();
-          }}
-        />
-      </>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     );
   }
 
