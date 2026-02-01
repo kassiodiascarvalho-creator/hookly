@@ -8,16 +8,16 @@ interface CompanyLogo {
 
 const COMPANY_LOGOS: CompanyLogo[] = [
   { name: "Meta", logo_url: "/logos/companies/meta.svg" },
-  { name: "Alphabet", logo_url: "/logos/companies/alphabet.svg" },
-  { name: "Coca-Cola", logo_url: "/logos/companies/coca-cola.svg" },
-  { name: "Amazon", logo_url: "/logos/companies/amazon.svg" },
-  { name: "Nvidia", logo_url: "/logos/companies/nvidia.svg" },
-  { name: "Apple", logo_url: "/logos/companies/apple.svg" },
+  { name: "Alphabet", logo_url: "/logos/companies/alphabet.png" },
+  { name: "Coca-Cola", logo_url: "/logos/companies/coca-cola.png" },
+  { name: "Amazon", logo_url: "/logos/companies/amazon.png" },
+  { name: "Nvidia", logo_url: "/logos/companies/nvidia.png" },
+  { name: "Apple", logo_url: "/logos/companies/apple.png" },
   { name: "Microsoft", logo_url: "/logos/companies/microsoft.svg" },
   { name: "IBM", logo_url: "/logos/companies/ibm.svg" },
   { name: "Adobe", logo_url: "/logos/companies/adobe.svg" },
   { name: "Google", logo_url: "/logos/companies/google.svg" },
-  { name: "TikTok", logo_url: "/logos/companies/tiktok.svg" },
+  { name: "TikTok", logo_url: "/logos/companies/tiktok.png" },
 ];
 
 export function CompanyLogosCarousel() {
