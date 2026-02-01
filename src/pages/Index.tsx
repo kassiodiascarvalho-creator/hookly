@@ -33,6 +33,7 @@ import {
 import { useState, useMemo } from "react";
 import { languages, LanguageCode } from "@/lib/i18n";
 import { useLandingStats, useLandingSocialLinks } from "@/hooks/useLandingContent";
+import { ProviderLogosCarousel } from "@/components/landing/ProviderLogosCarousel";
 import i18n from "@/lib/i18n";
 import {
   DropdownMenu,
@@ -409,6 +410,9 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Provider Logos & Trust Badges */}
+      <ProviderLogosCarousel />
 
       {/* Why HOOKLY - Comparison Table */}
       <section className="py-20 relative">

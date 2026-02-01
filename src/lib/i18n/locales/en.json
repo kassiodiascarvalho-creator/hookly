@@ -1864,5 +1864,18 @@
     "freelancerBenefit2": "Guaranteed payments",
     "freelancerBenefit3": "Build your reputation",
     "continue": "Continue Sign Up"
+  },
+  "landing": {
+    "providers": {
+      "title": "Trusted Infrastructure & Payments",
+      "subtitle": "Payments processed by leading providers with robust infrastructure.",
+      "disclaimer": "Trademarks belong to their respective owners. Does not imply endorsement.",
+      "badges": {
+        "escrow": "Protected payment (escrow)",
+        "approval": "Release after approval",
+        "secureChat": "Secure in-platform chat",
+        "antiFraud": "Anti-fraud protection"
+      }
+    }
   }
 }
