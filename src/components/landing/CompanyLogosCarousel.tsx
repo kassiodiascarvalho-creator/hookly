@@ -6,17 +6,17 @@ interface CompanyLogo {
 }
 
 const COMPANY_LOGOS: CompanyLogo[] = [
-  { name: "Meta", logo_url: "https://cdn.cdnlogo.com/logos/m/37/meta.svg" },
-  { name: "Alphabet", logo_url: "https://cdn.cdnlogo.com/logos/a/75/alphabet.svg" },
-  { name: "Coca-Cola", logo_url: "https://cdn.cdnlogo.com/logos/c/57/coca-cola.svg" },
-  { name: "Amazon", logo_url: "https://cdn.cdnlogo.com/logos/a/19/amazon.svg" },
-  { name: "Nvidia", logo_url: "https://cdn.cdnlogo.com/logos/n/27/nvidia.svg" },
-  { name: "Apple", logo_url: "https://cdn.cdnlogo.com/logos/a/27/apple.svg" },
-  { name: "Microsoft", logo_url: "https://cdn.cdnlogo.com/logos/m/87/microsoft.svg" },
-  { name: "IBM", logo_url: "https://cdn.cdnlogo.com/logos/i/6/ibm.svg" },
-  { name: "Adobe", logo_url: "https://cdn.cdnlogo.com/logos/a/72/adobe-2020.svg" },
-  { name: "Google", logo_url: "https://cdn.cdnlogo.com/logos/g/35/google-2015.svg" },
-  { name: "TikTok", logo_url: "https://cdn.cdnlogo.com/logos/t/25/tiktok-logo.svg" },
+  { name: "Meta", logo_url: "https://logo.clearbit.com/meta.com" },
+  { name: "Alphabet", logo_url: "https://logo.clearbit.com/abc.xyz" },
+  { name: "Coca-Cola", logo_url: "https://logo.clearbit.com/coca-cola.com" },
+  { name: "Amazon", logo_url: "https://logo.clearbit.com/amazon.com" },
+  { name: "Nvidia", logo_url: "https://logo.clearbit.com/nvidia.com" },
+  { name: "Apple", logo_url: "https://logo.clearbit.com/apple.com" },
+  { name: "Microsoft", logo_url: "https://logo.clearbit.com/microsoft.com" },
+  { name: "IBM", logo_url: "https://logo.clearbit.com/ibm.com" },
+  { name: "Adobe", logo_url: "https://logo.clearbit.com/adobe.com" },
+  { name: "Google", logo_url: "https://logo.clearbit.com/google.com" },
+  { name: "TikTok", logo_url: "https://logo.clearbit.com/tiktok.com" },
 ];
 
 export function CompanyLogosCarousel() {
@@ -42,7 +42,7 @@ export function CompanyLogosCarousel() {
               ? {}
               : {
                   x: {
-                    duration: 25,
+                    duration: 24,
                     repeat: Infinity,
                     ease: "linear",
                   },
