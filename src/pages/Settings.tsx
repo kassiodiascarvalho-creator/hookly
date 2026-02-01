@@ -515,34 +515,38 @@ export default function Settings() {
                     website: e.target.value
                   })} />
                   </div>
-                  <div className="space-y-2">
-                    <Label>{t("settings.documentType")}</Label>
-                    <Select value={companyProfile.document_type || ""} onValueChange={value => setCompanyProfile({
-                    ...companyProfile,
-                    document_type: value as "cpf" | "cnpj"
-                  })}>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t("settings.selectDocumentType")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="cpf">CPF (Pessoa Física)</SelectItem>
-                        <SelectItem value="cnpj">CNPJ (Pessoa Jurídica)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>{t("settings.documentNumber")}</Label>
-                    <Input value={formatDocument(companyProfile.document_number || "", companyProfile.document_type)} onChange={e => {
-                    const rawValue = unformatDocument(e.target.value);
-                    setCompanyProfile({
-                      ...companyProfile,
-                      document_number: rawValue
-                    });
-                  }} placeholder={companyProfile.document_type === "cpf" ? "000.000.000-00" : "00.000.000/0000-00"} maxLength={companyProfile.document_type === "cpf" ? 14 : 18} />
-                    <p className="text-xs text-muted-foreground">
-                      {companyProfile.document_type === "cpf" ? t("settings.cpfDesc") : t("settings.cnpjDesc")}
-                    </p>
-                  </div>
+                  {companyProfile.country === "BR" && (
+                    <>
+                      <div className="space-y-2">
+                        <Label>{t("settings.documentType")}</Label>
+                        <Select value={companyProfile.document_type || ""} onValueChange={value => setCompanyProfile({
+                        ...companyProfile,
+                        document_type: value as "cpf" | "cnpj"
+                      })}>
+                          <SelectTrigger>
+                            <SelectValue placeholder={t("settings.selectDocumentType")} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="cpf">CPF (Pessoa Física)</SelectItem>
+                            <SelectItem value="cnpj">CNPJ (Pessoa Jurídica)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>{t("settings.documentNumber")}</Label>
+                        <Input value={formatDocument(companyProfile.document_number || "", companyProfile.document_type)} onChange={e => {
+                        const rawValue = unformatDocument(e.target.value);
+                        setCompanyProfile({
+                          ...companyProfile,
+                          document_number: rawValue
+                        });
+                      }} placeholder={companyProfile.document_type === "cpf" ? "000.000.000-00" : "00.000.000/0000-00"} maxLength={companyProfile.document_type === "cpf" ? 14 : 18} />
+                        <p className="text-xs text-muted-foreground">
+                          {companyProfile.document_type === "cpf" ? t("settings.cpfDesc") : t("settings.cnpjDesc")}
+                        </p>
+                      </div>
+                    </>
+                  )}
                   <div className="space-y-2 md:col-span-2">
                     <Label>{t("settings.about")}</Label>
                     <Textarea value={companyProfile.about || ""} onChange={e => setCompanyProfile({
