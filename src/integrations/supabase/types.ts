@@ -3498,6 +3498,19 @@ export type Database = {
           project_id: string
         }[]
       }
+      get_proposal_queue: {
+        Args: { p_project_id: string }
+        Returns: {
+          boost_credits: number
+          created_at: string
+          freelancer_avatar: string
+          freelancer_name: string
+          freelancer_user_id: string
+          is_current_user: boolean
+          proposal_id: string
+          queue_position: number
+        }[]
+      }
       grant_plan_credits: {
         Args: {
           p_grant_type?: string
