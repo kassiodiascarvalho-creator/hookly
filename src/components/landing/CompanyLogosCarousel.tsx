@@ -53,7 +53,7 @@ export function CompanyLogosCarousel() {
         }
       `}</style>
       <div className="relative w-full overflow-hidden mask-gradient-x">
-        <div className="flex gap-16 items-center animate-scroll-logos">
+        <div className="flex gap-8 md:gap-10 items-center animate-scroll-logos">
           {duplicatedLogos.map((logo, index) => {
             const uniqueKey = `${logo.name}-${index}`;
             if (failedLogos.has(logo.name)) {
