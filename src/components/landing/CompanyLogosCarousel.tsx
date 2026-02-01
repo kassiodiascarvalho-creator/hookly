@@ -14,7 +14,7 @@ const COMPANY_LOGOS: CompanyLogo[] = [
   { name: "Apple", logo_url: "/logos/companies/apple.png" },
   { name: "Microsoft", logo_url: "/logos/companies/microsoft.svg" },
   { name: "IBM", logo_url: "/logos/companies/ibm.png" },
-  { name: "Adobe", logo_url: "/logos/companies/adobe.svg" },
+  { name: "Adobe", logo_url: "/logos/companies/adobe.png" },
   { name: "Google", logo_url: "/logos/companies/google.svg" },
   { name: "TikTok", logo_url: "/logos/companies/tiktok.png" },
 ];
