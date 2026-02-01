@@ -58,7 +58,20 @@ export function TierBadge({
     md: "h-4 w-4",
     lg: "h-5 w-5"
   };
-  return;
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full border font-medium",
+        config.bgClass,
+        config.colorClass,
+        sizeClasses[size],
+        className
+      )}
+    >
+      <Icon className={iconSizes[size]} />
+      {showLabel && <span>{t(`tiers.${tier}`, { defaultValue: config.labelEn })}</span>}
+    </span>
+  );
 }
 interface TierInfoCardProps {
   tier: FreelancerTier;
