@@ -21,7 +21,7 @@ import { Loader2, Wallet, Building, AlertCircle, CheckCircle, Shield, ShieldAler
 import { toast } from "sonner";
 import { formatMoney, getCurrencyDecimals } from "@/lib/formatMoney";
 import { useIdentityVerification } from "@/hooks/useIdentityVerification";
-
+import { usePaymentFees, FEE_KEYS } from "@/hooks/usePaymentFees";
 interface PayoutMethod {
   id: string;
   type: "pix" | "bank";
@@ -58,6 +58,10 @@ export function WithdrawalRequestModal({
   const { user } = useAuth();
   const navigate = useNavigate();
   
+  // Get withdrawal fee from dynamic config
+  const { getFeePercent, loading: feesLoading } = usePaymentFees();
+  const withdrawalFeePercent = getFeePercent(FEE_KEYS.WITHDRAWAL);
+  
   // Identity verification check
   const { status: identityStatus, isLoading: identityLoading } = useIdentityVerification({
     subjectType: "freelancer",
@@ -73,7 +77,6 @@ export function WithdrawalRequestModal({
   const [selectedMethodId, setSelectedMethodId] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   const decimals = getCurrencyDecimals(currency);
 
   useEffect(() => {
@@ -191,11 +194,12 @@ export function WithdrawalRequestModal({
   };
 
   const majorAmount = parseFloat(amountInput) || 0;
-  const netAmount = majorAmount * 0.80; // 20% platform fee deducted
+  const netAmount = majorAmount * (1 - withdrawalFeePercent); // Dynamic platform fee deducted
+  const feeAmount = majorAmount * withdrawalFeePercent;
+  const feePercDisplay = (withdrawalFeePercent * 100).toFixed(0);
   const isValid = majorAmount > 0 && majorAmount <= earningsAvailableMajor && selectedMethodId;
-
-  // If identity verification is still loading, show loading state
-  if (identityLoading) {
+  // If identity verification or fees are still loading, show loading state
+  if (identityLoading || feesLoading) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-md">
@@ -394,8 +398,16 @@ export function WithdrawalRequestModal({
 
           {/* Summary */}
           {majorAmount > 0 && isValid && (
-            <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/30">
-              <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
+            <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/30 space-y-2">
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>{t("earnings.withdrawal.grossAmount")}</span>
+                <span>{formatMoney(majorAmount, currency)}</span>
+              </div>
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>{t("earnings.withdrawal.platformFee", { percent: feePercDisplay })}</span>
+                <span className="text-red-500">-{formatMoney(feeAmount, currency)}</span>
+              </div>
+              <div className="border-t pt-2 flex items-center gap-2 text-green-700 dark:text-green-400">
                 <CheckCircle className="h-4 w-4" />
                 <span className="text-sm font-medium">
                   {t("earnings.withdrawal.summary", { 

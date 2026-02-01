@@ -50,6 +50,7 @@
       "conversionFee": "Proteção cambial",
       "total": "Total",
       "processingFee": "Taxa de Serviço",
+      "withdrawal": "Taxa de Saque",
       "contractValue": "Valor do contrato",
       "paymentSummary": "Resumo do Pagamento",
       "freelancerReceives": "O freelancer receberá exatamente {{amount}} após a conclusão."
@@ -192,6 +193,8 @@
       "invalidAmount": "Informe um valor válido",
       "exceedsBalance": "Valor excede o disponível",
       "selectMethod": "Selecione um método de recebimento",
+      "grossAmount": "Valor Bruto",
+      "platformFee": "Taxa da Plataforma ({{percent}}%)",
       "summary": "Você receberá {{amount}} após confirmação",
       "submit": "Solicitar Transferência",
       "success": "Solicitação de transferência enviada com sucesso",

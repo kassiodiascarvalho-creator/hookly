@@ -50,6 +50,7 @@
       "conversionFee": "Currency protection",
       "total": "Total",
       "processingFee": "Service Fee",
+      "withdrawal": "Withdrawal Fee",
       "contractValue": "Contract value",
       "paymentSummary": "Payment Summary",
       "freelancerReceives": "The freelancer will receive exactly {{amount}} upon completion."
@@ -168,6 +169,8 @@
       "invalidAmount": "Enter a valid amount",
       "exceedsBalance": "Amount exceeds available balance",
       "selectMethod": "Select a payout method",
+      "grossAmount": "Gross Amount",
+      "platformFee": "Platform Fee ({{percent}}%)",
       "summary": "You will receive {{amount}} after approval",
       "submit": "Request Withdrawal",
       "success": "Withdrawal request submitted successfully",

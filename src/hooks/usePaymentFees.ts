@@ -36,6 +36,7 @@ export const FEE_KEYS = {
   INTERNATIONAL_CARD: "international_card",
   BRL_PIX: "brl_pix",
   BRL_CARD: "brl_card",
+  WITHDRAWAL: "withdrawal",
 } as const;
 
 // Default fee values (used as fallback if DB fetch fails)
@@ -43,6 +44,7 @@ const DEFAULT_FEES: Record<string, number> = {
   [FEE_KEYS.INTERNATIONAL_CARD]: 0.15, // 15%
   [FEE_KEYS.BRL_PIX]: 0.02, // 2%
   [FEE_KEYS.BRL_CARD]: 0.06, // 6%
+  [FEE_KEYS.WITHDRAWAL]: 0.15, // 15%
 };
 
 /**
