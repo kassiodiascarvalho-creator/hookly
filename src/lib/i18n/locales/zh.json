@@ -1236,5 +1236,18 @@
     "proceedAnywayWarning": "此提案被AI标记为不推荐。您确定要继续吗？",
     "analyzed": "已分析",
     "aiSuggestion": "基于AI的建议"
+  },
+  "landing": {
+    "providers": {
+      "title": "可靠的基础设施和支付",
+      "subtitle": "支付由领先供应商处理，基础设施稳健。",
+      "disclaimer": "商标归各自所有者所有。不暗示任何合作关系。",
+      "badges": {
+        "escrow": "托管支付保护",
+        "approval": "审批后释放",
+        "secureChat": "平台安全聊天",
+        "antiFraud": "防欺诈保护"
+      }
+    }
   }
 }

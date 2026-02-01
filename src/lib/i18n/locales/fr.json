@@ -1242,5 +1242,18 @@
     "proceedAnywayWarning": "Cette proposition a été marquée comme Non Recommandée par l'IA. Voulez-vous continuer quand même?",
     "analyzed": "Analysé",
     "aiSuggestion": "Suggestion basée sur l'IA"
+  },
+  "landing": {
+    "providers": {
+      "title": "Infrastructure et paiements fiables",
+      "subtitle": "Paiements traités par des fournisseurs de premier plan avec une infrastructure robuste.",
+      "disclaimer": "Les marques appartiennent à leurs propriétaires respectifs. N'implique aucun partenariat.",
+      "badges": {
+        "escrow": "Paiement protégé (séquestre)",
+        "approval": "Libération après approbation",
+        "secureChat": "Chat sécurisé sur la plateforme",
+        "antiFraud": "Protection anti-fraude"
+      }
+    }
   }
 }

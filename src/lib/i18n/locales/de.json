@@ -1242,5 +1242,18 @@
     "proceedAnywayWarning": "Dieser Vorschlag wurde von der KI als Nicht Empfohlen markiert. Möchten Sie trotzdem fortfahren?",
     "analyzed": "Analysiert",
     "aiSuggestion": "KI-basierte Empfehlung"
+  },
+  "landing": {
+    "providers": {
+      "title": "Zuverlässige Infrastruktur & Zahlungen",
+      "subtitle": "Zahlungen werden von führenden Anbietern mit robuster Infrastruktur verarbeitet.",
+      "disclaimer": "Marken gehören ihren jeweiligen Eigentümern. Impliziert keine Partnerschaft.",
+      "badges": {
+        "escrow": "Geschützte Zahlung (Treuhand)",
+        "approval": "Freigabe nach Genehmigung",
+        "secureChat": "Sicherer Chat auf der Plattform",
+        "antiFraud": "Anti-Betrugs-Schutz"
+      }
+    }
   }
 }
