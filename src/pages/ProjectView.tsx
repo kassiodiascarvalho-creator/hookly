@@ -27,7 +27,7 @@ import { useProfileGate } from "@/hooks/useProfileGate";
 
 import { ProfileGateModal } from "@/components/profile/ProfileGateModal";
 import { ProfileGateAlert } from "@/components/profile/ProfileGateAlert";
-import { BudgetRangeDisplay, ProposalBudgetValidation, CounterproposalJustification, validateProposalBudget } from "@/components/proposals";
+import { BudgetRangeDisplay, ProposalBudgetValidation, CounterproposalJustification, validateProposalBudget, ProposalQueueCard } from "@/components/proposals";
 import { getCurrencySymbol, formatMoney } from "@/lib/formatMoney";
 import { checkProjectHasPrefund } from "@/hooks/useProjectPrefund";
 
@@ -619,6 +619,14 @@ export default function ProjectView() {
               )}
             </CardContent>
           </Card>
+
+          {/* Proposal Queue - visible for freelancers */}
+          {user && user.id !== project.company_user_id && (
+            <ProposalQueueCard 
+              projectId={project.id} 
+              myProposalId={myProposal?.id}
+            />
+          )}
         </div>
       </div>
 
