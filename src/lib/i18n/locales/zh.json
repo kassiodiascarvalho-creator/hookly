@@ -890,18 +890,25 @@
     "addFirst": "添加您的第一个项目来展示您的作品"
   },
   "certifications": {
-    "title": "认证",
-    "addCertification": "添加认证",
-    "editCertification": "编辑认证",
-    "name": "认证名称",
-    "issuer": "颁发机构",
-    "issueDate": "颁发日期",
+    "title": "学历",
+    "description": "添加您的学历和学位",
+    "addCert": "添加学历",
+    "editCert": "编辑学历",
+    "certDescription": "添加您的学历详情",
+    "certName": "学历名称",
+    "namePlaceholder": "例如，工商管理学士",
+    "issuer": "教育机构",
+    "issuerPlaceholder": "例如，北京大学",
+    "issueDate": "毕业日期",
     "expiryDate": "过期日期",
-    "credentialUrl": "证书链接",
-    "save": "保存",
-    "delete": "删除",
-    "noCertifications": "暂无认证",
-    "addFirst": "添加您的认证来展示您的专业技能"
+    "credentialUrl": "学历链接",
+    "noCerts": "暂无学历。添加您的第一个学历！",
+    "added": "学历已添加！",
+    "updated": "学历已更新！",
+    "deleted": "学历已删除",
+    "issued": "毕业",
+    "expires": "过期",
+    "expired": "已过期"
   },
   "payments": {
     "fees": {
