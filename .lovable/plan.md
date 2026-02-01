@@ -1,74 +1,93 @@
 
-Objetivo
-- Fazer o carrossel de logos carregar 100% (sem depender de serviços externos que falham/bloqueiam).
-- Acelerar o movimento em 1 segundo (de 24s para 23s).
 
-Diagnóstico (por que está falhando)
-- As imagens atuais vêm de `https://logo.clearbit.com/...`.
-- No preview, essas requisições estão falhando com erro de rede `net::ERR_TUNNEL_CONNECTION_FAILED` (isso costuma acontecer por bloqueio de rede/antitracker/adblock/VPN/proxy ou restrição do próprio serviço).
-- Como é um `<img src="https://...">`, se o navegador bloquear a conexão, não tem “conserto” só com CSS/React: precisamos parar de depender dessas URLs externas.
+# Plano: Corrigir o Formulário de Perfil do Freelancer e a Foto
 
-Solução (garantir 100%)
-1) Trocar todas as logos para arquivos locais (dentro do projeto)
-- Adicionar as 11 logos dentro de `public/logos/companies/` (ex.: `meta.svg`, `alphabet.svg`, `coca-cola.svg`, etc).
-- Vantagem: o navegador carrega do mesmo domínio do site, sem bloqueio de terceiros e sem “tunnel/proxy issues”.
-- Fonte recomendada: SVGs oficiais ou de repositórios confiáveis (ex.: Simple Icons/brand assets) e manter arquivos otimizados (tamanho pequeno).
+## Problema Identificado
 
-2) Atualizar o componente `CompanyLogosCarousel` para usar paths locais
-- Trocar o array `COMPANY_LOGOS` para usar:
-  - `/logos/companies/meta.svg`
-  - `/logos/companies/alphabet.svg`
-  - `/logos/companies/coca-cola.svg`
-  - `/logos/companies/amazon.svg`
-  - `/logos/companies/nvidia.svg`
-  - `/logos/companies/apple.svg`
-  - `/logos/companies/microsoft.svg`
-  - `/logos/companies/ibm.svg`
-  - `/logos/companies/adobe.svg`
-  - `/logos/companies/google.svg`
-  - `/logos/companies/tiktok.svg`
+O formulário de perfil do freelancer e a foto de perfil não estão carregando na página de Configurações porque há um erro de **recursão infinita** na política de segurança (RLS) da tabela `freelancer_profiles`. 
 
-3) Ajustar o estilo para não “sumir” em dark mode
-- Hoje o componente usa `dark:invert`. Em logos coloridas isso pode ficar estranho; em algumas combinações pode piorar contraste.
-- Vamos alinhar com o carrossel de providers (Stripe/Mercado/Supabase) que funciona melhor:
-  - Remover `dark:invert`
-  - Manter algo como `dark:brightness-150` (e se necessário adicionar `dark:contrast-125`) para garantir legibilidade.
+Os logs do banco de dados mostram repetidamente:
+```
+"infinite recursion detected in policy for relation 'freelancer_profiles'"
+```
 
-4) Adicionar fallback de carregamento (para “100%” visual)
-Mesmo com assets locais, vale blindar:
-- Adicionar `onError` no `<img>` para trocar automaticamente para um placeholder local (por ex. `/placeholder.svg`) caso algum arquivo esteja faltando ou corrompido.
-- Importante: sem texto, só imagem placeholder discreta (ou até esconder o item).
+**Causa raiz**: A política RLS atual contém uma consulta que referencia a própria tabela `freelancer_profiles` para verificar se o usuário é um freelancer:
+```sql
+OR EXISTS (
+  SELECT 1 FROM freelancer_profiles fp   -- ← ERRADO: referencia a si mesma
+  WHERE fp.user_id = auth.uid()
+)
+```
 
-5) Acelerar 1 segundo o movimento
-- Em `CompanyLogosCarousel.tsx`, alterar:
-  - `duration: 24` → `duration: 23`
-- Mantemos `repeat: Infinity` e `ease: "linear"`.
+Isso cria um loop infinito quando o Postgres tenta avaliar a política.
 
-Arquivos que serão mexidos/criados (quando eu implementar em modo de edição)
-- Criar (novos arquivos estáticos):
-  - `public/logos/companies/meta.svg`
-  - `public/logos/companies/alphabet.svg`
-  - `public/logos/companies/coca-cola.svg`
-  - `public/logos/companies/amazon.svg`
-  - `public/logos/companies/nvidia.svg`
-  - `public/logos/companies/apple.svg`
-  - `public/logos/companies/microsoft.svg`
-  - `public/logos/companies/ibm.svg`
-  - `public/logos/companies/adobe.svg`
-  - `public/logos/companies/google.svg`
-  - `public/logos/companies/tiktok.svg`
-- Editar:
-  - `src/components/landing/CompanyLogosCarousel.tsx` (paths locais, velocidade, fallback, ajustes de dark mode)
+## Solução
 
-Critérios de aceite (como vamos validar que ficou “100%”)
-- Na aba / home:
-  - As 11 logos aparecem (sem ícones quebrados) em desktop e mobile.
-  - Sem requisições para `logo.clearbit.com` no Network (zero dependência externa).
-  - Carrossel continua com fade nas bordas (mask-gradient-x) e com loop suave.
-  - Velocidade visivelmente 1 segundo mais rápida.
-- Testar em:
-  - Modo claro e modo escuro
-  - Navegador com bloqueador/antitracker ligado (para confirmar que não afeta mais)
+Atualizar a política RLS para verificar o tipo de usuário através da tabela `profiles` (que não tem esse problema de recursão):
 
-Riscos / observações
-- Licenças de logos: vou usar assets conhecidos (SVG) e manter o uso apenas como “marcas exibidas” no site. Se você preferir, posso substituir por versões monocromáticas para consistência visual total.
+```sql
+-- CORRETO: usa a tabela profiles para verificar o tipo de usuário
+OR EXISTS (
+  SELECT 1 FROM profiles me
+  WHERE me.user_id = auth.uid()
+    AND me.user_type = 'freelancer'
+)
+```
+
+## Passos de Implementação
+
+### 1. Remover/Atualizar a migração problemática
+Atualizar a migração `20260201_freelancer_profiles_public_view_security.sql` para corrigir a política, garantindo que a versão correta seja aplicada.
+
+### 2. Garantir a política correta no banco
+A migração deve:
+- Remover a política existente (que está com bug)
+- Criar a política correta que NÃO referencia `freelancer_profiles` dentro de si mesma
+
+### Detalhes Técnicos
+
+A política corrigida ficará assim:
+
+```sql
+DROP POLICY IF EXISTS "Users can view freelancer profiles with context" ON public.freelancer_profiles;
+
+CREATE POLICY "Users can view freelancer profiles with context"
+ON public.freelancer_profiles FOR SELECT
+USING (
+  -- Próprio perfil
+  auth.uid() = user_id
+  -- Admin
+  OR is_admin()
+  -- Empresas com propostas aceitas deste freelancer
+  OR EXISTS (
+    SELECT 1 FROM proposals p
+    JOIN projects pr ON p.project_id = pr.id
+    WHERE p.freelancer_user_id = freelancer_profiles.user_id
+      AND pr.company_user_id = auth.uid()
+      AND p.status = 'accepted'
+  )
+  -- Freelancers podem ver outros freelancers (talent pool)
+  -- USANDO tabela profiles para evitar recursão
+  OR EXISTS (
+    SELECT 1 FROM profiles me
+    WHERE me.user_id = auth.uid()
+      AND me.user_type = 'freelancer'
+  )
+  -- Empresas podem ver freelancers (para contratação)
+  -- USANDO tabela profiles para evitar recursão
+  OR EXISTS (
+    SELECT 1 FROM profiles me
+    WHERE me.user_id = auth.uid()
+      AND me.user_type = 'company'
+  )
+);
+```
+
+## Resultado Esperado
+
+Após aplicar a correção:
+- O formulário de perfil do freelancer voltará a aparecer na página de Configurações
+- A foto de perfil (avatar) será exibida corretamente
+- O freelancer poderá editar todos os campos do seu perfil normalmente
+- Não haverá mais erros 500 ao acessar `/settings`
+
