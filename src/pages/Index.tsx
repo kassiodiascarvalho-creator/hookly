@@ -34,6 +34,7 @@ import { useState, useMemo } from "react";
 import { languages, LanguageCode } from "@/lib/i18n";
 import { useLandingStats, useLandingSocialLinks } from "@/hooks/useLandingContent";
 import { ProviderLogosCarousel } from "@/components/landing/ProviderLogosCarousel";
+import { CompanyLogosCarousel } from "@/components/landing/CompanyLogosCarousel";
 import i18n from "@/lib/i18n";
 import {
   DropdownMenu,
@@ -319,6 +320,9 @@ const Index = () => {
           </motion.div>
         </div>
       </section>
+
+      {/* Company Logos Carousel */}
+      <CompanyLogosCarousel />
 
       {/* Categories Section */}
       <section className="py-20 relative">
