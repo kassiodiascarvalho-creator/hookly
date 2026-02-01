@@ -23,8 +23,8 @@ export function CompanyLogosCarousel() {
   const [failedLogos, setFailedLogos] = useState<Set<string>>(new Set());
   const [selectedLogo, setSelectedLogo] = useState<string | null>(null);
 
-  // Duplicate logos for seamless infinite scroll
-  const duplicatedLogos = [...COMPANY_LOGOS, ...COMPANY_LOGOS];
+  // Triplicate logos for seamless infinite scroll on all screen sizes
+  const duplicatedLogos = [...COMPANY_LOGOS, ...COMPANY_LOGOS, ...COMPANY_LOGOS];
 
   const handleImageError = (logoName: string) => {
     setFailedLogos((prev) => new Set(prev).add(logoName));
@@ -42,18 +42,24 @@ export function CompanyLogosCarousel() {
             transform: translateX(0);
           }
           100% {
-            transform: translateX(-50%);
+            transform: translateX(-33.333%);
           }
         }
         .animate-scroll-logos {
-          animation: scroll-logos 30s linear infinite;
+          animation: scroll-logos 40s linear infinite;
+          will-change: transform;
         }
         .animate-scroll-logos:hover {
           animation-play-state: paused;
         }
+        @media (max-width: 768px) {
+          .animate-scroll-logos {
+            animation-duration: 25s;
+          }
+        }
       `}</style>
       <div className="relative w-full overflow-hidden mask-gradient-x">
-        <div className="flex gap-8 md:gap-10 items-center animate-scroll-logos">
+        <div className="flex gap-6 md:gap-10 items-center animate-scroll-logos" style={{ width: 'max-content' }}>
           {duplicatedLogos.map((logo, index) => {
             const uniqueKey = `${logo.name}-${index}`;
             if (failedLogos.has(logo.name)) {
@@ -65,7 +71,7 @@ export function CompanyLogosCarousel() {
             return (
               <div
                 key={uniqueKey}
-                className="flex-shrink-0 px-4 cursor-pointer"
+                className="flex-shrink-0 px-3 md:px-4 cursor-pointer"
                 onClick={() => handleLogoClick(uniqueKey)}
               >
                 <img
@@ -75,8 +81,8 @@ export function CompanyLogosCarousel() {
                   onError={() => handleImageError(logo.name)}
                   className={`w-auto object-contain transition-all duration-300 ${
                     logo.name === "Adobe" 
-                      ? "h-6 md:h-8 max-w-[80px] md:max-w-[100px]" 
-                      : "h-8 md:h-12 max-w-[120px] md:max-w-[160px]"
+                      ? "h-5 md:h-8 max-w-[70px] md:max-w-[100px]" 
+                      : "h-6 md:h-12 max-w-[100px] md:max-w-[160px]"
                   } ${
                     isSelected
                       ? "scale-125"
