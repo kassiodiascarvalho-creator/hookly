@@ -179,7 +179,6 @@ export function DashboardLayout() {
     { icon: FileText, label: t("nav.contracts"), path: "/contracts" },
     { icon: DollarSign, label: t("nav.earnings"), path: "/earnings" },
     { icon: Building2, label: t("nav.verifiedCompanies"), path: "/verified-companies" },
-    { icon: Award, label: t("nav.certifications"), path: "/certifications" },
     { icon: HelpCircle, label: t("nav.aiHelp"), path: "/help" },
     { icon: Settings, label: t("nav.settings"), path: "/settings" },
   ];
