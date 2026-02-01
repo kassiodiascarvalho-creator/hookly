@@ -2552,6 +2552,7 @@ export type Database = {
       }
       proposals: {
         Row: {
+          boost_credits: number | null
           company_feedback: string | null
           company_response: string | null
           company_response_at: string | null
@@ -2572,6 +2573,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          boost_credits?: number | null
           company_feedback?: string | null
           company_response?: string | null
           company_response_at?: string | null
@@ -2592,6 +2594,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          boost_credits?: number | null
           company_feedback?: string | null
           company_response?: string | null
           company_response_at?: string | null
