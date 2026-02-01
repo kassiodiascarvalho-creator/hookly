@@ -32,10 +32,8 @@ export function CompanyLogosCarousel() {
     setFailedLogos((prev) => new Set(prev).add(logoName));
   };
 
-  const handleAppleClick = (uniqueKey: string, logoName: string) => {
-    if (logoName === "Apple") {
-      setSelectedApple((prev) => (prev === uniqueKey ? null : uniqueKey));
-    }
+  const handleLogoClick = (uniqueKey: string) => {
+    setSelectedApple((prev) => (prev === uniqueKey ? null : uniqueKey));
   };
 
   return (
@@ -68,15 +66,13 @@ export function CompanyLogosCarousel() {
               return null; // Hide failed logos
             }
 
-            const isApple = logo.name === "Apple";
-            const isAppleSelected = selectedApple === uniqueKey;
+            const isSelected = selectedApple === uniqueKey;
 
             return (
               <div
                 key={uniqueKey}
-                className="flex-shrink-0 px-4"
-                onClick={() => handleAppleClick(uniqueKey, logo.name)}
-                style={{ cursor: isApple ? "pointer" : "default" }}
+                className="flex-shrink-0 px-4 cursor-pointer"
+                onClick={() => handleLogoClick(uniqueKey)}
               >
                 <img
                   src={logo.logo_url}
@@ -84,14 +80,14 @@ export function CompanyLogosCarousel() {
                   loading="lazy"
                   onError={() => handleImageError(logo.name)}
                   className={`h-10 md:h-14 w-auto transition-all duration-300 ${
-                    isAppleSelected
-                      ? "grayscale-0 opacity-100 scale-150"
-                      : "grayscale opacity-70 hover:grayscale-0 hover:opacity-100"
+                    isSelected
+                      ? "scale-125"
+                      : "hover:scale-110"
                   }`}
                   style={{
-                    filter: isAppleSelected 
-                      ? undefined 
-                      : 'grayscale(100%) opacity(0.7) brightness(1.3) contrast(0.7)'
+                    filter: isSelected 
+                      ? 'none' 
+                      : 'grayscale(100%) opacity(0.7) brightness(1.6) contrast(0.6)'
                   }}
                 />
               </div>
