@@ -17,10 +17,10 @@ export const Footer = () => {
             </p>
             <a 
               href="mailto:support@hooklyapp.com" 
-              className="mt-4 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="mt-4 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              <Mail className="h-4 w-4" />
-              support@hooklyapp.com
+              <Mail className="h-4 w-4 flex-shrink-0" />
+              <span>support@hooklyapp.com</span>
             </a>
           </div>
           
