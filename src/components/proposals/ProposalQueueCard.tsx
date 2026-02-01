@@ -17,7 +17,7 @@ interface QueueItem {
   freelancer_name: string | null;
   freelancer_avatar: string | null;
   boost_credits: number;
-  position: number;
+  queue_position: number;
   is_current_user: boolean;
   created_at: string;
 }
@@ -45,17 +45,10 @@ export function ProposalQueueCard({ projectId, myProposalId, onBoostSuccess }: P
   const fetchQueue = async () => {
     setLoading(true);
     
-    // Fetch proposals with freelancer profiles
-    const { data, error } = await supabase
-      .from("proposals")
-      .select(`
-        id,
-        freelancer_user_id,
-        created_at
-      `)
-      .eq("project_id", projectId)
-      .eq("status", "sent")
-      .order("created_at", { ascending: true });
+    // Use the RPC function to get the queue
+    const { data, error } = await supabase.rpc('get_proposal_queue', {
+      p_project_id: projectId
+    });
 
     if (error) {
       console.error("Error fetching queue:", error);
@@ -63,72 +56,23 @@ export function ProposalQueueCard({ projectId, myProposalId, onBoostSuccess }: P
       return;
     }
 
-    // Fetch boost_credits separately (might not exist yet)
-    const proposalIds = (data || []).map(p => p.id);
-    let boostMap: Record<string, number> = {};
-    
-    if (proposalIds.length > 0) {
-      // Try to fetch boost_credits - this will fail gracefully if column doesn't exist
-      try {
-        const { data: boostData } = await supabase
-          .from("proposals")
-          .select("id, boost_credits")
-          .in("id", proposalIds) as { data: { id: string; boost_credits: number | null }[] | null };
-        
-        if (boostData) {
-          boostData.forEach((b) => {
-            boostMap[b.id] = b.boost_credits || 0;
-          });
-        }
-      } catch {
-        // Column doesn't exist yet - use 0 for all
-      }
-    }
-
-    // Fetch freelancer profiles
-    const freelancerIds = [...new Set((data || []).map(p => p.freelancer_user_id))];
-    let profileMap: Record<string, { full_name: string | null; avatar_url: string | null }> = {};
-    
-    if (freelancerIds.length > 0) {
-      const { data: profiles } = await supabase
-        .from("freelancer_profiles")
-        .select("user_id, full_name, avatar_url")
-        .in("user_id", freelancerIds);
-      
-      if (profiles) {
-        profiles.forEach((p) => {
-          profileMap[p.user_id] = { full_name: p.full_name, avatar_url: p.avatar_url };
-        });
-      }
-    }
-
-    // Get current user
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    // Build queue with boost values
-    const withBoost = (data || []).map((item) => ({
-      ...item,
-      boost_credits: boostMap[item.id] || 0,
-      profile: profileMap[item.freelancer_user_id] || { full_name: null, avatar_url: null },
-      is_current_user: user?.id === item.freelancer_user_id,
-    }));
-
-    // Sort by boost_credits DESC, then created_at ASC
-    withBoost.sort((a, b) => {
-      if (b.boost_credits !== a.boost_credits) {
-        return b.boost_credits - a.boost_credits;
-      }
-      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-    });
-
-    // Transform with position
-    const transformed: QueueItem[] = withBoost.map((item, index) => ({
-      proposal_id: item.id,
+    // Transform the data to our interface
+    const transformed: QueueItem[] = (data || []).map((item: {
+      proposal_id: string;
+      freelancer_user_id: string;
+      freelancer_name: string | null;
+      freelancer_avatar: string | null;
+      boost_credits: number;
+      queue_position: number;
+      is_current_user: boolean;
+      created_at: string;
+    }) => ({
+      proposal_id: item.proposal_id,
       freelancer_user_id: item.freelancer_user_id,
-      freelancer_name: item.profile.full_name,
-      freelancer_avatar: item.profile.avatar_url,
-      boost_credits: item.boost_credits,
-      position: index + 1,
+      freelancer_name: item.freelancer_name,
+      freelancer_avatar: item.freelancer_avatar,
+      boost_credits: item.boost_credits || 0,
+      queue_position: item.queue_position,
       is_current_user: item.is_current_user,
       created_at: item.created_at,
     }));
@@ -137,7 +81,7 @@ export function ProposalQueueCard({ projectId, myProposalId, onBoostSuccess }: P
     setLoading(false);
   };
 
-  const myPosition = queue.find(q => q.is_current_user)?.position || null;
+  const myPosition = queue.find(q => q.is_current_user)?.queue_position || null;
   const topBoost = queue.length > 0 ? Math.max(...queue.map(q => q.boost_credits)) : 0;
   const minToPassFirst = topBoost > 0 ? topBoost + 1 : 2;
 
@@ -160,39 +104,29 @@ export function ProposalQueueCard({ projectId, myProposalId, onBoostSuccess }: P
     setBoosting(true);
     
     // Call boost RPC
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/rpc/boost_proposal`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            "Authorization": `Bearer ${session?.access_token}`,
-          },
-          body: JSON.stringify({
-            p_proposal_id: myProposalId,
-            p_boost_amount: boostAmount
-          }),
-        }
-      );
+    const { data: result, error } = await supabase.rpc('boost_proposal', {
+      p_proposal_id: myProposalId,
+      p_boost_amount: boostAmount
+    });
 
-      const result = await response.json();
-
-      if (result && result.success) {
-        toast.success(`Proposta impulsionada! Total de boost: ${result.new_boost_total} créditos`);
-        await fetchQueue();
-        await refreshBalance();
-        setShowBoostInput(false);
-        onBoostSuccess?.();
-      } else {
-        toast.error(result?.error || "Erro ao impulsionar proposta");
-      }
-    } catch (error) {
+    if (error) {
       console.error("Boost error:", error);
       toast.error("Erro ao impulsionar proposta");
+      setBoosting(false);
+      return;
+    }
+
+    // Cast result to expected shape
+    const typedResult = result as { success: boolean; new_boost_total?: number; error?: string } | null;
+
+    if (typedResult && typedResult.success) {
+      toast.success(`Proposta impulsionada! Total de boost: ${typedResult.new_boost_total} créditos`);
+      await fetchQueue();
+      await refreshBalance();
+      setShowBoostInput(false);
+      onBoostSuccess?.();
+    } else {
+      toast.error(typedResult?.error || "Erro ao impulsionar proposta");
     }
 
     setBoosting(false);
@@ -277,14 +211,14 @@ export function ProposalQueueCard({ projectId, myProposalId, onBoostSuccess }: P
               className={cn(
                 "flex items-center gap-3 p-2 rounded-lg transition-colors",
                 item.is_current_user ? "bg-primary/10 border border-primary/30" : "bg-muted/30",
-                item.position === 1 && "ring-2 ring-primary/50"
+                item.queue_position === 1 && "ring-2 ring-primary/50"
               )}
             >
               <div className="flex items-center justify-center w-6 h-6 rounded-full bg-muted text-xs font-bold">
-                {item.position === 1 ? (
+                {item.queue_position === 1 ? (
                   <Crown className="h-3.5 w-3.5 text-primary" />
                 ) : (
-                  item.position
+                  item.queue_position
                 )}
               </div>
               

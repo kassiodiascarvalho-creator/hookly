@@ -3290,6 +3290,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      boost_proposal: {
+        Args: { p_boost_amount: number; p_proposal_id: string }
+        Returns: Json
+      }
       check_and_grant_monthly_credits: {
         Args: { p_user_id: string; p_user_type: string }
         Returns: Json
