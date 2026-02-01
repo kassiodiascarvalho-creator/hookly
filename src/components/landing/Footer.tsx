@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
+import { Mail } from "lucide-react";
 import { Logo } from "@/components/Logo";
 
 export const Footer = () => {
@@ -14,6 +15,13 @@ export const Footer = () => {
             <p className="mt-4 text-sm text-muted-foreground">
               {t("footer.description")}
             </p>
+            <a 
+              href="mailto:support@hooklyapp.com" 
+              className="mt-4 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Mail className="h-4 w-4" />
+              support@hooklyapp.com
+            </a>
           </div>
           
           <div>
