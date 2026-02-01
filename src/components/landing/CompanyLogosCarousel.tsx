@@ -73,7 +73,11 @@ export function CompanyLogosCarousel() {
                   alt={logo.name}
                   loading="lazy"
                   onError={() => handleImageError(logo.name)}
-                  className={`h-8 md:h-12 w-auto max-w-[120px] md:max-w-[160px] object-contain transition-all duration-300 ${
+                  className={`w-auto object-contain transition-all duration-300 ${
+                    logo.name === "Adobe" 
+                      ? "h-6 md:h-8 max-w-[80px] md:max-w-[100px]" 
+                      : "h-8 md:h-12 max-w-[120px] md:max-w-[160px]"
+                  } ${
                     isSelected
                       ? "scale-125"
                       : "hover:scale-110"
