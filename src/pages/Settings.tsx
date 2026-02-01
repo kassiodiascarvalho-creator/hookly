@@ -639,34 +639,39 @@ export default function Settings() {
                   })} countryCode={freelancerProfile.country} className="w-48" />
                     <p className="text-xs text-muted-foreground">{t("settings.preferredPayoutCurrencyDesc")}</p>
                   </div>
-                  <div className="space-y-2">
-                    <Label>{t("settings.documentType")}</Label>
-                    <Select value={freelancerProfile.document_type || ""} onValueChange={value => setFreelancerProfile({
-                    ...freelancerProfile,
-                    document_type: value as "cpf" | "cnpj"
-                  })}>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t("settings.selectDocumentType")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="cpf">CPF (Pessoa Física)</SelectItem>
-                        <SelectItem value="cnpj">CNPJ (Pessoa Jurídica)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>{t("settings.documentNumber")}</Label>
-                    <Input value={formatDocument(freelancerProfile.document_number || "", freelancerProfile.document_type)} onChange={e => {
-                    const rawValue = unformatDocument(e.target.value);
-                    setFreelancerProfile({
-                      ...freelancerProfile,
-                      document_number: rawValue
-                    });
-                  }} placeholder={freelancerProfile.document_type === "cpf" ? "000.000.000-00" : "00.000.000/0000-00"} maxLength={freelancerProfile.document_type === "cpf" ? 14 : 18} />
-                    <p className="text-xs text-muted-foreground">
-                      {freelancerProfile.document_type === "cpf" ? t("settings.cpfDesc") : t("settings.cnpjDesc")}
-                    </p>
-                  </div>
+                  {/* CPF/CNPJ fields - only shown for Brazilian users */}
+                  {freelancerProfile.country === "BR" && (
+                    <>
+                      <div className="space-y-2">
+                        <Label>{t("settings.documentType")}</Label>
+                        <Select value={freelancerProfile.document_type || ""} onValueChange={value => setFreelancerProfile({
+                        ...freelancerProfile,
+                        document_type: value as "cpf" | "cnpj"
+                      })}>
+                          <SelectTrigger>
+                            <SelectValue placeholder={t("settings.selectDocumentType")} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="cpf">CPF (Pessoa Física)</SelectItem>
+                            <SelectItem value="cnpj">CNPJ (Pessoa Jurídica)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>{t("settings.documentNumber")}</Label>
+                        <Input value={formatDocument(freelancerProfile.document_number || "", freelancerProfile.document_type)} onChange={e => {
+                        const rawValue = unformatDocument(e.target.value);
+                        setFreelancerProfile({
+                          ...freelancerProfile,
+                          document_number: rawValue
+                        });
+                      }} placeholder={freelancerProfile.document_type === "cpf" ? "000.000.000-00" : "00.000.000/0000-00"} maxLength={freelancerProfile.document_type === "cpf" ? 14 : 18} />
+                        <p className="text-xs text-muted-foreground">
+                          {freelancerProfile.document_type === "cpf" ? t("settings.cpfDesc") : t("settings.cnpjDesc")}
+                        </p>
+                      </div>
+                    </>
+                  )}
                 </div> : null}
 
               <Separator />
