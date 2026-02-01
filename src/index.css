@@ -328,3 +328,21 @@ html {
   scrollbar-width: thin;
   scrollbar-color: hsl(var(--primary, 196 86% 54%)) rgba(255, 255, 255, 0.06);
 }
+
+/* Mask gradient for carousel fade edges */
+.mask-gradient-x {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 10%,
+    black 90%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 10%,
+    black 90%,
+    transparent 100%
+  );
+}

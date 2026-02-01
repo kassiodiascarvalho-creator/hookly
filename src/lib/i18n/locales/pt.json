@@ -1984,5 +1984,18 @@
       "verifiedDesc": "Sua identidade foi confirmada",
       "verifiedAt": "Verificado em {{date}}"
     }
+  },
+  "landing": {
+    "providers": {
+      "title": "Infraestrutura e pagamentos confiáveis",
+      "subtitle": "Pagamentos processados por provedores líderes e infraestrutura robusta.",
+      "disclaimer": "As marcas pertencem aos seus respectivos proprietários. Não implica endosso.",
+      "badges": {
+        "escrow": "Pagamento protegido (escrow)",
+        "approval": "Liberação após aprovação",
+        "secureChat": "Chat seguro na plataforma",
+        "antiFraud": "Proteção anti-fraude"
+      }
+    }
   }
 }
