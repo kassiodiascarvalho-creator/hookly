@@ -631,6 +631,14 @@ export default function Settings() {
                     skills: e.target.value.split(",").map(s => s.trim()).filter(Boolean)
                   })} placeholder={t("settings.skillsPlaceholder")} />
                   </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>{t("settings.languages")}</Label>
+                    <Input value={freelancerProfile.languages?.join(", ") || ""} onChange={e => setFreelancerProfile({
+                    ...freelancerProfile,
+                    languages: e.target.value.split(",").map(s => s.trim()).filter(Boolean)
+                  })} placeholder={t("settings.languagesPlaceholder")} />
+                    <p className="text-xs text-muted-foreground">{t("settings.languagesDesc")}</p>
+                  </div>
                   <div className="space-y-2">
                     <Label>{t("settings.preferredPayoutCurrency")}</Label>
                     <RestrictedCurrencySelect value={freelancerProfile.preferred_payout_currency || "USD"} onValueChange={v => setFreelancerProfile({
