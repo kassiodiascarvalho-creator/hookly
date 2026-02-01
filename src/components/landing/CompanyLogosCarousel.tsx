@@ -6,17 +6,17 @@ interface CompanyLogo {
 }
 
 const COMPANY_LOGOS: CompanyLogo[] = [
-  { name: "Meta", logo_url: "https://upload.wikimedia.org/wikipedia/commons/7/7b/Meta_Platforms_Inc._logo.svg" },
-  { name: "Alphabet", logo_url: "https://upload.wikimedia.org/wikipedia/commons/8/8a/Alphabet_Inc_Logo_2015.svg" },
-  { name: "Coca-Cola", logo_url: "https://upload.wikimedia.org/wikipedia/commons/c/ce/Coca-Cola_logo.svg" },
-  { name: "Amazon", logo_url: "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg" },
-  { name: "Nvidia", logo_url: "https://upload.wikimedia.org/wikipedia/commons/2/21/Nvidia_logo.svg" },
-  { name: "Apple", logo_url: "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" },
-  { name: "Microsoft", logo_url: "https://upload.wikimedia.org/wikipedia/commons/9/96/Microsoft_logo_%282012%29.svg" },
-  { name: "IBM", logo_url: "https://upload.wikimedia.org/wikipedia/commons/5/51/IBM_logo.svg" },
-  { name: "Adobe", logo_url: "https://upload.wikimedia.org/wikipedia/commons/8/8d/Adobe_Corporate_Logo.svg" },
-  { name: "Google", logo_url: "https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" },
-  { name: "TikTok", logo_url: "https://upload.wikimedia.org/wikipedia/en/a/a9/TikTok_logo.svg" },
+  { name: "Meta", logo_url: "https://cdn.cdnlogo.com/logos/m/37/meta.svg" },
+  { name: "Alphabet", logo_url: "https://cdn.cdnlogo.com/logos/a/75/alphabet.svg" },
+  { name: "Coca-Cola", logo_url: "https://cdn.cdnlogo.com/logos/c/57/coca-cola.svg" },
+  { name: "Amazon", logo_url: "https://cdn.cdnlogo.com/logos/a/19/amazon.svg" },
+  { name: "Nvidia", logo_url: "https://cdn.cdnlogo.com/logos/n/27/nvidia.svg" },
+  { name: "Apple", logo_url: "https://cdn.cdnlogo.com/logos/a/27/apple.svg" },
+  { name: "Microsoft", logo_url: "https://cdn.cdnlogo.com/logos/m/87/microsoft.svg" },
+  { name: "IBM", logo_url: "https://cdn.cdnlogo.com/logos/i/6/ibm.svg" },
+  { name: "Adobe", logo_url: "https://cdn.cdnlogo.com/logos/a/72/adobe-2020.svg" },
+  { name: "Google", logo_url: "https://cdn.cdnlogo.com/logos/g/35/google-2015.svg" },
+  { name: "TikTok", logo_url: "https://cdn.cdnlogo.com/logos/t/25/tiktok-logo.svg" },
 ];
 
 export function CompanyLogosCarousel() {
