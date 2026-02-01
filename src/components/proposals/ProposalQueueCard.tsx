@@ -239,12 +239,11 @@ export function ProposalQueueCard({ projectId, myProposalId, onBoostSuccess }: P
                 </p>
               </div>
               
-              {item.boost_credits > 0 && (
-                <Badge variant="outline" className="gap-1 shrink-0">
-                  <Zap className="h-3 w-3" />
-                  {item.boost_credits}
-                </Badge>
-              )}
+              {/* Always show boost credits badge */}
+              <Badge variant={item.boost_credits > 0 ? "default" : "outline"} className="gap-1 shrink-0">
+                <Zap className="h-3 w-3" />
+                {item.boost_credits}
+              </Badge>
             </div>
           ))}
         </div>
