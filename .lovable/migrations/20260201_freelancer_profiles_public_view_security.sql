@@ -2,6 +2,7 @@
 DROP POLICY IF EXISTS "Freelancer profiles are viewable by everyone" ON public.freelancer_profiles;
 
 -- Create new restrictive SELECT policy (only owner, admin, or authenticated users)
+-- FIXED: Uses profiles table instead of self-referencing freelancer_profiles to avoid infinite recursion
 CREATE POLICY "Users can view freelancer profiles with context"
 ON public.freelancer_profiles FOR SELECT
 USING (
@@ -17,15 +18,17 @@ USING (
       AND pr.company_user_id = auth.uid()
       AND p.status = 'accepted'
   )
-  -- Freelancers viewing other freelancers (for talent pool)
+  -- Freelancers viewing other freelancers (for talent pool) - uses profiles to avoid recursion
   OR EXISTS (
-    SELECT 1 FROM freelancer_profiles fp 
-    WHERE fp.user_id = auth.uid()
+    SELECT 1 FROM profiles me
+    WHERE me.user_id = auth.uid()
+      AND me.user_type = 'freelancer'
   )
-  -- Companies viewing freelancers (for hiring)
+  -- Companies viewing freelancers (for hiring) - uses profiles to avoid recursion
   OR EXISTS (
-    SELECT 1 FROM company_profiles cp 
-    WHERE cp.user_id = auth.uid()
+    SELECT 1 FROM profiles me
+    WHERE me.user_id = auth.uid()
+      AND me.user_type = 'company'
   )
 );
 
