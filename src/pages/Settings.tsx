@@ -18,17 +18,11 @@ import type { FreelancerTier } from "@/components/freelancer/TierBadge";
 import { useCompanyPlanData } from "@/hooks/useCompanyPlanData";
 import { useProfileCelebration } from "@/hooks/useProfileCelebration";
 import { ProfileCelebrationModal } from "@/components/profile/ProfileCelebrationModal";
-import { 
-  computeFreelancerCompletion, 
-  computeCompanyCompletion 
-} from "@/lib/profileCompletion";
+import { computeFreelancerCompletion, computeCompanyCompletion } from "@/lib/profileCompletion";
 import { formatDocument, unformatDocument } from "@/lib/formatDocument";
 import { IdentityVerificationCard } from "@/components/identity/IdentityVerificationCard";
 import { PasswordRequirements, isStrongPassword } from "@/components/auth/PasswordRequirements";
-import { 
-  User, Lock, Bell, CreditCard, Building, Briefcase, 
-  Loader2, Save, Upload, Folder, Award, Wallet, Shield, Eye, EyeOff
-} from "lucide-react";
+import { User, Lock, Bell, CreditCard, Building, Briefcase, Loader2, Save, Upload, Folder, Award, Wallet, Shield, Eye, EyeOff } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import PortfolioManager from "@/components/settings/PortfolioManager";
 import CertificationsManager from "@/components/settings/CertificationsManager";
@@ -38,14 +32,12 @@ import { FreelancerPlanCard } from "@/components/billing/FreelancerPlanCard";
 import { CompanyWalletCard } from "@/components/billing/CompanyWalletCard";
 import { CompanyPlanCard } from "@/components/billing/CompanyPlanCard";
 import { CompanyBillingPanel } from "@/components/billing/CompanyBillingPanel";
-
 interface Profile {
   email: string;
   preferred_language: string;
   user_type: "company" | "freelancer" | null;
   profile_completion_percent?: number | null;
 }
-
 interface CompanyProfile {
   company_name: string | null;
   contact_name: string | null;
@@ -60,7 +52,6 @@ interface CompanyProfile {
   document_type: "cpf" | "cnpj" | null;
   document_number: string | null;
 }
-
 interface FreelancerProfile {
   full_name: string | null;
   title: string | null;
@@ -76,16 +67,18 @@ interface FreelancerProfile {
   document_type: "cpf" | "cnpj" | null;
   document_number: string | null;
 }
-
 export default function Settings() {
-  const { t } = useTranslation();
-  const { user } = useAuth();
+  const {
+    t
+  } = useTranslation();
+  const {
+    user
+  } = useAuth();
   const [searchParams] = useSearchParams();
   const defaultTab = searchParams.get("tab") || "profile";
-  
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  
+
   // Check for success/cancel from Stripe
   useEffect(() => {
     if (searchParams.get("success") === "true") {
@@ -99,63 +92,56 @@ export default function Settings() {
   const [lastCompletionPercent, setLastCompletionPercent] = useState<number>(0);
   const [companyProfile, setCompanyProfile] = useState<CompanyProfile | null>(null);
   const [freelancerProfile, setFreelancerProfile] = useState<FreelancerProfile | null>(null);
-  
+
   // Password change
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
-  
+
   // Notification preferences
   const [notifications, setNotifications] = useState({
     emailProposals: true,
     emailMessages: true,
     emailPayments: true,
-    emailMarketing: false,
+    emailMarketing: false
   });
 
   // Fetch company plan for avatar ring + badge
-  const { planInfo: companyPlanInfo } = useCompanyPlanData(
-    profile?.user_type === "company" ? user?.id : undefined
-  );
+  const {
+    planInfo: companyPlanInfo
+  } = useCompanyPlanData(profile?.user_type === "company" ? user?.id : undefined);
 
   // Profile celebration hook
-  const { 
-    showCelebration, 
-    bonusCredits, 
-    userType: celebrationUserType, 
-    triggerCelebration, 
-    closeCelebration 
+  const {
+    showCelebration,
+    bonusCredits,
+    userType: celebrationUserType,
+    triggerCelebration,
+    closeCelebration
   } = useProfileCelebration();
-
   useEffect(() => {
     if (user) {
       fetchProfiles();
     }
   }, [user]);
-
   const fetchProfiles = async () => {
     if (!user) return;
-    
-    // Fetch main profile
-    const { data: profileData } = await supabase
-      .from("profiles")
-      .select("email, preferred_language, user_type, profile_completion_percent")
-      .eq("user_id", user.id)
-      .single();
 
+    // Fetch main profile
+    const {
+      data: profileData
+    } = await supabase.from("profiles").select("email, preferred_language, user_type, profile_completion_percent").eq("user_id", user.id).single();
     if (profileData) {
       setProfile(profileData);
       setLastCompletionPercent(profileData.profile_completion_percent ?? 0);
-      
+
       // Fetch type-specific profile
       if (profileData.user_type === "company") {
-        const { data: companyData } = await supabase
-          .from("company_profiles")
-          .select("*")
-          .eq("user_id", user.id)
-          .single();
+        const {
+          data: companyData
+        } = await supabase.from("company_profiles").select("*").eq("user_id", user.id).single();
         if (companyData) {
           // Cast to any to access new columns not yet in generated types
           const data = companyData as any;
@@ -171,15 +157,13 @@ export default function Settings() {
             about: data.about,
             logo_url: data.logo_url,
             document_type: data.document_type || null,
-            document_number: data.document_number || null,
+            document_number: data.document_number || null
           });
         }
       } else if (profileData.user_type === "freelancer") {
-        const { data: freelancerData } = await supabase
-          .from("freelancer_profiles")
-          .select("*, tier")
-          .eq("user_id", user.id)
-          .single();
+        const {
+          data: freelancerData
+        } = await supabase.from("freelancer_profiles").select("*, tier").eq("user_id", user.id).single();
         if (freelancerData) {
           // Cast to any to access new columns not yet in generated types
           const data = freelancerData as any;
@@ -194,32 +178,28 @@ export default function Settings() {
             languages: data.languages,
             avatar_url: data.avatar_url,
             preferred_payout_currency: data.preferred_payout_currency,
-            tier: (data.tier as FreelancerTier) || "standard",
+            tier: data.tier as FreelancerTier || "standard",
             document_type: data.document_type || null,
-            document_number: data.document_number || null,
+            document_number: data.document_number || null
           });
         }
       }
     }
-    
     setLoading(false);
   };
-
   const handleSaveProfile = async () => {
     if (!user || !profile) return;
     setSaving(true);
-
     try {
       const previousCompletionPercent = lastCompletionPercent;
 
       // Update main profile
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .update({ preferred_language: profile.preferred_language })
-        .eq("user_id", user.id);
-
+      const {
+        error: profileError
+      } = await supabase.from("profiles").update({
+        preferred_language: profile.preferred_language
+      }).eq("user_id", user.id);
       if (profileError) throw profileError;
-
       let completionPercent = 0;
 
       // Update type-specific profile - only send editable fields
@@ -236,18 +216,16 @@ export default function Settings() {
           about: companyProfile.about,
           logo_url: companyProfile.logo_url,
           document_type: companyProfile.document_type,
-          document_number: companyProfile.document_number,
+          document_number: companyProfile.document_number
         };
-        const { error } = await supabase
-          .from("company_profiles")
-          .update(companyUpdateData)
-          .eq("user_id", user.id);
+        const {
+          error
+        } = await supabase.from("company_profiles").update(companyUpdateData).eq("user_id", user.id);
         if (error) throw error;
 
         // Calculate completion for company
         const completion = computeCompanyCompletion(companyProfile);
         completionPercent = completion.percent;
-
       } else if (profile.user_type === "freelancer" && freelancerProfile) {
         const freelancerUpdateData = {
           full_name: freelancerProfile.full_name,
@@ -261,43 +239,34 @@ export default function Settings() {
           avatar_url: freelancerProfile.avatar_url,
           preferred_payout_currency: freelancerProfile.preferred_payout_currency,
           document_type: freelancerProfile.document_type,
-          document_number: freelancerProfile.document_number,
+          document_number: freelancerProfile.document_number
         };
-        const { error } = await supabase
-          .from("freelancer_profiles")
-          .update(freelancerUpdateData)
-          .eq("user_id", user.id);
+        const {
+          error
+        } = await supabase.from("freelancer_profiles").update(freelancerUpdateData).eq("user_id", user.id);
         if (error) throw error;
 
         // Check portfolio and payout methods for completion calculation
-        const [portfolioResult, payoutResult] = await Promise.all([
-          supabase
-            .from("portfolio_items")
-            .select("*", { count: "exact", head: true })
-            .eq("freelancer_user_id", user.id),
-          supabase
-            .from("payout_methods")
-            .select("*", { count: "exact", head: true })
-            .eq("freelancer_user_id", user.id)
-        ]);
-
+        const [portfolioResult, payoutResult] = await Promise.all([supabase.from("portfolio_items").select("*", {
+          count: "exact",
+          head: true
+        }).eq("freelancer_user_id", user.id), supabase.from("payout_methods").select("*", {
+          count: "exact",
+          head: true
+        }).eq("freelancer_user_id", user.id)]);
         const hasPortfolio = (portfolioResult.count || 0) > 0;
         const hasPayout = (payoutResult.count || 0) > 0;
-        
+
         // Calculate completion for freelancer
         const completion = computeFreelancerCompletion(freelancerProfile, hasPortfolio, hasPayout);
         completionPercent = completion.percent;
       }
 
       // Update completion percentage in profiles table
-      await supabase
-        .from("profiles")
-        .update({
-          profile_completion_percent: completionPercent,
-          profile_completion_updated_at: new Date().toISOString(),
-        })
-        .eq("user_id", user.id);
-
+      await supabase.from("profiles").update({
+        profile_completion_percent: completionPercent,
+        profile_completion_updated_at: new Date().toISOString()
+      }).eq("user_id", user.id);
       toast.success(t("settings.saved"));
 
       // Trigger celebration ONLY when crossing the threshold (<100% -> 100%)
@@ -309,7 +278,6 @@ export default function Settings() {
 
       // Keep local baseline up-to-date so the next save can detect transitions
       setLastCompletionPercent(completionPercent);
-
     } catch (error) {
       console.error("Error saving profile:", error);
       toast.error(t("common.error"));
@@ -317,27 +285,23 @@ export default function Settings() {
       setSaving(false);
     }
   };
-
   const handleChangePassword = async () => {
     if (newPassword !== confirmPassword) {
       toast.error(t("auth.passwordMismatch"));
       return;
     }
-    
     if (!isStrongPassword(newPassword)) {
       toast.error(t("auth.errors.weakPassword"));
       return;
     }
-
     setChangingPassword(true);
-    
     try {
-      const { error } = await supabase.auth.updateUser({
+      const {
+        error
+      } = await supabase.auth.updateUser({
         password: newPassword
       });
-
       if (error) throw error;
-
       toast.success(t("settings.passwordChanged"));
       setCurrentPassword("");
       setNewPassword("");
@@ -348,28 +312,15 @@ export default function Settings() {
       setChangingPassword(false);
     }
   };
-
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
+    return <div className="flex items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+      </div>;
   }
-
   const isCompany = profile?.user_type === "company";
-
-  return (
-    <>
+  return <>
       {/* Profile Celebration Modal */}
-      {showCelebration && celebrationUserType && (
-        <ProfileCelebrationModal
-          open={showCelebration}
-          onClose={closeCelebration}
-          bonusCredits={bonusCredits}
-          userType={celebrationUserType}
-        />
-      )}
+      {showCelebration && celebrationUserType && <ProfileCelebrationModal open={showCelebration} onClose={closeCelebration} bonusCredits={bonusCredits} userType={celebrationUserType} />}
 
       <div className="space-y-6">
         <div>
@@ -383,18 +334,16 @@ export default function Settings() {
             <User className="h-4 w-4" />
             <span className="hidden sm:inline">{t("settings.profile")}</span>
           </TabsTrigger>
-          {!isCompany && (
-            <>
+          {!isCompany && <>
               <TabsTrigger value="portfolio" className="gap-2">
                 <Folder className="h-4 w-4" />
                 <span className="hidden sm:inline">{t("settings.portfolio")}</span>
               </TabsTrigger>
               <TabsTrigger value="certifications" className="gap-2">
                 <Award className="h-4 w-4" />
-                <span className="hidden sm:inline">{t("settings.diploma")}</span>
+                <span className="hidden sm:inline">{t("settings.certifications")}</span>
               </TabsTrigger>
-            </>
-          )}
+            </>}
           <TabsTrigger value="security" className="gap-2">
             <Lock className="h-4 w-4" />
             <span className="hidden sm:inline">{t("settings.security")}</span>
@@ -425,64 +374,42 @@ export default function Settings() {
             <CardContent className="space-y-6">
               {/* Avatar/Logo with FileUpload */}
               <div className="flex items-center gap-4">
-                {isCompany ? (
-                  <CompanyAvatar
-                    logoUrl={companyProfile?.logo_url}
-                    companyName={companyProfile?.company_name}
-                    planType={companyPlanInfo?.plan_type || "free"}
-                    size="xl"
-                    showBadge={true}
-                  />
-                ) : (
-                  <TieredAvatar
-                    avatarUrl={freelancerProfile?.avatar_url}
-                    name={freelancerProfile?.full_name}
-                    tier={freelancerProfile?.tier || "standard"}
-                    size="xl"
-                    showBadge={true}
-                  />
-                )}
+                {isCompany ? <CompanyAvatar logoUrl={companyProfile?.logo_url} companyName={companyProfile?.company_name} planType={companyPlanInfo?.plan_type || "free"} size="xl" showBadge={true} /> : <TieredAvatar avatarUrl={freelancerProfile?.avatar_url} name={freelancerProfile?.full_name} tier={freelancerProfile?.tier || "standard"} size="xl" showBadge={true} />}
                 <div>
-                  <input
-                    type="file"
-                    id="avatar-upload"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      if (!file || !user) return;
-                      
-                      const bucket = isCompany ? "logos" : "avatars";
-                      const fileExt = file.name.split(".").pop();
-                      const filePath = `${user.id}/${Date.now()}.${fileExt}`;
-                      
-                      const { error } = await supabase.storage
-                        .from(bucket)
-                        .upload(filePath, file, { upsert: true });
-                      
-                      if (error) {
-                        toast.error(t("common.error"));
-                        return;
+                  <input type="file" id="avatar-upload" accept="image/*" className="hidden" onChange={async e => {
+                    const file = e.target.files?.[0];
+                    if (!file || !user) return;
+                    const bucket = isCompany ? "logos" : "avatars";
+                    const fileExt = file.name.split(".").pop();
+                    const filePath = `${user.id}/${Date.now()}.${fileExt}`;
+                    const {
+                      error
+                    } = await supabase.storage.from(bucket).upload(filePath, file, {
+                      upsert: true
+                    });
+                    if (error) {
+                      toast.error(t("common.error"));
+                      return;
+                    }
+                    const {
+                      data: {
+                        publicUrl
                       }
-                      
-                      const { data: { publicUrl } } = supabase.storage
-                        .from(bucket)
-                        .getPublicUrl(filePath);
-                      
-                      if (isCompany && companyProfile) {
-                        setCompanyProfile({ ...companyProfile, logo_url: publicUrl });
-                      } else if (freelancerProfile) {
-                        setFreelancerProfile({ ...freelancerProfile, avatar_url: publicUrl });
-                      }
-                      toast.success(t("uploads.success"));
-                    }}
-                  />
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="gap-2"
-                    onClick={() => document.getElementById("avatar-upload")?.click()}
-                  >
+                    } = supabase.storage.from(bucket).getPublicUrl(filePath);
+                    if (isCompany && companyProfile) {
+                      setCompanyProfile({
+                        ...companyProfile,
+                        logo_url: publicUrl
+                      });
+                    } else if (freelancerProfile) {
+                      setFreelancerProfile({
+                        ...freelancerProfile,
+                        avatar_url: publicUrl
+                      });
+                    }
+                    toast.success(t("uploads.success"));
+                  }} />
+                  <Button variant="outline" size="sm" className="gap-2" onClick={() => document.getElementById("avatar-upload")?.click()}>
                     <Upload className="h-4 w-4" />
                     {t("settings.uploadPhoto")}
                   </Button>
@@ -491,49 +418,48 @@ export default function Settings() {
 
               <Separator />
 
-              {isCompany && companyProfile ? (
-                <div className="grid gap-4 md:grid-cols-2">
+              {isCompany && companyProfile ? <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label>{t("settings.companyName")}</Label>
-                    <Input
-                      value={companyProfile.company_name || ""}
-                      onChange={(e) => setCompanyProfile({ ...companyProfile, company_name: e.target.value })}
-                    />
+                    <Input value={companyProfile.company_name || ""} onChange={e => setCompanyProfile({
+                    ...companyProfile,
+                    company_name: e.target.value
+                  })} />
                   </div>
                   <div className="space-y-2">
                     <Label>{t("settings.contactName")}</Label>
-                    <Input
-                      value={companyProfile.contact_name || ""}
-                      onChange={(e) => setCompanyProfile({ ...companyProfile, contact_name: e.target.value })}
-                    />
+                    <Input value={companyProfile.contact_name || ""} onChange={e => setCompanyProfile({
+                    ...companyProfile,
+                    contact_name: e.target.value
+                  })} />
                   </div>
                   <div className="space-y-2">
                     <Label>{t("settings.phone")}</Label>
-                    <Input
-                      value={companyProfile.phone || ""}
-                      onChange={(e) => setCompanyProfile({ ...companyProfile, phone: e.target.value })}
-                    />
+                    <Input value={companyProfile.phone || ""} onChange={e => setCompanyProfile({
+                    ...companyProfile,
+                    phone: e.target.value
+                  })} />
                   </div>
                   <div className="space-y-2">
                     <Label>{t("settings.location")}</Label>
-                    <Input
-                      value={companyProfile.location || ""}
-                      onChange={(e) => setCompanyProfile({ ...companyProfile, location: e.target.value })}
-                    />
+                    <Input value={companyProfile.location || ""} onChange={e => setCompanyProfile({
+                    ...companyProfile,
+                    location: e.target.value
+                  })} />
                   </div>
                   <div className="space-y-2">
                     <Label>{t("settings.industry")}</Label>
-                    <Input
-                      value={companyProfile.industry || ""}
-                      onChange={(e) => setCompanyProfile({ ...companyProfile, industry: e.target.value })}
-                    />
+                    <Input value={companyProfile.industry || ""} onChange={e => setCompanyProfile({
+                    ...companyProfile,
+                    industry: e.target.value
+                  })} />
                   </div>
                   <div className="space-y-2">
                     <Label>{t("settings.companySize")}</Label>
-                    <Select
-                      value={companyProfile.company_size || ""}
-                      onValueChange={(value) => setCompanyProfile({ ...companyProfile, company_size: value })}
-                    >
+                    <Select value={companyProfile.company_size || ""} onValueChange={value => setCompanyProfile({
+                    ...companyProfile,
+                    company_size: value
+                  })}>
                       <SelectTrigger>
                         <SelectValue placeholder={t("settings.selectCompanySize")} />
                       </SelectTrigger>
@@ -550,10 +476,10 @@ export default function Settings() {
                   </div>
                   <div className="space-y-2">
                     <Label>{t("settings.country")}</Label>
-                    <Select
-                      value={companyProfile.country || ""}
-                      onValueChange={(value) => setCompanyProfile({ ...companyProfile, country: value })}
-                    >
+                    <Select value={companyProfile.country || ""} onValueChange={value => setCompanyProfile({
+                    ...companyProfile,
+                    country: value
+                  })}>
                       <SelectTrigger>
                         <SelectValue placeholder={t("settings.selectCountry")} />
                       </SelectTrigger>
@@ -580,21 +506,21 @@ export default function Settings() {
                         <SelectItem value="SE">🇸🇪 Sweden</SelectItem>
                       </SelectContent>
                     </Select>
-                    <p className="text-xs text-muted-foreground">{t("settings.countryDesc")}</p>
+                    
                   </div>
                   <div className="space-y-2">
                     <Label>{t("settings.website")}</Label>
-                    <Input
-                      value={companyProfile.website || ""}
-                      onChange={(e) => setCompanyProfile({ ...companyProfile, website: e.target.value })}
-                    />
+                    <Input value={companyProfile.website || ""} onChange={e => setCompanyProfile({
+                    ...companyProfile,
+                    website: e.target.value
+                  })} />
                   </div>
                   <div className="space-y-2">
                     <Label>{t("settings.documentType")}</Label>
-                    <Select
-                      value={companyProfile.document_type || ""}
-                      onValueChange={(value) => setCompanyProfile({ ...companyProfile, document_type: value as "cpf" | "cnpj" })}
-                    >
+                    <Select value={companyProfile.document_type || ""} onValueChange={value => setCompanyProfile({
+                    ...companyProfile,
+                    document_type: value as "cpf" | "cnpj"
+                  })}>
                       <SelectTrigger>
                         <SelectValue placeholder={t("settings.selectDocumentType")} />
                       </SelectTrigger>
@@ -606,65 +532,59 @@ export default function Settings() {
                   </div>
                   <div className="space-y-2">
                     <Label>{t("settings.documentNumber")}</Label>
-                    <Input
-                      value={formatDocument(companyProfile.document_number || "", companyProfile.document_type)}
-                      onChange={(e) => {
-                        const rawValue = unformatDocument(e.target.value);
-                        setCompanyProfile({ ...companyProfile, document_number: rawValue });
-                      }}
-                      placeholder={companyProfile.document_type === "cpf" ? "000.000.000-00" : "00.000.000/0000-00"}
-                      maxLength={companyProfile.document_type === "cpf" ? 14 : 18}
-                    />
+                    <Input value={formatDocument(companyProfile.document_number || "", companyProfile.document_type)} onChange={e => {
+                    const rawValue = unformatDocument(e.target.value);
+                    setCompanyProfile({
+                      ...companyProfile,
+                      document_number: rawValue
+                    });
+                  }} placeholder={companyProfile.document_type === "cpf" ? "000.000.000-00" : "00.000.000/0000-00"} maxLength={companyProfile.document_type === "cpf" ? 14 : 18} />
                     <p className="text-xs text-muted-foreground">
                       {companyProfile.document_type === "cpf" ? t("settings.cpfDesc") : t("settings.cnpjDesc")}
                     </p>
                   </div>
                   <div className="space-y-2 md:col-span-2">
                     <Label>{t("settings.about")}</Label>
-                    <Textarea
-                      value={companyProfile.about || ""}
-                      onChange={(e) => setCompanyProfile({ ...companyProfile, about: e.target.value })}
-                      rows={4}
-                    />
+                    <Textarea value={companyProfile.about || ""} onChange={e => setCompanyProfile({
+                    ...companyProfile,
+                    about: e.target.value
+                  })} rows={4} />
                   </div>
-                </div>
-              ) : freelancerProfile ? (
-                <div className="grid gap-4 md:grid-cols-2">
+                </div> : freelancerProfile ? <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label>{t("settings.fullName")}</Label>
-                    <Input
-                      value={freelancerProfile.full_name || ""}
-                      onChange={(e) => setFreelancerProfile({ ...freelancerProfile, full_name: e.target.value })}
-                    />
+                    <Input value={freelancerProfile.full_name || ""} onChange={e => setFreelancerProfile({
+                    ...freelancerProfile,
+                    full_name: e.target.value
+                  })} />
                   </div>
                   <div className="space-y-2">
                     <Label>{t("settings.professionalTitle")}</Label>
-                    <Input
-                      value={freelancerProfile.title || ""}
-                      onChange={(e) => setFreelancerProfile({ ...freelancerProfile, title: e.target.value })}
-                    />
+                    <Input value={freelancerProfile.title || ""} onChange={e => setFreelancerProfile({
+                    ...freelancerProfile,
+                    title: e.target.value
+                  })} />
                   </div>
                   <div className="space-y-2">
                     <Label>{t("settings.hourlyRate")}</Label>
-                    <Input
-                      type="number"
-                      value={freelancerProfile.hourly_rate || ""}
-                      onChange={(e) => setFreelancerProfile({ ...freelancerProfile, hourly_rate: Number(e.target.value) })}
-                    />
+                    <Input type="number" value={freelancerProfile.hourly_rate || ""} onChange={e => setFreelancerProfile({
+                    ...freelancerProfile,
+                    hourly_rate: Number(e.target.value)
+                  })} />
                   </div>
                   <div className="space-y-2">
                     <Label>{t("settings.location")}</Label>
-                    <Input
-                      value={freelancerProfile.location || ""}
-                      onChange={(e) => setFreelancerProfile({ ...freelancerProfile, location: e.target.value })}
-                    />
+                    <Input value={freelancerProfile.location || ""} onChange={e => setFreelancerProfile({
+                    ...freelancerProfile,
+                    location: e.target.value
+                  })} />
                   </div>
                   <div className="space-y-2">
                     <Label>{t("settings.country")}</Label>
-                    <Select
-                      value={freelancerProfile.country || ""}
-                      onValueChange={(value) => setFreelancerProfile({ ...freelancerProfile, country: value })}
-                    >
+                    <Select value={freelancerProfile.country || ""} onValueChange={value => setFreelancerProfile({
+                    ...freelancerProfile,
+                    country: value
+                  })}>
                       <SelectTrigger>
                         <SelectValue placeholder={t("settings.selectCountry")} />
                       </SelectTrigger>
@@ -695,39 +615,32 @@ export default function Settings() {
                   </div>
                   <div className="space-y-2 md:col-span-2">
                     <Label>{t("settings.bio")}</Label>
-                    <Textarea
-                      value={freelancerProfile.bio || ""}
-                      onChange={(e) => setFreelancerProfile({ ...freelancerProfile, bio: e.target.value })}
-                      rows={4}
-                    />
+                    <Textarea value={freelancerProfile.bio || ""} onChange={e => setFreelancerProfile({
+                    ...freelancerProfile,
+                    bio: e.target.value
+                  })} rows={4} />
                   </div>
                   <div className="space-y-2 md:col-span-2">
                     <Label>{t("settings.skills")}</Label>
-                    <Input
-                      value={freelancerProfile.skills?.join(", ") || ""}
-                      onChange={(e) => setFreelancerProfile({ 
-                        ...freelancerProfile, 
-                        skills: e.target.value.split(",").map(s => s.trim()).filter(Boolean)
-                      })}
-                      placeholder={t("settings.skillsPlaceholder")}
-                    />
+                    <Input value={freelancerProfile.skills?.join(", ") || ""} onChange={e => setFreelancerProfile({
+                    ...freelancerProfile,
+                    skills: e.target.value.split(",").map(s => s.trim()).filter(Boolean)
+                  })} placeholder={t("settings.skillsPlaceholder")} />
                   </div>
                   <div className="space-y-2">
                     <Label>{t("settings.preferredPayoutCurrency")}</Label>
-                    <RestrictedCurrencySelect
-                      value={freelancerProfile.preferred_payout_currency || "USD"}
-                      onValueChange={(v) => setFreelancerProfile({ ...freelancerProfile, preferred_payout_currency: v })}
-                      countryCode={freelancerProfile.country}
-                      className="w-48"
-                    />
+                    <RestrictedCurrencySelect value={freelancerProfile.preferred_payout_currency || "USD"} onValueChange={v => setFreelancerProfile({
+                    ...freelancerProfile,
+                    preferred_payout_currency: v
+                  })} countryCode={freelancerProfile.country} className="w-48" />
                     <p className="text-xs text-muted-foreground">{t("settings.preferredPayoutCurrencyDesc")}</p>
                   </div>
                   <div className="space-y-2">
                     <Label>{t("settings.documentType")}</Label>
-                    <Select
-                      value={freelancerProfile.document_type || ""}
-                      onValueChange={(value) => setFreelancerProfile({ ...freelancerProfile, document_type: value as "cpf" | "cnpj" })}
-                    >
+                    <Select value={freelancerProfile.document_type || ""} onValueChange={value => setFreelancerProfile({
+                    ...freelancerProfile,
+                    document_type: value as "cpf" | "cnpj"
+                  })}>
                       <SelectTrigger>
                         <SelectValue placeholder={t("settings.selectDocumentType")} />
                       </SelectTrigger>
@@ -739,31 +652,28 @@ export default function Settings() {
                   </div>
                   <div className="space-y-2">
                     <Label>{t("settings.documentNumber")}</Label>
-                    <Input
-                      value={formatDocument(freelancerProfile.document_number || "", freelancerProfile.document_type)}
-                      onChange={(e) => {
-                        const rawValue = unformatDocument(e.target.value);
-                        setFreelancerProfile({ ...freelancerProfile, document_number: rawValue });
-                      }}
-                      placeholder={freelancerProfile.document_type === "cpf" ? "000.000.000-00" : "00.000.000/0000-00"}
-                      maxLength={freelancerProfile.document_type === "cpf" ? 14 : 18}
-                    />
+                    <Input value={formatDocument(freelancerProfile.document_number || "", freelancerProfile.document_type)} onChange={e => {
+                    const rawValue = unformatDocument(e.target.value);
+                    setFreelancerProfile({
+                      ...freelancerProfile,
+                      document_number: rawValue
+                    });
+                  }} placeholder={freelancerProfile.document_type === "cpf" ? "000.000.000-00" : "00.000.000/0000-00"} maxLength={freelancerProfile.document_type === "cpf" ? 14 : 18} />
                     <p className="text-xs text-muted-foreground">
                       {freelancerProfile.document_type === "cpf" ? t("settings.cpfDesc") : t("settings.cnpjDesc")}
                     </p>
                   </div>
-                </div>
-              ) : null}
+                </div> : null}
 
               <Separator />
 
               {/* Language Preference */}
               <div className="space-y-2">
                 <Label>{t("settings.language")}</Label>
-                <Select
-                  value={profile?.preferred_language || "en"}
-                  onValueChange={(value) => setProfile(profile ? { ...profile, preferred_language: value } : null)}
-                >
+                <Select value={profile?.preferred_language || "en"} onValueChange={value => setProfile(profile ? {
+                  ...profile,
+                  preferred_language: value
+                } : null)}>
                   <SelectTrigger className="w-48">
                     <SelectValue />
                   </SelectTrigger>
@@ -787,18 +697,14 @@ export default function Settings() {
         </TabsContent>
 
         {/* Portfolio Tab (Freelancers only) */}
-        {!isCompany && (
-          <TabsContent value="portfolio" className="space-y-6">
+        {!isCompany && <TabsContent value="portfolio" className="space-y-6">
             <PortfolioManager />
-          </TabsContent>
-        )}
+          </TabsContent>}
 
         {/* Certifications Tab (Freelancers only) */}
-        {!isCompany && (
-          <TabsContent value="certifications" className="space-y-6">
+        {!isCompany && <TabsContent value="certifications" className="space-y-6">
             <CertificationsManager />
-          </TabsContent>
-        )}
+          </TabsContent>}
 
         {/* Security Tab */}
         <TabsContent value="security" className="space-y-6">
@@ -815,42 +721,19 @@ export default function Settings() {
               <div className="space-y-2">
                 <Label>{t("settings.newPassword")}</Label>
                 <div className="relative">
-                  <Input
-                    type={showNewPassword ? "text" : "password"}
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    className="pr-10"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                  >
+                  <Input type={showNewPassword ? "text" : "password"} value={newPassword} onChange={e => setNewPassword(e.target.value)} className="pr-10" />
+                  <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full px-3 hover:bg-transparent" onClick={() => setShowNewPassword(!showNewPassword)}>
                     {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>
                 </div>
-                {newPassword.length > 0 && (
-                  <PasswordRequirements password={newPassword} />
-                )}
+                {newPassword.length > 0 && <PasswordRequirements password={newPassword} />}
               </div>
               <div className="space-y-2">
                 <Label>{t("settings.confirmPassword")}</Label>
-                <Input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                />
-                {confirmPassword.length > 0 && newPassword !== confirmPassword && (
-                  <p className="text-sm text-destructive">{t("auth.passwordMismatch")}</p>
-                )}
+                <Input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
+                {confirmPassword.length > 0 && newPassword !== confirmPassword && <p className="text-sm text-destructive">{t("auth.passwordMismatch")}</p>}
               </div>
-              <Button 
-                onClick={handleChangePassword} 
-                disabled={changingPassword || !newPassword || !confirmPassword || !isStrongPassword(newPassword) || newPassword !== confirmPassword}
-                className="gap-2"
-              >
+              <Button onClick={handleChangePassword} disabled={changingPassword || !newPassword || !confirmPassword || !isStrongPassword(newPassword) || newPassword !== confirmPassword} className="gap-2">
                 {changingPassword ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
                 {t("settings.updatePassword")}
               </Button>
@@ -871,10 +754,10 @@ export default function Settings() {
                   <p className="font-medium">{t("settings.proposalNotifications")}</p>
                   <p className="text-sm text-muted-foreground">{t("settings.proposalNotificationsDesc")}</p>
                 </div>
-                <Switch
-                  checked={notifications.emailProposals}
-                  onCheckedChange={(checked) => setNotifications({ ...notifications, emailProposals: checked })}
-                />
+                <Switch checked={notifications.emailProposals} onCheckedChange={checked => setNotifications({
+                  ...notifications,
+                  emailProposals: checked
+                })} />
               </div>
               <Separator />
               <div className="flex items-center justify-between">
@@ -882,10 +765,10 @@ export default function Settings() {
                   <p className="font-medium">{t("settings.messageNotifications")}</p>
                   <p className="text-sm text-muted-foreground">{t("settings.messageNotificationsDesc")}</p>
                 </div>
-                <Switch
-                  checked={notifications.emailMessages}
-                  onCheckedChange={(checked) => setNotifications({ ...notifications, emailMessages: checked })}
-                />
+                <Switch checked={notifications.emailMessages} onCheckedChange={checked => setNotifications({
+                  ...notifications,
+                  emailMessages: checked
+                })} />
               </div>
               <Separator />
               <div className="flex items-center justify-between">
@@ -893,10 +776,10 @@ export default function Settings() {
                   <p className="font-medium">{t("settings.paymentNotifications")}</p>
                   <p className="text-sm text-muted-foreground">{t("settings.paymentNotificationsDesc")}</p>
                 </div>
-                <Switch
-                  checked={notifications.emailPayments}
-                  onCheckedChange={(checked) => setNotifications({ ...notifications, emailPayments: checked })}
-                />
+                <Switch checked={notifications.emailPayments} onCheckedChange={checked => setNotifications({
+                  ...notifications,
+                  emailPayments: checked
+                })} />
               </div>
               <Separator />
               <div className="flex items-center justify-between">
@@ -904,10 +787,10 @@ export default function Settings() {
                   <p className="font-medium">{t("settings.marketingEmails")}</p>
                   <p className="text-sm text-muted-foreground">{t("settings.marketingEmailsDesc")}</p>
                 </div>
-                <Switch
-                  checked={notifications.emailMarketing}
-                  onCheckedChange={(checked) => setNotifications({ ...notifications, emailMarketing: checked })}
-                />
+                <Switch checked={notifications.emailMarketing} onCheckedChange={checked => setNotifications({
+                  ...notifications,
+                  emailMarketing: checked
+                })} />
               </div>
             </CardContent>
           </Card>
@@ -915,21 +798,16 @@ export default function Settings() {
 
         {/* Billing Tab */}
         <TabsContent value="billing" className="space-y-6">
-          {isCompany ? (
-            <>
+          {isCompany ? <>
               <CompanyPlanCard />
               <CompanyWalletCard />
               <CompanyBillingPanel />
-            </>
-          ) : (
-            <>
+            </> : <>
               <FreelancerPlanCard />
               <FreelancerCreditsCard />
-            </>
-          )}
+            </>}
         </TabsContent>
       </Tabs>
     </div>
-    </>
-  );
+    </>;
 }
