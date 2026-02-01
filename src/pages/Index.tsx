@@ -29,6 +29,7 @@ import {
   Building2,
   Award,
   Clock,
+  Mail,
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { languages, LanguageCode } from "@/lib/i18n";
@@ -694,6 +695,13 @@ const Index = () => {
             <div className="md:col-span-2">
               <Logo className="mb-4" />
               <p className="text-muted-foreground text-sm max-w-xs leading-relaxed">{t("footer.description")}</p>
+              <a 
+                href="mailto:support@hooklyapp.com" 
+                className="mt-4 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Mail className="h-4 w-4 flex-shrink-0" />
+                <span>support@hooklyapp.com</span>
+              </a>
               <div className="flex gap-3 mt-6 flex-wrap">
                 {socialLinks && socialLinks.length > 0 ? (
                   socialLinks.map((link) => (
