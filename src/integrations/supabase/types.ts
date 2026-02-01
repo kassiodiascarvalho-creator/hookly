@@ -743,6 +743,13 @@ export type Database = {
             referencedRelation: "freelancer_profiles"
             referencedColumns: ["user_id"]
           },
+          {
+            foreignKeyName: "freelancer_achievements_freelancer_user_id_fkey"
+            columns: ["freelancer_user_id"]
+            isOneToOne: false
+            referencedRelation: "freelancer_profiles_public"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       freelancer_plan_definitions: {
@@ -3111,6 +3118,57 @@ export type Database = {
           user_id?: string | null
           verified_at?: string | null
           website?: string | null
+        }
+        Relationships: []
+      }
+      freelancer_profiles_public: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          country: string | null
+          country_code: string | null
+          created_at: string | null
+          full_name: string | null
+          hourly_rate: number | null
+          id: string | null
+          languages: string[] | null
+          skills: string[] | null
+          tier: string | null
+          title: string | null
+          user_id: string | null
+          verified: boolean | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          country?: string | null
+          country_code?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          hourly_rate?: number | null
+          id?: string | null
+          languages?: string[] | null
+          skills?: string[] | null
+          tier?: string | null
+          title?: string | null
+          user_id?: string | null
+          verified?: boolean | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          country?: string | null
+          country_code?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          hourly_rate?: number | null
+          id?: string | null
+          languages?: string[] | null
+          skills?: string[] | null
+          tier?: string | null
+          title?: string | null
+          user_id?: string | null
+          verified?: boolean | null
         }
         Relationships: []
       }
