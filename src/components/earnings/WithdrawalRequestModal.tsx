@@ -398,16 +398,8 @@ export function WithdrawalRequestModal({
 
           {/* Summary */}
           {majorAmount > 0 && isValid && (
-            <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/30 space-y-2">
-              <div className="flex justify-between text-sm text-muted-foreground">
-                <span>{t("earnings.withdrawal.grossAmount")}</span>
-                <span>{formatMoney(majorAmount, currency)}</span>
-              </div>
-              <div className="flex justify-between text-sm text-muted-foreground">
-                <span>{t("earnings.withdrawal.platformFee", { percent: feePercDisplay })}</span>
-                <span className="text-red-500">-{formatMoney(feeAmount, currency)}</span>
-              </div>
-              <div className="border-t pt-2 flex items-center gap-2 text-green-700 dark:text-green-400">
+            <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/30">
+              <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
                 <CheckCircle className="h-4 w-4" />
                 <span className="text-sm font-medium">
                   {t("earnings.withdrawal.summary", { 
