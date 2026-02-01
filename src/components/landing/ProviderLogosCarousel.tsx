@@ -1,8 +1,8 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { motion, useReducedMotion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { Shield, CheckCircle, MessageSquare, ShieldCheck } from "lucide-react";
+import { Shield, CheckCircle, MessageSquare, ShieldCheck, Handshake } from "lucide-react";
 
 interface ProviderLogo {
   name: string;
@@ -17,19 +17,28 @@ const trustBadges = [
   { icon: ShieldCheck, key: "antiFraud" },
 ];
 
-// Fallback logos if no DB config (using public CDN logos)
+// Fallback logos if no DB config
 const FALLBACK_LOGOS: ProviderLogo[] = [
   { name: "Stripe", logo_url: "https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" },
-  { name: "Mercado Pago", logo_url: "https://http2.mlstatic.com/frontend-assets/mp-web-navigation/ui-navigation/6.6.73/mercadopago/logo__large.png" },
+  { name: "Mercado Pago", logo_url: "/logos/mercadopago.png", href: "https://www.mercadopago.com.br" },
   { name: "Supabase", logo_url: "https://supabase.com/dashboard/img/supabase-logo.svg" },
 ];
+
+// Track failed image loads
+const failedImages = new Set<string>();
 
 export function ProviderLogosCarousel() {
   const { t } = useTranslation();
   const [logos, setLogos] = useState<ProviderLogo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [, forceUpdate] = useState({});
   const shouldReduceMotion = useReducedMotion();
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleImageError = useCallback((logoUrl: string) => {
+    failedImages.add(logoUrl);
+    forceUpdate({});
+  }, []);
 
   useEffect(() => {
     const fetchLogos = async () => {
@@ -112,35 +121,45 @@ export function ProviderLogosCarousel() {
                   }
             }
           >
-            {duplicatedLogos.map((logo, index) => (
-              <div
-                key={`${logo.name}-${index}`}
-                className="flex-shrink-0 px-4"
-              >
-                {logo.href ? (
-                  <a
-                    href={logo.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block"
-                  >
-                    <img
-                      src={logo.logo_url}
-                      alt={logo.name}
-                      loading="lazy"
-                      className="h-8 md:h-10 w-auto grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all duration-300"
-                    />
-                  </a>
-                ) : (
-                  <img
-                    src={logo.logo_url}
-                    alt={logo.name}
-                    loading="lazy"
-                    className="h-8 md:h-10 w-auto grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all duration-300"
-                  />
-                )}
-              </div>
-            ))}
+            {duplicatedLogos.map((logo, index) => {
+              const hasFailed = failedImages.has(logo.logo_url);
+              
+              const logoContent = hasFailed ? (
+                <div className="flex items-center gap-2 h-8 md:h-10 opacity-70 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-300">
+                  <Handshake className="h-6 w-6 text-foreground" />
+                  <span className="text-sm font-medium text-foreground">{logo.name}</span>
+                </div>
+              ) : (
+                <img
+                  src={logo.logo_url}
+                  alt={logo.name}
+                  loading="lazy"
+                  onError={() => handleImageError(logo.logo_url)}
+                  className="h-8 md:h-10 w-auto grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all duration-300 brightness-110 dark:brightness-125 dark:invert"
+                />
+              );
+
+              return (
+                <div
+                  key={`${logo.name}-${index}`}
+                  className="flex-shrink-0 px-4"
+                >
+                  {logo.href ? (
+                    <a
+                      href={logo.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={logo.name}
+                      className="block"
+                    >
+                      {logoContent}
+                    </a>
+                  ) : (
+                    logoContent
+                  )}
+                </div>
+              );
+            })}
           </motion.div>
         </div>
 
