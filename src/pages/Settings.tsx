@@ -391,7 +391,7 @@ export default function Settings() {
               </TabsTrigger>
               <TabsTrigger value="certifications" className="gap-2">
                 <Award className="h-4 w-4" />
-                <span className="hidden sm:inline">{t("settings.certifications")}</span>
+                <span className="hidden sm:inline">{t("settings.diploma")}</span>
               </TabsTrigger>
             </>
           )}
