@@ -83,11 +83,11 @@ export function CompanyLogosCarousel() {
                   alt={logo.name}
                   loading="lazy"
                   onError={() => handleImageError(logo.name)}
-                  className={`h-6 md:h-8 w-auto transition-all duration-300 ${
+                  className={`h-10 md:h-14 w-auto transition-all duration-300 ${
                     isAppleSelected
                       ? "grayscale-0 opacity-100 scale-150 brightness-110"
-                      : "grayscale opacity-50 hover:grayscale-0 hover:opacity-100"
-                  } dark:brightness-150`}
+                      : "grayscale opacity-60 hover:grayscale-0 hover:opacity-100"
+                  } dark:brightness-150 dark:invert dark:contrast-150`}
                 />
               </div>
             );
