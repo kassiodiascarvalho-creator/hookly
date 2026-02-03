@@ -37,6 +37,7 @@ import ForFreelancers from "./pages/ForFreelancers";
 import Pricing from "./pages/Pricing";
 import HowItWorks from "./pages/HowItWorks";
 import AIHelp from "./pages/AIHelp";
+import Awards from "./pages/Awards";
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
@@ -76,6 +77,7 @@ const App = () => (
             <Route path="/freelancers" element={<ForFreelancers />} />
             <Route path="/precos" element={<Pricing />} />
             <Route path="/como-funciona" element={<HowItWorks />} />
+            <Route path="/premiacao" element={<Awards />} />
             
             {/* Onboarding - sem ProtectedRoute para evitar loop */}
             <Route path="/onboarding" element={<Onboarding />} />
