@@ -18,41 +18,41 @@ const awardsData = [
   {
     id: 1,
     title: "Nível 1 — Starter",
-    value: "R$ 5 mil",
+    value: "R$ 10 mil",
     description: "Primeiro marco: começou a construir tração e reputação.",
-    image: "/awards/plaque-1.jpeg",
+    image: "https://i.imgur.com/qSSjlYP.jpeg",
     icon: Trophy,
   },
   {
     id: 2,
     title: "Nível 2 — Bronze",
-    value: "R$ 10 mil",
+    value: "R$ 50 mil",
     description: "Consistência: entregas recorrentes e crescimento sólido.",
-    image: "/awards/plaque-2.jpeg",
+    image: "https://i.imgur.com/fOvTcOh.jpeg",
     icon: Award,
   },
   {
     id: 3,
     title: "Nível 3 — Silver",
-    value: "R$ 25 mil",
+    value: "R$ 100 mil",
     description: "Escala: resultados que mostram maturidade profissional.",
-    image: "/awards/plaque-3.jpeg",
+    image: "https://i.imgur.com/em3x4jr.jpeg",
     icon: CheckCircle,
   },
   {
     id: 4,
     title: "Nível 4 — Gold",
-    value: "R$ 50 mil",
+    value: "R$ 500 mil",
     description: "Alta performance: qualidade + volume com estabilidade.",
-    image: "/awards/plaque-4.jpeg",
+    image: "https://i.imgur.com/5kYkWTM.jpeg",
     icon: Star,
   },
   {
     id: 5,
     title: "Nível 5 — Diamond",
-    value: "R$ 100 mil",
+    value: "R$ 1 milhão",
     description: "Elite: referência dentro da comunidade HOOKLY.",
-    image: "/awards/plaque-5.jpeg",
+    image: "https://i.imgur.com/n82Ir4K.jpeg",
     icon: Crown,
   },
 ];
@@ -173,29 +173,29 @@ const Awards = () => {
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
               >
-                <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+                <Card className="overflow-hidden hover:shadow-lg transition-shadow border-border/50">
                   <CardContent className="p-0">
-                    <div className="flex flex-col md:flex-row items-center gap-6">
-                      {/* Image */}
-                      <div className="w-full md:w-1/3 bg-muted/50 flex items-center justify-center p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-[340px_1fr] lg:grid-cols-[380px_1fr] items-stretch">
+                      {/* Image - Large Premium Style */}
+                      <div className="w-full h-[220px] md:h-[240px] bg-gradient-to-br from-muted/30 to-muted/60 flex items-center justify-center p-4">
                         <img
                           src={award.image}
                           alt={`Plaquinha ${award.title}`}
-                          className="w-full max-w-[200px] h-auto object-contain rounded-lg"
+                          className="w-full h-full object-contain"
                           loading="lazy"
                         />
                       </div>
                       
                       {/* Content */}
-                      <div className="flex-1 p-6 md:p-8 text-center md:text-left">
-                        <div className="flex items-center justify-center md:justify-start gap-3 mb-3">
-                          <award.icon className="h-6 w-6 text-primary" />
-                          <h3 className="text-xl md:text-2xl font-bold">{award.title}</h3>
+                      <div className="flex flex-col justify-center p-6 md:p-8 text-center md:text-left">
+                        <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
+                          <award.icon className="h-5 w-5 text-primary/70" />
+                          <span className="text-base md:text-lg font-semibold text-foreground/80">{award.title}</span>
                         </div>
-                        <p className="text-2xl md:text-3xl font-bold text-primary mb-3">
+                        <p className="text-3xl md:text-4xl font-bold text-primary mb-3">
                           {award.value}
                         </p>
-                        <p className="text-muted-foreground">{award.description}</p>
+                        <p className="text-muted-foreground text-sm md:text-base">{award.description}</p>
                       </div>
                     </div>
                   </CardContent>
