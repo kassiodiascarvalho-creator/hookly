@@ -30,6 +30,9 @@ export const Navbar = ({ onOpenSignup }: NavbarProps) => {
           <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
             {t("nav.pricing")}
           </Link>
+          <Link to="/premiacao" className="text-muted-foreground hover:text-foreground transition-colors">
+            {t("nav.awards", "Premiação")}
+          </Link>
         </div>
 
         <div className="flex items-center gap-3">
