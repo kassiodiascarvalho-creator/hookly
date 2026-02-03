@@ -164,7 +164,7 @@ const Awards = () => {
             </p>
           </motion.div>
 
-          <div className="grid gap-6 max-w-4xl mx-auto">
+          <div className="flex flex-col gap-16 max-w-3xl mx-auto">
             {awardsData.map((award, index) => (
               <motion.div
                 key={award.id}
@@ -172,34 +172,27 @@ const Awards = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
+                className="flex flex-col"
               >
-                <Card className="overflow-hidden hover:shadow-lg transition-shadow border-border/50">
-                  <CardContent className="p-0">
-                    <div className="grid grid-cols-1 md:grid-cols-[340px_1fr] lg:grid-cols-[380px_1fr] items-stretch">
-                      {/* Image - Large Premium Style */}
-                      <div className="w-full h-[220px] md:h-[240px] bg-gradient-to-br from-muted/30 to-muted/60 flex items-center justify-center p-4">
-                        <img
-                          src={award.image}
-                          alt={`Plaquinha ${award.title}`}
-                          className="w-full h-full object-contain"
-                          loading="lazy"
-                        />
-                      </div>
-                      
-                      {/* Content */}
-                      <div className="flex flex-col justify-center p-6 md:p-8 text-center md:text-left">
-                        <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
-                          <award.icon className="h-5 w-5 text-primary/70" />
-                          <span className="text-base md:text-lg font-semibold text-foreground/80">{award.title}</span>
-                        </div>
-                        <p className="text-3xl md:text-4xl font-bold text-primary mb-3">
-                          {award.value}
-                        </p>
-                        <p className="text-muted-foreground text-sm md:text-base">{award.description}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                {/* Title + Value - Kiwify Style */}
+                <div className="mb-6">
+                  <h3 className="text-2xl md:text-3xl font-bold text-primary mb-1">
+                    {award.title} — {award.value}
+                  </h3>
+                  <p className="text-muted-foreground text-sm md:text-base">
+                    {award.description}
+                  </p>
+                </div>
+
+                {/* Large Centered Image - Kiwify Style */}
+                <div className="flex justify-center">
+                  <img
+                    src={award.image}
+                    alt={`Plaquinha ${award.title}`}
+                    className="w-full max-w-[500px] h-auto object-contain rounded-lg"
+                    loading="lazy"
+                  />
+                </div>
               </motion.div>
             ))}
           </div>
