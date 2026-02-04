@@ -125,6 +125,7 @@ const Index = () => {
     { to: "/como-funciona", label: t("nav.howItWorks") },
     { to: "/empresas", label: t("nav.forCompanies") },
     { to: "/freelancers", label: t("nav.forFreelancers") },
+    { to: "/premiacao", label: t("nav.awards", "Premiação") },
     { to: "#faq", label: "FAQ", isAnchor: true },
   ];
 
