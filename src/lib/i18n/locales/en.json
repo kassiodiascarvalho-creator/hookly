@@ -235,7 +235,8 @@
     "verifiedCompanies": "Verified Companies",
     "adminPanel": "Admin Panel",
     "contracts": "Contracts",
-    "aiHelp": "AI Help"
+    "aiHelp": "AI Help",
+    "awards": "Awards"
   },
   "projects": {
     "title": "Projects",
@@ -1880,5 +1881,78 @@
         "antiFraud": "Anti-fraud protection"
       }
     }
+  },
+  "awards": {
+    "badge": "Recognition Program",
+    "title": "HOOKLY Awards",
+    "heroSubtitle": "We recognize those who make it happen.",
+    "heroDescription": "HOOKLY plaques celebrate real milestones achieved on the platform — our way of honoring those who scale with consistency and quality.",
+    "recognitionTitle": "Be recognized for your work",
+    "recognitionDescription": "At HOOKLY, results come from consistency, quality, and delivery. Our awards program exists to value those who grow ethically, meet deadlines, and build reputation — project after project.",
+    "awardsTitle": "Awards",
+    "awardsSubtitle": "With each milestone reached, you unlock a new level of recognition. The plaques represent evolution and constancy — not just volume.",
+    "levels": {
+      "1": {
+        "title": "Level 1 — Starter",
+        "value": "$2,000",
+        "description": "First milestone: started building traction and reputation."
+      },
+      "2": {
+        "title": "Level 2 — Bronze",
+        "value": "$10,000",
+        "description": "Consistency: recurring deliveries and solid growth."
+      },
+      "3": {
+        "title": "Level 3 — Silver",
+        "value": "$20,000",
+        "description": "Scale: results that show professional maturity."
+      },
+      "4": {
+        "title": "Level 4 — Gold",
+        "value": "$100,000",
+        "description": "High performance: quality + volume with stability."
+      },
+      "5": {
+        "title": "Level 5 — Diamond",
+        "value": "$200,000",
+        "description": "Elite: a reference within the HOOKLY community."
+      }
+    },
+    "rulesTitle": "General Rules",
+    "rules": {
+      "1": "Only confirmed values within HOOKLY count toward the milestone.",
+      "2": "Transactions with disputes, chargebacks, or fraud may be excluded.",
+      "3": "We may request data confirmation before shipping.",
+      "4": "Delivery/production time may vary by region and logistics.",
+      "5": "The program may be adjusted to maintain fairness and transparency."
+    },
+    "faqTitle": "Frequently Asked Questions",
+    "faqSubtitle": "Get your questions answered about the awards program",
+    "faq": {
+      "1": {
+        "question": "How do I earn a plaque?",
+        "answer": "By reaching a confirmed result milestone on HOOKLY, according to program rules."
+      },
+      "2": {
+        "question": "What counts toward the calculation?",
+        "answer": "Confirmed payments from completed projects on the platform."
+      },
+      "3": {
+        "question": "Do cancellations count?",
+        "answer": "No, only confirmed and eligible results count."
+      },
+      "4": {
+        "question": "When do I receive it?",
+        "answer": "After validation and shipping confirmation, within the program's stated timeframe."
+      },
+      "5": {
+        "question": "Can I track my progress?",
+        "answer": "Yes — you can track your progress directly on the platform dashboard."
+      }
+    },
+    "ctaTitle": "Ready to get started?",
+    "ctaDescription": "Join the HOOKLY community and start building your success story.",
+    "ctaButton": "Start on HOOKLY",
+    "ctaSecondary": "See how it works"
   }
 }

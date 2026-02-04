@@ -21,7 +21,8 @@
     "verifiedCompanies": "Empresas Verificadas",
     "adminPanel": "Panel Admin",
     "contracts": "Contratos",
-    "aiHelp": "Ayuda IA"
+    "aiHelp": "Ayuda IA",
+    "awards": "Premios"
   },
   "hero": {
     "badge": "Mejor Calificado",
@@ -1255,5 +1256,78 @@
         "antiFraud": "Protección antifraude"
       }
     }
+  },
+  "awards": {
+    "badge": "Programa de Reconocimiento",
+    "title": "Premios HOOKLY",
+    "heroSubtitle": "Reconocemos a quienes lo hacen posible.",
+    "heroDescription": "Las placas HOOKLY celebran hitos reales de resultados dentro de la plataforma — nuestra forma de valorar a quienes escalan con consistencia y calidad.",
+    "recognitionTitle": "Sé reconocido(a) por tu trabajo",
+    "recognitionDescription": "En HOOKLY, los resultados son consecuencia de consistencia, calidad y entrega. Nuestro programa de premios existe para valorar a quienes crecen con ética, cumplen plazos y construyen reputación — proyecto tras proyecto.",
+    "awardsTitle": "Premios",
+    "awardsSubtitle": "Con cada hito alcanzado, desbloqueas un nuevo nivel de reconocimiento. Las placas representan evolución y constancia — no solo volumen.",
+    "levels": {
+      "1": {
+        "title": "Nivel 1 — Starter",
+        "value": "$2,000",
+        "description": "Primer hito: comenzaste a construir tracción y reputación."
+      },
+      "2": {
+        "title": "Nivel 2 — Bronze",
+        "value": "$10,000",
+        "description": "Consistencia: entregas recurrentes y crecimiento sólido."
+      },
+      "3": {
+        "title": "Nivel 3 — Silver",
+        "value": "$20,000",
+        "description": "Escala: resultados que muestran madurez profesional."
+      },
+      "4": {
+        "title": "Nivel 4 — Gold",
+        "value": "$100,000",
+        "description": "Alto rendimiento: calidad + volumen con estabilidad."
+      },
+      "5": {
+        "title": "Nivel 5 — Diamond",
+        "value": "$200,000",
+        "description": "Élite: referencia dentro de la comunidad HOOKLY."
+      }
+    },
+    "rulesTitle": "Reglas Generales",
+    "rules": {
+      "1": "Solo los valores confirmados dentro de HOOKLY cuentan para el hito.",
+      "2": "Las transacciones con disputas, devoluciones o fraude pueden ser excluidas.",
+      "3": "Podemos solicitar confirmación de datos antes del envío.",
+      "4": "El tiempo de entrega/producción puede variar según la región y logística.",
+      "5": "El programa puede ajustarse para mantener la equidad y transparencia."
+    },
+    "faqTitle": "Preguntas Frecuentes",
+    "faqSubtitle": "Resuelve tus dudas sobre el programa de premios",
+    "faq": {
+      "1": {
+        "question": "¿Cómo gano una placa?",
+        "answer": "Alcanzando un hito de resultado confirmado en HOOKLY, según las reglas del programa."
+      },
+      "2": {
+        "question": "¿Qué cuenta para el cálculo?",
+        "answer": "Pagos confirmados de proyectos completados en la plataforma."
+      },
+      "3": {
+        "question": "¿Las cancelaciones cuentan?",
+        "answer": "No, solo los resultados confirmados y elegibles cuentan."
+      },
+      "4": {
+        "question": "¿Cuándo lo recibo?",
+        "answer": "Después de la validación y confirmación de envío, dentro del plazo indicado en el programa."
+      },
+      "5": {
+        "question": "¿Puedo seguir mi progreso?",
+        "answer": "Sí — puedes seguir tu progreso directamente en el dashboard de la plataforma."
+      }
+    },
+    "ctaTitle": "¿Listo para empezar?",
+    "ctaDescription": "Únete a la comunidad HOOKLY y comienza a construir tu historia de éxito.",
+    "ctaButton": "Empezar en HOOKLY",
+    "ctaSecondary": "Ver cómo funciona"
   }
 }
