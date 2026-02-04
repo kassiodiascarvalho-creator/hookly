@@ -98,7 +98,7 @@ const Awards = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-black text-white">
       <Navbar onOpenSignup={handleOpenSignup} />
       
       {/* Hero Section */}
