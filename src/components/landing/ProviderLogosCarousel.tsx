@@ -21,6 +21,8 @@ const trustBadges = [
 const FALLBACK_LOGOS: ProviderLogo[] = [
   { name: "Stripe", logo_url: "https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" },
   { name: "Mercado Pago", logo_url: "/logos/mercadopago.png", href: "https://www.mercadopago.com.br" },
+  { name: "Nomad", logo_url: "/logos/nomad.png", href: "https://www.nomadglobal.com" },
+  { name: "Wise", logo_url: "/logos/wise.png", href: "https://wise.com" },
   { name: "Supabase", logo_url: "https://supabase.com/dashboard/img/supabase-logo.svg" },
 ];
 
