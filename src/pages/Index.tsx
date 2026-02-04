@@ -298,6 +298,16 @@ const Index = () => {
                   {t("hero.ctaSecondary")}
                 </Button>
               </Link>
+              <Link to="/premiacao">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="text-lg px-8 py-6 rounded-xl border-primary/50 hover:bg-primary/10 gap-2"
+                >
+                  <Award className="h-5 w-5" />
+                  Premiação
+                </Button>
+              </Link>
             </div>
 
             {/* Stats Grid */}
