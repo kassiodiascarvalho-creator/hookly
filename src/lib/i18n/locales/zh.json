@@ -21,7 +21,8 @@
     "verifiedCompanies": "认证企业",
     "adminPanel": "管理面板",
     "contracts": "合同",
-    "aiHelp": "AI助手"
+    "aiHelp": "AI助手",
+    "awards": "奖励"
   },
   "hero": {
     "badge": "最佳评级",
@@ -1249,5 +1250,78 @@
         "antiFraud": "防欺诈保护"
       }
     }
+  },
+  "awards": {
+    "badge": "认可计划",
+    "title": "HOOKLY 奖励",
+    "heroSubtitle": "我们认可那些让事情发生的人。",
+    "heroDescription": "HOOKLY 奖牌庆祝在平台上实现的真实里程碑 — 我们表彰那些以一致性和质量成长的人。",
+    "recognitionTitle": "让您的工作得到认可",
+    "recognitionDescription": "在 HOOKLY，结果来自于一致性、质量和交付。我们的奖励计划旨在表彰那些以道德方式成长、按时交付并建立声誉的人 — 一个项目接一个项目。",
+    "awardsTitle": "奖励",
+    "awardsSubtitle": "每达到一个里程碑，您就解锁一个新的认可级别。奖牌代表的是进步和坚持 — 而不仅仅是数量。",
+    "levels": {
+      "1": {
+        "title": "级别 1 — 新手",
+        "value": "$2,000",
+        "description": "第一个里程碑：开始建立吸引力和声誉。"
+      },
+      "2": {
+        "title": "级别 2 — 铜牌",
+        "value": "$10,000",
+        "description": "一致性：持续交付和稳健增长。"
+      },
+      "3": {
+        "title": "级别 3 — 银牌",
+        "value": "$20,000",
+        "description": "规模化：展示专业成熟度的结果。"
+      },
+      "4": {
+        "title": "级别 4 — 金牌",
+        "value": "$100,000",
+        "description": "高性能：质量 + 数量与稳定性。"
+      },
+      "5": {
+        "title": "级别 5 — 钻石",
+        "value": "$200,000",
+        "description": "精英：HOOKLY 社区的标杆。"
+      }
+    },
+    "rulesTitle": "一般规则",
+    "rules": {
+      "1": "只有在 HOOKLY 内确认的金额才计入里程碑。",
+      "2": "有争议、退款或欺诈的交易可能被排除。",
+      "3": "我们可能在发货前要求确认数据。",
+      "4": "交付/生产时间可能因地区和物流而异。",
+      "5": "该计划可能会调整以保持公平和透明。"
+    },
+    "faqTitle": "常见问题",
+    "faqSubtitle": "获取有关奖励计划的问题答案",
+    "faq": {
+      "1": {
+        "question": "如何获得奖牌？",
+        "answer": "通过在 HOOKLY 上达到确认的结果里程碑，根据计划规则。"
+      },
+      "2": {
+        "question": "什么计入计算？",
+        "answer": "平台上已完成项目的已确认付款。"
+      },
+      "3": {
+        "question": "取消算数吗？",
+        "answer": "不算，只有确认和符合条件的结果才算。"
+      },
+      "4": {
+        "question": "什么时候收到？",
+        "answer": "在验证和发货确认后，在计划规定的时间内。"
+      },
+      "5": {
+        "question": "可以跟踪进度吗？",
+        "answer": "是的 — 您可以直接在平台仪表板上跟踪您的进度。"
+      }
+    },
+    "ctaTitle": "准备开始了吗？",
+    "ctaDescription": "加入 HOOKLY 社区，开始打造您的成功故事。",
+    "ctaButton": "在 HOOKLY 开始",
+    "ctaSecondary": "了解运作方式"
   }
 }

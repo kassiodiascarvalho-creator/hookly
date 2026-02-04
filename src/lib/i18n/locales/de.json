@@ -21,7 +21,8 @@
     "verifiedCompanies": "Verifizierte Unternehmen",
     "adminPanel": "Admin Panel",
     "contracts": "Verträge",
-    "aiHelp": "KI-Hilfe"
+    "aiHelp": "KI-Hilfe",
+    "awards": "Auszeichnungen"
   },
   "hero": {
     "badge": "Top Bewertet",
@@ -1255,5 +1256,78 @@
         "antiFraud": "Anti-Betrugs-Schutz"
       }
     }
+  },
+  "awards": {
+    "badge": "Anerkennungsprogramm",
+    "title": "HOOKLY Auszeichnungen",
+    "heroSubtitle": "Wir erkennen diejenigen an, die es möglich machen.",
+    "heroDescription": "HOOKLY-Plaketten feiern echte Meilensteine, die auf der Plattform erreicht wurden — unsere Art, diejenigen zu ehren, die mit Beständigkeit und Qualität wachsen.",
+    "recognitionTitle": "Werden Sie für Ihre Arbeit anerkannt",
+    "recognitionDescription": "Bei HOOKLY sind Ergebnisse das Resultat von Beständigkeit, Qualität und Lieferung. Unser Auszeichnungsprogramm würdigt diejenigen, die ethisch wachsen, Termine einhalten und Reputation aufbauen — Projekt für Projekt.",
+    "awardsTitle": "Auszeichnungen",
+    "awardsSubtitle": "Mit jedem erreichten Meilenstein schalten Sie eine neue Anerkennungsstufe frei. Die Plaketten repräsentieren Entwicklung und Beständigkeit — nicht nur Volumen.",
+    "levels": {
+      "1": {
+        "title": "Stufe 1 — Starter",
+        "value": "2.000 $",
+        "description": "Erster Meilenstein: Sie haben begonnen, Traktion und Reputation aufzubauen."
+      },
+      "2": {
+        "title": "Stufe 2 — Bronze",
+        "value": "10.000 $",
+        "description": "Beständigkeit: wiederkehrende Lieferungen und solides Wachstum."
+      },
+      "3": {
+        "title": "Stufe 3 — Silver",
+        "value": "20.000 $",
+        "description": "Skalierung: Ergebnisse, die professionelle Reife zeigen."
+      },
+      "4": {
+        "title": "Stufe 4 — Gold",
+        "value": "100.000 $",
+        "description": "Hohe Leistung: Qualität + Volumen mit Stabilität."
+      },
+      "5": {
+        "title": "Stufe 5 — Diamond",
+        "value": "200.000 $",
+        "description": "Elite: eine Referenz in der HOOKLY-Community."
+      }
+    },
+    "rulesTitle": "Allgemeine Regeln",
+    "rules": {
+      "1": "Nur bestätigte Werte innerhalb von HOOKLY zählen für den Meilenstein.",
+      "2": "Transaktionen mit Streitigkeiten, Rückbuchungen oder Betrug können ausgeschlossen werden.",
+      "3": "Wir können vor dem Versand eine Datenbestätigung anfordern.",
+      "4": "Die Liefer-/Produktionszeit kann je nach Region und Logistik variieren.",
+      "5": "Das Programm kann angepasst werden, um Fairness und Transparenz zu gewährleisten."
+    },
+    "faqTitle": "Häufig gestellte Fragen",
+    "faqSubtitle": "Erhalten Sie Antworten auf Ihre Fragen zum Auszeichnungsprogramm",
+    "faq": {
+      "1": {
+        "question": "Wie verdiene ich eine Plakette?",
+        "answer": "Indem Sie einen bestätigten Ergebnismeilenstein auf HOOKLY erreichen, gemäß den Programmregeln."
+      },
+      "2": {
+        "question": "Was zählt zur Berechnung?",
+        "answer": "Bestätigte Zahlungen von abgeschlossenen Projekten auf der Plattform."
+      },
+      "3": {
+        "question": "Zählen Stornierungen?",
+        "answer": "Nein, nur bestätigte und berechtigte Ergebnisse zählen."
+      },
+      "4": {
+        "question": "Wann erhalte ich sie?",
+        "answer": "Nach Validierung und Versandbestätigung, innerhalb des im Programm angegebenen Zeitrahmens."
+      },
+      "5": {
+        "question": "Kann ich meinen Fortschritt verfolgen?",
+        "answer": "Ja — Sie können Ihren Fortschritt direkt im Plattform-Dashboard verfolgen."
+      }
+    },
+    "ctaTitle": "Bereit loszulegen?",
+    "ctaDescription": "Treten Sie der HOOKLY-Community bei und beginnen Sie, Ihre Erfolgsgeschichte zu schreiben.",
+    "ctaButton": "Bei HOOKLY starten",
+    "ctaSecondary": "So funktioniert's"
   }
 }

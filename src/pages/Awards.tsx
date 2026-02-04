@@ -23,79 +23,15 @@ import { languages, LanguageCode } from "@/lib/i18n";
 import i18n from "@/lib/i18n";
 import { useLandingSocialLinks } from "@/hooks/useLandingContent";
 
-const awardsData = [
-  {
-    id: 1,
-    title: "Nível 1 — Starter",
-    value: "R$ 10 mil",
-    description: "Primeiro marco: começou a construir tração e reputação.",
-    image: "https://i.imgur.com/qSSjlYP.jpeg",
-    icon: Trophy,
-  },
-  {
-    id: 2,
-    title: "Nível 2 — Bronze",
-    value: "R$ 50 mil",
-    description: "Consistência: entregas recorrentes e crescimento sólido.",
-    image: "https://i.imgur.com/fOvTcOh.jpeg",
-    icon: Award,
-  },
-  {
-    id: 3,
-    title: "Nível 3 — Silver",
-    value: "R$ 100 mil",
-    description: "Escala: resultados que mostram maturidade profissional.",
-    image: "https://i.imgur.com/em3x4jr.jpeg",
-    icon: CheckCircle,
-  },
-  {
-    id: 4,
-    title: "Nível 4 — Gold",
-    value: "R$ 500 mil",
-    description: "Alta performance: qualidade + volume com estabilidade.",
-    image: "https://i.imgur.com/5kYkWTM.jpeg",
-    icon: Star,
-  },
-  {
-    id: 5,
-    title: "Nível 5 — Diamond",
-    value: "R$ 1 milhão",
-    description: "Elite: referência dentro da comunidade HOOKLY.",
-    image: "https://i.imgur.com/n82Ir4K.jpeg",
-    icon: Crown,
-  },
+const awardsImages = [
+  "https://i.imgur.com/qSSjlYP.jpeg",
+  "https://i.imgur.com/fOvTcOh.jpeg",
+  "https://i.imgur.com/em3x4jr.jpeg",
+  "https://i.imgur.com/5kYkWTM.jpeg",
+  "https://i.imgur.com/n82Ir4K.jpeg",
 ];
 
-const rulesData = [
-  "Apenas valores confirmados dentro da HOOKLY entram no marco.",
-  "Transações com disputa, estorno ou fraude podem ser desconsideradas.",
-  "Podemos solicitar confirmação de dados antes do envio.",
-  "O prazo de entrega/produção pode variar conforme região e logística.",
-  "O programa pode ser ajustado para manter justiça e transparência.",
-];
-
-const faqData = [
-  {
-    question: "Como ganho uma plaquinha?",
-    answer: "Atingindo um marco de resultado confirmado na HOOKLY, conforme regras do programa.",
-  },
-  {
-    question: "O que entra no cálculo?",
-    answer: "Pagamentos confirmados de projetos concluídos pela plataforma.",
-  },
-  {
-    question: "Cancelamentos contam?",
-    answer: "Não, apenas resultados confirmados e elegíveis.",
-  },
-  {
-    question: "Quando recebo?",
-    answer: "Após validação e confirmação de envio, dentro do prazo informado no programa.",
-  },
-  {
-    question: "Dá para acompanhar progresso?",
-    answer: "Sim — você pode acompanhar seu progresso diretamente no dashboard da plataforma.",
-  },
-];
+const awardsIcons = [Trophy, Award, CheckCircle, Star, Crown];
 
 const Awards = () => {
   const { t } = useTranslation();
@@ -203,17 +139,16 @@ const Awards = () => {
           >
             <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full mb-6">
               <Trophy className="h-5 w-5" />
-              <span className="font-medium">Programa de Reconhecimento</span>
+              <span className="font-medium">{t("awards.badge")}</span>
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">
-              Premiação HOOKLY
+              {t("awards.title")}
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto mb-4">
-              Reconhecemos quem faz acontecer.
+              {t("awards.heroSubtitle")}
             </p>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              As plaquinhas HOOKLY celebram marcos reais de resultado dentro da plataforma — 
-              são a forma de valorizar quem escala com consistência e qualidade.
+              {t("awards.heroDescription")}
             </p>
           </motion.div>
         </div>
@@ -229,12 +164,10 @@ const Awards = () => {
             className="max-w-4xl mx-auto text-center"
           >
             <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              Seja reconhecido(a) pelo seu trabalho
+              {t("awards.recognitionTitle")}
             </h2>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              Na HOOKLY, resultado é consequência de consistência, qualidade e entrega. 
-              Nosso programa de premiação existe para valorizar quem cresce com ética, 
-              cumpre prazos e constrói reputação — projeto após projeto.
+              {t("awards.recognitionDescription")}
             </p>
           </motion.div>
         </div>
@@ -249,44 +182,46 @@ const Awards = () => {
             viewport={{ once: true }}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Premiações</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">{t("awards.awardsTitle")}</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              A cada marco atingido, você desbloqueia um novo nível de reconhecimento. 
-              As plaquinhas representam evolução e constância — não apenas volume.
+              {t("awards.awardsSubtitle")}
             </p>
           </motion.div>
 
           <div className="flex flex-col gap-16 max-w-3xl mx-auto">
-            {awardsData.map((award, index) => (
-              <motion.div
-                key={award.id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="flex flex-col"
-              >
-                {/* Title + Value - Kiwify Style */}
-                <div className="mb-6 text-center">
-                  <h3 className="text-2xl md:text-3xl font-bold text-primary mb-1">
-                    {award.title} — {award.value}
-                  </h3>
-                  <p className="text-muted-foreground text-sm md:text-base">
-                    {award.description}
-                  </p>
-                </div>
+            {[1, 2, 3, 4, 5].map((level, index) => {
+              const IconComponent = awardsIcons[index];
+              return (
+                <motion.div
+                  key={level}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className="flex flex-col"
+                >
+                  {/* Title + Value - Kiwify Style */}
+                  <div className="mb-6 text-center">
+                    <h3 className="text-2xl md:text-3xl font-bold text-primary mb-1">
+                      {t(`awards.levels.${level}.title`)} — {t(`awards.levels.${level}.value`)}
+                    </h3>
+                    <p className="text-muted-foreground text-sm md:text-base">
+                      {t(`awards.levels.${level}.description`)}
+                    </p>
+                  </div>
 
-                {/* Large Centered Image - Kiwify Style */}
-                <div className="flex justify-center">
-                  <img
-                    src={award.image}
-                    alt={`Plaquinha ${award.title}`}
-                    className="w-full max-w-[500px] h-auto object-contain rounded-lg"
-                    loading="lazy"
-                  />
-                </div>
-              </motion.div>
-            ))}
+                  {/* Large Centered Image - Kiwify Style */}
+                  <div className="flex justify-center">
+                    <img
+                      src={awardsImages[index]}
+                      alt={t(`awards.levels.${level}.title`)}
+                      className="w-full max-w-[500px] h-auto object-contain rounded-lg"
+                      loading="lazy"
+                    />
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -301,12 +236,12 @@ const Awards = () => {
             className="max-w-3xl mx-auto"
           >
             <h2 className="text-3xl md:text-4xl font-bold mb-8 text-center">
-              Regras Gerais
+              {t("awards.rulesTitle")}
             </h2>
             <ul className="space-y-4">
-              {rulesData.map((rule, index) => (
+              {[1, 2, 3, 4, 5].map((ruleNum, index) => (
                 <motion.li
-                  key={index}
+                  key={ruleNum}
                   initial={{ opacity: 0, x: -20 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
@@ -314,7 +249,7 @@ const Awards = () => {
                   className="flex items-start gap-3"
                 >
                   <CheckCircle className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                  <span className="text-muted-foreground">{rule}</span>
+                  <span className="text-muted-foreground">{t(`awards.rules.${ruleNum}`)}</span>
                 </motion.li>
               ))}
             </ul>
@@ -332,10 +267,10 @@ const Awards = () => {
             className="text-center mb-12"
           >
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Perguntas Frequentes
+              {t("awards.faqTitle")}
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Tire suas dúvidas sobre o programa de premiação
+              {t("awards.faqSubtitle")}
             </p>
           </motion.div>
 
@@ -346,10 +281,10 @@ const Awards = () => {
             className="max-w-2xl mx-auto"
           >
             <Accordion type="single" collapsible className="w-full">
-              {faqData.map((faq, index) => (
-                <AccordionItem key={index} value={`item-${index}`}>
-                  <AccordionTrigger className="text-left">{faq.question}</AccordionTrigger>
-                  <AccordionContent>{faq.answer}</AccordionContent>
+              {[1, 2, 3, 4, 5].map((faqNum) => (
+                <AccordionItem key={faqNum} value={`item-${faqNum}`}>
+                  <AccordionTrigger className="text-left">{t(`awards.faq.${faqNum}.question`)}</AccordionTrigger>
+                  <AccordionContent>{t(`awards.faq.${faqNum}.answer`)}</AccordionContent>
                 </AccordionItem>
               ))}
             </Accordion>
@@ -366,10 +301,10 @@ const Awards = () => {
             viewport={{ once: true }}
           >
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Pronto para começar?
+              {t("awards.ctaTitle")}
             </h2>
             <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Entre para a comunidade HOOKLY e comece a construir sua trajetória de sucesso.
+              {t("awards.ctaDescription")}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
@@ -377,11 +312,11 @@ const Awards = () => {
                 className="text-lg px-8"
                 onClick={() => handleOpenSignup("freelancer")}
               >
-                Começar na HOOKLY
+                {t("awards.ctaButton")}
               </Button>
               <Link to="/como-funciona">
                 <Button size="lg" variant="outline" className="text-lg px-8">
-                  Ver como funciona
+                  {t("awards.ctaSecondary")}
                 </Button>
               </Link>
             </div>

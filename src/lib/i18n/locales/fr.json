@@ -21,7 +21,8 @@
     "verifiedCompanies": "Entreprises Vérifiées",
     "adminPanel": "Panneau Admin",
     "contracts": "Contrats",
-    "aiHelp": "Aide IA"
+    "aiHelp": "Aide IA",
+    "awards": "Récompenses"
   },
   "hero": {
     "badge": "Meilleur Noté",
@@ -1255,5 +1256,78 @@
         "antiFraud": "Protection anti-fraude"
       }
     }
+  },
+  "awards": {
+    "badge": "Programme de Reconnaissance",
+    "title": "Récompenses HOOKLY",
+    "heroSubtitle": "Nous reconnaissons ceux qui font bouger les choses.",
+    "heroDescription": "Les plaques HOOKLY célèbrent les vrais jalons atteints sur la plateforme — notre façon d'honorer ceux qui évoluent avec constance et qualité.",
+    "recognitionTitle": "Soyez reconnu(e) pour votre travail",
+    "recognitionDescription": "Chez HOOKLY, les résultats viennent de la constance, de la qualité et de la livraison. Notre programme de récompenses existe pour valoriser ceux qui grandissent éthiquement, respectent les délais et construisent leur réputation — projet après projet.",
+    "awardsTitle": "Récompenses",
+    "awardsSubtitle": "À chaque jalon atteint, vous débloquez un nouveau niveau de reconnaissance. Les plaques représentent l'évolution et la constance — pas seulement le volume.",
+    "levels": {
+      "1": {
+        "title": "Niveau 1 — Starter",
+        "value": "2 000 $",
+        "description": "Premier jalon : vous avez commencé à construire traction et réputation."
+      },
+      "2": {
+        "title": "Niveau 2 — Bronze",
+        "value": "10 000 $",
+        "description": "Constance : livraisons récurrentes et croissance solide."
+      },
+      "3": {
+        "title": "Niveau 3 — Silver",
+        "value": "20 000 $",
+        "description": "Échelle : des résultats qui montrent une maturité professionnelle."
+      },
+      "4": {
+        "title": "Niveau 4 — Gold",
+        "value": "100 000 $",
+        "description": "Haute performance : qualité + volume avec stabilité."
+      },
+      "5": {
+        "title": "Niveau 5 — Diamond",
+        "value": "200 000 $",
+        "description": "Élite : une référence au sein de la communauté HOOKLY."
+      }
+    },
+    "rulesTitle": "Règles Générales",
+    "rules": {
+      "1": "Seules les valeurs confirmées au sein de HOOKLY comptent pour le jalon.",
+      "2": "Les transactions avec litiges, remboursements ou fraude peuvent être exclues.",
+      "3": "Nous pouvons demander une confirmation des données avant l'expédition.",
+      "4": "Le délai de livraison/production peut varier selon la région et la logistique.",
+      "5": "Le programme peut être ajusté pour maintenir l'équité et la transparence."
+    },
+    "faqTitle": "Questions Fréquentes",
+    "faqSubtitle": "Obtenez des réponses à vos questions sur le programme de récompenses",
+    "faq": {
+      "1": {
+        "question": "Comment gagner une plaque ?",
+        "answer": "En atteignant un jalon de résultat confirmé sur HOOKLY, selon les règles du programme."
+      },
+      "2": {
+        "question": "Qu'est-ce qui compte dans le calcul ?",
+        "answer": "Les paiements confirmés des projets terminés sur la plateforme."
+      },
+      "3": {
+        "question": "Les annulations comptent-elles ?",
+        "answer": "Non, seuls les résultats confirmés et éligibles comptent."
+      },
+      "4": {
+        "question": "Quand le reçois-je ?",
+        "answer": "Après validation et confirmation d'expédition, dans le délai indiqué par le programme."
+      },
+      "5": {
+        "question": "Puis-je suivre ma progression ?",
+        "answer": "Oui — vous pouvez suivre votre progression directement sur le tableau de bord de la plateforme."
+      }
+    },
+    "ctaTitle": "Prêt à commencer ?",
+    "ctaDescription": "Rejoignez la communauté HOOKLY et commencez à construire votre succès.",
+    "ctaButton": "Commencer sur HOOKLY",
+    "ctaSecondary": "Voir comment ça marche"
   }
 }
