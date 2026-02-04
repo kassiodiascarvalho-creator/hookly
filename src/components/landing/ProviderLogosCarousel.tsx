@@ -110,36 +110,41 @@ export function ProviderLogosCarousel() {
                   }
             }
           >
-            {duplicatedLogos.map((logo, index) => (
-              <div
-                key={`${logo.name}-${index}`}
-                className="flex-shrink-0 px-4"
-              >
-                {logo.href ? (
-                  <a
-                    href={logo.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={logo.name}
-                    className="block"
-                  >
+            {duplicatedLogos.map((logo, index) => {
+              const isWise = logo.name === "Wise";
+              const sizeClass = isWise ? "h-10 md:h-14" : "h-8 md:h-10";
+              
+              return (
+                <div
+                  key={`${logo.name}-${index}`}
+                  className="flex-shrink-0 px-4"
+                >
+                  {logo.href ? (
+                    <a
+                      href={logo.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={logo.name}
+                      className="block"
+                    >
+                      <img
+                        src={logo.logo_url}
+                        alt={logo.name}
+                        loading="lazy"
+                        className={`${sizeClass} w-auto grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all duration-300 dark:brightness-150`}
+                      />
+                    </a>
+                  ) : (
                     <img
                       src={logo.logo_url}
                       alt={logo.name}
                       loading="lazy"
-                      className="h-8 md:h-10 w-auto grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all duration-300 dark:brightness-150"
+                      className={`${sizeClass} w-auto grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all duration-300 dark:brightness-150`}
                     />
-                  </a>
-                ) : (
-                  <img
-                    src={logo.logo_url}
-                    alt={logo.name}
-                    loading="lazy"
-                    className="h-8 md:h-10 w-auto grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all duration-300 dark:brightness-150"
-                  />
-                )}
-              </div>
-            ))}
+                  )}
+                </div>
+              );
+            })}
           </motion.div>
         </div>
 
