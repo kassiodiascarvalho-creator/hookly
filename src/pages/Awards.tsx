@@ -175,7 +175,7 @@ const Awards = () => {
                 className="flex flex-col"
               >
                 {/* Title + Value - Kiwify Style */}
-                <div className="mb-6">
+                <div className="mb-6 text-center">
                   <h3 className="text-2xl md:text-3xl font-bold text-primary mb-1">
                     {award.title} — {award.value}
                   </h3>
