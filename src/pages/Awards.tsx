@@ -116,10 +116,10 @@ const Awards = () => {
   };
 
   const navLinks = [
-    { to: "/how-it-works", label: t("nav.howItWorks") },
-    { to: "/for-companies", label: t("nav.forCompanies") },
-    { to: "/for-freelancers", label: t("nav.forFreelancers") },
-    { to: "/pricing", label: t("nav.pricing") },
+    { to: "/como-funciona", label: t("nav.howItWorks") },
+    { to: "/empresas", label: t("nav.forCompanies") },
+    { to: "/freelancers", label: t("nav.forFreelancers") },
+    { to: "/precos", label: t("nav.pricing") },
     { to: "/premiacao", label: t("nav.awards", "Premiação") },
   ];
 
@@ -379,7 +379,7 @@ const Awards = () => {
               >
                 Começar na HOOKLY
               </Button>
-              <Link to="/how-it-works">
+              <Link to="/como-funciona">
                 <Button size="lg" variant="outline" className="text-lg px-8">
                   Ver como funciona
                 </Button>

@@ -15,10 +15,10 @@ export const Navbar = ({ onOpenSignup }: NavbarProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const navLinks = [
-    { to: "/how-it-works", label: t("nav.howItWorks") },
-    { to: "/for-companies", label: t("nav.forCompanies") },
-    { to: "/for-freelancers", label: t("nav.forFreelancers") },
-    { to: "/pricing", label: t("nav.pricing") },
+    { to: "/como-funciona", label: t("nav.howItWorks") },
+    { to: "/empresas", label: t("nav.forCompanies") },
+    { to: "/freelancers", label: t("nav.forFreelancers") },
+    { to: "/precos", label: t("nav.pricing") },
     { to: "/premiacao", label: t("nav.awards", "Premiação") },
   ];
 
