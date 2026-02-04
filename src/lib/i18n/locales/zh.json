@@ -1267,22 +1267,22 @@
         "description": "第一个里程碑：开始建立吸引力和声誉。"
       },
       "2": {
-        "title": "级别 2 — 铜牌",
+        "title": "级别 2 — Blue",
         "value": "$10,000",
         "description": "一致性：持续交付和稳健增长。"
       },
       "3": {
-        "title": "级别 3 — 银牌",
+        "title": "级别 3 — Bronze",
         "value": "$20,000",
         "description": "规模化：展示专业成熟度的结果。"
       },
       "4": {
-        "title": "级别 4 — 金牌",
+        "title": "级别 4 — Gold",
         "value": "$100,000",
         "description": "高性能：质量 + 数量与稳定性。"
       },
       "5": {
-        "title": "级别 5 — 钻石",
+        "title": "级别 5 — Black",
         "value": "$200,000",
         "description": "精英：HOOKLY 社区的标杆。"
       }
