@@ -1273,12 +1273,12 @@
         "description": "Premier jalon : vous avez commencé à construire traction et réputation."
       },
       "2": {
-        "title": "Niveau 2 — Bronze",
+        "title": "Niveau 2 — Blue",
         "value": "10 000 $",
         "description": "Constance : livraisons récurrentes et croissance solide."
       },
       "3": {
-        "title": "Niveau 3 — Silver",
+        "title": "Niveau 3 — Bronze",
         "value": "20 000 $",
         "description": "Échelle : des résultats qui montrent une maturité professionnelle."
       },
@@ -1288,7 +1288,7 @@
         "description": "Haute performance : qualité + volume avec stabilité."
       },
       "5": {
-        "title": "Niveau 5 — Diamond",
+        "title": "Niveau 5 — Black",
         "value": "200 000 $",
         "description": "Élite : une référence au sein de la communauté HOOKLY."
       }
