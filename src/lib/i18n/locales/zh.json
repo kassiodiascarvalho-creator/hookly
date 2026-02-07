@@ -22,7 +22,28 @@
     "adminPanel": "管理面板",
     "contracts": "合同",
     "aiHelp": "AI助手",
-    "awards": "奖励"
+    "awards": "奖励",
+    "reportBug": "报告错误",
+    "suggestImprovement": "建议改进"
+  },
+  "feedback": {
+    "reportBug": "报告错误",
+    "suggestImprovement": "建议改进",
+    "bugDescription": "描述您发现的错误，以便我们修复。",
+    "suggestionDescription": "分享您改进平台的想法。",
+    "title": "标题",
+    "description": "描述",
+    "bugTitlePlaceholder": "错误的简要描述",
+    "suggestionTitlePlaceholder": "建议的简要描述",
+    "bugDescriptionPlaceholder": "详细描述错误。您在做什么？发生了什么？",
+    "suggestionDescriptionPlaceholder": "详细描述您的建议。这将如何改善您的体验？",
+    "currentPage": "当前页面",
+    "submit": "提交",
+    "loginRequired": "您需要登录才能提交反馈",
+    "fillAllFields": "请填写所有字段",
+    "bugReported": "错误报告成功！感谢您的反馈。",
+    "suggestionSent": "建议发送成功！感谢您的反馈。",
+    "submitError": "提交反馈时出错。请重试。"
   },
   "hero": {
     "badge": "最佳评级",
@@ -531,7 +552,9 @@
     "submit": "提交",
     "logout": "退出登录",
     "days": "天",
-    "later": "稍后"
+    "later": "稍后",
+    "company": "企业",
+    "freelancer": "自由职业者"
   },
   "profileGate": {
     "title": "完善您的资料",

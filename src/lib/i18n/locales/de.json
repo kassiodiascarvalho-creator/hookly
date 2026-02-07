@@ -22,7 +22,28 @@
     "adminPanel": "Admin Panel",
     "contracts": "Verträge",
     "aiHelp": "KI-Hilfe",
-    "awards": "Auszeichnungen"
+    "awards": "Auszeichnungen",
+    "reportBug": "Fehler Melden",
+    "suggestImprovement": "Verbesserung Vorschlagen"
+  },
+  "feedback": {
+    "reportBug": "Fehler Melden",
+    "suggestImprovement": "Verbesserung Vorschlagen",
+    "bugDescription": "Beschreiben Sie den gefundenen Fehler, damit wir ihn beheben können.",
+    "suggestionDescription": "Teilen Sie Ihre Idee zur Verbesserung der Plattform.",
+    "title": "Titel",
+    "description": "Beschreibung",
+    "bugTitlePlaceholder": "Kurze Beschreibung des Fehlers",
+    "suggestionTitlePlaceholder": "Kurze Beschreibung des Vorschlags",
+    "bugDescriptionPlaceholder": "Beschreiben Sie den Fehler detailliert. Was haben Sie getan? Was ist passiert?",
+    "suggestionDescriptionPlaceholder": "Beschreiben Sie Ihren Vorschlag detailliert. Wie würde dies Ihre Erfahrung verbessern?",
+    "currentPage": "Aktuelle Seite",
+    "submit": "Absenden",
+    "loginRequired": "Sie müssen angemeldet sein, um Feedback zu senden",
+    "fillAllFields": "Bitte füllen Sie alle Felder aus",
+    "bugReported": "Fehler erfolgreich gemeldet! Danke für Ihr Feedback.",
+    "suggestionSent": "Vorschlag erfolgreich gesendet! Danke für Ihr Feedback.",
+    "submitError": "Fehler beim Senden des Feedbacks. Bitte versuchen Sie es erneut."
   },
   "hero": {
     "badge": "Top Bewertet",
@@ -531,7 +552,9 @@
     "submit": "Absenden",
     "logout": "Abmelden",
     "days": "Tage",
-    "later": "Später"
+    "later": "Später",
+    "company": "Unternehmen",
+    "freelancer": "Freelancer"
   },
   "profileGate": {
     "title": "Profil Vervollständigen",

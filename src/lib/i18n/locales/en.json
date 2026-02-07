@@ -236,7 +236,28 @@
     "adminPanel": "Admin Panel",
     "contracts": "Contracts",
     "aiHelp": "AI Help",
-    "awards": "Awards"
+    "awards": "Awards",
+    "reportBug": "Report Bug",
+    "suggestImprovement": "Suggest Improvement"
+  },
+  "feedback": {
+    "reportBug": "Report Bug",
+    "suggestImprovement": "Suggest Improvement",
+    "bugDescription": "Describe the bug you found so we can fix it.",
+    "suggestionDescription": "Share your idea to improve the platform.",
+    "title": "Title",
+    "description": "Description",
+    "bugTitlePlaceholder": "Brief description of the bug",
+    "suggestionTitlePlaceholder": "Brief description of the suggestion",
+    "bugDescriptionPlaceholder": "Describe the bug in detail. What were you doing? What happened?",
+    "suggestionDescriptionPlaceholder": "Describe your suggestion in detail. How would this improve your experience?",
+    "currentPage": "Current page",
+    "submit": "Submit",
+    "loginRequired": "You need to be logged in to submit feedback",
+    "fillAllFields": "Please fill all fields",
+    "bugReported": "Bug reported successfully! Thank you for your feedback.",
+    "suggestionSent": "Suggestion sent successfully! Thank you for your feedback.",
+    "submitError": "Error submitting feedback. Please try again."
   },
   "projects": {
     "title": "Projects",
@@ -1243,7 +1264,9 @@
     "contracts": "contracts",
     "projects": "projects",
     "continue": "Continue",
-    "close": "Close"
+    "close": "Close",
+    "company": "Company",
+    "freelancer": "Freelancer"
   },
   "profileGate": {
     "title": "Complete Your Profile",
@@ -1426,7 +1449,51 @@
     "source": "Source",
     "searchCompanies": "Search companies...",
     "allPlans": "All plans",
-    "noCompaniesFound": "No companies found"
+    "noCompaniesFound": "No companies found",
+    "feedbacks": {
+      "title": "Feedbacks",
+      "description": "Reported bugs and user suggestions",
+      "total": "Total Feedbacks",
+      "bugs": "Bugs",
+      "suggestions": "Suggestions",
+      "pending": "Pending",
+      "list": "Feedback List",
+      "listDescription": "Manage all feedback submitted by users",
+      "filterType": "Type",
+      "filterStatus": "Status",
+      "allTypes": "All types",
+      "allStatus": "All statuses",
+      "type": {
+        "bug": "Bug",
+        "suggestion": "Suggestion"
+      },
+      "status": {
+        "pending": "Pending",
+        "in_progress": "In Progress",
+        "resolved": "Resolved",
+        "closed": "Closed"
+      },
+      "tableType": "Type",
+      "tableTitle": "Title",
+      "tableUserType": "User",
+      "tableStatus": "Status",
+      "tableDate": "Date",
+      "tableActions": "Actions",
+      "noFeedbacks": "No feedback found",
+      "detailDescription": "View and update feedback status",
+      "descriptionLabel": "Description",
+      "pageUrl": "Source page",
+      "createdAt": "Created at",
+      "updateStatus": "Update status",
+      "adminNotes": "Admin notes",
+      "adminNotesPlaceholder": "Add notes about how the issue was resolved or why it was closed...",
+      "save": "Save",
+      "updated": "Feedback updated successfully",
+      "updateError": "Error updating feedback",
+      "deleted": "Feedback deleted successfully",
+      "deleteError": "Error deleting feedback",
+      "confirmDelete": "Are you sure you want to delete this feedback?"
+    }
   },
   "finances": {
     "title": "Finances",

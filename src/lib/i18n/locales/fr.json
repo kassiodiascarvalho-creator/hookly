@@ -22,7 +22,28 @@
     "adminPanel": "Panneau Admin",
     "contracts": "Contrats",
     "aiHelp": "Aide IA",
-    "awards": "Récompenses"
+    "awards": "Récompenses",
+    "reportBug": "Signaler un Bug",
+    "suggestImprovement": "Suggérer une Amélioration"
+  },
+  "feedback": {
+    "reportBug": "Signaler un Bug",
+    "suggestImprovement": "Suggérer une Amélioration",
+    "bugDescription": "Décrivez le bug que vous avez trouvé pour que nous puissions le corriger.",
+    "suggestionDescription": "Partagez votre idée pour améliorer la plateforme.",
+    "title": "Titre",
+    "description": "Description",
+    "bugTitlePlaceholder": "Brève description du bug",
+    "suggestionTitlePlaceholder": "Brève description de la suggestion",
+    "bugDescriptionPlaceholder": "Décrivez le bug en détail. Que faisiez-vous? Que s'est-il passé?",
+    "suggestionDescriptionPlaceholder": "Décrivez votre suggestion en détail. Comment cela améliorerait-il votre expérience?",
+    "currentPage": "Page actuelle",
+    "submit": "Envoyer",
+    "loginRequired": "Vous devez être connecté pour envoyer un commentaire",
+    "fillAllFields": "Veuillez remplir tous les champs",
+    "bugReported": "Bug signalé avec succès! Merci pour votre commentaire.",
+    "suggestionSent": "Suggestion envoyée avec succès! Merci pour votre commentaire.",
+    "submitError": "Erreur lors de l'envoi du commentaire. Veuillez réessayer."
   },
   "hero": {
     "badge": "Meilleur Noté",
@@ -531,7 +552,9 @@
     "submit": "Soumettre",
     "logout": "Déconnexion",
     "days": "jours",
-    "later": "Plus tard"
+    "later": "Plus tard",
+    "company": "Entreprise",
+    "freelancer": "Freelance"
   },
   "profileGate": {
     "title": "Complétez votre Profil",

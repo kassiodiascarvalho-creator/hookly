@@ -260,7 +260,28 @@
     "adminPanel": "Painel Admin",
     "contracts": "Contratos",
     "aiHelp": "Ajuda IA",
-    "awards": "Premiação"
+    "awards": "Premiação",
+    "reportBug": "Reportar Erro",
+    "suggestImprovement": "Sugerir Melhoria"
+  },
+  "feedback": {
+    "reportBug": "Reportar Erro",
+    "suggestImprovement": "Sugerir Melhoria",
+    "bugDescription": "Descreva o erro que você encontrou para que possamos corrigi-lo.",
+    "suggestionDescription": "Compartilhe sua ideia para melhorar a plataforma.",
+    "title": "Título",
+    "description": "Descrição",
+    "bugTitlePlaceholder": "Breve descrição do erro",
+    "suggestionTitlePlaceholder": "Breve descrição da sugestão",
+    "bugDescriptionPlaceholder": "Descreva o erro em detalhes. O que você estava fazendo? O que aconteceu?",
+    "suggestionDescriptionPlaceholder": "Descreva sua sugestão em detalhes. Como isso melhoraria sua experiência?",
+    "currentPage": "Página atual",
+    "submit": "Enviar",
+    "loginRequired": "Você precisa estar logado para enviar feedback",
+    "fillAllFields": "Preencha todos os campos",
+    "bugReported": "Erro reportado com sucesso! Obrigado pelo feedback.",
+    "suggestionSent": "Sugestão enviada com sucesso! Obrigado pelo feedback.",
+    "submitError": "Erro ao enviar feedback. Tente novamente."
   },
   "projects": {
     "title": "Projetos",
@@ -1288,7 +1309,9 @@
     "contracts": "contratos",
     "projects": "projetos",
     "continue": "Continuar",
-    "close": "Fechar"
+    "close": "Fechar",
+    "company": "Empresa",
+    "freelancer": "Freelancer"
   },
   "profileGate": {
     "title": "Complete seu Perfil",
@@ -1458,7 +1481,51 @@
     "source": "Fonte",
     "searchCompanies": "Buscar empresas...",
     "allPlans": "Todos os planos",
-    "noCompaniesFound": "Nenhuma empresa encontrada"
+    "noCompaniesFound": "Nenhuma empresa encontrada",
+    "feedbacks": {
+      "title": "Feedbacks",
+      "description": "Erros reportados e sugestões de usuários",
+      "total": "Total de Feedbacks",
+      "bugs": "Erros",
+      "suggestions": "Sugestões",
+      "pending": "Pendentes",
+      "list": "Lista de Feedbacks",
+      "listDescription": "Gerencie todos os feedbacks enviados pelos usuários",
+      "filterType": "Tipo",
+      "filterStatus": "Status",
+      "allTypes": "Todos os tipos",
+      "allStatus": "Todos os status",
+      "type": {
+        "bug": "Erro",
+        "suggestion": "Sugestão"
+      },
+      "status": {
+        "pending": "Pendente",
+        "in_progress": "Em Andamento",
+        "resolved": "Resolvido",
+        "closed": "Fechado"
+      },
+      "tableType": "Tipo",
+      "tableTitle": "Título",
+      "tableUserType": "Usuário",
+      "tableStatus": "Status",
+      "tableDate": "Data",
+      "tableActions": "Ações",
+      "noFeedbacks": "Nenhum feedback encontrado",
+      "detailDescription": "Visualize e atualize o status do feedback",
+      "descriptionLabel": "Descrição",
+      "pageUrl": "Página de origem",
+      "createdAt": "Criado em",
+      "updateStatus": "Atualizar status",
+      "adminNotes": "Notas do admin",
+      "adminNotesPlaceholder": "Adicione notas sobre como o problema foi resolvido ou por que foi fechado...",
+      "save": "Salvar",
+      "updated": "Feedback atualizado com sucesso",
+      "updateError": "Erro ao atualizar feedback",
+      "deleted": "Feedback excluído com sucesso",
+      "deleteError": "Erro ao excluir feedback",
+      "confirmDelete": "Tem certeza que deseja excluir este feedback?"
+    }
   },
   "finances": {
     "title": "Finanças",
