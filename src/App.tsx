@@ -54,6 +54,7 @@ import AdminTierManager from "./pages/admin/AdminTierManager";
 import AdminLandingPage from "./pages/admin/AdminLandingPage";
 import AdminManagement from "./pages/admin/AdminManagement";
 import AdminIdentityVerifications from "./pages/admin/AdminIdentityVerifications";
+import AdminFeedbacks from "./pages/admin/AdminFeedbacks";
 
 // Public pages
 import VerifiedCompanies from "./pages/VerifiedCompanies";
@@ -105,6 +106,7 @@ const App = () => (
               <Route path="/admin/tiers" element={<AdminTierManager />} />
               <Route path="/admin/landing-page" element={<AdminLandingPage />} />
               <Route path="/admin/management" element={<AdminManagement />} />
+              <Route path="/admin/feedbacks" element={<AdminFeedbacks />} />
             </Route>
             
             {/* Company Dashboard Routes */}

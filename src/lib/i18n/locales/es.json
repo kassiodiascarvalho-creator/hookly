@@ -22,7 +22,28 @@
     "adminPanel": "Panel Admin",
     "contracts": "Contratos",
     "aiHelp": "Ayuda IA",
-    "awards": "Premios"
+    "awards": "Premios",
+    "reportBug": "Reportar Error",
+    "suggestImprovement": "Sugerir Mejora"
+  },
+  "feedback": {
+    "reportBug": "Reportar Error",
+    "suggestImprovement": "Sugerir Mejora",
+    "bugDescription": "Describe el error que encontraste para que podamos corregirlo.",
+    "suggestionDescription": "Comparte tu idea para mejorar la plataforma.",
+    "title": "Título",
+    "description": "Descripción",
+    "bugTitlePlaceholder": "Breve descripción del error",
+    "suggestionTitlePlaceholder": "Breve descripción de la sugerencia",
+    "bugDescriptionPlaceholder": "Describe el error en detalle. ¿Qué estabas haciendo? ¿Qué pasó?",
+    "suggestionDescriptionPlaceholder": "Describe tu sugerencia en detalle. ¿Cómo mejoraría tu experiencia?",
+    "currentPage": "Página actual",
+    "submit": "Enviar",
+    "loginRequired": "Debes iniciar sesión para enviar comentarios",
+    "fillAllFields": "Por favor completa todos los campos",
+    "bugReported": "¡Error reportado con éxito! Gracias por tu comentario.",
+    "suggestionSent": "¡Sugerencia enviada con éxito! Gracias por tu comentario.",
+    "submitError": "Error al enviar comentario. Por favor intenta de nuevo."
   },
   "hero": {
     "badge": "Mejor Calificado",
@@ -531,7 +552,9 @@
     "submit": "Enviar",
     "logout": "Cerrar sesión",
     "days": "días",
-    "later": "Después"
+    "later": "Después",
+    "company": "Empresa",
+    "freelancer": "Freelancer"
   },
   "profileGate": {
     "title": "Completa tu Perfil",
