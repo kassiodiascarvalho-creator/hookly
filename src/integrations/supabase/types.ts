@@ -71,6 +71,39 @@ export type Database = {
         }
         Relationships: []
       }
+      analytics_page_views: {
+        Row: {
+          country: string | null
+          created_at: string | null
+          device_type: string | null
+          id: string
+          page_path: string
+          referrer: string | null
+          session_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string | null
+          device_type?: string | null
+          id?: string
+          page_path: string
+          referrer?: string | null
+          session_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          country?: string | null
+          created_at?: string | null
+          device_type?: string | null
+          id?: string
+          page_path?: string
+          referrer?: string | null
+          session_id?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string
@@ -3327,6 +3360,7 @@ export type Database = {
         Args: { p_action_key: string; p_user_id: string }
         Returns: boolean
       }
+      cleanup_old_analytics: { Args: never; Returns: undefined }
       consume_proposal_credit: {
         Args: { p_freelancer_user_id: string }
         Returns: boolean

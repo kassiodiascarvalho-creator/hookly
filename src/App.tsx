@@ -8,6 +8,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { AdminLayout } from "@/components/layouts/AdminLayout";
 import { AnalyticsTracker } from "@/components/AnalyticsTracker";
+import { AdvancedAnalyticsTracker } from "@/components/analytics";
 import "@/lib/i18n";
 
 import Index from "./pages/Index";
@@ -72,6 +73,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AnalyticsTracker />
+          <AdvancedAnalyticsTracker />
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Index />} />
