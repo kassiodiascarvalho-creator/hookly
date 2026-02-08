@@ -16,6 +16,9 @@ export interface AdminPermissions {
   can_manage_payment_providers: boolean;
   can_manage_landing_page: boolean;
   can_manage_admins: boolean;
+  can_manage_analytics: boolean;
+  can_manage_identity: boolean;
+  can_manage_feedbacks: boolean;
   added_by_user_id: string | null;
   created_at: string;
   updated_at: string;

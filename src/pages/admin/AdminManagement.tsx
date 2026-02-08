@@ -30,6 +30,9 @@ const PERMISSION_LABELS: Record<string, { label: string; description: string }> 
   can_manage_tiers: { label: "Tiers/Planos", description: "Gerenciar tiers e planos" },
   can_manage_payment_providers: { label: "Provedores de Pagamento", description: "Configurar provedores de pagamento" },
   can_manage_landing_page: { label: "Landing Page", description: "Editar conteúdo da landing page" },
+  can_manage_analytics: { label: "Analytics", description: "Visualizar dados de analytics e gravações" },
+  can_manage_identity: { label: "Verificações de Identidade", description: "Revisar verificações de identidade (KYC)" },
+  can_manage_feedbacks: { label: "Feedbacks", description: "Visualizar e gerenciar feedbacks de usuários" },
 };
 
 const DEFAULT_PERMISSIONS: Partial<AdminPermissions> = {
@@ -42,6 +45,9 @@ const DEFAULT_PERMISSIONS: Partial<AdminPermissions> = {
   can_manage_tiers: false,
   can_manage_payment_providers: false,
   can_manage_landing_page: false,
+  can_manage_analytics: false,
+  can_manage_identity: false,
+  can_manage_feedbacks: false,
 };
 
 export default function AdminManagement() {
@@ -135,6 +141,9 @@ export default function AdminManagement() {
       can_manage_tiers: admin.can_manage_tiers,
       can_manage_payment_providers: admin.can_manage_payment_providers,
       can_manage_landing_page: admin.can_manage_landing_page,
+      can_manage_analytics: admin.can_manage_analytics,
+      can_manage_identity: admin.can_manage_identity,
+      can_manage_feedbacks: admin.can_manage_feedbacks,
     });
     setEditDialogOpen(true);
   };
