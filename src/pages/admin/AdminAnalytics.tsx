@@ -16,12 +16,8 @@ import {
   XAxis, 
   YAxis, 
   CartesianGrid, 
-  ResponsiveContainer,
   BarChart,
   Bar,
-  PieChart,
-  Pie,
-  Cell
 } from "recharts";
 import { 
   Users, 
@@ -34,9 +30,13 @@ import {
   Smartphone,
   Link2,
   FileText,
-  Activity
+  Activity,
+  Layers,
+  Video,
+  BarChart3
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { EventsTab, HeatmapTab, FunnelTab, SessionReplayTab } from "@/components/admin/analytics";
 
 interface AnalyticsData {
   timeSeries: {
@@ -327,6 +327,8 @@ export default function AdminAnalytics() {
     },
   };
 
+  const { start, end } = getDateRange(timeRange);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -340,10 +342,10 @@ export default function AdminAnalytics() {
 
         <div className="flex items-center gap-3">
           {/* Current Visitors */}
-          <div className="flex items-center gap-2 px-3 py-2 bg-green-500/10 border border-green-500/20 rounded-lg">
-            <Activity className="h-4 w-4 text-green-500 animate-pulse" />
+          <div className="flex items-center gap-2 px-3 py-2 bg-primary/10 border border-primary/20 rounded-lg">
+            <Activity className="h-4 w-4 text-primary animate-pulse" />
             <span className="text-sm font-medium">
-              <span className="text-green-500">{currentVisitors}</span>
+              <span className="text-primary">{currentVisitors}</span>
               <span className="text-muted-foreground ml-1">{t("admin.analytics.currentVisitors")}</span>
             </span>
           </div>
@@ -363,228 +365,277 @@ export default function AdminAnalytics() {
         </div>
       </div>
 
-      {/* Metric Cards */}
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-5">
-        <MetricCard
-          title={t("admin.analytics.visitors")}
-          value={analyticsData?.timeSeries.visitors.total || 0}
-          icon={Users}
-          loading={loading}
-        />
-        <MetricCard
-          title={t("admin.analytics.pageviews")}
-          value={analyticsData?.timeSeries.pageviews.total || 0}
-          icon={Eye}
-          loading={loading}
-        />
-        <MetricCard
-          title={t("admin.analytics.viewsPerVisit")}
-          value={analyticsData?.timeSeries.pageviewsPerVisit.total || 0}
-          icon={MousePointerClick}
-          loading={loading}
-          decimals={2}
-        />
-        <MetricCard
-          title={t("admin.analytics.avgDuration")}
-          value={formatDuration(analyticsData?.timeSeries.sessionDuration.total || 0)}
-          icon={Clock}
-          loading={loading}
-          isText
-        />
-        <MetricCard
-          title={t("admin.analytics.bounceRate")}
-          value={`${analyticsData?.timeSeries.bounceRate.total || 0}%`}
-          icon={TrendingDown}
-          loading={loading}
-          isText
-        />
-      </div>
+      {/* Tabs for different analytics views */}
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-flex">
+          <TabsTrigger value="overview" className="gap-2">
+            <BarChart3 className="h-4 w-4" />
+            <span className="hidden sm:inline">{t("admin.analytics.overview", "Visão Geral")}</span>
+          </TabsTrigger>
+          <TabsTrigger value="events" className="gap-2">
+            <MousePointerClick className="h-4 w-4" />
+            <span className="hidden sm:inline">{t("admin.analytics.events", "Eventos")}</span>
+          </TabsTrigger>
+          <TabsTrigger value="heatmap" className="gap-2">
+            <Layers className="h-4 w-4" />
+            <span className="hidden sm:inline">{t("admin.analytics.heatmap", "Heatmap")}</span>
+          </TabsTrigger>
+          <TabsTrigger value="funnel" className="gap-2">
+            <TrendingDown className="h-4 w-4" />
+            <span className="hidden sm:inline">{t("admin.analytics.funnel", "Funil")}</span>
+          </TabsTrigger>
+          <TabsTrigger value="replays" className="gap-2">
+            <Video className="h-4 w-4" />
+            <span className="hidden sm:inline">{t("admin.analytics.replays", "Replays")}</span>
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Charts */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Visitors Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">{t("admin.analytics.visitorsOverTime")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <Skeleton className="h-[250px] w-full" />
-            ) : (
-              <ChartContainer config={chartConfig} className="h-[250px] w-full">
-                <LineChart data={analyticsData?.timeSeries.visitors.data || []}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis 
-                    dataKey="date" 
-                    tickFormatter={formatDate}
-                    tick={{ fontSize: 12 }}
-                    className="text-muted-foreground"
-                  />
-                  <YAxis tick={{ fontSize: 12 }} className="text-muted-foreground" />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Line 
-                    type="monotone" 
-                    dataKey="value" 
-                    stroke="hsl(var(--primary))" 
-                    strokeWidth={2}
-                    dot={false}
-                  />
-                </LineChart>
-              </ChartContainer>
-            )}
-          </CardContent>
-        </Card>
+        {/* Overview Tab */}
+        <TabsContent value="overview" className="space-y-6">
+          {/* Metric Cards */}
+          <div className="grid gap-4 grid-cols-2 lg:grid-cols-5">
+            <MetricCard
+              title={t("admin.analytics.visitors")}
+              value={analyticsData?.timeSeries.visitors.total || 0}
+              icon={Users}
+              loading={loading}
+            />
+            <MetricCard
+              title={t("admin.analytics.pageviews")}
+              value={analyticsData?.timeSeries.pageviews.total || 0}
+              icon={Eye}
+              loading={loading}
+            />
+            <MetricCard
+              title={t("admin.analytics.viewsPerVisit")}
+              value={analyticsData?.timeSeries.pageviewsPerVisit.total || 0}
+              icon={MousePointerClick}
+              loading={loading}
+              decimals={2}
+            />
+            <MetricCard
+              title={t("admin.analytics.avgDuration")}
+              value={formatDuration(analyticsData?.timeSeries.sessionDuration.total || 0)}
+              icon={Clock}
+              loading={loading}
+              isText
+            />
+            <MetricCard
+              title={t("admin.analytics.bounceRate")}
+              value={`${analyticsData?.timeSeries.bounceRate.total || 0}%`}
+              icon={TrendingDown}
+              loading={loading}
+              isText
+            />
+          </div>
 
-        {/* Pageviews Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">{t("admin.analytics.pageviewsOverTime")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <Skeleton className="h-[250px] w-full" />
-            ) : (
-              <ChartContainer config={chartConfig} className="h-[250px] w-full">
-                <BarChart data={analyticsData?.timeSeries.pageviews.data || []}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis 
-                    dataKey="date" 
-                    tickFormatter={formatDate}
-                    tick={{ fontSize: 12 }}
-                    className="text-muted-foreground"
-                  />
-                  <YAxis tick={{ fontSize: 12 }} className="text-muted-foreground" />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ChartContainer>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+          {/* Charts */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Visitors Chart */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">{t("admin.analytics.visitorsOverTime")}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <Skeleton className="h-[250px] w-full" />
+                ) : (
+                  <ChartContainer config={chartConfig} className="h-[250px] w-full">
+                    <LineChart data={analyticsData?.timeSeries.visitors.data || []}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis 
+                        dataKey="date" 
+                        tickFormatter={formatDate}
+                        tick={{ fontSize: 12 }}
+                        className="text-muted-foreground"
+                      />
+                      <YAxis tick={{ fontSize: 12 }} className="text-muted-foreground" />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Line 
+                        type="monotone" 
+                        dataKey="value" 
+                        stroke="hsl(var(--primary))" 
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                    </LineChart>
+                  </ChartContainer>
+                )}
+              </CardContent>
+            </Card>
 
-      {/* Lists */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {/* Top Pages */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              {t("admin.analytics.topPages")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="space-y-2">
-                {[...Array(5)].map((_, i) => (
-                  <Skeleton key={i} className="h-8 w-full" />
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {analyticsData?.lists.page.data.slice(0, 5).map((item, index) => (
-                  <div key={item.label} className="flex items-center justify-between text-sm">
-                    <span className="truncate text-muted-foreground" title={item.label}>
-                      {item.label}
-                    </span>
-                    <Badge variant="secondary">{item.value}</Badge>
+            {/* Pageviews Chart */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">{t("admin.analytics.pageviewsOverTime")}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <Skeleton className="h-[250px] w-full" />
+                ) : (
+                  <ChartContainer config={chartConfig} className="h-[250px] w-full">
+                    <BarChart data={analyticsData?.timeSeries.pageviews.data || []}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis 
+                        dataKey="date" 
+                        tickFormatter={formatDate}
+                        tick={{ fontSize: 12 }}
+                        className="text-muted-foreground"
+                      />
+                      <YAxis tick={{ fontSize: 12 }} className="text-muted-foreground" />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ChartContainer>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Lists */}
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {/* Top Pages */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  {t("admin.analytics.topPages")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="space-y-2">
+                    {[...Array(5)].map((_, i) => (
+                      <Skeleton key={i} className="h-8 w-full" />
+                    ))}
                   </div>
-                )) || <p className="text-sm text-muted-foreground">{t("admin.analytics.noData")}</p>}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Traffic Sources */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Link2 className="h-4 w-4" />
-              {t("admin.analytics.sources")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="space-y-2">
-                {[...Array(5)].map((_, i) => (
-                  <Skeleton key={i} className="h-8 w-full" />
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {analyticsData?.lists.source.data.slice(0, 5).map((item) => (
-                  <div key={item.label} className="flex items-center justify-between text-sm">
-                    <span className="truncate text-muted-foreground">{item.label}</span>
-                    <Badge variant="secondary">{item.value}</Badge>
+                ) : (
+                  <div className="space-y-2">
+                    {analyticsData?.lists.page.data.slice(0, 5).map((item) => (
+                      <div key={item.label} className="flex items-center justify-between text-sm">
+                        <span className="truncate text-muted-foreground" title={item.label}>
+                          {item.label}
+                        </span>
+                        <Badge variant="secondary">{item.value}</Badge>
+                      </div>
+                    )) || <p className="text-sm text-muted-foreground">{t("admin.analytics.noData")}</p>}
                   </div>
-                )) || <p className="text-sm text-muted-foreground">{t("admin.analytics.noData")}</p>}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                )}
+              </CardContent>
+            </Card>
 
-        {/* Devices */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Monitor className="h-4 w-4" />
-              {t("admin.analytics.devices")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="space-y-2">
-                {[...Array(3)].map((_, i) => (
-                  <Skeleton key={i} className="h-8 w-full" />
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {analyticsData?.lists.device.data.map((item) => (
-                  <div key={item.label} className="flex items-center justify-between text-sm">
-                    <span className="flex items-center gap-2 text-muted-foreground">
-                      {getDeviceIcon(item.label)}
-                      {item.label.charAt(0).toUpperCase() + item.label.slice(1)}
-                    </span>
-                    <Badge variant="secondary">{item.value}</Badge>
+            {/* Traffic Sources */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Link2 className="h-4 w-4" />
+                  {t("admin.analytics.sources")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="space-y-2">
+                    {[...Array(5)].map((_, i) => (
+                      <Skeleton key={i} className="h-8 w-full" />
+                    ))}
                   </div>
-                )) || <p className="text-sm text-muted-foreground">{t("admin.analytics.noData")}</p>}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                ) : (
+                  <div className="space-y-2">
+                    {analyticsData?.lists.source.data.slice(0, 5).map((item) => (
+                      <div key={item.label} className="flex items-center justify-between text-sm">
+                        <span className="truncate text-muted-foreground">{item.label}</span>
+                        <Badge variant="secondary">{item.value}</Badge>
+                      </div>
+                    )) || <p className="text-sm text-muted-foreground">{t("admin.analytics.noData")}</p>}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
-        {/* Countries */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Globe className="h-4 w-4" />
-              {t("admin.analytics.countries")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="space-y-2">
-                {[...Array(5)].map((_, i) => (
-                  <Skeleton key={i} className="h-8 w-full" />
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {analyticsData?.lists.country.data.slice(0, 5).map((item) => (
-                  <div key={item.label} className="flex items-center justify-between text-sm">
-                    <span className="flex items-center gap-2 text-muted-foreground">
-                      <span>{getCountryFlag(item.label)}</span>
-                      {item.label}
-                    </span>
-                    <Badge variant="secondary">{item.value}</Badge>
+            {/* Devices */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Monitor className="h-4 w-4" />
+                  {t("admin.analytics.devices")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="space-y-2">
+                    {[...Array(3)].map((_, i) => (
+                      <Skeleton key={i} className="h-8 w-full" />
+                    ))}
                   </div>
-                )) || <p className="text-sm text-muted-foreground">{t("admin.analytics.noData")}</p>}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                ) : (
+                  <div className="space-y-2">
+                    {analyticsData?.lists.device.data.map((item) => (
+                      <div key={item.label} className="flex items-center justify-between text-sm">
+                        <span className="flex items-center gap-2 text-muted-foreground">
+                          {getDeviceIcon(item.label)}
+                          {item.label.charAt(0).toUpperCase() + item.label.slice(1)}
+                        </span>
+                        <Badge variant="secondary">{item.value}</Badge>
+                      </div>
+                    )) || <p className="text-sm text-muted-foreground">{t("admin.analytics.noData")}</p>}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Countries */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Globe className="h-4 w-4" />
+                  {t("admin.analytics.countries")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="space-y-2">
+                    {[...Array(5)].map((_, i) => (
+                      <Skeleton key={i} className="h-8 w-full" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {analyticsData?.lists.country.data.slice(0, 5).map((item) => (
+                      <div key={item.label} className="flex items-center justify-between text-sm">
+                        <span className="flex items-center gap-2 text-muted-foreground">
+                          <span>{getCountryFlag(item.label)}</span>
+                          {item.label}
+                        </span>
+                        <Badge variant="secondary">{item.value}</Badge>
+                      </div>
+                    )) || <p className="text-sm text-muted-foreground">{t("admin.analytics.noData")}</p>}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Events Tab */}
+        <TabsContent value="events">
+          <EventsTab timeRange={timeRange} startDate={start} endDate={end} />
+        </TabsContent>
+
+        {/* Heatmap Tab */}
+        <TabsContent value="heatmap">
+          <HeatmapTab timeRange={timeRange} startDate={start} endDate={end} />
+        </TabsContent>
+
+        {/* Funnel Tab */}
+        <TabsContent value="funnel">
+          <FunnelTab timeRange={timeRange} startDate={start} endDate={end} />
+        </TabsContent>
+
+        {/* Session Replays Tab */}
+        <TabsContent value="replays">
+          <SessionReplayTab timeRange={timeRange} startDate={start} endDate={end} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
