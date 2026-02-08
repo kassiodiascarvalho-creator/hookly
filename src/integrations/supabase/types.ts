@@ -3003,6 +3003,54 @@ export type Database = {
         }
         Relationships: []
       }
+      user_feedbacks: {
+        Row: {
+          admin_notes: string | null
+          created_at: string | null
+          description: string
+          feedback_type: string
+          id: string
+          page_url: string | null
+          resolved_at: string | null
+          resolved_by_admin_id: string | null
+          status: string
+          title: string
+          updated_at: string | null
+          user_id: string
+          user_type: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string | null
+          description: string
+          feedback_type: string
+          id?: string
+          page_url?: string | null
+          resolved_at?: string | null
+          resolved_by_admin_id?: string | null
+          status?: string
+          title: string
+          updated_at?: string | null
+          user_id: string
+          user_type: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string | null
+          description?: string
+          feedback_type?: string
+          id?: string
+          page_url?: string | null
+          resolved_at?: string | null
+          resolved_by_admin_id?: string | null
+          status?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+          user_type?: string
+        }
+        Relationships: []
+      }
       user_presence: {
         Row: {
           created_at: string
