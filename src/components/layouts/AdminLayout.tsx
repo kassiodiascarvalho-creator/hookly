@@ -36,18 +36,18 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { path: "/admin", icon: LayoutDashboard, labelKey: "admin.dashboard" },
-  { path: "/admin/analytics", icon: BarChart3, labelKey: "admin.analytics.title" },
+  { path: "/admin/analytics", icon: BarChart3, labelKey: "admin.analytics.title", permissionKey: "can_manage_analytics" },
   { path: "/admin/users", icon: Users, labelKey: "admin.users", permissionKey: "can_manage_users" },
   { path: "/admin/freelancers", icon: UserCheck, labelKey: "admin.freelancers", permissionKey: "can_manage_freelancers" },
   { path: "/admin/companies", icon: Building2, labelKey: "admin.companies", permissionKey: "can_manage_companies" },
   { path: "/admin/projects", icon: FolderOpen, labelKey: "admin.projects", permissionKey: "can_manage_projects" },
-  { path: "/admin/identity", icon: Shield, labelKey: "admin.identityVerifications", permissionKey: "can_manage_users" },
+  { path: "/admin/identity", icon: Shield, labelKey: "admin.identityVerifications", permissionKey: "can_manage_identity" },
   { path: "/admin/payments", icon: CreditCard, labelKey: "admin.payments", permissionKey: "can_manage_payments" },
   { path: "/admin/finances", icon: Wallet, labelKey: "admin.finances", permissionKey: "can_manage_finances" },
   { path: "/admin/tiers", icon: Star, labelKey: "admin.tiers", permissionKey: "can_manage_tiers" },
   { path: "/admin/payment-providers", icon: CreditCard, labelKey: "admin.paymentProviders", permissionKey: "can_manage_payment_providers" },
   { path: "/admin/landing-page", icon: Layout, labelKey: "admin.landingPage", permissionKey: "can_manage_landing_page" },
-  { path: "/admin/feedbacks", icon: MessageSquare, labelKey: "admin.feedbacks.title", permissionKey: "can_manage_users" },
+  { path: "/admin/feedbacks", icon: MessageSquare, labelKey: "admin.feedbacks.title", permissionKey: "can_manage_feedbacks" },
   { path: "/admin/management", icon: Shield, labelKey: "admin.adminManagement", ownerOnly: true },
 ];
 
