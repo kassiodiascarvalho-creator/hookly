@@ -532,6 +532,27 @@
       "unlimited": "无限",
       "active": "活跃",
       "inactive": "不活跃"
+    },
+    "analytics": {
+      "title": "数据分析",
+      "description": "查看访客指标和用户行为",
+      "visitors": "访客",
+      "pageviews": "浏览量",
+      "viewsPerVisit": "每访问浏览",
+      "avgDuration": "平均时长",
+      "bounceRate": "跳出率",
+      "currentVisitors": "当前在线",
+      "last24h": "过去24小时",
+      "last7d": "过去7天",
+      "last30d": "过去30天",
+      "last90d": "过去90天",
+      "visitorsOverTime": "访客趋势",
+      "pageviewsOverTime": "浏览量趋势",
+      "topPages": "热门页面",
+      "sources": "流量来源",
+      "devices": "设备",
+      "countries": "国家",
+      "noData": "暂无数据"
     }
   },
   "common": {

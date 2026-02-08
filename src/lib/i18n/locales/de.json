@@ -532,6 +532,27 @@
       "unlimited": "Unbegrenzt",
       "active": "Aktiv",
       "inactive": "Inaktiv"
+    },
+    "analytics": {
+      "title": "Analytics",
+      "description": "Besuchermetriken und Nutzerverhalten anzeigen",
+      "visitors": "Besucher",
+      "pageviews": "Seitenaufrufe",
+      "viewsPerVisit": "Aufrufe/Besuch",
+      "avgDuration": "Ø Dauer",
+      "bounceRate": "Absprungrate",
+      "currentVisitors": "gerade online",
+      "last24h": "Letzte 24 Stunden",
+      "last7d": "Letzte 7 Tage",
+      "last30d": "Letzte 30 Tage",
+      "last90d": "Letzte 90 Tage",
+      "visitorsOverTime": "Besucher im Zeitverlauf",
+      "pageviewsOverTime": "Seitenaufrufe im Zeitverlauf",
+      "topPages": "Meistbesuchte Seiten",
+      "sources": "Traffic-Quellen",
+      "devices": "Geräte",
+      "countries": "Länder",
+      "noData": "Keine Daten verfügbar"
     }
   },
   "common": {

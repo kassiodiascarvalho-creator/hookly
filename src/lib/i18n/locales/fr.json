@@ -532,6 +532,27 @@
       "unlimited": "Illimité",
       "active": "Actif",
       "inactive": "Inactif"
+    },
+    "analytics": {
+      "title": "Analytics",
+      "description": "Visualisez les métriques de visite et le comportement des utilisateurs",
+      "visitors": "Visiteurs",
+      "pageviews": "Pages vues",
+      "viewsPerVisit": "Vues/Visite",
+      "avgDuration": "Durée Moyenne",
+      "bounceRate": "Taux de Rebond",
+      "currentVisitors": "en ligne maintenant",
+      "last24h": "Dernières 24 heures",
+      "last7d": "7 derniers jours",
+      "last30d": "30 derniers jours",
+      "last90d": "90 derniers jours",
+      "visitorsOverTime": "Visiteurs au Fil du Temps",
+      "pageviewsOverTime": "Pages Vues au Fil du Temps",
+      "topPages": "Pages les Plus Visitées",
+      "sources": "Sources de Trafic",
+      "devices": "Appareils",
+      "countries": "Pays",
+      "noData": "Aucune donnée disponible"
     }
   },
   "common": {

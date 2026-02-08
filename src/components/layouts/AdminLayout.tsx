@@ -20,6 +20,7 @@ import {
   Shield,
   Crown,
   MessageSquare,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ReactNode, useState, useEffect, useMemo } from "react";
@@ -35,6 +36,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { path: "/admin", icon: LayoutDashboard, labelKey: "admin.dashboard" },
+  { path: "/admin/analytics", icon: BarChart3, labelKey: "admin.analytics.title" },
   { path: "/admin/users", icon: Users, labelKey: "admin.users", permissionKey: "can_manage_users" },
   { path: "/admin/freelancers", icon: UserCheck, labelKey: "admin.freelancers", permissionKey: "can_manage_freelancers" },
   { path: "/admin/companies", icon: Building2, labelKey: "admin.companies", permissionKey: "can_manage_companies" },

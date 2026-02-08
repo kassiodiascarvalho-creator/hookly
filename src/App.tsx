@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { AdminLayout } from "@/components/layouts/AdminLayout";
+import { AnalyticsTracker } from "@/components/AnalyticsTracker";
 import "@/lib/i18n";
 
 import Index from "./pages/Index";
@@ -40,6 +41,7 @@ import AIHelp from "./pages/AIHelp";
 import Awards from "./pages/Awards";
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminFreelancers from "./pages/admin/AdminFreelancers";
 import AdminCompanies from "./pages/admin/AdminCompanies";
@@ -69,6 +71,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <AnalyticsTracker />
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Index />} />
@@ -91,7 +94,8 @@ const App = () => (
                 </ProtectedRoute>
               }
             >
-              <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/analytics" element={<AdminAnalytics />} />
               <Route path="/admin/users" element={<AdminUsers />} />
               <Route path="/admin/freelancers" element={<AdminFreelancers />} />
               <Route path="/admin/freelancers/:userId" element={<AdminFreelancerDetail />} />
