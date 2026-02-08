@@ -71,6 +71,87 @@ export type Database = {
         }
         Relationships: []
       }
+      analytics_events: {
+        Row: {
+          created_at: string | null
+          element_class: string | null
+          element_id: string | null
+          element_text: string | null
+          event_data: Json | null
+          event_name: string
+          id: string
+          page_path: string | null
+          session_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          element_class?: string | null
+          element_id?: string | null
+          element_text?: string | null
+          event_data?: Json | null
+          event_name: string
+          id?: string
+          page_path?: string | null
+          session_id: string
+        }
+        Update: {
+          created_at?: string | null
+          element_class?: string | null
+          element_id?: string | null
+          element_text?: string | null
+          event_data?: Json | null
+          event_name?: string
+          id?: string
+          page_path?: string | null
+          session_id?: string
+        }
+        Relationships: []
+      }
+      analytics_interactions: {
+        Row: {
+          created_at: string | null
+          id: string
+          interaction_type: string
+          page_height: number | null
+          page_path: string
+          page_width: number | null
+          scroll_depth: number | null
+          session_id: string
+          viewport_height: number | null
+          viewport_width: number | null
+          x_position: number | null
+          y_position: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          interaction_type: string
+          page_height?: number | null
+          page_path: string
+          page_width?: number | null
+          scroll_depth?: number | null
+          session_id: string
+          viewport_height?: number | null
+          viewport_width?: number | null
+          x_position?: number | null
+          y_position?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          interaction_type?: string
+          page_height?: number | null
+          page_path?: string
+          page_width?: number | null
+          scroll_depth?: number | null
+          session_id?: string
+          viewport_height?: number | null
+          viewport_width?: number | null
+          x_position?: number | null
+          y_position?: number | null
+        }
+        Relationships: []
+      }
       analytics_page_views: {
         Row: {
           country: string | null
@@ -101,6 +182,51 @@ export type Database = {
           referrer?: string | null
           session_id?: string
           user_agent?: string | null
+        }
+        Relationships: []
+      }
+      analytics_session_recordings: {
+        Row: {
+          country: string | null
+          created_at: string | null
+          device_type: string | null
+          duration_seconds: number | null
+          ended_at: string | null
+          id: string
+          is_bounce: boolean | null
+          page_count: number | null
+          pages_visited: string[] | null
+          recording_events: Json | null
+          session_id: string
+          started_at: string | null
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string | null
+          device_type?: string | null
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          is_bounce?: boolean | null
+          page_count?: number | null
+          pages_visited?: string[] | null
+          recording_events?: Json | null
+          session_id: string
+          started_at?: string | null
+        }
+        Update: {
+          country?: string | null
+          created_at?: string | null
+          device_type?: string | null
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          is_bounce?: boolean | null
+          page_count?: number | null
+          pages_visited?: string[] | null
+          recording_events?: Json | null
+          session_id?: string
+          started_at?: string | null
         }
         Relationships: []
       }
