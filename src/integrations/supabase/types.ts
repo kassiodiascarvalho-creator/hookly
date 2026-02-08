@@ -18,9 +18,12 @@ export type Database = {
         Row: {
           added_by_user_id: string | null
           can_manage_admins: boolean
+          can_manage_analytics: boolean
           can_manage_companies: boolean
+          can_manage_feedbacks: boolean
           can_manage_finances: boolean
           can_manage_freelancers: boolean
+          can_manage_identity: boolean
           can_manage_landing_page: boolean
           can_manage_payment_providers: boolean
           can_manage_payments: boolean
@@ -36,9 +39,12 @@ export type Database = {
         Insert: {
           added_by_user_id?: string | null
           can_manage_admins?: boolean
+          can_manage_analytics?: boolean
           can_manage_companies?: boolean
+          can_manage_feedbacks?: boolean
           can_manage_finances?: boolean
           can_manage_freelancers?: boolean
+          can_manage_identity?: boolean
           can_manage_landing_page?: boolean
           can_manage_payment_providers?: boolean
           can_manage_payments?: boolean
@@ -54,9 +60,12 @@ export type Database = {
         Update: {
           added_by_user_id?: string | null
           can_manage_admins?: boolean
+          can_manage_analytics?: boolean
           can_manage_companies?: boolean
+          can_manage_feedbacks?: boolean
           can_manage_finances?: boolean
           can_manage_freelancers?: boolean
+          can_manage_identity?: boolean
           can_manage_landing_page?: boolean
           can_manage_payment_providers?: boolean
           can_manage_payments?: boolean
