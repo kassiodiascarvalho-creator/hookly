@@ -1983,27 +1983,27 @@
     "levels": {
       "1": {
         "title": "Level 1 — Starter",
-        "value": "$2,000",
+        "value": "$10,000",
         "description": "First milestone: started building traction and reputation."
       },
       "2": {
         "title": "Level 2 — Blue",
-        "value": "$10,000",
+        "value": "$50,000",
         "description": "Consistency: recurring deliveries and solid growth."
       },
       "3": {
         "title": "Level 3 — Bronze",
-        "value": "$20,000",
+        "value": "$100,000",
         "description": "Scale: results that show professional maturity."
       },
       "4": {
         "title": "Level 4 — Gold",
-        "value": "$100,000",
+        "value": "$500,000",
         "description": "High performance: quality + volume with stability."
       },
       "5": {
         "title": "Level 5 — Black",
-        "value": "$200,000",
+        "value": "$1,000,000",
         "description": "Elite: a reference within the HOOKLY community."
       }
     },
