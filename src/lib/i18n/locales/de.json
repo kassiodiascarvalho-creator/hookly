@@ -1313,27 +1313,27 @@
     "levels": {
       "1": {
         "title": "Stufe 1 — Starter",
-        "value": "2.000 $",
+        "value": "$10,000",
         "description": "Erster Meilenstein: Sie haben begonnen, Traktion und Reputation aufzubauen."
       },
       "2": {
         "title": "Stufe 2 — Blue",
-        "value": "10.000 $",
+        "value": "$50,000",
         "description": "Beständigkeit: wiederkehrende Lieferungen und solides Wachstum."
       },
       "3": {
         "title": "Stufe 3 — Bronze",
-        "value": "20.000 $",
+        "value": "$100,000",
         "description": "Skalierung: Ergebnisse, die professionelle Reife zeigen."
       },
       "4": {
         "title": "Stufe 4 — Gold",
-        "value": "100.000 $",
+        "value": "$500,000",
         "description": "Hohe Leistung: Qualität + Volumen mit Stabilität."
       },
       "5": {
         "title": "Stufe 5 — Black",
-        "value": "200.000 $",
+        "value": "$1,000,000",
         "description": "Elite: eine Referenz in der HOOKLY-Community."
       }
     },
