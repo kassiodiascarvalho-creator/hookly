@@ -9,6 +9,7 @@ import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { AdminLayout } from "@/components/layouts/AdminLayout";
 import { AnalyticsTracker } from "@/components/AnalyticsTracker";
 import { AdvancedAnalyticsTracker } from "@/components/analytics";
+import { TrackingPixelsLoader } from "@/components/analytics/TrackingPixelsLoader";
 import "@/lib/i18n";
 
 import Index from "./pages/Index";
@@ -58,6 +59,7 @@ import AdminLandingPage from "./pages/admin/AdminLandingPage";
 import AdminManagement from "./pages/admin/AdminManagement";
 import AdminIdentityVerifications from "./pages/admin/AdminIdentityVerifications";
 import AdminFeedbacks from "./pages/admin/AdminFeedbacks";
+import AdminTrackingPixels from "./pages/admin/AdminTrackingPixels";
 
 // Public pages
 import VerifiedCompanies from "./pages/VerifiedCompanies";
@@ -74,6 +76,7 @@ const App = () => (
         <BrowserRouter>
           <AnalyticsTracker />
           <AdvancedAnalyticsTracker />
+          <TrackingPixelsLoader />
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Index />} />
@@ -113,6 +116,7 @@ const App = () => (
               <Route path="/admin/landing-page" element={<AdminLandingPage />} />
               <Route path="/admin/management" element={<AdminManagement />} />
               <Route path="/admin/feedbacks" element={<AdminFeedbacks />} />
+              <Route path="/admin/tracking-pixels" element={<AdminTrackingPixels />} />
             </Route>
             
             {/* Company Dashboard Routes */}
