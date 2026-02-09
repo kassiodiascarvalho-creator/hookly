@@ -1313,27 +1313,27 @@
     "levels": {
       "1": {
         "title": "Nivel 1 — Starter",
-        "value": "$2,000",
+        "value": "$10,000",
         "description": "Primer hito: comenzaste a construir tracción y reputación."
       },
       "2": {
         "title": "Nivel 2 — Blue",
-        "value": "$10,000",
+        "value": "$50,000",
         "description": "Consistencia: entregas recurrentes y crecimiento sólido."
       },
       "3": {
         "title": "Nivel 3 — Bronze",
-        "value": "$20,000",
+        "value": "$100,000",
         "description": "Escala: resultados que muestran madurez profesional."
       },
       "4": {
         "title": "Nivel 4 — Gold",
-        "value": "$100,000",
+        "value": "$500,000",
         "description": "Alto rendimiento: calidad + volumen con estabilidad."
       },
       "5": {
         "title": "Nivel 5 — Black",
-        "value": "$200,000",
+        "value": "$1,000,000",
         "description": "Élite: referencia dentro de la comunidad HOOKLY."
       }
     },
