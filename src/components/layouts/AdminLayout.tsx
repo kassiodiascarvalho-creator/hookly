@@ -48,7 +48,7 @@ const navItems: NavItem[] = [
   { path: "/admin/tiers", icon: Star, labelKey: "admin.tiers", permissionKey: "can_manage_tiers" },
   { path: "/admin/payment-providers", icon: CreditCard, labelKey: "admin.paymentProviders", permissionKey: "can_manage_payment_providers" },
   { path: "/admin/landing-page", icon: Layout, labelKey: "admin.landingPage", permissionKey: "can_manage_landing_page" },
-  { path: "/admin/tracking-pixels", icon: Code, labelKey: "admin.trackingPixels", permissionKey: "can_manage_landing_page" },
+  { path: "/admin/tracking-pixels", icon: Code, labelKey: "admin.trackingPixels", permissionKey: "can_manage_tracking_pixels" },
   { path: "/admin/feedbacks", icon: MessageSquare, labelKey: "admin.feedbacks.title", permissionKey: "can_manage_feedbacks" },
   { path: "/admin/management", icon: Shield, labelKey: "admin.adminManagement", ownerOnly: true },
 ];
