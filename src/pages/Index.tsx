@@ -99,7 +99,7 @@ const Index = () => {
     // Fallback to translations
     return [
       { value: "100%", label: t("hero.stats.talents"), icon: Users },
-      { value: "8,400+", label: t("hero.stats.paid"), icon: Briefcase },
+      { value: "100%", label: t("hero.stats.paid"), icon: Briefcase },
       { value: "98%", label: t("hero.stats.satisfaction"), icon: Star },
       { value: "45+", label: t("hero.stats.categories"), icon: Globe },
     ];
