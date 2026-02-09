@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Save, Facebook, BarChart3, Code } from "lucide-react";
+import { useAdminPermissions } from "@/hooks/useAdminPermissions";
+import { Save, Facebook, BarChart3, Code, ShieldAlert, Loader2 } from "lucide-react";
 
 interface TrackingPixel {
   id?: string;
@@ -42,13 +43,18 @@ const PIXEL_TYPES = [
 
 export default function AdminTrackingPixels() {
   const { t } = useTranslation();
+  const { isOwner, hasPermission, loading: permLoading } = useAdminPermissions();
   const [pixels, setPixels] = useState<Record<string, TrackingPixel>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
 
+  const canManagePixels = isOwner || hasPermission("can_manage_tracking_pixels" as any);
+
   useEffect(() => {
+    if (permLoading) return;
+    if (!canManagePixels) return;
     fetchPixels();
-  }, []);
+  }, [permLoading, canManagePixels]);
 
   const fetchPixels = async () => {
     try {
@@ -190,6 +196,26 @@ export default function AdminTrackingPixels() {
       setSaving(null);
     }
   };
+
+  if (permLoading) {
+    return (
+      <div className="flex justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!canManagePixels) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 gap-4">
+        <ShieldAlert className="h-16 w-16 text-destructive" />
+        <h1 className="text-2xl font-bold">Acesso Restrito</h1>
+        <p className="text-muted-foreground text-center max-w-md">
+          Você não tem permissão para gerenciar pixels de rastreamento.
+        </p>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
