@@ -29,6 +29,7 @@ export type Database = {
           can_manage_payments: boolean
           can_manage_projects: boolean
           can_manage_tiers: boolean
+          can_manage_tracking_pixels: boolean
           can_manage_users: boolean
           created_at: string
           id: string
@@ -50,6 +51,7 @@ export type Database = {
           can_manage_payments?: boolean
           can_manage_projects?: boolean
           can_manage_tiers?: boolean
+          can_manage_tracking_pixels?: boolean
           can_manage_users?: boolean
           created_at?: string
           id?: string
@@ -71,6 +73,7 @@ export type Database = {
           can_manage_payments?: boolean
           can_manage_projects?: boolean
           can_manage_tiers?: boolean
+          can_manage_tracking_pixels?: boolean
           can_manage_users?: boolean
           created_at?: string
           id?: string
