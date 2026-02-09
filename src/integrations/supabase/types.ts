@@ -2860,6 +2860,33 @@ export type Database = {
         }
         Relationships: []
       }
+      tracking_pixels: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          pixel_id: string
+          pixel_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          pixel_id: string
+          pixel_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          pixel_id?: string
+          pixel_type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       unified_payments: {
         Row: {
           amount_cents: number
