@@ -1,73 +1,79 @@
 
 
-# Plano: Corrigir Sistema de Pixels de Rastreamento
+# Plano de Hardening de Seguranca no Frontend
 
-## Problema Identificado
+## Contexto
 
-A tabela `tracking_pixels` **não existe** no banco de dados. A migração foi criada mas nunca foi aplicada. Isso significa que:
-- Você não consegue salvar nenhum pixel (Facebook, Google Analytics, GTM)
-- O loader não consegue carregar e injetar os scripts
+Ao inspecionar o codigo no navegador (DevTools), informacoes sensiveis ficam visiveis: URLs de webhooks, chaves de API, logs de debug com dados internos, e o source map completo do codigo-fonte. Este plano aplica boas praticas de seguranca sem quebrar funcionalidades.
 
-## Solução
+## O que sera feito
 
-Executar a migração SQL para criar a tabela e as políticas de segurança.
+### 1. Desabilitar Source Maps em producao (vite.config.ts)
+Source maps permitem ver o codigo-fonte original no DevTools. Em producao, isso deve ser desativado.
 
-## O Que Será Criado
+- Adicionar `build: { sourcemap: false }` na configuracao do Vite
+- Isso impede que o codigo TypeScript original seja visivel no inspetor
 
-### 1. Tabela `tracking_pixels`
-```text
-+--------------------+------------------------------------------+
-| Coluna             | Descrição                                |
-+--------------------+------------------------------------------+
-| id                 | UUID único                               |
-| pixel_type         | facebook_pixel / google_analytics / gtm  |
-| pixel_id           | ID do pixel (ex: G-XXXXXXXXXX)           |
-| is_active          | Se o pixel está ativo                    |
-| created_at         | Data de criação                          |
-| updated_at         | Data de atualização                      |
-+--------------------+------------------------------------------+
+### 2. Remover console.log em producao (vite.config.ts)
+Existem mais de 560 chamadas de `console.log` espalhadas pelo codigo. Em producao, esses logs expoe fluxos internos, IDs de pagamento, dados de usuario, etc.
+
+- Configurar `esbuild: { drop: ["console", "debugger"] }` no Vite para builds de producao
+- Isso remove automaticamente TODOS os `console.log`, `console.error`, `console.warn` e `debugger` do bundle final
+- Nao precisa alterar nenhum arquivo de componente -- o Vite faz a remocao no build
+
+### 3. Remover comentarios do bundle final (vite.config.ts)
+Comentarios no codigo podem revelar logica interna, TODOs e informacoes de arquitetura.
+
+- Configurar `esbuild: { legalComments: "none" }` para remover comentarios do bundle
+
+### 4. Proteger informacoes no HTML (index.html)
+- Remover o comentario `<!-- TODO: Set the document title -->` e `<!-- TODO: Update og:title -->`  que expoe detalhes de desenvolvimento
+- Remover `<meta name="author" content="Lovable" />` que revela a plataforma usada
+
+### 5. Adicionar headers de seguranca via meta tags (index.html)
+- Adicionar `<meta http-equiv="X-Content-Type-Options" content="nosniff">`
+- Adicionar meta tag de `Content-Security-Policy` restritiva para scripts
+
+## Secao Tecnica
+
+### Arquivo: `vite.config.ts`
+```typescript
+export default defineConfig(({ mode }) => ({
+  server: {
+    host: "::",
+    port: 8080,
+  },
+  plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
+  build: {
+    sourcemap: false,
+    minify: "esbuild",
+  },
+  esbuild: {
+    drop: mode === "production" ? ["console", "debugger"] : [],
+    legalComments: "none",
+  },
+}));
 ```
 
-### 2. Políticas de Segurança (RLS)
-- Administradores podem criar/editar/excluir pixels
-- Qualquer usuário pode ler pixels ativos (para injeção no frontend)
+### Arquivo: `index.html`
+- Remover os 2 comentarios TODO
+- Remover `<meta name="author" content="Lovable">`
+- Adicionar meta de seguranca
 
-### 3. Validação dos IDs
-| Tipo | Formato Esperado | Exemplo |
-|------|------------------|---------|
-| Facebook Pixel | Números (15-16 dígitos) | 1234567890123456 |
-| Google Analytics 4 | G-XXXXXXXXXX | G-ABC123DEF4 |
-| Google Tag Manager | GTM-XXXXXXX | GTM-ABCDEF1 |
+### O que NAO muda
+- As chaves `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` sao chaves **publicas** por design (a anon key so permite acesso via RLS). Isso e seguro e esperado
+- A chave `VITE_STRIPE_PUBLISHABLE_KEY` (pk_) tambem e publica por design do Stripe
+- Nenhum Edge Function sera alterado
+- Nenhuma funcionalidade sera quebrada
 
-## Detalhes Técnicos
-
-```sql
-CREATE TABLE public.tracking_pixels (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  pixel_type text NOT NULL CHECK (pixel_type IN ('facebook_pixel', 'google_analytics', 'google_tag_manager')),
-  pixel_id text NOT NULL,
-  is_active boolean DEFAULT true,
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now(),
-  UNIQUE(pixel_type)
-);
-
-ALTER TABLE public.tracking_pixels ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Admins can manage tracking pixels"
-  ON public.tracking_pixels FOR ALL TO authenticated
-  USING (public.is_admin());
-
-CREATE POLICY "Anyone can read active pixels"
-  ON public.tracking_pixels FOR SELECT TO anon, authenticated
-  USING (is_active = true);
-```
-
-## Após Implementação
-
-- Você poderá salvar IDs de Facebook Pixel, Google Analytics e GTM
-- Os pixels ativos serão automaticamente injetados em todas as páginas
-- O Facebook Pixel rastreará `PageView` automaticamente
-- O Google Analytics rastreará pageviews e eventos
-- O GTM permitirá configuração avançada via painel Google
+### Resultado esperado
+- Inspetor do navegador nao mostrara o codigo-fonte original
+- Console do navegador ficara limpo sem logs de debug
+- Comentarios internos nao aparecerrao no bundle
+- HTML nao revelara informacoes sobre a plataforma de desenvolvimento
 
