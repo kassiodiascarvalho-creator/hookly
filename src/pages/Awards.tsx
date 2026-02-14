@@ -138,7 +138,7 @@ const Awards = () => {
       
 
       {/* Awards Section */}
-      <section className="px-[165px] py-[8px]">
+      <section className="px-4 md:px-16 lg:px-[165px] py-[8px]">
         <div className="container mx-auto">
           <motion.div initial={{
           opacity: 0,
