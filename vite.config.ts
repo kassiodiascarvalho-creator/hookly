@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => ({
     minify: "esbuild",
   },
   esbuild: {
-    drop: mode === "production" ? ["console", "debugger"] : [],
+    drop: ["console", "debugger"],
     legalComments: "none",
   },
 }));
