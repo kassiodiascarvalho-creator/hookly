@@ -1,8 +1,11 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-import { SAFE_CORS_HEADERS, SECURITY_HEADERS, safeLog } from "../_shared/security.ts";
+import { SECURITY_HEADERS, safeLog } from "../_shared/security.ts";
 
-const corsHeaders = SAFE_CORS_HEADERS;
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
 const logStep = (correlationId: string, step: string, details?: unknown) => {
   safeLog(`CREATE-PIX-PAYMENT:${correlationId}`, step, details as Record<string, unknown> | undefined);
