@@ -99,15 +99,15 @@ serve(async (req) => {
     }
     
     const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
     
-    if (claimsError || !claimsData?.claims) {
-      logStep(correlationId, "Auth failed", { error: claimsError?.message });
+    if (userError || !user) {
+      logStep(correlationId, "Auth failed", { error: userError?.message });
       throw new Error("User not authenticated");
     }
     
-    const userId = claimsData.claims.sub as string;
-    const userEmail = claimsData.claims.email as string;
+    const userId = user.id;
+    const userEmail = user.email ?? "";
     
     if (!userId || !userEmail) {
       throw new Error("User not authenticated or email not available");
