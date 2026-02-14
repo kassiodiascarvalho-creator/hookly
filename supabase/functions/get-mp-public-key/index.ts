@@ -6,70 +6,72 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-function maskKey(key: string) {
-  return `${key.slice(0, 12)}...`;
-}
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabaseAdmin = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-  );
-
   try {
+    // =========================================================================
+    // AUTHENTICATION
+    // =========================================================================
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !data.user) {
+      return new Response(JSON.stringify({ error: "Invalid token" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // =========================================================================
+    // GET PUBLIC KEY
+    // =========================================================================
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
     const envKey = Deno.env.get("VITE_MERCADOPAGO_PUBLIC_KEY") ?? "";
 
-    const { data, error } = await supabaseAdmin
+    const { data: providerData } = await supabaseAdmin
       .from("payment_providers")
       .select("is_enabled, config_encrypted")
       .eq("provider", "mercadopago")
       .maybeSingle();
 
-    if (error) {
-      console.error("[GET-MP-PUBLIC-KEY] DB error", { message: error.message });
-    }
+    const dbKey = (providerData?.config_encrypted as any)?.public_key as string | undefined;
 
-    const dbKey = (data?.config_encrypted as any)?.public_key as string | undefined;
-    const isEnabled = !!data?.is_enabled;
-
-    let source: "env" | "db" | "missing" = "missing";
     let publicKey = "";
-
     if (envKey) {
-      source = "env";
       publicKey = envKey;
     } else if (dbKey) {
-      source = "db";
       publicKey = dbKey;
     }
 
-    console.log("[GET-MP-PUBLIC-KEY] resolved", {
-      source,
-      isEnabled,
-      masked: publicKey ? maskKey(publicKey) : null,
-      length: publicKey ? publicKey.length : 0,
-    });
-
     return new Response(
-      JSON.stringify({
-        publicKey,
-        source,
-        isEnabled,
-        length: publicKey ? publicKey.length : 0,
-      }),
+      JSON.stringify({ publicKey }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       }
     );
-  } catch (e) {
-    const message = e instanceof Error ? e.message : String(e);
-    console.error("[GET-MP-PUBLIC-KEY] ERROR", { message });
-    return new Response(JSON.stringify({ error: message }), {
+  } catch {
+    return new Response(JSON.stringify({ error: "Internal error" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });

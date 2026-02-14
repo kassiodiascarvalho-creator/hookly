@@ -11,31 +11,11 @@ serve(async (req) => {
   }
 
   try {
-    // Get the Stripe publishable key from environment
     const publishableKey = Deno.env.get("VITE_STRIPE_PUBLISHABLE_KEY");
     
-    if (!publishableKey) {
-      console.error("[get-stripe-public-key] VITE_STRIPE_PUBLISHABLE_KEY not configured");
+    if (!publishableKey || !publishableKey.startsWith("pk_")) {
       return new Response(
-        JSON.stringify({ 
-          error: "Stripe não configurado: faltando VITE_STRIPE_PUBLISHABLE_KEY",
-          configured: false 
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200, // Return 200 so frontend can handle gracefully
-        }
-      );
-    }
-
-    // Validate it's a publishable key (starts with pk_)
-    if (!publishableKey.startsWith("pk_")) {
-      console.error("[get-stripe-public-key] Invalid publishable key format");
-      return new Response(
-        JSON.stringify({ 
-          error: "Chave Stripe inválida (deve começar com pk_)",
-          configured: false 
-        }),
+        JSON.stringify({ configured: false }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 200,
@@ -43,8 +23,6 @@ serve(async (req) => {
       );
     }
 
-    console.log("[get-stripe-public-key] Returning publishable key");
-    
     return new Response(
       JSON.stringify({ 
         publishableKey,
@@ -55,11 +33,9 @@ serve(async (req) => {
         status: 200,
       }
     );
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("[get-stripe-public-key] Error:", errorMessage);
+  } catch {
     return new Response(
-      JSON.stringify({ error: errorMessage, configured: false }),
+      JSON.stringify({ configured: false }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,
