@@ -94,8 +94,8 @@ export function ActivityTicker() {
       </div>
 
       <div className="container mx-auto px-4 mt-4">
-        <p className="text-xs text-muted-foreground/60 text-center">
-          {t("landing.ticker.stat", "+2.847 projetos completados este mês")}
+        <p className="text-xs text-muted-foreground/60 text-left">
+          <span className="text-primary font-semibold">+2.847</span> {t("landing.ticker.statLabel", "projetos completados este mês")}
         </p>
       </div>
     </section>
