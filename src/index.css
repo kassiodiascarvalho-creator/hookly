@@ -4,16 +4,17 @@
 
 /* HOOKLY Design System - Purple Premium Theme */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700;800&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter&display=swap");
 
 @layer base {
   :root {
     /* Deep Dark Background */
-    --bg-900: 228 50% 3%;
-    --bg-850: 228 40% 5%;
-    --surface-800: 228 35% 7%;
-    --surface-750: 228 30% 10%;
-    --surface-700: 228 25% 13%;
-    
+    --bg-900: 220 30% 5%;
+    --bg-850: 220 30% 7%;
+    --surface-800: 220 30% 10%;
+    --surface-750: 220 30% 13%;
+    --surface-700: 220 30% 16%;
+
     /* Brand Colors */
     --hookly-purple: 249 76% 62%;
     --hookly-purple-hover: 249 76% 68%;
@@ -23,84 +24,83 @@
     --hookly-teal-light: 175 80% 60%;
     --hookly-warm: 340 92% 74%;
     --hookly-gold: 48 95% 82%;
-    --hookly-navy: 228 40% 5%;
-    --hookly-navy-light: 228 30% 12%;
-    --hookly-navy-dark: 228 50% 3%;
+    --hookly-navy: 220 30% 8%;
+    --hookly-navy-light: 220 30% 15%;
+    --hookly-navy-dark: 220 30% 4%;
 
     /* Background & Foreground - Dark */
-    --background: 228 50% 3%;
-    --foreground: 0 0% 100%;
+    --background: 220 30% 5%;
+    --foreground: 0 0% 98%;
 
     /* Card */
-    --card: 228 35% 7%;
-    --card-foreground: 0 0% 100%;
+    --card: 220 30% 10%;
+    --card-foreground: 0 0% 98%;
 
     /* Popover */
-    --popover: 228 35% 7%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 220 30% 10%;
+    --popover-foreground: 0 0% 98%;
 
     /* Primary - Purple */
-    --primary: 249 76% 62%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 199 89% 48%;
+    --primary-foreground: 220 30% 5%;
 
     /* Secondary - Teal */
-    --secondary: 175 100% 40%;
+    --secondary: 199 70% 35%;
     --secondary-foreground: 0 0% 100%;
 
     /* Muted */
-    --muted: 228 25% 13%;
-    --muted-foreground: 228 20% 55%;
+    --muted: 220 30% 15%;
+    --muted-foreground: 220 15% 60%;
 
     /* Accent */
-    --accent: 228 25% 15%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 220 30% 18%;
+    --accent-foreground: 0 0% 98%;
 
     /* Destructive */
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
     /* Success */
-    --success: 175 100% 40%;
+    --success: 142 76% 45%;
     --success-foreground: 0 0% 100%;
 
     /* Warning */
-    --warning: 48 95% 65%;
-    --warning-foreground: 0 0% 0%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
 
     /* Border & Input */
-    --border: 249 76% 62% / 0.15;
-    --input: 228 25% 13%;
-    --ring: 249 76% 62%;
+    --border: 220 30% 18%;
+    --input: 220 30% 15%;
+    --ring: 199 89% 48%;
 
     --radius: 0.625rem;
 
     /* Sidebar */
-    --sidebar-background: 228 40% 5%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 249 76% 62%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 228 25% 13%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 249 76% 62% / 0.15;
-    --sidebar-ring: 249 76% 62%;
+    --sidebar-background: 220 30% 7%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 199 89% 48%;
+    --sidebar-primary-foreground: 220 30% 5%;
+    --sidebar-accent: 220 30% 15%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 220 30% 18%;
+    --sidebar-ring: 199 89% 48%;
 
     /* Purple accent */
-    --purple: 249 76% 62%;
+    --purple: 263 70% 58%;
     --purple-foreground: 0 0% 100%;
 
     /* Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(249 76% 62%) 0%, hsl(175 100% 40%) 50%, hsl(340 92% 74%) 100%);
-    --gradient-cta: linear-gradient(135deg, hsl(249 76% 62%) 0%, hsl(270 80% 65%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(220 30% 5%) 0%, hsl(220 30% 8%) 50%, hsl(220 30% 6%) 100%);
+    --gradient-cta: linear-gradient(135deg, hsl(199 89% 48%) 0%, hsl(263 70% 58%) 100%);
     --gradient-warm: linear-gradient(135deg, hsl(340 92% 74%) 0%, hsl(48 95% 82%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(228 35% 9%) 0%, hsl(228 35% 7%) 100%);
-    --gradient-text: linear-gradient(135deg, hsl(249 76% 62%) 0%, hsl(175 100% 40%) 50%, hsl(340 92% 74%) 100%);
-    --gradient-glow: radial-gradient(ellipse 80% 50% at 50% -20%, hsl(249 76% 62% / 0.15) 0%, transparent 70%);
-    --gradient-blue-glow: radial-gradient(ellipse 50% 80% at 80% 50%, hsl(175 100% 40% / 0.08) 0%, transparent 70%);
-    --gradient-purple-glow: radial-gradient(ellipse 50% 80% at 80% 20%, hsl(249 76% 62% / 0.1) 0%, transparent 70%);
-    --gradient-mesh: 
-      radial-gradient(ellipse at 20% 50%, hsl(249 76% 62% / 0.06) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 20%, hsl(175 100% 40% / 0.04) 0%, transparent 50%),
-      radial-gradient(ellipse at 50% 100%, hsl(340 92% 74% / 0.03) 0%, transparent 40%);
+    --gradient-card: linear-gradient(180deg, hsl(220 30% 12%) 0%, hsl(220 30% 10%) 100%);
+    --gradient-text: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(199 89% 70%) 50%, hsl(199 70% 55%) 100%);
+    --gradient-glow: radial-gradient(ellipse 80% 50% at 50% -20%, hsl(199 89% 48% / 0.15) 0%, transparent 70%);
+    --gradient-blue-glow: radial-gradient(ellipse 50% 80% at 80% 50%, hsl(199 89% 48% / 0.1) 0%, transparent 70%);
+    --gradient-purple-glow: radial-gradient(ellipse 50% 80% at 80% 20%, hsl(263 70% 58% / 0.08) 0%, transparent 70%);
+    --gradient-mesh: radial-gradient(ellipse at 20% 50%, hsl(199 89% 48% / 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, hsl(263 70% 58% / 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 100%, hsl(199 89% 48% / 0.04) 0%, transparent 40%);
 
     /* Shadows */
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
@@ -109,9 +109,13 @@
     --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.3);
     --shadow-card: 0 4px 20px -2px rgb(0 0 0 / 0.3);
     --shadow-card-hover: 0 12px 40px -8px rgb(0 0 0 / 0.5);
-    --shadow-glow: 0 0 40px -10px hsl(249 76% 62% / 0.4);
-    --shadow-purple-glow: 0 0 40px -10px hsl(249 76% 62% / 0.4);
+    --shadow-glow: 0 0 40px -10px hsl(199 89% 48% / 0.4);
+    --shadow-purple-glow: 0 0 40px -10px hsl(263 70% 58% / 0.4);
     --shadow-teal-glow: 0 0 40px -10px hsl(175 100% 40% / 0.4);
+    --hookly-blue: 199 89% 48%;
+    --hookly-blue-hover: 199 89% 55%;
+    --hookly-blue-light: 199 89% 90%;
+    --hookly-blue-dark: 199 70% 35%;
   }
 
   .dark {
