@@ -182,12 +182,16 @@ const Index = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.7 }}
             >
-              <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-extrabold leading-[1.1] mb-6 text-foreground">
-                {t("landing.hero.titleWhite1", "Talentos")}{" "}
-                <span className="text-primary">{t("landing.hero.titleCyan1", "Verificados.")}</span>
+              <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-extrabold leading-[1.1] mb-6">
+                <span className="text-foreground">{t("landing.hero.line1", "Contrate por")}</span>
                 <br />
-                {t("landing.hero.titleWhite2", "Resultados")}{" "}
-                <span className="text-primary">{t("landing.hero.titleCyan2", "Garantidos.")}</span>
+                <span className="text-gradient-primary italic underline-gradient">
+                  {t("landing.hero.line2", "RESULTADOS.")}
+                </span>
+                <br />
+                <span className="text-muted-foreground text-3xl md:text-4xl lg:text-5xl font-bold">
+                  {t("landing.hero.line3", "Não por promessas.")}
+                </span>
               </h1>
               <p className="text-lg text-muted-foreground mb-8 max-w-lg leading-relaxed">
                 {t("landing.hero.description", "A única plataforma onde você paga apenas pelo que foi ENTREGUE. Freelancers verificados, escrow seguro, zero surpresas.")}
