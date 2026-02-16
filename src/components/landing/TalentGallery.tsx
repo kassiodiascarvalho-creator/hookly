@@ -33,7 +33,7 @@ const TALENTS: Talent[] = [
     rating: 5.0,
     successRate: "100%",
     rate: "R$90/h",
-    portfolioImages: ["/portfolio/design-workspace-1.jpg", "/portfolio/brand-workspace-1.jpg"],
+    portfolioImages: ["/portfolio/design-workspace-1.jpg", "/portfolio/marketing-workspace-1.jpg"],
     avatarUrl: "https://randomuser.me/api/portraits/women/44.jpg",
     category: "design",
   },
