@@ -194,7 +194,7 @@ const Index = () => {
                 </span>
               </h1>
               <p className="text-lg text-muted-foreground mb-8 max-w-lg leading-relaxed">
-                {t("landing.hero.description", "A única plataforma onde você paga apenas pelo que foi ENTREGUE. Freelancers verificados, escrow seguro, zero surpresas.")}
+                {t("landing.hero.desc1", "A única plataforma onde você paga apenas pelo que foi ")}<span className="text-foreground font-semibold">{t("landing.hero.descHighlight", "ENTREGUE")}</span>{t("landing.hero.desc2", ". Freelancers verificados, escrow seguro, zero surpresas.")}
               </p>
 
               <div className="flex flex-wrap items-center gap-4 mb-8">
