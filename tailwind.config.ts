@@ -25,7 +25,7 @@ export default {
   				'Noto Color Emoji'
   			],
   			display: [
-  				'Plus Jakarta Sans',
+  				'Space Grotesk',
   				'system-ui',
   				'sans-serif'
   			],
