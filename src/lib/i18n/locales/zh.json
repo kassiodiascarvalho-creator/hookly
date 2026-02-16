@@ -1283,17 +1283,17 @@
     "aiSuggestion": "基于AI的建议"
   },
   "landing": {
-    "providers": {
-      "title": "可靠的基础设施和支付",
-      "subtitle": "支付由领先供应商处理，基础设施稳健。",
-      "disclaimer": "商标归各自所有者所有。不暗示任何合作关系。",
-      "badges": {
-        "escrow": "托管支付保护",
-        "approval": "审批后释放",
-        "secureChat": "平台安全聊天",
-        "antiFraud": "防欺诈保护"
-      }
-    }
+    "providers": { "title": "可靠的基础设施和支付", "subtitle": "支付由领先供应商处理，基础设施稳健。", "disclaimer": "商标归各自所有者所有。不暗示任何合作关系。", "badges": { "escrow": "托管支付保护", "approval": "审批后释放", "secureChat": "平台安全聊天", "antiFraud": "防欺诈保护" } },
+    "hero": { "liveBadge": "本月完成的项目", "line1": "按", "line2": "成果付费。", "line3": "而非承诺。", "desc1": "唯一一个您", "descHighlight": "只为交付成果付费", "desc2": "的平台。经过验证的自由职业者，安全托管，零意外。", "cta": "立即寻找人才", "ctaSecondary": "了解运作方式", "trust1": "100% 已验证", "trust2": "安全托管", "trust3": "24小时匹配", "formTitle": "快速人才搜索", "formSkill": "我需要一位...", "selectSpecialty": "选择专业", "formDeadline": "截止日期", "formCta": "立即寻找人才", "free": "免费开始", "noCommit": "无需承诺", "specialties": { "fullstack": "全栈开发者", "designer": "UI/UX 设计师", "marketing": "增长营销", "data": "数据科学 / ML", "mobile": "移动端开发者", "devops": "DevOps 工程师" }, "deadlines": { "1week": "1 周", "2weeks": "2 周", "1month": "1 个月", "2months": "2+ 个月" }, "floatingCards": { "justReceived": "刚收到", "approval": "98% 通过率", "devsHired": "3名开发者已录用" } },
+    "ticker": { "title": "HOOKLY 实时动态", "statLabel": "本月完成的项目", "delivered": "交付了", "received": "收到了", "hired": "招聘了", "completed": "完成了", "uiDesign": "UI 设计项目", "threeDevs": "2天内招聘3名开发者", "appMobile": "移动应用", "designer": "高级 UX 设计师", "ecommerce": "完整电商项目", "paid": "已付款", "active": "进行中" },
+    "showcase": { "title": "看看按", "titleAccent": "成果", "subtitle": "付费是什么样的（不是按沙发上的小时数）", "projectName": "项目：移动应用重新设计", "milestone1": "线框图", "milestone2": "UI 设计", "milestone3": "交互原型", "approved": "已批准", "inReview": "审核中", "released": "已释放", "progress": "进度", "deliverables": "交付物", "bottomText": "没有意外。没有虚报工时。", "bottomBold": "批准了？付款释放。就这么简单。" },
+    "talents": { "title": "为您的项目准备好的人才", "all": "全部", "dev": "开发", "design": "设计", "marketing": "营销", "data": "数据科学", "viewProfile": "查看档案", "success": "成功率", "viewAll": "探索所有 2,400+ 人才" },
+    "steps": { "tag": "就是这么简单" },
+    "beforeAfter": { "title": "为什么团队正在转向", "beforeLabel": "之前", "afterLabel": "使用 HOOKLY", "beforeSub": "（传统平台）", "before1": "筛选200个普通档案", "before2": "按小时付费无保障", "before3": "无支付保护", "before4": "到处是隐藏费用", "after1": "3位预验证人才", "after2": "按批准的交付物付费", "after3": "托管 + 全额保障", "after4": "完全透明" },
+    "testimonials": { "title": "真实用户的真实故事", "project": "项目", "value": "价值", "deadline": "期限" },
+    "pricing": { "tag": "透明" },
+    "faq": { "tag": "问题" },
+    "ctaFinal": { "title1": "您的下一个项目值得", "title2": "", "titleHighlight": "经验证的人才。", "subtitle": "加入数千名已通过真实成果获利的专业人士和企业。", "emailPlaceholder": "您的工作邮箱", "cta": "免费创建账户", "noCreditCard": "无需信用卡", "quickSetup": "2分钟设置", "cancelAnytime": "随时取消" }
   },
   "awards": {
     "badge": "认可计划",

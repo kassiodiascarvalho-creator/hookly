@@ -1959,17 +1959,17 @@
     "continue": "Continue Sign Up"
   },
   "landing": {
-    "providers": {
-      "title": "Trusted Infrastructure & Payments",
-      "subtitle": "Payments processed by leading providers with robust infrastructure.",
-      "disclaimer": "Trademarks belong to their respective owners. Does not imply endorsement.",
-      "badges": {
-        "escrow": "Protected payment (escrow)",
-        "approval": "Release after approval",
-        "secureChat": "Secure in-platform chat",
-        "antiFraud": "Anti-fraud protection"
-      }
-    }
+    "providers": { "title": "Trusted Infrastructure & Payments", "subtitle": "Payments processed by leading providers with robust infrastructure.", "disclaimer": "Trademarks belong to their respective owners. Does not imply endorsement.", "badges": { "escrow": "Protected payment (escrow)", "approval": "Release after approval", "secureChat": "Secure in-platform chat", "antiFraud": "Anti-fraud protection" } },
+    "hero": { "liveBadge": "projects completed this month", "line1": "Hire for", "line2": "Results.", "line3": "Not for promises.", "desc1": "The only platform where you ", "descHighlight": "pay only for what's delivered", "desc2": ". Verified freelancers, secure escrow, zero surprises.", "cta": "Find Talent Now", "ctaSecondary": "See how it works", "trust1": "100% Verified", "trust2": "Secure Escrow", "trust3": "Match in 24h", "formTitle": "Quick talent search", "formSkill": "I need a...", "selectSpecialty": "Select specialty", "formDeadline": "Deadline", "formCta": "Find Talent Now", "free": "Free to start", "noCommit": "No commitment", "specialties": { "fullstack": "Full-Stack Developer", "designer": "UI/UX Designer", "marketing": "Growth Marketing", "data": "Data Science / ML", "mobile": "Mobile Developer", "devops": "DevOps Engineer" }, "deadlines": { "1week": "1 week", "2weeks": "2 weeks", "1month": "1 month", "2months": "2+ months" }, "floatingCards": { "justReceived": "Just received", "approval": "98% approval", "devsHired": "3 devs hired" } },
+    "ticker": { "title": "Happening now on HOOKLY", "statLabel": "projects completed this month", "delivered": "delivered", "received": "received", "hired": "hired", "completed": "completed", "uiDesign": "UI Design project", "threeDevs": "3 devs in 2 days", "appMobile": "mobile app", "designer": "senior UX designer", "ecommerce": "full e-commerce", "paid": "Paid", "active": "Active" },
+    "showcase": { "title": "See what paying for", "titleAccent": "RESULTS", "subtitle": "(not for hours on the couch)", "projectName": "Project: Mobile App Redesign", "milestone1": "Wireframes", "milestone2": "UI Design", "milestone3": "Interactive Prototype", "approved": "Approved", "inReview": "In review", "released": "released", "progress": "Progress", "deliverables": "deliverables", "bottomText": "No surprises. No inflated hours.", "bottomBold": "Approved? Payment released. Simple." },
+    "talents": { "title": "Talents ready for your project", "all": "All", "dev": "Development", "design": "Design", "marketing": "Marketing", "data": "Data Science", "viewProfile": "View profile", "success": "success", "viewAll": "Explore all 2,400+ talents" },
+    "steps": { "tag": "Simple as that" },
+    "beforeAfter": { "title": "Why teams are switching to", "beforeLabel": "BEFORE", "afterLabel": "WITH HOOKLY", "beforeSub": "(traditional platforms)", "before1": "Filtering 200 generic profiles", "before2": "Paying by the hour with no guarantee", "before3": "No payment protection", "before4": "Hidden fees everywhere", "after1": "3 pre-verified talents", "after2": "Pay per approved deliverable", "after3": "Escrow + full guarantee", "after4": "Total transparency" },
+    "testimonials": { "title": "Real stories from real users", "project": "Project", "value": "Value", "deadline": "Deadline" },
+    "pricing": { "tag": "Transparent" },
+    "faq": { "tag": "Questions" },
+    "ctaFinal": { "title1": "Your next project deserves", "title2": "talents ", "titleHighlight": "VERIFIED.", "subtitle": "Join thousands of professionals and companies already earning with real results.", "emailPlaceholder": "Your work email", "cta": "Create Free Account", "noCreditCard": "No credit card", "quickSetup": "Setup in 2 minutes", "cancelAnytime": "Cancel anytime" }
   },
   "awards": {
     "badge": "Recognition Program",
