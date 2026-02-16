@@ -1,9 +1,10 @@
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { Star, ArrowRight } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Talent {
   name: string;
@@ -82,6 +83,7 @@ const TALENTS: Talent[] = [
 const CATEGORIES = ["all", "development", "design", "marketing", "data"];
 
 export function TalentGallery() {
+  const isMobile = useIsMobile();
   const { t } = useTranslation();
   const [activeCategory, setActiveCategory] = useState("all");
 
@@ -128,8 +130,12 @@ export function TalentGallery() {
           ))}
         </div>
 
-        {/* Talent grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+        {/* Talent grid / mobile carousel */}
+        <div className={
+          isMobile
+            ? "flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 -mx-4 px-4 scrollbar-hide"
+            : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto"
+        }>
           {filtered.map((talent, i) => (
             <motion.div
               key={talent.name}
@@ -137,7 +143,9 @@ export function TalentGallery() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.08 }}
-              className="group surface-card overflow-hidden hover:border-primary/30 transition-all duration-300"
+              className={`group surface-card overflow-hidden hover:border-primary/30 transition-all duration-300 ${
+                isMobile ? "min-w-[280px] snap-center flex-shrink-0" : ""
+              }`}
             >
               {/* Portfolio thumbnails */}
               <div className="relative h-40 flex">
