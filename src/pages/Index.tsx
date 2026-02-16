@@ -185,7 +185,7 @@ const Index = () => {
               <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-extrabold leading-[1.1] mb-6">
                 <span className="text-foreground">{t("landing.hero.line1", "Contrate por")}</span>
                 <br />
-                <span className="text-gradient-primary italic underline-gradient">
+                <span className="italic" style={{ background: 'linear-gradient(135deg, hsl(0 0% 100%), hsl(199 89% 70%), hsl(199 70% 55%))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                   {t("landing.hero.line2", "RESULTADOS.")}
                 </span>
                 <br />
