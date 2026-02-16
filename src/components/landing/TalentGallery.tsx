@@ -133,7 +133,7 @@ export function TalentGallery() {
         {/* Talent grid / mobile carousel */}
         <div className={
           isMobile
-            ? "flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 -mx-4 px-4 scrollbar-hide"
+            ? "flex gap-3 overflow-x-auto snap-x snap-mandatory pb-4 -mx-4 px-6 scrollbar-hide"
             : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto"
         }>
           {filtered.map((talent, i) => (
@@ -144,7 +144,7 @@ export function TalentGallery() {
               viewport={{ once: true }}
               transition={{ delay: i * 0.08 }}
               className={`group surface-card overflow-hidden hover:border-primary/30 transition-all duration-300 ${
-                isMobile ? "min-w-[280px] snap-center flex-shrink-0" : ""
+                isMobile ? "w-[75vw] min-w-[75vw] snap-center flex-shrink-0" : ""
               }`}
             >
               {/* Portfolio thumbnails */}
