@@ -5,35 +5,22 @@ import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Search,
-  Code,
-  Palette,
-  TrendingUp,
-  PenTool,
-  Database,
-  Video,
-  Briefcase,
-  DollarSign,
-  Scale,
-  ChevronRight,
   Shield,
   Globe,
   Zap,
   Check,
-  X,
   Star,
   ChevronDown,
   FileText,
   Users,
   Sparkles,
   Menu,
-  Award,
   Mail,
   Rocket,
   ArrowRight,
   Play,
 } from "lucide-react";
-import { useState, useMemo, useRef } from "react";
+import { useState } from "react";
 import { languages, LanguageCode } from "@/lib/i18n";
 import { useLandingStats, useLandingSocialLinks } from "@/hooks/useLandingContent";
 import { CompanyLogosCarousel } from "@/components/landing/CompanyLogosCarousel";
@@ -43,6 +30,8 @@ import { ProductShowcase } from "@/components/landing/ProductShowcase";
 import { BeforeAfter } from "@/components/landing/BeforeAfter";
 import { SocialProofNotification } from "@/components/landing/SocialProofNotification";
 import { StickyMobileCTA } from "@/components/landing/StickyMobileCTA";
+import { TalentGallery } from "@/components/landing/TalentGallery";
+import { TestimonialsCarousel } from "@/components/landing/TestimonialsCarousel";
 import i18n from "@/lib/i18n";
 import {
   DropdownMenu,
@@ -67,17 +56,8 @@ const Index = () => {
     setCurrentLang(lang);
   };
 
-  const categories = [
-    { icon: Code, key: "development" },
-    { icon: Palette, key: "design" },
-    { icon: TrendingUp, key: "marketing" },
-    { icon: PenTool, key: "writing" },
-    { icon: Database, key: "dataScience" },
-    { icon: Video, key: "videoPhoto" },
-    { icon: Briefcase, key: "consulting" },
-    { icon: DollarSign, key: "finance" },
-    { icon: Scale, key: "legal" },
-  ];
+
+
 
   const navLinks = [
     { to: "/como-funciona", label: t("nav.howItWorks") },
@@ -246,18 +226,19 @@ const Index = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.7, delay: 0.2 }}
             >
-              <div className="surface-card p-8 border-glow">
-                <div className="flex items-center gap-3 mb-6">
-                  <Search className="h-5 w-5 text-primary" />
-                  <h3 className="font-display font-semibold text-foreground">
-                    {t("landing.hero.formTitle", "Preciso de um...")}
+              <div className="surface-card p-6 md:p-8 border-glow">
+                <div className="flex items-center gap-2 mb-6">
+                  <span className="w-2 h-2 rounded-full bg-primary" />
+                  <h3 className="font-display font-semibold text-foreground text-sm">
+                    {t("landing.hero.formTitle", "Busca rápida de talentos")}
                   </h3>
                 </div>
 
                 <div className="space-y-4 mb-6">
                   <div>
-                    <label className="text-xs text-muted-foreground mb-1.5 block">{t("landing.hero.formSkill", "Tipo de profissional")}</label>
-                    <select className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground">
+                    <label className="text-xs text-muted-foreground mb-1.5 block">{t("landing.hero.formSkill", "Preciso de um...")}</label>
+                    <select className="w-full h-11 rounded-lg border border-border bg-background/80 px-4 text-sm text-foreground appearance-none cursor-pointer focus:border-primary/50 focus:outline-none transition-colors">
+                      <option>{t("landing.hero.selectSpecialty", "Selecione a especialidade")}</option>
                       <option>Designer UX/UI</option>
                       <option>Desenvolvedor Full Stack</option>
                       <option>Desenvolvedor Mobile</option>
@@ -266,37 +247,42 @@ const Index = () => {
                       <option>Data Scientist</option>
                     </select>
                   </div>
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1.5 block">{t("landing.hero.formBudget", "Orçamento estimado")}</label>
-                    <select className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground">
-                      <option>R$1.000 - R$3.000</option>
-                      <option>R$3.000 - R$5.000</option>
-                      <option>R$5.000 - R$10.000</option>
-                      <option>R$10.000 - R$25.000</option>
-                      <option>R$25.000+</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1.5 block">{t("landing.hero.formDeadline", "Prazo")}</label>
-                    <select className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground">
-                      <option>1-2 {t("landing.hero.weeks", "semanas")}</option>
-                      <option>2-4 {t("landing.hero.weeks", "semanas")}</option>
-                      <option>1-2 {t("landing.hero.months", "meses")}</option>
-                      <option>3+ {t("landing.hero.months", "meses")}</option>
-                    </select>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1.5 block">Budget</label>
+                      <select className="w-full h-11 rounded-lg border border-border bg-background/80 px-4 text-sm text-foreground appearance-none cursor-pointer focus:border-primary/50 focus:outline-none transition-colors">
+                        <option>R$ Budget</option>
+                        <option>R$1k - R$3k</option>
+                        <option>R$3k - R$5k</option>
+                        <option>R$5k - R$10k</option>
+                        <option>R$10k - R$25k</option>
+                        <option>R$25k+</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1.5 block">{t("landing.hero.formDeadline", "Prazo")}</label>
+                      <select className="w-full h-11 rounded-lg border border-border bg-background/80 px-4 text-sm text-foreground appearance-none cursor-pointer focus:border-primary/50 focus:outline-none transition-colors">
+                        <option>{t("landing.hero.formDeadline", "Prazo")}</option>
+                        <option>1-2 {t("landing.hero.weeks", "semanas")}</option>
+                        <option>2-4 {t("landing.hero.weeks", "semanas")}</option>
+                        <option>1-2 {t("landing.hero.months", "meses")}</option>
+                        <option>3+ {t("landing.hero.months", "meses")}</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
 
                 <Link to="/auth">
-                  <Button className="w-full btn-gradient gap-2 py-5 text-base">
+                  <Button className="w-full py-5 text-base font-semibold rounded-lg bg-gradient-to-r from-primary to-purple-500 hover:from-primary/90 hover:to-purple-500/90 text-white gap-2">
                     <Rocket className="h-4 w-4" />
                     {t("landing.hero.formCta", "Encontrar Talentos Agora")}
                   </Button>
                 </Link>
 
-                <p className="text-xs text-muted-foreground/60 text-center mt-4">
-                  {t("landing.hero.formNote", "\"3 talentos encontrados em 4 segundos\"")}
-                </p>
+                <div className="flex items-center gap-4 mt-4 text-xs text-muted-foreground/60 justify-center">
+                  <span className="flex items-center gap-1"><Check className="h-3 w-3" /> {t("landing.hero.free", "Grátis para começar")}</span>
+                  <span className="flex items-center gap-1"><Check className="h-3 w-3" /> {t("landing.hero.noCommit", "Sem compromisso")}</span>
+                </div>
               </div>
             </motion.div>
           </div>
@@ -312,34 +298,8 @@ const Index = () => {
       {/* ─── SECTION 4: PRODUCT SHOWCASE ─── */}
       <ProductShowcase />
 
-      {/* ─── SECTION 5: CATEGORIES ─── */}
-      <section className="py-20 relative">
-        <div className="container mx-auto px-4">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">{t("categories.title")}</h2>
-            <p className="text-muted-foreground text-lg">{t("categories.subtitle")}</p>
-          </motion.div>
-
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-4 max-w-5xl mx-auto">
-            {categories.map((cat) => (
-              <Link key={cat.key} to={`/talent-pool?category=${cat.key}`} className="surface-card-hover p-4 text-center group">
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-3 group-hover:bg-primary/20 transition-colors">
-                  <cat.icon className="h-6 w-6 text-primary" />
-                </div>
-                <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">{t(`categories.${cat.key}`)}</span>
-              </Link>
-            ))}
-          </motion.div>
-
-          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mt-8">
-            <Link to="/talent-pool">
-              <Button variant="outline" className="border-border hover:bg-accent gap-2">
-                {t("categories.viewAll")} <ChevronRight className="h-4 w-4" />
-              </Button>
-            </Link>
-          </motion.div>
-        </div>
-      </section>
+      {/* ─── SECTION 5: TALENT GALLERY ─── */}
+      <TalentGallery />
 
       {/* ─── SECTION 6: HOW IT WORKS — Timeline ─── */}
       <section className="py-24 relative">
@@ -397,48 +357,8 @@ const Index = () => {
       {/* ─── SECTION 8: PROVIDER LOGOS & TRUST ─── */}
       <ProviderLogosCarousel />
 
-      {/* ─── SECTION 9: TESTIMONIALS — Enhanced ─── */}
-      <section className="py-24 relative">
-        <div className="container mx-auto px-4">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16">
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold mb-4">{t("testimonials.title")}</h2>
-            <p className="text-muted-foreground text-lg">{t("testimonials.subtitle")}</p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {(t("testimonials.items", { returnObjects: true }) as Array<{ quote: string; author: string; role: string }>)
-              .slice(0, 3)
-              .map((testimonial, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1 }}
-                  className="surface-card-hover p-6 flex flex-col"
-                >
-                  <div className="flex gap-1 mb-4">
-                    {[...Array(5)].map((_, j) => (
-                      <Star key={j} className="h-4 w-4 fill-primary text-primary" />
-                    ))}
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-6 leading-relaxed italic flex-1">"{testimonial.quote}"</p>
-                  <div className="flex items-center gap-3 pt-4 border-t border-border">
-                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                      <span className="text-primary font-semibold text-sm">
-                        {testimonial.author.split(" ").map((n) => n[0]).join("")}
-                      </span>
-                    </div>
-                    <div>
-                      <div className="font-semibold text-sm">{testimonial.author}</div>
-                      <div className="text-xs text-muted-foreground">{testimonial.role}</div>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-          </div>
-        </div>
-      </section>
+      {/* ─── SECTION 9: TESTIMONIALS — Carousel ─── */}
+      <TestimonialsCarousel />
 
       {/* ─── SECTION 10: PRICING ─── */}
       <section className="py-24 relative">
