@@ -190,15 +190,14 @@ const Index = () => {
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8 }}
-                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border mb-8"
-                style={{ background: 'hsl(175 100% 40% / 0.08)', borderColor: 'hsl(175 100% 40% / 0.2)' }}
+                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-border/30 bg-card/50 mb-8"
               >
                 <span className="relative flex h-2 w-2">
                   <span className="absolute inset-[-3px] rounded-full border animate-live-pulse" style={{ borderColor: 'hsl(175 100% 40%)' }} />
                   <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: 'hsl(175 100% 40%)' }} />
                 </span>
-                <span className="text-[13px] font-medium" style={{ color: 'hsl(175 100% 40%)' }}>
-                  <strong className="text-foreground">2.847</strong> {t("landing.hero.liveBadge", "projetos completados este mês")}
+                <span className="text-[13px] font-medium text-muted-foreground">
+                  <strong className="text-primary">+2.847</strong> {t("landing.hero.liveBadge", "projetos completados este mês")}
                 </span>
               </motion.div>
 
