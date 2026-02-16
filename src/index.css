@@ -388,19 +388,19 @@
 }
 
 *::-webkit-scrollbar-thumb {
-  background-color: hsl(249 76% 62%);
+  background-color: #0da2e7;
   border-radius: 999px;
   border: 2px solid rgba(0, 0, 0, 0.25);
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background-color: hsl(249 76% 68%);
+  background-color: #3bb8f0;
 }
 
 /* Firefox */
 html {
   scrollbar-width: thin;
-  scrollbar-color: hsl(249 76% 62%) rgba(255, 255, 255, 0.04);
+  scrollbar-color: #0da2e7 rgba(255, 255, 255, 0.04);
 }
 
 /* Mask gradient for carousel fade edges */
