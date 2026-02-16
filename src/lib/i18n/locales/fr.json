@@ -1289,17 +1289,17 @@
     "aiSuggestion": "Suggestion basée sur l'IA"
   },
   "landing": {
-    "providers": {
-      "title": "Infrastructure et paiements fiables",
-      "subtitle": "Paiements traités par des fournisseurs de premier plan avec une infrastructure robuste.",
-      "disclaimer": "Les marques appartiennent à leurs propriétaires respectifs. N'implique aucun partenariat.",
-      "badges": {
-        "escrow": "Paiement protégé (séquestre)",
-        "approval": "Libération après approbation",
-        "secureChat": "Chat sécurisé sur la plateforme",
-        "antiFraud": "Protection anti-fraude"
-      }
-    }
+    "providers": { "title": "Infrastructure et paiements fiables", "subtitle": "Paiements traités par des fournisseurs de premier plan avec une infrastructure robuste.", "disclaimer": "Les marques appartiennent à leurs propriétaires respectifs. N'implique aucun partenariat.", "badges": { "escrow": "Paiement protégé (séquestre)", "approval": "Libération après approbation", "secureChat": "Chat sécurisé sur la plateforme", "antiFraud": "Protection anti-fraude" } },
+    "hero": { "liveBadge": "projets complétés ce mois", "line1": "Recrutez pour des", "line2": "Résultats.", "line3": "Pas pour des promesses.", "desc1": "La seule plateforme où vous ", "descHighlight": "ne payez que ce qui est livré", "desc2": ". Freelances vérifiés, séquestre sécurisé, zéro surprise.", "cta": "Trouver des Talents", "ctaSecondary": "Voir comment ça marche", "trust1": "100% Vérifiés", "trust2": "Séquestre Sécurisé", "trust3": "Match en 24h", "formTitle": "Recherche rapide de talents", "formSkill": "J'ai besoin d'un...", "selectSpecialty": "Sélectionnez la spécialité", "formDeadline": "Délai", "formCta": "Trouver des Talents", "free": "Gratuit pour commencer", "noCommit": "Sans engagement", "specialties": { "fullstack": "Développeur Full-Stack", "designer": "Designer UI/UX", "marketing": "Growth Marketing", "data": "Data Science / ML", "mobile": "Développeur Mobile", "devops": "Ingénieur DevOps" }, "deadlines": { "1week": "1 semaine", "2weeks": "2 semaines", "1month": "1 mois", "2months": "2+ mois" }, "floatingCards": { "justReceived": "Vient de recevoir", "approval": "98% approbation", "devsHired": "3 devs recrutés" } },
+    "ticker": { "title": "En ce moment sur HOOKLY", "statLabel": "projets complétés ce mois", "delivered": "a livré", "received": "a reçu", "hired": "a recruté", "completed": "a complété", "uiDesign": "projet UI Design", "threeDevs": "3 devs en 2 jours", "appMobile": "app mobile", "designer": "designer UX sénior", "ecommerce": "e-commerce complet", "paid": "Payé", "active": "Actif" },
+    "showcase": { "title": "Découvrez comment payer pour des", "titleAccent": "RÉSULTATS", "subtitle": "(pas pour des heures sur le canapé)", "projectName": "Projet : Refonte App Mobile", "milestone1": "Wireframes", "milestone2": "UI Design", "milestone3": "Prototype Interactif", "approved": "Approuvé", "inReview": "En révision", "released": "libéré", "progress": "Progression", "deliverables": "livrables", "bottomText": "Pas de surprises. Pas d'heures gonflées.", "bottomBold": "Approuvé ? Paiement libéré. Simple." },
+    "talents": { "title": "Talents prêts pour votre projet", "all": "Tous", "dev": "Développement", "design": "Design", "marketing": "Marketing", "data": "Data Science", "viewProfile": "Voir le profil", "success": "réussite", "viewAll": "Explorer les 2 400+ talents" },
+    "steps": { "tag": "Simple comme bonjour" },
+    "beforeAfter": { "title": "Pourquoi les équipes migrent vers", "beforeLabel": "AVANT", "afterLabel": "AVEC HOOKLY", "beforeSub": "(plateformes traditionnelles)", "before1": "Filtrer 200 profils génériques", "before2": "Payer à l'heure sans garantie", "before3": "Aucune protection de paiement", "before4": "Frais cachés partout", "after1": "3 talents pré-vérifiés", "after2": "Payer par livrable approuvé", "after3": "Séquestre + garantie totale", "after4": "Transparence totale" },
+    "testimonials": { "title": "Histoires réelles d'utilisateurs", "project": "Projet", "value": "Valeur", "deadline": "Délai" },
+    "pricing": { "tag": "Transparent" },
+    "faq": { "tag": "Questions" },
+    "ctaFinal": { "title1": "Votre prochain projet mérite des", "title2": "talents ", "titleHighlight": "VÉRIFIÉS.", "subtitle": "Rejoignez des milliers de professionnels et d'entreprises qui réussissent avec des résultats réels.", "emailPlaceholder": "Votre email professionnel", "cta": "Créer un Compte Gratuit", "noCreditCard": "Sans carte de crédit", "quickSetup": "Setup en 2 minutes", "cancelAnytime": "Annulez quand vous voulez" }
   },
   "awards": {
     "badge": "Programme de Reconnaissance",

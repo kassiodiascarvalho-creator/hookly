@@ -2089,6 +2089,66 @@
         "secureChat": "Chat seguro na plataforma",
         "antiFraud": "Proteção anti-fraude"
       }
+    },
+    "hero": {
+      "liveBadge": "projetos completados este mês",
+      "line1": "Contrate por",
+      "line2": "Resultados.",
+      "line3": "Não por promessas.",
+      "desc1": "A única plataforma onde você ",
+      "descHighlight": "paga apenas pelo que foi entregue",
+      "desc2": ". Freelancers verificados, escrow seguro, zero surpresas.",
+      "cta": "Encontrar Talentos Agora",
+      "ctaSecondary": "Ver como funciona",
+      "trust1": "100% Verificados",
+      "trust2": "Escrow Seguro",
+      "trust3": "Match em 24h",
+      "formTitle": "Busca rápida de talentos",
+      "formSkill": "Preciso de um...",
+      "selectSpecialty": "Selecione a especialidade",
+      "formDeadline": "Prazo",
+      "formCta": "Encontrar Talentos Agora",
+      "free": "Grátis para começar",
+      "noCommit": "Sem compromisso",
+      "specialties": { "fullstack": "Desenvolvedor Full-Stack", "designer": "UI/UX Designer", "marketing": "Growth Marketing", "data": "Data Science / ML", "mobile": "Mobile Developer", "devops": "DevOps Engineer" },
+      "deadlines": { "1week": "1 semana", "2weeks": "2 semanas", "1month": "1 mês", "2months": "2+ meses" },
+      "floatingCards": { "justReceived": "Acabou de receber", "approval": "98% aprovação", "devsHired": "3 devs contratados" }
+    },
+    "ticker": {
+      "title": "Acontecendo agora na HOOKLY",
+      "statLabel": "projetos completados este mês",
+      "delivered": "entregou", "received": "recebeu", "hired": "contratou", "completed": "completou",
+      "uiDesign": "projeto de UI Design", "threeDevs": "3 devs em 2 dias", "appMobile": "app mobile",
+      "designer": "designer UX sênior", "ecommerce": "e-commerce completo", "paid": "Pago", "active": "Ativo"
+    },
+    "showcase": {
+      "title": "Veja como é pagar por", "titleAccent": "RESULTADOS", "subtitle": "(não por horas gastas no sofá)",
+      "projectName": "Projeto: Redesign App Mobile", "milestone1": "Wireframes", "milestone2": "UI Design",
+      "milestone3": "Protótipo Interativo", "approved": "Aprovado", "inReview": "Em revisão", "released": "liberado",
+      "progress": "Progresso", "deliverables": "entregáveis",
+      "bottomText": "Sem surpresas. Sem horas infladas.", "bottomBold": "Aprovou? Pagamento liberado. Simples."
+    },
+    "talents": {
+      "title": "Talentos prontos para seu projeto", "all": "Todos", "dev": "Desenvolvimento", "design": "Design",
+      "marketing": "Marketing", "data": "Data Science", "viewProfile": "Ver perfil", "success": "sucesso",
+      "viewAll": "Explorar todos os 2.400+ talentos"
+    },
+    "steps": { "tag": "Simples assim" },
+    "beforeAfter": {
+      "title": "Por que equipes estão migrando para", "beforeLabel": "ANTES", "afterLabel": "COM HOOKLY",
+      "beforeSub": "(plataformas tradicionais)", "before1": "Filtrar 200 perfis genéricos",
+      "before2": "Pagar por hora sem garantia", "before3": "Sem proteção de pagamento", "before4": "Taxas ocultas em tudo",
+      "after1": "3 talentos pré-verificados", "after2": "Pagar por entregável aprovado",
+      "after3": "Escrow + garantia total", "after4": "Transparência total"
+    },
+    "testimonials": { "title": "Histórias reais de quem usa", "project": "Projeto", "value": "Valor", "deadline": "Prazo" },
+    "pricing": { "tag": "Transparente" },
+    "faq": { "tag": "Dúvidas" },
+    "ctaFinal": {
+      "title1": "Seu próximo projeto merece", "title2": "talentos ", "titleHighlight": "VERIFICADOS.",
+      "subtitle": "Junte-se a milhares de profissionais e empresas que já faturam com resultados reais.",
+      "emailPlaceholder": "Seu email de trabalho", "cta": "Criar Conta Grátis",
+      "noCreditCard": "Sem cartão de crédito", "quickSetup": "Setup em 2 minutos", "cancelAnytime": "Cancele quando quiser"
     }
   },
   "awards": {
