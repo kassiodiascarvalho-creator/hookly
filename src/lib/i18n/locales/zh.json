@@ -1289,8 +1289,41 @@
     "showcase": { "title": "看看按", "titleAccent": "成果", "subtitle": "付费是什么样的（不是按沙发上的小时数）", "projectName": "项目：移动应用重新设计", "milestone1": "线框图", "milestone2": "UI 设计", "milestone3": "交互原型", "approved": "已批准", "inReview": "审核中", "released": "已释放", "progress": "进度", "deliverables": "交付物", "bottomText": "没有意外。没有虚报工时。", "bottomBold": "批准了？付款释放。就这么简单。" },
     "talents": { "title": "为您的项目准备好的人才", "all": "全部", "dev": "开发", "design": "设计", "marketing": "营销", "data": "数据科学", "viewProfile": "查看档案", "success": "成功率", "viewAll": "探索所有 2,400+ 人才" },
     "steps": { "tag": "就是这么简单" },
+    "howItWorks": { "title": "3 步。0 麻烦。", "time1": "⏱ 3 分钟", "time2": "⏱ 24 小时", "time3": "✅ 已批准的交付物" },
     "beforeAfter": { "title": "为什么团队正在转向", "beforeLabel": "之前", "afterLabel": "使用 HOOKLY", "beforeSub": "（传统平台）", "before1": "筛选200个普通档案", "before2": "按小时付费无保障", "before3": "无支付保护", "before4": "到处是隐藏费用", "after1": "3位预验证人才", "after2": "按批准的交付物付费", "after3": "托管 + 全额保障", "after4": "完全透明" },
-    "testimonials": { "title": "真实用户的真实故事", "project": "项目", "value": "价值", "deadline": "期限" },
+    "testimonials": {
+      "title": "真实用户的真实故事",
+      "project": "项目",
+      "value": "价值",
+      "deadline": "期限",
+      "1": {
+        "quote": "我们测试了 Upwork、99freelas、Workana。在 HOOKLY，我们在48小时内找到了全栈开发者。交付物系统让我们完全控制预算。结果？应用提前3周上线。",
+        "author": "Ricardo Mendes",
+        "role": "CPO @ NeoBank",
+        "location": "圣保罗",
+        "project": "移动应用",
+        "value": "R$28,000",
+        "duration": "6 周"
+      },
+      "2": {
+        "quote": "作为自由职业者，HOOKLY改变了我的生活。3个月内，我赚的比其他平台8个月还多。托管给了我完全的安全感——我再也没有白干过。",
+        "author": "Camila Torres",
+        "role": "UI/UX 设计师",
+        "location": "库里蒂巴",
+        "project": "SaaS 仪表板",
+        "value": "R$15,000",
+        "duration": "4 周"
+      },
+      "3": {
+        "quote": "自由职业者验证是真实的。我们雇用的每位专业人士都有扎实的作品集，交付超出预期。这是我们做过的最好的投资。",
+        "author": "Marcos Oliveira",
+        "role": "CTO @ DataFlow",
+        "location": "贝洛奥里藏特",
+        "project": "分析平台",
+        "value": "R$42,000",
+        "duration": "8 周"
+      }
+    },
     "pricing": { "tag": "透明" },
     "faq": { "tag": "问题" },
     "ctaFinal": { "title1": "您的下一个项目值得", "title2": "", "titleHighlight": "经验证的人才。", "subtitle": "加入数千名已通过真实成果获利的专业人士和企业。", "emailPlaceholder": "您的工作邮箱", "cta": "免费创建账户", "noCreditCard": "无需信用卡", "quickSetup": "2分钟设置", "cancelAnytime": "随时取消" }

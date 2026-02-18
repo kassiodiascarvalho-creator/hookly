@@ -1295,8 +1295,41 @@
     "showcase": { "title": "So sieht Bezahlung für", "titleAccent": "ERGEBNISSE", "subtitle": "(nicht für Stunden auf dem Sofa)", "projectName": "Projekt: Mobile App Redesign", "milestone1": "Wireframes", "milestone2": "UI Design", "milestone3": "Interaktiver Prototyp", "approved": "Genehmigt", "inReview": "In Überprüfung", "released": "freigegeben", "progress": "Fortschritt", "deliverables": "Liefergegenstände", "bottomText": "Keine Überraschungen. Keine aufgeblähten Stunden.", "bottomBold": "Genehmigt? Zahlung freigegeben. Einfach." },
     "talents": { "title": "Talente bereit für Ihr Projekt", "all": "Alle", "dev": "Entwicklung", "design": "Design", "marketing": "Marketing", "data": "Data Science", "viewProfile": "Profil ansehen", "success": "Erfolg", "viewAll": "Alle 2.400+ Talente erkunden" },
     "steps": { "tag": "So einfach" },
+    "howItWorks": { "title": "3 Schritte. 0 Komplikationen.", "time1": "⏱ 3 Minuten", "time2": "⏱ 24 Stunden", "time3": "✅ Genehmigte Liefergegenstände" },
     "beforeAfter": { "title": "Warum Teams zu HOOKLY wechseln", "beforeLabel": "VORHER", "afterLabel": "MIT HOOKLY", "beforeSub": "(traditionelle Plattformen)", "before1": "200 generische Profile filtern", "before2": "Stundenweise ohne Garantie bezahlen", "before3": "Kein Zahlungsschutz", "before4": "Überall versteckte Gebühren", "after1": "3 vorab verifizierte Talente", "after2": "Pro genehmigtem Liefergegenstand bezahlen", "after3": "Treuhand + volle Garantie", "after4": "Totale Transparenz" },
-    "testimonials": { "title": "Echte Geschichten von echten Nutzern", "project": "Projekt", "value": "Wert", "deadline": "Frist" },
+    "testimonials": {
+      "title": "Echte Geschichten von echten Nutzern",
+      "project": "Projekt",
+      "value": "Wert",
+      "deadline": "Frist",
+      "1": {
+        "quote": "Wir haben Upwork, 99freelas und Workana getestet. Auf HOOKLY fanden wir unseren Full-Stack-Entwickler in 48h. Das Liefergegenstände-System gab uns volle Budgetkontrolle. Ergebnis? App 3 Wochen vor dem Zeitplan gestartet.",
+        "author": "Ricardo Mendes",
+        "role": "CPO @ NeoBank",
+        "location": "São Paulo, SP",
+        "project": "Mobile App",
+        "value": "R$28.000",
+        "duration": "6 Wochen"
+      },
+      "2": {
+        "quote": "Als Freelancerin hat HOOKLY mein Leben verändert. In 3 Monaten habe ich mehr verdient als in 8 Monaten auf anderen Plattformen. Das Treuhandkonto gibt mir totale Sicherheit — ich habe nie wieder ohne Bezahlung gearbeitet.",
+        "author": "Camila Torres",
+        "role": "UI/UX Designerin",
+        "location": "Curitiba, PR",
+        "project": "SaaS Dashboard",
+        "value": "R$15.000",
+        "duration": "4 Wochen"
+      },
+      "3": {
+        "quote": "Die Freelancer-Verifizierung ist echt. Alle Fachleute, die wir eingestellt haben, hatten solide Portfolios und lieferten über den Erwartungen. Die beste Investition, die wir gemacht haben.",
+        "author": "Marcos Oliveira",
+        "role": "CTO @ DataFlow",
+        "location": "Belo Horizonte, MG",
+        "project": "Analytics-Plattform",
+        "value": "R$42.000",
+        "duration": "8 Wochen"
+      }
+    },
     "pricing": { "tag": "Transparent" },
     "faq": { "tag": "Fragen" },
     "ctaFinal": { "title1": "Ihr nächstes Projekt verdient", "title2": "Talente ", "titleHighlight": "VERIFIZIERT.", "subtitle": "Schließen Sie sich Tausenden von Fachleuten und Unternehmen an, die bereits mit echten Ergebnissen erfolgreich sind.", "emailPlaceholder": "Ihre geschäftliche E-Mail", "cta": "Kostenloses Konto erstellen", "noCreditCard": "Keine Kreditkarte", "quickSetup": "Setup in 2 Minuten", "cancelAnytime": "Jederzeit kündbar" }
