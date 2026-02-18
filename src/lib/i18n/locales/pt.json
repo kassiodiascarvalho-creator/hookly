@@ -2134,6 +2134,7 @@
       "viewAll": "Explorar todos os 2.400+ talentos"
     },
     "steps": { "tag": "Simples assim" },
+    "howItWorks": { "title": "3 passos. 0 complicação.", "time1": "⏱ 3 minutos", "time2": "⏱ 24 horas", "time3": "✅ Entregáveis aprovados" },
     "beforeAfter": {
       "title": "Por que equipes estão migrando para", "beforeLabel": "ANTES", "afterLabel": "COM HOOKLY",
       "beforeSub": "(plataformas tradicionais)", "before1": "Filtrar 200 perfis genéricos",
@@ -2141,7 +2142,39 @@
       "after1": "3 talentos pré-verificados", "after2": "Pagar por entregável aprovado",
       "after3": "Escrow + garantia total", "after4": "Transparência total"
     },
-    "testimonials": { "title": "Histórias reais de quem usa", "project": "Projeto", "value": "Valor", "deadline": "Prazo" },
+    "testimonials": {
+      "title": "Histórias reais de quem usa",
+      "project": "Projeto",
+      "value": "Valor",
+      "deadline": "Prazo",
+      "1": {
+        "quote": "Testamos Upwork, 99freelas, Workana. No HOOKLY, encontramos nosso dev full-stack em 48h. O sistema de entregáveis nos deu controle total sobre o orçamento. Resultado? App lançado 3 semanas antes do prazo.",
+        "author": "Ricardo Mendes",
+        "role": "CPO @ NeoBank",
+        "location": "São Paulo, SP",
+        "project": "App Mobile",
+        "value": "R$28.000",
+        "duration": "6 semanas"
+      },
+      "2": {
+        "quote": "Como freelancer, o HOOKLY mudou minha vida. Em 3 meses, faturei mais do que em 8 meses nas outras plataformas. O escrow me dá segurança total — nunca mais trabalhei sem receber.",
+        "author": "Camila Torres",
+        "role": "UI/UX Designer",
+        "location": "Curitiba, PR",
+        "project": "SaaS Dashboard",
+        "value": "R$15.000",
+        "duration": "4 semanas"
+      },
+      "3": {
+        "quote": "A verificação dos freelancers é real. Todos os profissionais que contratamos tinham portfólios sólidos e entregaram acima das expectativas. O melhor investimento que fizemos.",
+        "author": "Marcos Oliveira",
+        "role": "CTO @ DataFlow",
+        "location": "Belo Horizonte, MG",
+        "project": "Plataforma Analytics",
+        "value": "R$42.000",
+        "duration": "8 semanas"
+      }
+    },
     "pricing": { "tag": "Transparente" },
     "faq": { "tag": "Dúvidas" },
     "ctaFinal": {

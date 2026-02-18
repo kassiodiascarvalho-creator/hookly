@@ -14,52 +14,40 @@ interface Testimonial {
   avatarUrl: string;
 }
 
-const TESTIMONIALS: Testimonial[] = [
-  {
-    quote: "Testamos Upwork, 99freelas, Workana. No HOOKLY, encontramos nosso dev full-stack em 48h. O sistema de entregáveis nos deu controle total sobre o orçamento. Resultado? App lançado 3 semanas antes do prazo.",
-    author: "Ricardo Mendes",
-    role: "CPO @ NeoBank",
-    location: "São Paulo, SP",
-    project: "App Mobile",
-    value: "R$28.000",
-    duration: "6 semanas",
-    avatarUrl: "https://randomuser.me/api/portraits/men/75.jpg",
-  },
-  {
-    quote: "Como freelancer, o HOOKLY mudou minha vida. Em 3 meses, faturei mais do que em 8 meses nas outras plataformas. O escrow me dá segurança total — nunca mais trabalhei sem receber.",
-    author: "Camila Torres",
-    role: "UI/UX Designer",
-    location: "Curitiba, PR",
-    project: "SaaS Dashboard",
-    value: "R$15.000",
-    duration: "4 semanas",
-    avatarUrl: "https://randomuser.me/api/portraits/women/65.jpg",
-  },
-  {
-    quote: "A verificação dos freelancers é real. Todos os profissionais que contratamos tinham portfólios sólidos e entregaram acima das expectativas. O melhor investimento que fizemos.",
-    author: "Marcos Oliveira",
-    role: "CTO @ DataFlow",
-    location: "Belo Horizonte, MG",
-    project: "Plataforma Analytics",
-    value: "R$42.000",
-    duration: "8 semanas",
-    avatarUrl: "https://randomuser.me/api/portraits/men/46.jpg",
-  },
+const AVATAR_URLS = [
+  "https://randomuser.me/api/portraits/men/75.jpg",
+  "https://randomuser.me/api/portraits/women/65.jpg",
+  "https://randomuser.me/api/portraits/men/46.jpg",
 ];
+
+function useTestimonials(): Testimonial[] {
+  const { t } = useTranslation();
+  return [1, 2, 3].map((i, idx) => ({
+    quote: t(`landing.testimonials.${i}.quote`),
+    author: t(`landing.testimonials.${i}.author`),
+    role: t(`landing.testimonials.${i}.role`),
+    location: t(`landing.testimonials.${i}.location`),
+    project: t(`landing.testimonials.${i}.project`),
+    value: t(`landing.testimonials.${i}.value`),
+    duration: t(`landing.testimonials.${i}.duration`),
+    avatarUrl: AVATAR_URLS[idx],
+  }));
+}
 
 export function TestimonialsCarousel() {
   const { t } = useTranslation();
+  const testimonials = useTestimonials();
   const [current, setCurrent] = useState(0);
 
-  const next = useCallback(() => setCurrent((p) => (p + 1) % TESTIMONIALS.length), []);
-  const prev = useCallback(() => setCurrent((p) => (p - 1 + TESTIMONIALS.length) % TESTIMONIALS.length), []);
+  const next = useCallback(() => setCurrent((p) => (p + 1) % testimonials.length), [testimonials.length]);
+  const prev = useCallback(() => setCurrent((p) => (p - 1 + testimonials.length) % testimonials.length), [testimonials.length]);
 
   useEffect(() => {
     const timer = setInterval(next, 6000);
     return () => clearInterval(timer);
   }, [next]);
 
-  const testimonial = TESTIMONIALS[current];
+  const testimonial = testimonials[current];
 
   return (
     <section className="py-24 relative">
@@ -71,7 +59,7 @@ export function TestimonialsCarousel() {
           className="text-center mb-16"
         >
           <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold">
-            {t("landing.testimonials.title", "Histórias reais de quem usa")}
+            {t("landing.testimonials.title")}
           </h2>
         </motion.div>
 
@@ -113,9 +101,9 @@ export function TestimonialsCarousel() {
 
               {/* Project details */}
               <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground border-t border-border pt-5">
-                <span>Projeto: <strong className="text-foreground">{testimonial.project}</strong></span>
-                <span>Valor: <strong className="text-primary">{testimonial.value}</strong></span>
-                <span>Prazo: <strong className="text-foreground">{testimonial.duration}</strong></span>
+                <span>{t("landing.testimonials.project")}: <strong className="text-foreground">{testimonial.project}</strong></span>
+                <span>{t("landing.testimonials.value")}: <strong className="text-primary">{testimonial.value}</strong></span>
+                <span>{t("landing.testimonials.deadline")}: <strong className="text-foreground">{testimonial.duration}</strong></span>
               </div>
             </motion.div>
           </AnimatePresence>
@@ -130,7 +118,7 @@ export function TestimonialsCarousel() {
             </button>
 
             <div className="flex gap-2">
-              {TESTIMONIALS.map((_, i) => (
+              {testimonials.map((_, i) => (
                 <button
                   key={i}
                   onClick={() => setCurrent(i)}

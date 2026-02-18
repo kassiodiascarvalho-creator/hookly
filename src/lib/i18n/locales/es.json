@@ -1295,8 +1295,41 @@
     "showcase": { "title": "Mira cómo es pagar por", "titleAccent": "RESULTADOS", "subtitle": "(no por horas en el sofá)", "projectName": "Proyecto: Rediseño App Mobile", "milestone1": "Wireframes", "milestone2": "UI Design", "milestone3": "Prototipo Interactivo", "approved": "Aprobado", "inReview": "En revisión", "released": "liberado", "progress": "Progreso", "deliverables": "entregables", "bottomText": "Sin sorpresas. Sin horas infladas.", "bottomBold": "¿Aprobado? Pago liberado. Así de simple." },
     "talents": { "title": "Talentos listos para tu proyecto", "all": "Todos", "dev": "Desarrollo", "design": "Diseño", "marketing": "Marketing", "data": "Data Science", "viewProfile": "Ver perfil", "success": "éxito", "viewAll": "Explorar todos los 2.400+ talentos" },
     "steps": { "tag": "Así de simple" },
+    "howItWorks": { "title": "3 pasos. 0 complicaciones.", "time1": "⏱ 3 minutos", "time2": "⏱ 24 horas", "time3": "✅ Entregables aprobados" },
     "beforeAfter": { "title": "Por qué los equipos migran a", "beforeLabel": "ANTES", "afterLabel": "CON HOOKLY", "beforeSub": "(plataformas tradicionales)", "before1": "Filtrar 200 perfiles genéricos", "before2": "Pagar por hora sin garantía", "before3": "Sin protección de pago", "before4": "Tarifas ocultas en todo", "after1": "3 talentos pre-verificados", "after2": "Pagar por entregable aprobado", "after3": "Escrow + garantía total", "after4": "Transparencia total" },
-    "testimonials": { "title": "Historias reales de quienes lo usan", "project": "Proyecto", "value": "Valor", "deadline": "Plazo" },
+    "testimonials": {
+      "title": "Historias reales de quienes lo usan",
+      "project": "Proyecto",
+      "value": "Valor",
+      "deadline": "Plazo",
+      "1": {
+        "quote": "Probamos Upwork, 99freelas, Workana. En HOOKLY, encontramos nuestro dev full-stack en 48h. El sistema de entregables nos dio control total del presupuesto. ¿Resultado? App lanzada 3 semanas antes del plazo.",
+        "author": "Ricardo Mendes",
+        "role": "CPO @ NeoBank",
+        "location": "São Paulo, SP",
+        "project": "App Mobile",
+        "value": "R$28.000",
+        "duration": "6 semanas"
+      },
+      "2": {
+        "quote": "Como freelancer, HOOKLY cambió mi vida. En 3 meses, facturé más que en 8 meses en otras plataformas. El escrow me da seguridad total — nunca más trabajé sin cobrar.",
+        "author": "Camila Torres",
+        "role": "Diseñadora UI/UX",
+        "location": "Curitiba, PR",
+        "project": "SaaS Dashboard",
+        "value": "R$15.000",
+        "duration": "4 semanas"
+      },
+      "3": {
+        "quote": "La verificación de freelancers es real. Todos los profesionales que contratamos tenían portafolios sólidos y entregaron por encima de las expectativas. La mejor inversión que hicimos.",
+        "author": "Marcos Oliveira",
+        "role": "CTO @ DataFlow",
+        "location": "Belo Horizonte, MG",
+        "project": "Plataforma Analytics",
+        "value": "R$42.000",
+        "duration": "8 semanas"
+      }
+    },
     "pricing": { "tag": "Transparente" },
     "faq": { "tag": "Dudas" },
     "ctaFinal": { "title1": "Tu próximo proyecto merece", "title2": "talentos ", "titleHighlight": "VERIFICADOS.", "subtitle": "Únete a miles de profesionales y empresas que ya facturan con resultados reales.", "emailPlaceholder": "Tu email de trabajo", "cta": "Crear Cuenta Gratis", "noCreditCard": "Sin tarjeta de crédito", "quickSetup": "Setup en 2 minutos", "cancelAnytime": "Cancela cuando quieras" }
