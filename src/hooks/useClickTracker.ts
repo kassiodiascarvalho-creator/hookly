@@ -24,7 +24,7 @@ interface ClickData {
 export function useClickTracker(enabled: boolean = true) {
   const sessionId = useRef(getSessionId());
   const clicksBuffer = useRef<ClickData[]>([]);
-  const flushTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const flushTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const flushClicks = useCallback(async () => {
     if (clicksBuffer.current.length === 0) return;
