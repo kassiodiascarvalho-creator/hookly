@@ -75,7 +75,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AnalyticsTracker />
-          <AdvancedAnalyticsTracker />
+          <AdvancedAnalyticsTracker enableScrollTracking enableClickTracking />
           <TrackingPixelsLoader />
           <Routes>
             {/* Public Routes */}

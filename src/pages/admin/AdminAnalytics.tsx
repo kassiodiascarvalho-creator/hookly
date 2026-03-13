@@ -633,7 +633,7 @@ export default function AdminAnalytics() {
 
         {/* Session Replays Tab */}
         <TabsContent value="replays">
-          <SessionReplayTab timeRange={timeRange} startDate={start} endDate={end} />
+          <SessionReplayTab />
         </TabsContent>
       </Tabs>
     </div>
