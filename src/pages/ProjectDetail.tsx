@@ -149,7 +149,7 @@ export default function ProjectDetail() {
   }, [searchParams]);
 
   const fetchProject = async () => {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("projects")
       .select("*")
       .eq("id", id)
@@ -158,7 +158,7 @@ export default function ProjectDetail() {
     if (error) {
       toast.error(error.message);
     } else if (data) {
-      setProject(data);
+      setProject({ ...data, currency: data.currency || "USD" } as Project);
       // Fetch company info including plan (for freelancers viewing)
       fetchCompanyInfo(data.company_user_id);
     }

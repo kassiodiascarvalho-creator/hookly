@@ -142,9 +142,9 @@ export default function Messages() {
         
         // Fetch last message for each conversation using a single query
         // Get all messages ordered by created_at desc, then deduplicate in JS
-        supabase
+        (supabase as any)
           .from("messages")
-          .select("conversation_id, content, created_at, type")
+          .select("conversation_id, content, created_at")
           .in("conversation_id", convIds)
           .order("created_at", { ascending: false }),
         
