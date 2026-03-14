@@ -144,7 +144,7 @@ export default function CompanyFinances() {
       .in("payment_type", ["project_prefund", "contract_funding"]);
 
     // Fetch contracts to link prefunds to contracts via project_id
-    const { data: contracts } = await supabase
+    const { data: contracts } = await (supabase as any)
       .from("contracts")
       .select("id, project_id, agreed_amount_cents, currency")
       .eq("company_user_id", user.id)
