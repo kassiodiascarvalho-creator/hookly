@@ -127,7 +127,7 @@ export default function FreelancerProfile() {
 
     setFreelancer({
       ...freelancerData,
-      tier: (freelancerData.tier as FreelancerTier) || "standard",
+      tier: ((freelancerData as any).tier as FreelancerTier) || "standard",
     });
 
     // Fetch reviews with project info
