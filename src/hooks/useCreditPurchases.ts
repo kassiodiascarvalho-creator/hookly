@@ -318,7 +318,7 @@ export async function fetchUserCreditStats(userId: string): Promise<UserCreditSt
     .order("created_at", { ascending: false })
     .limit(20);
 
-  const confirmedPurchases = (creditPurchases || []) as CreditPurchase[];
+  const confirmedPurchases = (creditPurchases || []) as unknown as CreditPurchase[];
 
   // If credit_purchases has data, use it
   if (confirmedPurchases.length > 0) {
