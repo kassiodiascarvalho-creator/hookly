@@ -1,0 +1,1404 @@
+{
+  "nav": {
+    "howItWorks": "如何运作",
+    "forCompanies": "企业服务",
+    "forFreelancers": "自由职业者服务",
+    "pricing": "定价",
+    "login": "登录",
+    "signup": "开始使用",
+    "dashboard": "控制台",
+    "projects": "项目",
+    "proposals": "提案",
+    "talentPool": "人才库",
+    "messages": "消息",
+    "finances": "财务",
+    "settings": "设置",
+    "findProjects": "寻找项目",
+    "myProposals": "我的提案",
+    "earnings": "收入",
+    "certifications": "证书",
+    "invites": "邀请",
+    "verifiedCompanies": "认证企业",
+    "adminPanel": "管理面板",
+    "contracts": "合同",
+    "aiHelp": "AI助手",
+    "awards": "奖励",
+    "reportBug": "报告错误",
+    "suggestImprovement": "建议改进"
+  },
+  "feedback": {
+    "reportBug": "报告错误",
+    "suggestImprovement": "建议改进",
+    "bugDescription": "描述您发现的错误，以便我们修复。",
+    "suggestionDescription": "分享您改进平台的想法。",
+    "title": "标题",
+    "description": "描述",
+    "bugTitlePlaceholder": "错误的简要描述",
+    "suggestionTitlePlaceholder": "建议的简要描述",
+    "bugDescriptionPlaceholder": "详细描述错误。您在做什么？发生了什么？",
+    "suggestionDescriptionPlaceholder": "详细描述您的建议。这将如何改善您的体验？",
+    "currentPage": "当前页面",
+    "submit": "提交",
+    "loginRequired": "您需要登录才能提交反馈",
+    "fillAllFields": "请填写所有字段",
+    "bugReported": "错误报告成功！感谢您的反馈。",
+    "suggestionSent": "建议发送成功！感谢您的反馈。",
+    "submitError": "提交反馈时出错。请重试。"
+  },
+  "hero": {
+    "badge": "最佳评级",
+    "title": "验证人才。",
+    "titleLine2": "保证结果。",
+    "titleLine3": "按成果付费 — 而非按小时。",
+    "subtitle": "HOOKLY 将企业与顶级验证自由职业者连接。专注于结果，只为交付的成果付费。",
+    "cta": "立即加入",
+    "ctaSecondary": "免费寻找人才",
+    "stats": {
+      "talents": "验证人才",
+      "satisfaction": "满意度",
+      "paid": "支付给自由职业者",
+      "categories": "类别"
+    }
+  },
+  "search": {
+    "findTalent": "寻找人才",
+    "findProjects": "寻找项目",
+    "placeholder": "搜索技能、项目或自由职业者...",
+    "searchBtn": "搜索"
+  },
+  "categories": {
+    "title": "按类别浏览",
+    "subtitle": "为任何项目找到完美的人才",
+    "development": "开发",
+    "design": "设计",
+    "marketing": "营销",
+    "writing": "写作",
+    "dataScience": "数据科学",
+    "videoPhoto": "视频与摄影",
+    "consulting": "咨询",
+    "finance": "财务",
+    "legal": "法律",
+    "other": "其他",
+    "viewAll": "查看所有类别"
+  },
+  "whyHookly": {
+    "title": "为什么选择 HOOKLY？",
+    "subtitle": "更智能的雇佣和工作方式",
+    "features": {
+      "verified": {
+        "title": "验证人才",
+        "description": "所有自由职业者都经过严格的验证过程，以确保高质量的工作。"
+      },
+      "escrow": {
+        "title": "安全支付",
+        "description": "资金存放在托管账户中，只有在您批准交付物后才会释放。"
+      },
+      "support": {
+        "title": "全天候支持",
+        "description": "我们专业的支持团队随时准备帮助解决任何问题。"
+      },
+      "escrowTitle": "受保护的托管",
+      "escrowDesc": "您的资金是安全的。只有在批准交付的工作后才付款。",
+      "coverageTitle": "全球覆盖",
+      "coverageDesc": "接触来自150多个国家的优秀专业人士。",
+      "matchingTitle": "快速匹配",
+      "matchingDesc": "我们的AI在24小时内为您匹配完美的自由职业者。"
+    }
+  },
+  "howItWorks": {
+    "title": "如何运作",
+    "subtitle": "简单、透明、高效",
+    "steps": {
+      "post": {
+        "title": "发布您的项目",
+        "description": "描述您的需求并设定预算。发布是免费的。"
+      },
+      "receive": {
+        "title": "接收提案",
+        "description": "获得符合您要求的验证自由职业者的提案。"
+      },
+      "hire": {
+        "title": "按成果付费",
+        "description": "批准交付物并释放付款。就这么简单。"
+      }
+    }
+  },
+  "pricing": {
+    "title": "灵活的计划，自信地雇佣",
+    "subtitle": "免费开始，需要时升级",
+    "monthly": "月付",
+    "yearly": "年付",
+    "starter": {
+      "name": "入门版",
+      "price": "免费",
+      "description": "非常适合试用平台",
+      "features": [
+        "发布最多3个项目",
+        "基本人才搜索",
+        "邮件支持",
+        "标准匹配"
+      ],
+      "cta": "开始使用"
+    },
+    "business": {
+      "name": "企业版",
+      "price": "定制",
+      "description": "适合有持续雇佣需求的团队",
+      "features": [
+        "无限项目",
+        "优先人才匹配",
+        "专属客户经理",
+        "高级分析",
+        "API访问"
+      ],
+      "cta": "联系销售",
+      "popular": "最受欢迎"
+    }
+  },
+  "comparison": {
+    "title": "HOOKLY vs 传统平台",
+    "subtitle": "了解为什么领先公司选择 HOOKLY",
+    "feature": "功能",
+    "features": {
+      "verifiedTalent": "验证人才",
+      "resultsBased": "按成果付费",
+      "noHiddenFees": "无隐藏费用",
+      "escrowProtection": "托管保护",
+      "platformFee": "平台费用",
+      "multiCurrency": "多币种",
+      "integration": "集成工具包"
+    },
+    "hookly": "HOOKLY",
+    "upwork": "Upwork",
+    "fiverr": "Fiverr",
+    "others": "其他"
+  },
+  "testimonials": {
+    "title": "深受企业和自由职业者喜爱",
+    "subtitle": "来自我们社区的真实故事",
+    "items": [
+      {
+        "quote": "HOOKLY 改变了我们的招聘流程。我们在几天内就找到了优秀的开发人员，而不是几周。",
+        "author": "Sarah Chen",
+        "role": "CTO, TechStart Inc"
+      },
+      {
+        "quote": "终于有一个重视质量而非数量的平台。验证过程确实发挥了作用。",
+        "author": "Marcus Johnson",
+        "role": "创始人, Creative Labs"
+      },
+      {
+        "quote": "作为自由职业者，HOOKLY 让我接触到尊重我工作的优质客户。",
+        "author": "Ana Silva",
+        "role": "全栈开发者"
+      },
+      {
+        "quote": "托管系统让我们安心。我们只为批准的交付物付款。",
+        "author": "David Park",
+        "role": "产品经理, ScaleUp"
+      }
+    ]
+  },
+  "faq": {
+    "title": "常见问题",
+    "subtitle": "关于 HOOKLY 您需要了解的一切",
+    "items": [
+      {
+        "question": "HOOKLY 如何验证自由职业者？",
+        "answer": "每位自由职业者都要经过多步骤的验证过程，包括身份验证、技能评估和作品集审核。只有前10%的申请者会被接受。"
+      },
+      {
+        "question": "平台费用是多少？",
+        "answer": "HOOKLY 对成功项目收取10%的固定费用。没有隐藏费用，发布项目完全免费。"
+      },
+      {
+        "question": "托管系统如何运作？",
+        "answer": "当您雇佣自由职业者时，资金安全地存放在托管账户中。只有在您批准交付物后才会释放付款，保护双方利益。"
+      },
+      {
+        "question": "我可以雇佣长期项目吗？",
+        "answer": "可以！HOOKLY 支持一次性项目和长期合作。您可以设置定期里程碑和付款。"
+      },
+      {
+        "question": "如果我对工作不满意怎么办？",
+        "answer": "我们的满意保证意味着您可以要求修改或对工作提出争议。我们的支持团队将帮助调解并找到公平的解决方案。"
+      }
+    ]
+  },
+  "cta": {
+    "title": "准备好按成果雇佣了吗？",
+    "subtitle": "加入数千家企业和自由职业者，与 HOOKLY 一起取得更多成就。今天开始您的旅程。",
+    "primary": "免费加入",
+    "secondary": "预约演示"
+  },
+  "footer": {
+    "description": "现代化市场，将验证人才与有抱负的企业连接起来。",
+    "platform": {
+      "title": "平台",
+      "howItWorks": "如何运作",
+      "findTalent": "寻找人才",
+      "findProjects": "寻找项目",
+      "pricing": "定价"
+    },
+    "company": {
+      "title": "公司",
+      "about": "关于我们",
+      "careers": "职业机会",
+      "blog": "博客",
+      "press": "媒体"
+    },
+    "resources": {
+      "title": "资源",
+      "help": "帮助中心",
+      "guides": "指南",
+      "api": "API文档",
+      "status": "状态"
+    },
+    "legal": {
+      "title": "法律",
+      "privacy": "隐私政策",
+      "terms": "服务条款",
+      "cookies": "Cookie政策"
+    },
+    "newsletter": {
+      "title": "保持联系",
+      "placeholder": "输入您的邮箱",
+      "subscribe": "订阅"
+    },
+    "copyright": "© 2026 HOOKLY。保留所有权利。"
+  },
+  "auth": {
+    "login": "登录",
+    "signup": "注册",
+    "email": "邮箱",
+    "password": "密码",
+    "confirmPassword": "确认密码",
+    "forgotPassword": "忘记密码？",
+    "welcomeBack": "欢迎回来",
+    "loginSubtitle": "登录您的账户继续",
+    "createAccount": "创建账户",
+    "signupSubtitle": "加入HOOKLY上的数千名专业人士",
+    "termsNotice": "注册即表示您同意我们的服务条款和隐私政策",
+    "loginSuccess": "登录成功！",
+    "signupSuccess": "账户已创建！请查收邮件确认。",
+    "invalidCredentials": "邮箱或密码无效",
+    "emailAlreadyRegistered": "该邮箱已存在账户",
+    "passwordMismatch": "密码不匹配",
+    "resetPassword": "重置密码",
+    "resetPasswordSubtitle": "输入您的邮箱，我们将发送重置链接",
+    "sendResetLink": "发送重置链接",
+    "backToLogin": "返回登录",
+    "checkYourEmail": "查收您的邮件",
+    "resetEmailSent": "我们已向{{email}}发送密码重置链接",
+    "mustBeLoggedIn": "您需要登录",
+    "logout": "退出登录",
+    "confirmEmail": "确认您的邮箱",
+    "codeSentTo": "我们已发送验证码至：",
+    "enterCode": "输入6位验证码",
+    "verifyEmail": "确认邮箱",
+    "resendCode": "重新发送验证码",
+    "resendCodeIn": "重新发送验证码（{{seconds}}秒）",
+    "invalidCode": "验证码无效",
+    "invalidOrExpiredCode": "验证码无效或已过期。请重新发送并重试。",
+    "codeExpired": "验证码已过期。请申请新验证码。",
+    "emailVerified": "邮箱验证成功！",
+    "verificationCodeSent": "验证码已发送到您的邮箱！",
+    "codeSentAgain": "我们已发送新验证码",
+    "emailNotConfirmed": "请确认您的邮箱以继续",
+    "passwordRequirementsIntro": "密码必须包含：",
+    "passwordRuleMinLength": "8+个字符",
+    "passwordRuleLetter": "1个字母 (A–Z)",
+    "passwordRuleNumber": "1个数字 (0–9)",
+    "passwordRuleSpecial": "1个特殊字符 (!@#$…)",
+    "errors": {
+      "invalidCredentials": "邮箱或密码无效",
+      "emailExists": "该邮箱已存在账户",
+      "weakPassword": "密码必须包含8+个字符、字母、数字和特殊字符",
+      "passwordMismatch": "密码不匹配",
+      "invalidEmail": "请输入有效的邮箱地址",
+      "generic": "发生错误。请重试。"
+    }
+  },
+  "onboarding": {
+    "title": "欢迎来到 HOOKLY！",
+    "subtitle": "告诉我们您将如何使用平台",
+    "companyTitle": "我是企业",
+    "companyDescription": "我想为我的项目雇佣有才华的自由职业者",
+    "freelancerTitle": "我是自由职业者",
+    "freelancerDescription": "我想寻找项目并与优秀的客户合作",
+    "companyFeature1": "访问经过验证的自由职业者",
+    "companyFeature2": "托管保护支付",
+    "companyFeature3": "专属支持",
+    "freelancerFeature1": "优质项目",
+    "freelancerFeature2": "付款有保障",
+    "freelancerFeature3": "建立您的声誉",
+    "getStarted": "开始",
+    "companyCreated": "企业档案已创建！",
+    "freelancerCreated": "自由职业者档案已创建！",
+    "company": {
+      "title": "我是企业",
+      "description": "我想为我的项目雇佣有才华的自由职业者"
+    },
+    "freelancer": {
+      "title": "我是自由职业者",
+      "description": "我想寻找项目并与优秀的客户合作"
+    }
+  },
+  "dashboard": {
+    "company": {
+      "title": "企业控制台",
+      "welcome": "欢迎回来",
+      "stats": {
+        "activeProjects": "活跃项目",
+        "totalSpent": "总支出",
+        "hiredTalents": "已雇佣人才",
+        "pendingProposals": "待处理提案"
+      },
+      "quickActions": {
+        "title": "快捷操作",
+        "newProject": "发布新项目",
+        "findTalent": "寻找人才",
+        "viewMessages": "查看消息"
+      }
+    },
+    "freelancer": {
+      "title": "自由职业者控制台",
+      "welcome": "欢迎回来",
+      "stats": {
+        "activeProjects": "活跃项目",
+        "totalEarned": "总收入",
+        "proposalsSent": "已发送提案",
+        "profileViews": "档案浏览量"
+      },
+      "quickActions": {
+        "title": "快捷操作",
+        "findProjects": "寻找项目",
+        "myProposals": "我的提案",
+        "viewMessages": "查看消息"
+      }
+    }
+  },
+  "sidebar": {
+    "company": {
+      "dashboard": "控制台",
+      "projects": "项目",
+      "proposals": "提案",
+      "talentPool": "人才库",
+      "messages": "消息",
+      "finances": "财务",
+      "settings": "设置"
+    },
+    "freelancer": {
+      "dashboard": "控制台",
+      "findProjects": "寻找项目",
+      "myProposals": "我的提案",
+      "messages": "消息",
+      "earnings": "收入",
+      "finances": "财务",
+      "certifications": "认证",
+      "settings": "设置"
+    },
+    "admin": {
+      "dashboard": "管理控制台",
+      "users": "用户",
+      "companies": "企业",
+      "freelancers": "自由职业者",
+      "projects": "项目",
+      "payments": "支付",
+      "leads": "潜在客户",
+      "viewSite": "查看网站"
+    }
+  },
+  "projects": {
+    "title": "项目",
+    "new": "新项目",
+    "filters": {
+      "all": "全部",
+      "draft": "草稿",
+      "open": "开放",
+      "inProgress": "进行中",
+      "completed": "已完成"
+    },
+    "create": {
+      "title": "创建新项目",
+      "step1": "基本信息",
+      "step2": "预算和KPI",
+      "step3": "预览",
+      "projectTitle": "项目标题",
+      "description": "描述",
+      "category": "类别",
+      "budgetMin": "最低预算",
+      "budgetMax": "最高预算",
+      "kpis": "关键绩效指标",
+      "addKpi": "添加KPI",
+      "saveDraft": "保存草稿",
+      "publish": "发布项目",
+      "next": "下一步",
+      "back": "返回"
+    },
+    "published": "项目发布成功！",
+    "alreadyPublished": "此项目已发布",
+    "savedAsDraft": "项目已保存为草稿",
+    "notFound": "项目未找到",
+    "boost": {
+      "title": "推广项目",
+      "label": "已推广",
+      "description": "此项目由公司使用Hookly积分推广。",
+      "tooltip": "将项目置顶7天",
+      "cta": "使用10积分推广",
+      "confirmation": "确认使用{{credits}}积分推广此项目7天？",
+      "expired": "推广已过期",
+      "activeUntil": "推广至{{date}}",
+      "extend": "延长推广",
+      "cost": "费用",
+      "duration": "时长",
+      "success": "项目推广成功！",
+      "error": "推广项目时出错",
+      "insufficientCredits": "积分不足"
+    }
+  },
+  "proposals": {
+    "title": "提案",
+    "sent": "已发送",
+    "received": "已收到",
+    "status": {
+      "sent": "已发送",
+      "accepted": "已接受",
+      "rejected": "已拒绝"
+    },
+    "actions": {
+      "accept": "接受",
+      "reject": "拒绝",
+      "viewProject": "查看项目"
+    },
+    "milestonesHelp": {
+      "title": "什么是里程碑？",
+      "description": "将您的提案分成具有明确截止日期、交付成果和金额的阶段。这可以建立与企业的信任，并实现受保护的分期付款。",
+      "titleTip": "阶段名称（例如：\"首页设计\"、\"功能API\"、\"最终交付\"）",
+      "amountTip": "此交付物的金额（以美元、人民币等计）",
+      "descriptionTip": "详细说明交付内容和时间",
+      "proTip": "里程碑定义清晰的提案被批准的可能性高达3倍。"
+    }
+  },
+  "messages": {
+    "title": "消息",
+    "noConversations": "暂无对话",
+    "typeMessage": "输入消息...",
+    "send": "发送"
+  },
+  "settings": {
+    "title": "设置",
+    "profile": "档案",
+    "diploma": "文凭",
+    "security": "安全",
+    "notifications": "通知",
+    "language": "语言",
+    "save": "保存更改",
+    "changePassword": "更改密码",
+    "currentPassword": "当前密码",
+    "newPassword": "新密码",
+    "confirmNewPassword": "确认新密码"
+  },
+  "admin": {
+    "title": "管理面板",
+    "stats": {
+      "totalUsers": "总用户数",
+      "activeProjects": "活跃项目",
+      "totalRevenue": "总收入",
+      "pendingPayments": "待处理支付"
+    },
+    "users": {
+      "title": "用户管理",
+      "verified": "已验证",
+      "unverified": "未验证",
+      "actions": {
+        "verify": "验证用户",
+        "suspend": "暂停",
+        "viewProfile": "查看档案"
+      }
+    },
+    "plans": {
+      "plan": "计划",
+      "priceUsd": "价格 (USD)",
+      "monthlyBonus": "每月奖励",
+      "monthlyBonusLabel": "每月奖励 (积分)",
+      "monthlyBonusDesc": "每30天自动添加积分（仅限100%完整资料）",
+      "projectsLimit": "项目限制",
+      "proposalsLimit": "提案限制",
+      "features": "功能",
+      "status": "状态",
+      "actions": "操作",
+      "month": "月",
+      "unlimited": "无限",
+      "active": "活跃",
+      "inactive": "不活跃"
+    },
+    "analytics": {
+      "title": "数据分析",
+      "description": "查看访客指标和用户行为",
+      "visitors": "访客",
+      "pageviews": "浏览量",
+      "viewsPerVisit": "每访问浏览",
+      "avgDuration": "平均时长",
+      "bounceRate": "跳出率",
+      "currentVisitors": "当前在线",
+      "last24h": "过去24小时",
+      "last7d": "过去7天",
+      "last30d": "过去30天",
+      "last90d": "过去90天",
+      "visitorsOverTime": "访客趋势",
+      "pageviewsOverTime": "浏览量趋势",
+      "topPages": "热门页面",
+      "sources": "流量来源",
+      "devices": "设备",
+      "countries": "国家",
+      "noData": "暂无数据"
+    }
+  },
+  "common": {
+    "loading": "加载中...",
+    "save": "保存",
+    "cancel": "取消",
+    "delete": "删除",
+    "edit": "编辑",
+    "view": "查看",
+    "search": "搜索",
+    "filter": "筛选",
+    "noResults": "未找到结果",
+    "success": "成功！",
+    "error": "错误",
+    "confirm": "确认",
+    "back": "返回",
+    "next": "下一步",
+    "submit": "提交",
+    "logout": "退出登录",
+    "days": "天",
+    "later": "稍后",
+    "company": "企业",
+    "freelancer": "自由职业者"
+  },
+  "profileGate": {
+    "title": "完善您的资料",
+    "freelancerDescription": "完善100%的个人资料以发送提案并解锁您的奖励积分。",
+    "companyDescription": "完善100%的公司资料以发布项目并解锁您的奖励积分。",
+    "profileProgress": "资料进度",
+    "bonusHint": "完善您的资料即可获得10个奖励积分！",
+    "missingItems": "还缺少：",
+    "moreItems": "个项目",
+    "completeNow": "完善资料",
+    "freelancerAlertTitle": "完善您的资料以发送提案",
+    "companyAlertTitle": "完善公司资料以发布项目",
+    "completeToPublish": "完善您的资料以发布项目"
+  },
+  "credits": "积分",
+  "earnings": {
+    "title": "我的收入",
+    "subtitle": "管理您的付款和提款",
+    "received": "已收到",
+    "receivedDesc": "企业资助的金额",
+    "receivable": "待收款",
+    "inEscrow": "待处理",
+    "escrowDesc": "已接受的项目等待资金到位",
+    "pendingFunding": "等待企业资助",
+    "pendingFundingDesc": "您有 {{amount}} 的已接受项目等待企业完成付款",
+    "totalEarnings": "总收入",
+    "paymentHistory": "付款记录",
+    "payoutMethods": "提款方式",
+    "payoutMethodsDesc": "配置您希望如何接收付款",
+    "noPayments": "暂无付款",
+    "noPaymentsDesc": "您项目的付款将显示在这里",
+    "unknownProject": "未知项目",
+    "unknownCompany": "未知公司",
+    "clickForDetails": "点击查看详情",
+    "receivableDetails": "待收款详情",
+    "receivableDetailsDesc": "已释放的付款等待转账",
+    "projectCompleted": "项目已完成",
+    "projectInProgress": "项目进行中",
+    "payoutMethodAdded": "提款方式已添加",
+    "payoutMethodDeleted": "提款方式已删除",
+    "defaultUpdated": "默认方式已更新",
+    "default": "默认",
+    "addPayoutMethod": "添加方式",
+    "requestWithdrawal": "申请提款",
+    "withdrawableBalance": "可提款余额",
+    "withdrawableDesc": "此金额可随时提取",
+    "escrowPendingDesc": "您有 {{amount}} 在托管中等待批准",
+    "noWithdrawableBalance": "完成项目以赚取可提款余额",
+    "configurePayoutFirst": "请先在「提款方式」选项卡中配置提款方式",
+    "withdrawalHistory": "提款记录",
+    "noWithdrawals": "暂无提款申请",
+    "noWithdrawalsDesc": "您的提款申请将显示在这里",
+    "withdrawalRequest": "提款申请",
+    "adminNotes": "备注",
+    "paidAt": "付款日期",
+    "withdrawalStatus": {
+      "pending_review": "审核中",
+      "approved": "已批准",
+      "paid": "已付款",
+      "rejected": "已拒绝"
+    },
+    "status": {
+      "pending": "待处理",
+      "paid": "已付款",
+      "released": "已释放",
+      "failed": "失败"
+    },
+    "withdrawal": {
+      "title": "申请提款",
+      "description": "输入金额和提款方式",
+      "availableBalance": "可用余额",
+      "amount": "提款金额",
+      "max": "最大",
+      "payoutMethod": "提款方式",
+      "noMethods": "请先配置提款方式",
+      "invalidAmount": "请输入有效金额",
+      "exceedsBalance": "金额超过可用余额",
+      "selectMethod": "选择提款方式",
+      "summary": "批准后您将收到 {{amount}}",
+      "submit": "申请提款",
+      "success": "提款申请提交成功",
+      "error": "提款申请出错",
+      "identityRequired": "需要身份验证",
+      "identityRequiredDesc": "为了您的安全和平台上所有人的安全，我们需要在您首次提款前验证您的身份。",
+      "whyVerify": "为什么我们要验证您的身份？",
+      "whyVerifyReason1": "防止欺诈并保护您的收入",
+      "whyVerifyReason2": "确保资金转入正确的人",
+      "whyVerifyReason3": "遵守金融法规",
+      "identityPending": "验证审核中",
+      "identityPendingDesc": "您的验证正在审核中。一旦批准，您就可以申请提款。",
+      "identityRejected": "验证被拒绝",
+      "identityRejectedDesc": "您之前的验证被拒绝。请使用有效文件重试。",
+      "verifyNow": "立即验证"
+    },
+    "available": "可用余额",
+    "addPayoutMethodDesc": "配置您希望如何接收付款",
+    "noPayoutMethods": "未配置提款方式",
+    "bankAccount": "银行账户",
+    "pixKeyType": "PIX密钥类型",
+    "pixKey": "PIX密钥",
+    "pixKeyPlaceholder": "输入您的PIX密钥",
+    "pixKeyTypes": {
+      "cpf": "CPF",
+      "cnpj": "CNPJ",
+      "email": "电子邮件",
+      "phone": "电话",
+      "random": "随机密钥"
+    },
+    "bankName": "银行名称",
+    "bankCode": "银行代码",
+    "branch": "分行",
+    "account": "账户",
+    "accountType": "账户类型",
+    "checking": "活期账户",
+    "savings": "储蓄账户",
+    "holderName": "账户持有人姓名",
+    "holderDoc": "CPF/CNPJ",
+    "setDefault": "设为默认"
+  },
+  "findProjects": {
+    "title": "寻找项目",
+    "subtitle": "浏览由验证企业发布的可用机会",
+    "filters": "筛选器",
+    "category": "类别",
+    "allCategories": "所有类别",
+    "budgetRange": "预算范围",
+    "minBudget": "最低预算",
+    "maxBudget": "最高预算",
+    "status": "状态",
+    "allStatuses": "所有状态",
+    "open": "开放",
+    "inProgress": "进行中",
+    "apply": "申请",
+    "clearFilters": "清除筛选器",
+    "noProjects": "未找到项目",
+    "noProjectsDesc": "尝试调整筛选器或稍后再来查看",
+    "loading": "加载项目中...",
+    "postedBy": "发布者",
+    "budget": "预算",
+    "proposals": "提案",
+    "viewDetails": "查看详情",
+    "submitProposal": "提交提案"
+  },
+  "myProposals": {
+    "title": "我的提案",
+    "subtitle": "跟踪您发送给项目的所有提案",
+    "noProposals": "暂无提案",
+    "noProposalsDesc": "当您向项目提交提案时，它们将显示在这里",
+    "project": "项目",
+    "company": "企业",
+    "proposedAmount": "提议金额",
+    "status": "状态",
+    "submittedAt": "提交时间",
+    "viewProject": "查看项目",
+    "coverLetter": "求职信",
+    "milestones": "里程碑"
+  },
+  "companyProposals": {
+    "title": "提案",
+    "subtitle": "审核和管理您项目的提案",
+    "noProposals": "暂无提案",
+    "noProposalsDesc": "当自由职业者向您的项目提交提案时，它们将显示在这里",
+    "freelancer": "自由职业者",
+    "project": "项目",
+    "proposedAmount": "提议金额",
+    "status": "状态",
+    "receivedAt": "收到时间",
+    "viewProfile": "查看档案",
+    "accept": "接受",
+    "reject": "拒绝",
+    "accepted": "已接受",
+    "rejected": "已拒绝",
+    "pending": "待处理",
+    "coverLetter": "求职信",
+    "milestones": "里程碑",
+    "acceptConfirm": "接受提案",
+    "acceptConfirmDesc": "您确定要接受此提案吗？这将创建与自由职业者的合同。",
+    "rejectConfirm": "拒绝提案",
+    "rejectConfirmDesc": "您确定要拒绝此提案吗？"
+  },
+  "freelancerDashboard": {
+    "title": "自由职业者控制台",
+    "welcome": "欢迎回来",
+    "stats": {
+      "activeProjects": "活跃项目",
+      "totalEarned": "总收入",
+      "proposalsSent": "已发送提案",
+      "profileViews": "档案浏览量",
+      "proposalCredits": "提案积分"
+    },
+    "quickActions": {
+      "title": "快捷操作",
+      "findProjects": "寻找项目",
+      "myProposals": "我的提案",
+      "viewMessages": "查看消息",
+      "viewEarnings": "查看收入"
+    },
+    "recentProposals": "最近的提案",
+    "noRecentProposals": "暂无最近的提案"
+  },
+  "verifiedCompanies": {
+    "title": "验证企业",
+    "subtitle": "浏览所有验证企业",
+    "noCompanies": "未找到验证企业",
+    "viewProfile": "查看档案",
+    "industry": "行业",
+    "location": "地点",
+    "verified": "已验证"
+  },
+  "achievements": {
+    "title": "成就",
+    "subtitle": "跟踪您的进度并解锁奖励",
+    "locked": "锁定",
+    "unlocked": "已解锁",
+    "progress": "进度",
+    "viewAll": "查看全部",
+    "noAchievements": "暂无成就",
+    "revenueRequired": "需要收入"
+  },
+  "talentPool": {
+    "title": "人才库",
+    "subtitle": "发现适合您项目的验证人才",
+    "filters": "筛选器",
+    "skills": "技能",
+    "allSkills": "所有技能",
+    "location": "地点",
+    "allLocations": "所有地点",
+    "hourlyRate": "时薪",
+    "minRate": "最低时薪",
+    "maxRate": "最高时薪",
+    "clearFilters": "清除筛选器",
+    "noTalents": "未找到人才",
+    "noTalentsDesc": "尝试调整筛选器或稍后再来查看",
+    "loading": "加载人才中...",
+    "viewProfile": "查看档案",
+    "invite": "邀请参加项目",
+    "verified": "已验证",
+    "perHour": "/小时",
+    "projects": "项目",
+    "reviews": "评价"
+  },
+  "freelancerProfile": {
+    "title": "自由职业者档案",
+    "about": "关于",
+    "skills": "技能",
+    "portfolio": "作品集",
+    "reviews": "评价",
+    "certifications": "认证",
+    "hourlyRate": "时薪",
+    "location": "地点",
+    "memberSince": "加入时间",
+    "totalEarned": "总收入",
+    "projectsCompleted": "已完成项目",
+    "inviteToProject": "邀请参加项目",
+    "sendMessage": "发送消息",
+    "noPortfolio": "暂无作品集项目",
+    "noReviews": "暂无评价",
+    "noCertifications": "暂无认证",
+    "verified": "已验证",
+    "notVerified": "未验证"
+  },
+  "billing": {
+    "title": "账单",
+    "wallet": "钱包",
+    "balance": "余额",
+    "addFunds": "添加资金",
+    "transactions": "交易记录",
+    "noTransactions": "暂无交易",
+    "amount": "金额",
+    "type": "类型",
+    "date": "日期",
+    "status": "状态",
+    "deposit": "存款",
+    "withdrawal": "提款",
+    "payment": "付款",
+    "credits": "积分",
+    "buyCredits": "购买积分",
+    "creditsBalance": "积分余额",
+    "creditsDesc": "用积分提交提案",
+    "perCredit": "每积分"
+  },
+  "contracts": {
+    "title": "合同",
+    "subtitle": "管理您的活跃合同和里程碑",
+    "noContracts": "暂无合同",
+    "noContractsDesc": "当您接受提案时，合同将显示在这里",
+    "status": {
+      "active": "活跃",
+      "completed": "已完成",
+      "cancelled": "已取消",
+      "pending": "待处理"
+    },
+    "milestones": "里程碑",
+    "totalValue": "总价值",
+    "freelancer": "自由职业者",
+    "company": "企业",
+    "startDate": "开始日期",
+    "endDate": "结束日期",
+    "viewDetails": "查看详情",
+    "fundMilestone": "资助里程碑",
+    "releaseFunds": "释放资金",
+    "markComplete": "标记完成"
+  },
+  "companyProfile": {
+    "title": "企业档案",
+    "companyName": "企业名称",
+    "contactName": "联系人姓名",
+    "industry": "行业",
+    "companySize": "企业规模",
+    "website": "网站",
+    "phone": "电话",
+    "location": "地点",
+    "country": "国家",
+    "about": "关于企业",
+    "logo": "企业标志",
+    "uploadLogo": "上传标志",
+    "verified": "已验证企业",
+    "notVerified": "未验证",
+    "save": "保存更改",
+    "saving": "保存中...",
+    "success": "档案更新成功",
+    "error": "更新档案出错"
+  },
+  "uploads": {
+    "dragDrop": "拖放文件到这里",
+    "or": "或",
+    "browse": "浏览文件",
+    "maxSize": "最大大小",
+    "uploading": "上传中...",
+    "success": "文件上传成功",
+    "error": "上传文件出错",
+    "remove": "移除",
+    "preview": "预览"
+  },
+  "reviews": {
+    "title": "评价",
+    "leaveReview": "留下评价",
+    "rating": "评分",
+    "comment": "评论",
+    "submit": "提交评价",
+    "noReviews": "暂无评价",
+    "averageRating": "平均评分",
+    "totalReviews": "总评价数"
+  },
+  "portfolio": {
+    "title": "作品集",
+    "addProject": "添加项目",
+    "editProject": "编辑项目",
+    "projectTitle": "项目标题",
+    "description": "描述",
+    "projectUrl": "项目链接",
+    "tags": "标签",
+    "image": "图片",
+    "save": "保存",
+    "delete": "删除",
+    "noProjects": "暂无作品集项目",
+    "addFirst": "添加您的第一个项目来展示您的作品"
+  },
+  "certifications": {
+    "title": "学历",
+    "description": "添加您的学历和学位",
+    "addCert": "添加学历",
+    "editCert": "编辑学历",
+    "certDescription": "添加您的学历详情",
+    "certName": "学历名称",
+    "namePlaceholder": "例如，工商管理学士",
+    "issuer": "教育机构",
+    "issuerPlaceholder": "例如，北京大学",
+    "issueDate": "毕业日期",
+    "expiryDate": "过期日期",
+    "credentialUrl": "学历链接",
+    "noCerts": "暂无学历。添加您的第一个学历！",
+    "added": "学历已添加！",
+    "updated": "学历已更新！",
+    "deleted": "学历已删除",
+    "issued": "毕业",
+    "expires": "过期",
+    "expired": "已过期"
+  },
+  "payments": {
+    "fees": {
+      "international_card": "国际信用卡",
+      "brl_pix": "PIX",
+      "brl_card": "巴西信用卡",
+      "unknown": "服务费"
+    },
+    "feeLabels": {
+      "methodFee": "支付保护",
+      "conversionFee": "汇率保护",
+      "total": "总计",
+      "processingFee": "服务费",
+      "contractValue": "合同价值",
+      "paymentSummary": "支付摘要",
+      "freelancerReceives": "自由职业者将在完成后收到 {{amount}}。"
+    },
+    "breakdown": {
+      "youSend": "您发送",
+      "currencyProtection": "汇率保护 ({{percent}}%)",
+      "convertedAmount": "转换金额",
+      "currency": "货币",
+      "paymentMethod": "支付方式",
+      "card": "信用卡"
+    },
+    "protectionFee": "支付保护",
+    "processing": "处理中...",
+    "currencyNotAllowed": "不支持此货币",
+    "currencyRestrictionMessage": "您的国家不允许使用货币 {{currency}}。允许的货币：{{allowed}}。",
+    "cardInternational": "国际信用卡",
+    "fundContract": "为合同注资",
+    "amountToFund": "注资金额",
+    "paymentMethod": "支付方式",
+    "instant": "即时支付",
+    "card": "信用卡",
+    "creditDebit": "信用卡或借记卡",
+    "generatePix": "生成 PIX 二维码",
+    "payWithCard": "使用信用卡支付",
+    "title": "付款",
+    "subtitle": "管理您的付款和交易",
+    "noPayments": "暂无付款",
+    "amount": "金额",
+    "status": "状态",
+    "date": "日期",
+    "project": "项目",
+    "freelancer": "自由职业者",
+    "company": "企业",
+    "pending": "待处理",
+    "completed": "已完成",
+    "failed": "失败",
+    "refunded": "已退款"
+  },
+  "finances": {
+    "title": "财务",
+    "subtitle": "管理您的财务和交易",
+    "overview": "概览",
+    "transactions": "交易记录",
+    "wallet": "钱包",
+    "balance": "余额",
+    "income": "收入",
+    "expenses": "支出",
+    "pending": "待处理",
+    "addFunds": "添加资金",
+    "withdraw": "提款",
+    "noTransactions": "暂无交易",
+    "viewAll": "查看全部"
+  },
+  "currency": {
+    "usd": "美元",
+    "eur": "欧元",
+    "brl": "巴西雷亚尔",
+    "gbp": "英镑"
+  },
+  "invites": {
+    "title": "项目邀请",
+    "subtitle": "管理您的项目邀请",
+    "noInvites": "暂无邀请",
+    "noInvitesDesc": "当企业邀请您参加项目时，将显示在这里",
+    "accept": "接受",
+    "decline": "拒绝",
+    "viewProject": "查看项目",
+    "from": "来自",
+    "message": "消息",
+    "status": {
+      "pending": "待处理",
+      "accepted": "已接受",
+      "declined": "已拒绝"
+    }
+  },
+  "forCompanies": {
+    "badge": "企业服务",
+    "title": "自信地雇佣验证人才",
+    "subtitle": "HOOKLY 将您的企业与顶级自由职业者连接。按成果付费，而非按小时。",
+    "cta": "免费创建账户",
+    "ctaSecondary": "浏览人才",
+    "benefitsTitle": "为什么选择 HOOKLY？",
+    "benefits": {
+      "verified": {
+        "title": "验证人才",
+        "description": "所有自由职业者都经过严格的验证过程"
+      },
+      "escrow": {
+        "title": "安全付款",
+        "description": "资金受托管保护，直到工作获批"
+      },
+      "talent": {
+        "title": "全球人才库",
+        "description": "接触来自150多个国家的专业人士"
+      },
+      "fast": {
+        "title": "快速匹配",
+        "description": "在24小时内找到理想的专业人士"
+      }
+    },
+    "howItWorks": "如何运作",
+    "steps": {
+      "post": {
+        "title": "发布您的项目",
+        "description": "描述您的需求并设定预算"
+      },
+      "receive": {
+        "title": "接收提案",
+        "description": "验证的自由职业者将发送提案"
+      },
+      "hire": {
+        "title": "雇佣并追踪",
+        "description": "选择最佳人选并追踪进度"
+      },
+      "pay": {
+        "title": "按成果付费",
+        "description": "批准工作后释放付款"
+      }
+    },
+    "ctaTitle": "准备好开始了吗？",
+    "ctaSubtitle": "加入数千家已找到理想人才的企业",
+    "ctaButton": "免费注册"
+  },
+  "forFreelancers": {
+    "badge": "自由职业者服务",
+    "title": "与优质客户一起发展您的事业",
+    "subtitle": "与重视您工作并为质量付费的正规企业建立联系。",
+    "cta": "免费创建档案",
+    "benefitsTitle": "HOOKLY 优势",
+    "benefits": {
+      "payment": {
+        "title": "付款保障",
+        "description": "批准的工作始终获得报酬"
+      },
+      "escrow": {
+        "title": "托管保护",
+        "description": "开始工作前资金已获保障"
+      },
+      "clients": {
+        "title": "验证客户",
+        "description": "只与正规可靠的企业合作"
+      },
+      "growth": {
+        "title": "发展事业",
+        "description": "在平台上建立您的作品集和声誉"
+      }
+    },
+    "howItWorks": "如何运作",
+    "steps": {
+      "profile": {
+        "title": "创建您的档案",
+        "description": "展示您的技能和经验"
+      },
+      "browse": {
+        "title": "寻找项目",
+        "description": "浏览与您档案匹配的机会"
+      },
+      "propose": {
+        "title": "发送提案",
+        "description": "用清晰的里程碑展示您的解决方案"
+      },
+      "earn": {
+        "title": "工作并赚钱",
+        "description": "交付成果并收取付款"
+      }
+    },
+    "ctaTitle": "今天开始您的旅程",
+    "ctaSubtitle": "数千个项目正在等待像您这样的专业人士",
+    "ctaButton": "免费创建档案"
+  },
+  "pricingPage": {
+    "title": "满足各种需求的灵活计划",
+    "subtitle": "免费开始，需要更多功能时升级",
+    "faqTitle": "定价常见问题",
+    "faqSubtitle": "获取关于我们计划的解答",
+    "faq": {
+      "fees": {
+        "question": "平台费用是多少？",
+        "answer": "HOOKLY 对完成的交易收取10%的费用。没有隐藏费用或强制订阅。"
+      },
+      "payment": {
+        "question": "付款如何运作？",
+        "answer": "付款保留在托管账户中，直到您批准工作。批准后，我们将其释放给自由职业者。"
+      }
+    },
+    "ctaTitle": "准备好开始了吗？",
+    "ctaSubtitle": "创建您的免费账户并探索平台",
+    "ctaButton": "立即开始"
+  },
+  "howItWorksPage": {
+    "title": "HOOKLY 如何运作",
+    "subtitle": "连接人才和企业的简单透明过程",
+    "step": "步骤",
+    "steps": {
+      "post": {
+        "title": "发布您的项目",
+        "description": "详细描述您的需求，设定预算和预期KPI。免费且只需几分钟。"
+      },
+      "match": {
+        "title": "接收合格提案",
+        "description": "验证的自由职业者分析您的项目并发送带里程碑和报价的提案。您可以比较和协商。"
+      },
+      "work": {
+        "title": "追踪进度",
+        "description": "直接与自由职业者沟通，追踪里程碑交付并保持对项目的完全控制。"
+      },
+      "pay": {
+        "title": "按成果付费",
+        "description": "批准每次交付并释放付款。托管确保双方的安全。"
+      }
+    },
+    "security": {
+      "title": "您的安全是我们的首要任务",
+      "description": "所有付款都受托管保护。您只在批准工作后付款。自由职业者经过验证和评级。"
+    },
+    "ctaTitle": "准备好开始了吗？",
+    "ctaSubtitle": "加入数千家成功的企业和自由职业者",
+    "ctaButton": "免费创建账户"
+  },
+  "dashboard": {
+    "companySubtitle": "管理您的项目和招聘",
+    "unreadMessages": "消息",
+    "recentActivity": "最近活动",
+    "noActivity": "暂无活动",
+    "createFirstProject": "创建您的第一个项目",
+    "company": {
+      "title": "企业仪表板",
+      "welcome": "欢迎回来",
+      "stats": {
+        "activeProjects": "进行中项目",
+        "totalSpent": "总支出",
+        "hiredTalents": "已雇佣人才",
+        "pendingProposals": "待处理提案"
+      },
+      "quickActions": {
+        "title": "快捷操作",
+        "newProject": "新建项目",
+        "findTalent": "寻找人才",
+        "viewMessages": "查看消息"
+      }
+    },
+    "freelancer": {
+      "title": "自由职业者仪表板",
+      "welcome": "欢迎回来",
+      "stats": {
+        "activeProjects": "进行中项目",
+        "totalEarned": "总收入",
+        "proposalsSent": "已发送提案",
+        "profileViews": "个人资料浏览"
+      },
+      "quickActions": {
+        "title": "快捷操作",
+        "findProjects": "寻找项目",
+        "myProposals": "我的提案",
+        "viewMessages": "查看消息"
+      }
+    }
+  },
+  "projects": {
+    "validation": {
+      "titleMin": "标题至少需要5个字符",
+      "descriptionMin": "描述至少需要20个字符",
+      "categoryRequired": "请选择一个类别",
+      "budgetMinMax": "最低预算不能大于最高预算"
+    }
+  },
+  "profileCompletion": {
+    "title": "完善您的个人资料",
+    "complete": "完成",
+    "completeNow": "立即完善",
+    "almostThere": "快完成了！您距离完善个人资料只差一步。",
+    "keepGoing": "继续完善您的个人资料以增加机会。",
+    "nextSteps": "下一步",
+    "completed": "已完成",
+    "bonusClaimedTitle": "🎉 恭喜！",
+    "bonusClaimedDesc": "您已完成100%的个人资料并获得 {{credits}} 积分！",
+    "celebrationTitle": "🎉 个人资料100%完成！",
+    "celebrationDesc": "您获得了 {{credits}} 积分作为奖励！",
+    "credits": "积分",
+    "bonusIncentiveShort": "完成100%可获得 {{credits}} 积分！",
+    "bonusIncentive": "完成100%可获得 {{credits}} 积分！",
+    "bonusIncentiveDesc": "用于发送提案和突出您的个人资料"
+  },
+  "common": {
+    "viewAll": "查看全部",
+    "next": "下一步",
+    "back": "返回"
+  },
+  "aiHelp": {
+    "title": "AI助手",
+    "subtitle": "问我任何关于HOOKLY的问题",
+    "welcomeMessage": "你好！👋 我是HOOKLY的虚拟助手。我在这里帮助您导航平台。我能帮您什么？",
+    "quickActionsLabel": "常见问题：",
+    "inputPlaceholder": "输入您的问题...",
+    "quickActions": {
+      "whereProjects": "我的项目在哪里？",
+      "howCreateProject": "如何创建项目？",
+      "whereProposals": "在哪里查看提案？",
+      "whereFinances": "我的财务在哪里？",
+      "howSendProposal": "如何发送提案？",
+      "whereEarnings": "我的收入在哪里？"
+    }
+  },
+  "ai": {
+    "primaryRecommendation": "首选推荐",
+    "highlyRecommended": "强烈推荐",
+    "compatible": "适合",
+    "notRecommended": "不推荐",
+    "analysisPending": "待分析",
+    "scoreLabel": "AI评分",
+    "proceedAnywayWarning": "此提案被AI标记为不推荐。您确定要继续吗？",
+    "analyzed": "已分析",
+    "aiSuggestion": "基于AI的建议"
+  },
+  "landing": {
+    "providers": { "title": "可靠的基础设施和支付", "subtitle": "支付由领先供应商处理，基础设施稳健。", "disclaimer": "商标归各自所有者所有。不暗示任何合作关系。", "badges": { "escrow": "托管支付保护", "approval": "审批后释放", "secureChat": "平台安全聊天", "antiFraud": "防欺诈保护" } },
+    "hero": { "liveBadge": "本月完成的项目", "line1": "按", "line2": "成果付费。", "line3": "而非承诺。", "desc1": "唯一一个您", "descHighlight": "只为交付成果付费", "desc2": "的平台。经过验证的自由职业者，安全托管，零意外。", "cta": "立即寻找人才", "ctaSecondary": "了解运作方式", "trust1": "100% 已验证", "trust2": "安全托管", "trust3": "24小时匹配", "formTitle": "快速人才搜索", "formSkill": "我需要一位...", "selectSpecialty": "选择专业", "formDeadline": "截止日期", "formCta": "立即寻找人才", "free": "免费开始", "noCommit": "无需承诺", "specialties": { "fullstack": "全栈开发者", "designer": "UI/UX 设计师", "marketing": "增长营销", "data": "数据科学 / ML", "mobile": "移动端开发者", "devops": "DevOps 工程师" }, "deadlines": { "1week": "1 周", "2weeks": "2 周", "1month": "1 个月", "2months": "2+ 个月" }, "floatingCards": { "justReceived": "刚收到", "approval": "98% 通过率", "devsHired": "3名开发者已录用" } },
+    "ticker": { "title": "HOOKLY 实时动态", "statLabel": "本月完成的项目", "delivered": "交付了", "received": "收到了", "hired": "招聘了", "completed": "完成了", "uiDesign": "UI 设计项目", "threeDevs": "2天内招聘3名开发者", "appMobile": "移动应用", "designer": "高级 UX 设计师", "ecommerce": "完整电商项目", "paid": "已付款", "active": "进行中" },
+    "showcase": { "title": "看看按", "titleAccent": "成果", "subtitle": "付费是什么样的（不是按沙发上的小时数）", "projectName": "项目：移动应用重新设计", "milestone1": "线框图", "milestone2": "UI 设计", "milestone3": "交互原型", "approved": "已批准", "inReview": "审核中", "released": "已释放", "progress": "进度", "deliverables": "交付物", "bottomText": "没有意外。没有虚报工时。", "bottomBold": "批准了？付款释放。就这么简单。" },
+    "talents": { "title": "为您的项目准备好的人才", "all": "全部", "dev": "开发", "design": "设计", "marketing": "营销", "data": "数据科学", "viewProfile": "查看档案", "success": "成功率", "viewAll": "探索所有 2,400+ 人才" },
+    "steps": { "tag": "就是这么简单" },
+    "howItWorks": { "title": "3 步。0 麻烦。", "time1": "⏱ 3 分钟", "time2": "⏱ 24 小时", "time3": "✅ 已批准的交付物" },
+    "beforeAfter": { "title": "为什么团队正在转向", "beforeLabel": "之前", "afterLabel": "使用 HOOKLY", "beforeSub": "（传统平台）", "before1": "筛选200个普通档案", "before2": "按小时付费无保障", "before3": "无支付保护", "before4": "到处是隐藏费用", "after1": "3位预验证人才", "after2": "按批准的交付物付费", "after3": "托管 + 全额保障", "after4": "完全透明" },
+    "testimonials": {
+      "title": "真实用户的真实故事",
+      "project": "项目",
+      "value": "价值",
+      "deadline": "期限",
+      "1": {
+        "quote": "我们测试了 Upwork、99freelas、Workana。在 HOOKLY，我们在48小时内找到了全栈开发者。交付物系统让我们完全控制预算。结果？应用提前3周上线。",
+        "author": "Ricardo Mendes",
+        "role": "CPO @ NeoBank",
+        "location": "圣保罗",
+        "project": "移动应用",
+        "value": "R$28,000",
+        "duration": "6 周"
+      },
+      "2": {
+        "quote": "作为自由职业者，HOOKLY改变了我的生活。3个月内，我赚的比其他平台8个月还多。托管给了我完全的安全感——我再也没有白干过。",
+        "author": "Camila Torres",
+        "role": "UI/UX 设计师",
+        "location": "库里蒂巴",
+        "project": "SaaS 仪表板",
+        "value": "R$15,000",
+        "duration": "4 周"
+      },
+      "3": {
+        "quote": "自由职业者验证是真实的。我们雇用的每位专业人士都有扎实的作品集，交付超出预期。这是我们做过的最好的投资。",
+        "author": "Marcos Oliveira",
+        "role": "CTO @ DataFlow",
+        "location": "贝洛奥里藏特",
+        "project": "分析平台",
+        "value": "R$42,000",
+        "duration": "8 周"
+      }
+    },
+    "pricing": { "tag": "透明" },
+    "faq": { "tag": "问题" },
+    "ctaFinal": { "title1": "您的下一个项目值得", "title2": "", "titleHighlight": "经验证的人才。", "subtitle": "加入数千名已通过真实成果获利的专业人士和企业。", "emailPlaceholder": "您的工作邮箱", "cta": "免费创建账户", "noCreditCard": "无需信用卡", "quickSetup": "2分钟设置", "cancelAnytime": "随时取消" }
+  },
+  "awards": {
+    "badge": "认可计划",
+    "title": "HOOKLY 奖励",
+    "heroSubtitle": "我们认可那些让事情发生的人。",
+    "heroDescription": "HOOKLY 奖牌庆祝在平台上实现的真实里程碑 — 我们表彰那些以一致性和质量成长的人。",
+    "recognitionTitle": "让您的工作得到认可",
+    "recognitionDescription": "在 HOOKLY，结果来自于一致性、质量和交付。我们的奖励计划旨在表彰那些以道德方式成长、按时交付并建立声誉的人 — 一个项目接一个项目。",
+    "awardsTitle": "奖励",
+    "awardsSubtitle": "每达到一个里程碑，您就解锁一个新的认可级别。奖牌代表的是进步和坚持 — 而不仅仅是数量。",
+    "levels": {
+      "1": {
+        "title": "级别 1 — 新手",
+        "value": "$10,000",
+        "description": "第一个里程碑：开始建立吸引力和声誉。"
+      },
+      "2": {
+        "title": "级别 2 — Blue",
+        "value": "$50,000",
+        "description": "一致性：持续交付和稳健增长。"
+      },
+      "3": {
+        "title": "级别 3 — Bronze",
+        "value": "$100,000",
+        "description": "规模化：展示专业成熟度的结果。"
+      },
+      "4": {
+        "title": "级别 4 — Gold",
+        "value": "$500,000",
+        "description": "高性能：质量 + 数量与稳定性。"
+      },
+      "5": {
+        "title": "级别 5 — Black",
+        "value": "$1,000,000",
+        "description": "精英：HOOKLY 社区的标杆。"
+      }
+    },
+    "rulesTitle": "一般规则",
+    "rules": {
+      "1": "只有在 HOOKLY 内确认的金额才计入里程碑。",
+      "2": "有争议、退款或欺诈的交易可能被排除。",
+      "3": "我们可能在发货前要求确认数据。",
+      "4": "交付/生产时间可能因地区和物流而异。",
+      "5": "该计划可能会调整以保持公平和透明。"
+    },
+    "faqTitle": "常见问题",
+    "faqSubtitle": "获取有关奖励计划的问题答案",
+    "faq": {
+      "1": {
+        "question": "如何获得奖牌？",
+        "answer": "通过在 HOOKLY 上达到确认的结果里程碑，根据计划规则。"
+      },
+      "2": {
+        "question": "什么计入计算？",
+        "answer": "平台上已完成项目的已确认付款。"
+      },
+      "3": {
+        "question": "取消算数吗？",
+        "answer": "不算，只有确认和符合条件的结果才算。"
+      },
+      "4": {
+        "question": "什么时候收到？",
+        "answer": "在验证和发货确认后，在计划规定的时间内。"
+      },
+      "5": {
+        "question": "可以跟踪进度吗？",
+        "answer": "是的 — 您可以直接在平台仪表板上跟踪您的进度。"
+      }
+    },
+    "ctaTitle": "准备开始了吗？",
+    "ctaDescription": "加入 HOOKLY 社区，开始打造您的成功故事。",
+    "ctaButton": "在 HOOKLY 开始",
+    "ctaSecondary": "了解运作方式"
+  }
+}
