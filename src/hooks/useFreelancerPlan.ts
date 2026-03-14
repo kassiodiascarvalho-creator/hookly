@@ -61,7 +61,7 @@ export function useFreelancerPlan() {
       const isUnlimitedTier = tier === "pro" || tier === "top_rated";
 
       // Fetch freelancer plan from database
-      const { data: planData, error: planError } = await supabase
+      const { data: planData, error: planError } = await (supabase as any)
         .from("freelancer_plans")
         .select("*")
         .eq("freelancer_user_id", user.id)
