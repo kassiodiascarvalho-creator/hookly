@@ -50,7 +50,7 @@ export function useTranslationUsage() {
         tier = freelancerProfile?.tier || "standard";
         isPremium = tier === "pro" || tier === "top_rated";
       } else if (userType === "company") {
-        const { data: plan } = await supabase
+        const { data: plan } = await (supabase as any)
           .from("company_plans")
           .select("plan_type, status")
           .eq("company_user_id", user.id)
