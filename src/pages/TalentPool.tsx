@@ -214,7 +214,7 @@ export default function TalentPool() {
     setSendingInvite(true);
     
     // Check for existing pending invite
-    const { data: existing } = await supabase
+    const { data: existing } = await (supabase as any)
       .from("project_invites")
       .select("id")
       .eq("project_id", selectedProjectId)
