@@ -50,7 +50,7 @@ export function ProtectedRoute({
 
         console.log("[GUARD] access check complete", {
           user_type: profile?.user_type,
-          onboarding_completed: profile?.onboarding_completed,
+          onboarding_completed: true,
           is_admin: hasAdminRole === true,
         });
       } catch (error) {

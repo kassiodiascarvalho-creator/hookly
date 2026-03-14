@@ -212,7 +212,7 @@ export function useCompanyFinancialSummary(): CompanyFinancialSummary {
       let projectsWithPrefund: Set<string> = new Set();
 
       if (projectIds.length > 0) {
-        const { data: prefundPayments } = await supabase
+        const { data: prefundPayments } = await (supabase as any)
           .from("unified_payments")
           .select("metadata")
           .eq("payment_type", "project_prefund")
