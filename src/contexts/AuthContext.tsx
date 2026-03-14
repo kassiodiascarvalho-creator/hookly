@@ -42,10 +42,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signOut = async () => {
-    // Clear local state first
     setUser(null);
     setSession(null);
-    // Then try to sign out from server (ignore errors if session doesn't exist)
     try {
       await supabase.auth.signOut();
     } catch (error) {

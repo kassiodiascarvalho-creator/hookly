@@ -28,7 +28,6 @@ const resources = {
   de: { translation: de },
 };
 
-// Get stored language or browser preference
 const getInitialLanguage = (): string => {
   const stored = localStorage.getItem('i18nextLng');
   if (stored && ['en', 'pt', 'es', 'fr', 'zh', 'de'].includes(stored)) {
@@ -40,7 +39,7 @@ const getInitialLanguage = (): string => {
     return browserLang;
   }
   
-  return 'pt'; // Default to Portuguese for Brazilian market
+  return 'pt';
 };
 
 i18n

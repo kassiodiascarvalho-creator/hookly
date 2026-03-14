@@ -41,27 +41,6 @@ import Pricing from "./pages/Pricing";
 import HowItWorks from "./pages/HowItWorks";
 import AIHelp from "./pages/AIHelp";
 import Awards from "./pages/Awards";
-// Admin pages
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminAnalytics from "./pages/admin/AdminAnalytics";
-import AdminUsers from "./pages/admin/AdminUsers";
-import AdminFreelancers from "./pages/admin/AdminFreelancers";
-import AdminCompanies from "./pages/admin/AdminCompanies";
-import AdminProjects from "./pages/admin/AdminProjects";
-import AdminPayments from "./pages/admin/AdminPayments";
-import AdminPaymentProviders from "./pages/admin/AdminPaymentProviders";
-import AdminLeads from "./pages/admin/AdminLeads";
-import AdminFreelancerDetail from "./pages/admin/AdminFreelancerDetail";
-import AdminCompanyDetail from "./pages/admin/AdminCompanyDetail";
-import AdminFinances from "./pages/admin/AdminFinances";
-import AdminTierManager from "./pages/admin/AdminTierManager";
-import AdminLandingPage from "./pages/admin/AdminLandingPage";
-import AdminManagement from "./pages/admin/AdminManagement";
-import AdminIdentityVerifications from "./pages/admin/AdminIdentityVerifications";
-import AdminFeedbacks from "./pages/admin/AdminFeedbacks";
-import AdminTrackingPixels from "./pages/admin/AdminTrackingPixels";
-
-// Public pages
 import VerifiedCompanies from "./pages/VerifiedCompanies";
 import CompanyProfile from "./pages/CompanyProfile";
 
@@ -88,36 +67,8 @@ const App = () => (
             <Route path="/como-funciona" element={<HowItWorks />} />
             <Route path="/premiacao" element={<Awards />} />
             
-            {/* Onboarding - sem ProtectedRoute para evitar loop */}
+            {/* Onboarding */}
             <Route path="/onboarding" element={<Onboarding />} />
-            
-            {/* Admin Routes */}
-            <Route
-              element={
-                <ProtectedRoute requireAdmin>
-                  <AdminLayout />
-                </ProtectedRoute>
-              }
-            >
-            <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/analytics" element={<AdminAnalytics />} />
-              <Route path="/admin/users" element={<AdminUsers />} />
-              <Route path="/admin/freelancers" element={<AdminFreelancers />} />
-              <Route path="/admin/freelancers/:userId" element={<AdminFreelancerDetail />} />
-              <Route path="/admin/companies" element={<AdminCompanies />} />
-              <Route path="/admin/companies/:userId" element={<AdminCompanyDetail />} />
-              <Route path="/admin/projects" element={<AdminProjects />} />
-              <Route path="/admin/identity" element={<AdminIdentityVerifications />} />
-              <Route path="/admin/payments" element={<AdminPayments />} />
-              <Route path="/admin/payment-providers" element={<AdminPaymentProviders />} />
-              <Route path="/admin/leads" element={<AdminLeads />} />
-              <Route path="/admin/finances" element={<AdminFinances />} />
-              <Route path="/admin/tiers" element={<AdminTierManager />} />
-              <Route path="/admin/landing-page" element={<AdminLandingPage />} />
-              <Route path="/admin/management" element={<AdminManagement />} />
-              <Route path="/admin/feedbacks" element={<AdminFeedbacks />} />
-              <Route path="/admin/tracking-pixels" element={<AdminTrackingPixels />} />
-            </Route>
             
             {/* Company Dashboard Routes */}
             <Route

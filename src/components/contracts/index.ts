@@ -1,1 +1,0 @@
-export { ContractAcceptanceModal } from "./ContractAcceptanceModal";
