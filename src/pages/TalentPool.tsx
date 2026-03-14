@@ -109,7 +109,7 @@ export default function TalentPool() {
       .order("verified", { ascending: false });
 
     if (!error && data) {
-      setFreelancers(data.map(f => ({
+      setFreelancers(data.map((f: any) => ({
         ...f,
         tier: (f.tier as FreelancerTier) || "standard",
       })));
