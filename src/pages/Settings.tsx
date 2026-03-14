@@ -132,10 +132,10 @@ export default function Settings() {
     // Fetch main profile
     const {
       data: profileData
-    } = await supabase.from("profiles").select("email, preferred_language, user_type, profile_completion_percent").eq("user_id", user.id).single();
+    } = await (supabase as any).from("profiles").select("email, preferred_language, user_type, profile_completion_percent").eq("user_id", user.id).single();
     if (profileData) {
-      setProfile(profileData);
-      setLastCompletionPercent(profileData.profile_completion_percent ?? 0);
+      setProfile(profileData as any);
+      setLastCompletionPercent((profileData as any).profile_completion_percent ?? 0);
 
       // Fetch type-specific profile
       if (profileData.user_type === "company") {
