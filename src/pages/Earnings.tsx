@@ -197,11 +197,11 @@ export default function Earnings() {
     }
 
     // Fetch active contracts (accepted but not yet funded/completed)
-    const { data: activeContracts } = await supabase
+    const { data: activeContracts } = await (supabase as any)
       .from("contracts")
       .select("amount_cents, currency")
       .eq("freelancer_user_id", user.id)
-      .eq("status", "active"); // active = aceito, funded = financiado
+      .eq("status", "active");
 
     const escrowFromContracts = activeContracts?.reduce(
       (sum, c) => sum + (c.amount_cents || 0), 0

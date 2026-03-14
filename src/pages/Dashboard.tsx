@@ -53,7 +53,7 @@ export default function Dashboard() {
           .select("*, conversations!inner(company_user_id)", { count: "exact", head: true })
           .eq("conversations.company_user_id", user?.id)
           .is("read_at", null),
-        supabase
+        (supabase as any)
           .from("platform_credits")
           .select("balance")
           .eq("user_id", user?.id)

@@ -79,7 +79,7 @@ export default function CompanyProfile() {
       return;
     }
 
-    setCompany(companyData);
+    setCompany({ ...companyData, is_verified: (companyData as any).is_verified ?? false } as CompanyData);
     
     // Determine effective plan
     if (planData) {
