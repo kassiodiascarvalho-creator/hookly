@@ -64,7 +64,7 @@ export function useProfileCelebration(): ProfileCelebrationData {
 
       // Try to claim the bonus
       console.log("[CELEBRATION] Attempting to claim bonus...");
-      const { data, error } = await supabase.rpc('grant_profile_completion_bonus', {
+      const { data, error } = await (supabase.rpc as Function)('grant_profile_completion_bonus', {
         p_user_id: user.id,
         p_user_type: type
       });

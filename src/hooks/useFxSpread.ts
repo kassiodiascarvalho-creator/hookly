@@ -17,7 +17,7 @@ export function useFxSpread(): FxSpreadData {
   useEffect(() => {
     const fetchSpread = async () => {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
           .from("platform_settings")
           .select("value")
           .eq("key", "fx_spread_percent")

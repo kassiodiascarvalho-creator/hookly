@@ -93,7 +93,7 @@ export function usePlatformCredits(): PlatformCreditsData {
     }
 
     // Call RPC to spend credits
-    const { data, error } = await supabase.rpc("spend_platform_credits", {
+    const { data, error } = await (supabase.rpc as Function)("spend_platform_credits", {
       p_user_id: user.id,
       p_action_key: actionKey,
       p_description: description,

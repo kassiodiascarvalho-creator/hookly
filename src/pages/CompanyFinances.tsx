@@ -240,8 +240,11 @@ export default function CompanyFinances() {
     // netEscrowTotal already represents (funded - released) calculated above
 
     if (paymentsData) {
-      const mapped = paymentsData.map(p => ({
+      const mapped = (paymentsData as any[]).map((p: any) => ({
         ...p,
+        escrow_status: p.escrow_status || null,
+        paid_at: p.paid_at || null,
+        released_at: p.released_at || null,
         project: p.project as { title: string } | undefined,
         freelancer: p.freelancer_user_id
           ? ({ full_name: freelancerNames[p.freelancer_user_id] || null } as {
@@ -249,7 +252,7 @@ export default function CompanyFinances() {
             })
           : (null as { full_name: string } | null),
       }));
-      setPayments(mapped);
+      setPayments(mapped as Payment[]);
     }
 
     // Total funded = escrow still held + released

@@ -67,7 +67,7 @@ export function useLocalizedPlanPrice() {
         }
 
         // Try freelancer profile
-        const { data: freelancerData } = await supabase
+        const { data: freelancerData } = await (supabase as any)
           .from("freelancer_profiles")
           .select("country_code")
           .eq("user_id", user.id)

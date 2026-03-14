@@ -92,7 +92,7 @@ export function useLocalCurrencyDisplay(): LocalCurrencyData {
 
     try {
       // Try to get rate from fx_spread_configs (if it has cached rates)
-      const { data: fxConfig } = await supabase
+      const { data: fxConfig } = await (supabase as any)
         .from("fx_spread_configs")
         .select("currency_code, spread_percent")
         .eq("currency_code", localCurrency)
