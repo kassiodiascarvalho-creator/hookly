@@ -54,7 +54,7 @@ export function useLocalizedPlanPrice() {
 
       try {
         // Try company profile first
-        const { data: companyData } = await supabase
+        const { data: companyData } = await (supabase as any)
           .from("company_profiles")
           .select("country")
           .eq("user_id", user.id)
