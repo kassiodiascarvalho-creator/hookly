@@ -61,7 +61,7 @@ export function useGeniusAccess(featureType: "proposal_ai" | "ranking_ai") {
         .single();
 
       if (profile?.user_type === "freelancer") {
-        const { data: freelancerPlan } = await supabase
+        const { data: freelancerPlan } = await (supabase as any)
           .from("freelancer_plans")
           .select("plan_type, status")
           .eq("freelancer_user_id", user.id)
