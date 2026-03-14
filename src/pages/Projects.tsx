@@ -97,7 +97,7 @@ export default function Projects() {
         fetchProjectsPrefundStatus(projectIds),
       ]);
       
-      setProjects(projectsWithCounts);
+      setProjects(projectsWithCounts.map((p: any) => ({ ...p, boosted_until: p.boosted_until ?? null })));
       setPrefundedProjects(prefundMap);
     }
     setLoading(false);

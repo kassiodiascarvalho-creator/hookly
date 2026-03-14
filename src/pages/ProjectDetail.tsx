@@ -294,7 +294,7 @@ export default function ProjectDetail() {
     try {
       // Usar RPC centralizada - fonte única de verdade
       // Esta RPC: atualiza proposal, projeto, cria/atualiza contrato, recalcula milestones
-      const { data: contractId, error: rpcError } = await supabase.rpc(
+      const { data: contractId, error: rpcError } = await (supabase.rpc as Function)(
         "finalize_proposal_acceptance",
         { p_proposal_id: proposalId }
       );

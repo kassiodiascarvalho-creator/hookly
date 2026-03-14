@@ -72,13 +72,14 @@ export default function ProjectEdit() {
         return;
       }
 
+      const d = data as any;
       setFormData({
-        title: data.title || "",
-        description: data.description || "",
-        budget_min: data.budget_min?.toString() || "",
-        budget_ideal: data.budget_ideal?.toString() || "",
-        budget_max: data.budget_max?.toString() || "",
-        currency: data.currency || "USD",
+        title: d.title || "",
+        description: d.description || "",
+        budget_min: d.budget_min?.toString() || "",
+        budget_ideal: d.budget_ideal?.toString() || "",
+        budget_max: d.budget_max?.toString() || "",
+        currency: d.currency || "USD",
       });
 
       // Load categories from junction table

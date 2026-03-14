@@ -109,7 +109,7 @@ export default function TalentPool() {
       .order("verified", { ascending: false });
 
     if (!error && data) {
-      setFreelancers(data.map(f => ({
+      setFreelancers(data.map((f: any) => ({
         ...f,
         tier: (f.tier as FreelancerTier) || "standard",
       })));
@@ -214,7 +214,7 @@ export default function TalentPool() {
     setSendingInvite(true);
     
     // Check for existing pending invite
-    const { data: existing } = await supabase
+    const { data: existing } = await (supabase as any)
       .from("project_invites")
       .select("id")
       .eq("project_id", selectedProjectId)
@@ -229,7 +229,7 @@ export default function TalentPool() {
     }
     
     // Create invite
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("project_invites")
       .insert({
         project_id: selectedProjectId,

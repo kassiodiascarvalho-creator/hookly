@@ -151,7 +151,7 @@ export default function ProjectView() {
         .eq("user_id", data.company_user_id)
         .maybeSingle();
       
-      setProject({ ...data, company });
+      setProject({ ...data, company, budget_ideal: (data as any).budget_ideal ?? null, currency: (data as any).currency ?? "USD" } as any);
     }
     setLoading(false);
   };
@@ -185,7 +185,7 @@ export default function ProjectView() {
   const fetchContractInfo = async () => {
     if (!user || !id) return;
     
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("contracts")
       .select("agreed_amount_cents, was_counterproposal, original_proposal_amount_cents")
       .eq("project_id", id)
@@ -193,7 +193,7 @@ export default function ProjectView() {
       .maybeSingle();
 
     if (data) {
-      setContractInfo(data);
+      setContractInfo(data as any);
     }
   };
 
