@@ -173,7 +173,7 @@ export default function CompanyFinances() {
 
     // Build a map of project_id -> contract_id for linking prefunds
     const projectToContract: Record<string, string> = {};
-    contracts?.forEach(c => {
+    (contracts as any[])?.forEach((c: any) => {
       if (c.project_id) {
         projectToContract[c.project_id] = c.id;
       }
