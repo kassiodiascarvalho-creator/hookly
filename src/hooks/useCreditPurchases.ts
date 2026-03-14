@@ -351,7 +351,7 @@ export async function fetchUserCreditStats(userId: string): Promise<UserCreditSt
   }
 
   // Fallback: use unified_payments
-  const { data: unifiedPayments } = await supabase
+  const { data: unifiedPayments } = await (supabase as any)
     .from("unified_payments")
     .select("*")
     .eq("user_id", userId)
