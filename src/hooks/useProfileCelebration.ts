@@ -29,7 +29,7 @@ export function useProfileCelebration(): ProfileCelebrationData {
 
     try {
       // Check if bonus was already claimed
-      const { data: profile } = await supabase
+      const { data: profile } = await (supabase as any)
         .from("profiles")
         .select("profile_completion_bonus_claimed")
         .eq("user_id", user.id)
