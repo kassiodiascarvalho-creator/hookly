@@ -229,7 +229,7 @@ export default function TalentPool() {
     }
     
     // Create invite
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("project_invites")
       .insert({
         project_id: selectedProjectId,

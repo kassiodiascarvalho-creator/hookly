@@ -263,7 +263,7 @@ export default function Settings() {
       }
 
       // Update completion percentage in profiles table
-      await supabase.from("profiles").update({
+      await (supabase as any).from("profiles").update({
         profile_completion_percent: completionPercent,
         profile_completion_updated_at: new Date().toISOString()
       }).eq("user_id", user.id);
