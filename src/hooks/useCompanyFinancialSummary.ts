@@ -197,7 +197,7 @@ export function useCompanyFinancialSummary(): CompanyFinancialSummary {
       let projectsWithContracts: Set<string> = new Set();
 
       if (projectIds.length > 0) {
-        const { data: projectContracts } = await supabase
+        const { data: projectContracts } = await (supabase as any)
           .from("contracts")
           .select("project_id")
           .in("project_id", projectIds)
