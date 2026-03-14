@@ -51,7 +51,7 @@ export function useLocalCurrencyDisplay(): LocalCurrencyData {
         }
 
         // Try to get country from company profile
-        const { data: companyData } = await supabase
+        const { data: companyData } = await (supabase as any)
           .from("company_profiles")
           .select("country")
           .eq("user_id", user.id)
