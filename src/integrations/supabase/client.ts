@@ -15,3 +15,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     autoRefreshToken: true,
   }
 });
+
+// Untyped client for tables/columns not yet in generated types
+// Use: import { supabaseUntyped } from "@/integrations/supabase/client";
+export const supabaseUntyped = supabase as any;
