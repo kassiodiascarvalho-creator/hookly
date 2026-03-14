@@ -45,7 +45,7 @@ export function usePlatformCredits(): PlatformCreditsData {
     setBalance(platformCredits?.balance || 0);
 
     // Fetch action costs
-    const { data: costs } = await supabase
+    const { data: costs } = await (supabase as any)
       .from("platform_action_costs")
       .select("*")
       .eq("is_enabled", true);

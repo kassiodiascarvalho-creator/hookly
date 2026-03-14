@@ -79,7 +79,7 @@ export function useGeniusAccess(featureType: "proposal_ai" | "ranking_ai") {
           return;
         }
       } else if (profile?.user_type === "company") {
-        const { data: companyPlan } = await supabase
+        const { data: companyPlan } = await (supabase as any)
           .from("company_plans")
           .select("plan_type, status")
           .eq("company_user_id", user.id)

@@ -79,7 +79,7 @@ export function useTranslationUsage() {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      const { count } = await supabase
+      const { count } = await (supabase as any)
         .from("genius_usage_log")
         .select("*", { count: "exact", head: true })
         .eq("user_id", user.id)

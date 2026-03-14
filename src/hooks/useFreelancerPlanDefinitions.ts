@@ -28,7 +28,7 @@ export function useFreelancerPlanDefinitions() {
   const fetchPlans = useCallback(async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("freelancer_plan_definitions")
         .select("*")
         .order("display_order", { ascending: true });

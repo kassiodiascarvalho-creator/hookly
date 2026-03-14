@@ -33,7 +33,7 @@ export function useCreditPackages(): CreditPackagesData {
       setLoading(true);
       setError(null);
 
-      const { data, error: fetchError } = await supabase
+      const { data, error: fetchError } = await (supabase as any)
         .from("credit_packages")
         .select("*")
         .eq("is_active", true)
@@ -45,7 +45,7 @@ export function useCreditPackages(): CreditPackagesData {
         return;
       }
 
-      setPackages(data || []);
+      setPackages((data || []) as CreditPackage[]);
     } catch (err) {
       console.error("[useCreditPackages] Error:", err);
       setError(err instanceof Error ? err.message : "Unknown error");

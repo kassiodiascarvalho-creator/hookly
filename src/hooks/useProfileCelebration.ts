@@ -47,7 +47,7 @@ export function useProfileCelebration(): ProfileCelebrationData {
       }
 
       // Get bonus amount from config
-      const { data: bonusConfig } = await supabase
+      const { data: bonusConfig } = await (supabase as any)
         .from("platform_action_costs")
         .select("cost_credits, is_enabled")
         .eq("action_key", "profile_completion_bonus")

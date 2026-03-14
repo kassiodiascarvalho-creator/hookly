@@ -101,7 +101,7 @@ export function useCompanyPlan() {
       setLoading(true);
       
       // First, read directly from company_plans table (source of truth)
-      const { data: companyPlan, error: planError } = await supabase
+      const { data: companyPlan, error: planError } = await (supabase as any)
         .from("company_plans")
         .select("plan_type, status, plan_source, cancel_at_period_end, current_period_end, projects_this_month, stripe_subscription_id")
         .eq("company_user_id", user.id)

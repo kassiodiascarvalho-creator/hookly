@@ -87,7 +87,7 @@ export function useCompanyFinancialSummary(): CompanyFinancialSummary {
       }
 
       // 1b. Fetch freelancer profiles for contracts
-      const freelancerIds = [...new Set(contracts?.map((c) => c.freelancer_user_id).filter(Boolean) || [])];
+      const freelancerIds = [...new Set((contracts as any[])?.map((c: any) => c.freelancer_user_id).filter(Boolean) || [])] as string[];
       let freelancerNames: Record<string, string> = {};
 
       if (freelancerIds.length > 0) {

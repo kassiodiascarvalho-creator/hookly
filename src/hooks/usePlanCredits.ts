@@ -122,7 +122,7 @@ export function usePlanCredits(userType: 'freelancer' | 'company') {
           creditCap = defData.credit_cap ?? null;
         }
       } else {
-        const { data: def } = await supabase
+        const { data: def } = await (supabase as any)
           .from("company_plan_definitions")
           .select("monthly_credits, credit_cap")
           .eq("plan_type", planType)

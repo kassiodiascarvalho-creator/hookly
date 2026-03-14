@@ -360,7 +360,7 @@ export async function fetchUserCreditStats(userId: string): Promise<UserCreditSt
     .order("created_at", { ascending: false })
     .limit(20);
 
-  const payments = (unifiedPayments || []) as UnifiedPaymentRecord[];
+  const payments = (unifiedPayments || []) as unknown as UnifiedPaymentRecord[];
 
   const totalPaidByCurrency: Record<string, number> = {};
   let totalCreditsGranted = 0;

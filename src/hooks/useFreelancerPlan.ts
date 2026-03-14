@@ -104,7 +104,7 @@ export function useFreelancerPlan() {
       let proposalsLimit: number | null = null;
       if (!usage && !isUnlimitedTier) {
         const planType = planData?.plan_type || "free";
-        const { data: defData } = await supabase
+        const { data: defData } = await (supabase as any)
           .from("freelancer_plan_definitions")
           .select("proposals_limit")
           .eq("plan_type", planType)
