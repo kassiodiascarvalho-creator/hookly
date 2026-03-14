@@ -310,7 +310,7 @@ export async function fetchUserCreditStats(userId: string): Promise<UserCreditSt
   const currentBalance = platformCredits?.balance || 0;
 
   // Try credit_purchases first
-  const { data: creditPurchases } = await supabase
+  const { data: creditPurchases } = await (supabase as any)
     .from("credit_purchases")
     .select("*")
     .eq("user_id", userId)
