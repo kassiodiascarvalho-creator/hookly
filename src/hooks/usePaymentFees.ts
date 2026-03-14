@@ -65,7 +65,7 @@ export function usePaymentFees(): PaymentFeesData {
       setError(null);
 
       // Fetch base fees
-      const { data: feesData, error: feesError } = await supabase
+      const { data: feesData, error: feesError } = await (supabase as any)
         .from("payment_fee_configs")
         .select("*")
         .eq("is_enabled", true);
