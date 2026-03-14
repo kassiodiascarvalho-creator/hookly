@@ -136,7 +136,7 @@ export default function CompanyFinances() {
     }
 
     // Fetch unified_payments for escrow calculations (project_prefund and contract_funding)
-    const { data: unifiedPayments } = await supabase
+    const { data: unifiedPayments } = await (supabase as any)
       .from("unified_payments")
       .select("id, payment_type, status, amount_cents, currency, paid_at, metadata")
       .eq("user_id", user.id)
