@@ -69,7 +69,7 @@ export function useCompanyFinancialSummary(): CompanyFinancialSummary {
 
     try {
       // 1. Fetch active contracts for the company
-      const { data: contracts, error: contractsError } = await supabase
+      const { data: contracts, error: contractsError } = await (supabase as any)
         .from("contracts")
         .select(`
           id,
