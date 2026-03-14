@@ -53,7 +53,7 @@ export function usePlanCredits(userType: 'freelancer' | 'company') {
 
       if (userType === 'freelancer') {
         // CANONICAL SOURCE: freelancer_profiles.tier for plan status
-        const { data: profile } = await supabase
+        const { data: profile } = await (supabase as any)
           .from("freelancer_profiles")
           .select("tier")
           .eq("user_id", user.id)
