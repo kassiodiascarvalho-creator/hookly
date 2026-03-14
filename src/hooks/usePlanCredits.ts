@@ -34,7 +34,7 @@ export function usePlanCredits(userType: 'freelancer' | 'company') {
       setLoading(true);
 
       // Get current balances from platform_credits (dual-balance system)
-      const { data: credits } = await supabase
+      const { data: credits } = await (supabase as any)
         .from("platform_credits")
         .select("plan_balance, purchased_balance, balance")
         .eq("user_id", user.id)
