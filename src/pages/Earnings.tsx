@@ -179,7 +179,7 @@ export default function Earnings() {
     if (methodsData) setPayoutMethods(methodsData);
 
     // Fetch user balance from new ledger system
-    const { data: balanceData } = await supabase
+    const { data: balanceData } = await (supabase as any)
       .from("user_balances")
       .select("earnings_available, credits_available, escrow_held, currency")
       .eq("user_id", user.id)
