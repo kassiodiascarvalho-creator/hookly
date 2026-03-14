@@ -51,6 +51,8 @@ export default function FreelancerDashboard() {
     if (!user) return;
 
     try {
+      const sb = supabase as any;
+
       // Fetch all data in parallel
       const [
         contractsResult,
@@ -63,7 +65,7 @@ export default function FreelancerDashboard() {
         payoutCountResult
       ] = await Promise.all([
         // Active contracts (accepted proposals = contracts created)
-        supabase
+        sb
           .from("contracts")
           .select("id", { count: "exact" })
           .eq("freelancer_user_id", user.id)
@@ -83,7 +85,7 @@ export default function FreelancerDashboard() {
           .eq("freelancer_user_id", user.id),
         
         // User balance (earnings)
-        supabase
+        sb
           .from("user_balances")
           .select("earnings_available, currency")
           .eq("user_id", user.id)
@@ -91,7 +93,7 @@ export default function FreelancerDashboard() {
           .maybeSingle(),
         
         // Active contracts amount (escrow from contracts)
-        supabase
+        sb
           .from("contracts")
           .select("amount_cents")
           .eq("freelancer_user_id", user.id)
@@ -101,14 +103,14 @@ export default function FreelancerDashboard() {
         // Total Earnings = earnings_available + escrow (current liquidity, matching Earnings page)
         
         // Freelancer profile for real-time completion calculation
-        supabase
+        sb
           .from("freelancer_profiles")
           .select("*")
           .eq("user_id", user.id)
           .maybeSingle(),
         
         // Portfolio items count
-        supabase
+        sb
           .from("portfolio_items")
           .select("*", { count: "exact", head: true })
           .eq("freelancer_user_id", user.id),
@@ -149,7 +151,7 @@ export default function FreelancerDashboard() {
       }
 
       // Get tier from freelancer profile
-      const tier = (freelancerProfileResult.data?.tier as FreelancerTier) || "standard";
+      const tier = ((freelancerProfileResult.data as any)?.tier as FreelancerTier) || "standard";
 
       setStats({
         activeProjects,

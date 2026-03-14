@@ -210,17 +210,18 @@ export default function Earnings() {
     setContractsEscrow(escrowFromContracts); // Keep in cents
 
     // Fetch withdrawal requests
-    const { data: withdrawalsData } = await supabase
+    const { data: withdrawalsData } = await (supabase as any)
       .from("withdrawal_requests")
       .select("*")
       .eq("freelancer_user_id", user.id)
       .order("created_at", { ascending: false });
 
     if (withdrawalsData) {
-      setWithdrawalRequests(withdrawalsData);
+      const withdrawals = withdrawalsData as any[];
+      setWithdrawalRequests(withdrawals);
       // withdrawal_requests.amount stores values in MAJOR UNITS (numeric)
-      const paidWithdrawals = withdrawalsData
-        .filter(w => w.status === 'paid')
+      const paidWithdrawals = withdrawals
+        .filter((w) => w.status === "paid")
         .reduce((sum, w) => sum + (Number(w.amount) || 0), 0);
       setTotalPaidWithdrawals(paidWithdrawals); // Major units
     }

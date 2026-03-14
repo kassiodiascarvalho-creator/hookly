@@ -37,10 +37,10 @@ interface Project {
   description: string | null;
   budget_min: number | null;
   budget_max: number | null;
-  currency: string | null;
+  currency?: string | null;
   created_at: string;
   company_user_id: string;
-  boosted_until: string | null;
+  boosted_until?: string | null;
   company?: {
     company_name: string | null;
     logo_url: string | null;
@@ -99,13 +99,15 @@ export default function FindProjects() {
       const companyMap = new Map(companies?.map((c) => [c.user_id, c]) || []);
       setPrefundedProjects(prefundMap);
 
-      const projectsWithData = data.map((project) => {
+      const projectsWithData: Project[] = (data as any[]).map((project) => {
         const company = companyMap.get(project.company_user_id);
         const badge = badgeMap.get(project.company_user_id) || { plan_type: "free", is_verified: false };
         const projectCategories = categoriesMap.get(project.id) || [];
 
         return {
           ...project,
+          currency: project.currency || "USD",
+          boosted_until: project.boosted_until || null,
           company: company
             ? { ...company, plan_type: badge.plan_type, is_verified: badge.is_verified }
             : undefined,

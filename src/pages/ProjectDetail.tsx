@@ -149,7 +149,7 @@ export default function ProjectDetail() {
   }, [searchParams]);
 
   const fetchProject = async () => {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("projects")
       .select("*")
       .eq("id", id)
@@ -158,7 +158,7 @@ export default function ProjectDetail() {
     if (error) {
       toast.error(error.message);
     } else if (data) {
-      setProject(data);
+      setProject({ ...data, currency: data.currency || "USD" } as Project);
       // Fetch company info including plan (for freelancers viewing)
       fetchCompanyInfo(data.company_user_id);
     }
@@ -201,8 +201,8 @@ export default function ProjectDetail() {
     if (!error && proposalData) {
       // Fetch freelancer profiles for each proposal (including tier)
       const proposalsWithFreelancers = await Promise.all(
-        proposalData.map(async (proposal) => {
-          const { data: freelancer } = await supabase
+        (proposalData as any[]).map(async (proposal) => {
+          const { data: freelancer } = await (supabase as any)
             .from("freelancer_profiles")
             .select("full_name, title, avatar_url, hourly_rate, location, verified, tier")
             .eq("user_id", proposal.freelancer_user_id)
@@ -210,7 +210,7 @@ export default function ProjectDetail() {
           return { ...proposal, freelancer };
         })
       );
-      setProposals(proposalsWithFreelancers);
+      setProposals(proposalsWithFreelancers as Proposal[]);
     }
   };
 
@@ -228,7 +228,7 @@ export default function ProjectDetail() {
   const fetchContractAgreedAmount = async () => {
     if (!id) return;
     
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("contracts")
       .select("id, agreed_amount_cents, freelancer_user_id")
       .eq("project_id", id)

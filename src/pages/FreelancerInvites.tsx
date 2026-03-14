@@ -38,7 +38,7 @@ export default function FreelancerInvites() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  
+
   const [invites, setInvites] = useState<Invite[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
@@ -51,17 +51,10 @@ export default function FreelancerInvites() {
 
   const fetchInvites = async () => {
     if (!user) return;
-    
-    const { data, error } = await supabase
+
+    const { data, error } = await (supabase as any)
       .from("project_invites")
-      .select(`
-        id,
-        project_id,
-        company_user_id,
-        status,
-        message,
-        created_at
-      `)
+      .select("id, project_id, company_user_id, status, message, created_at")
       .eq("freelancer_user_id", user.id)
       .order("created_at", { ascending: false });
 
@@ -71,28 +64,25 @@ export default function FreelancerInvites() {
       return;
     }
 
-    // Fetch related data
     const invitesWithDetails: Invite[] = [];
-    
-    for (const invite of data || []) {
-      // Fetch project
+
+    for (const invite of (data || []) as any[]) {
       const { data: project } = await supabase
         .from("projects")
-        .select("id, title, description, budget_min, budget_max, currency, category")
+        .select("id, title, description, budget_min, budget_max, category")
         .eq("id", invite.project_id)
         .single();
-      
-      // Fetch company
+
       const { data: company } = await supabase
         .from("company_profiles")
         .select("company_name, logo_url")
         .eq("user_id", invite.company_user_id)
         .single();
-      
+
       if (project) {
         invitesWithDetails.push({
-          ...invite,
-          project,
+          ...(invite as any),
+          project: { ...(project as any), currency: (project as any).currency || "USD" },
           company,
         });
       }
@@ -104,12 +94,12 @@ export default function FreelancerInvites() {
 
   const handleAccept = async (invite: Invite) => {
     setProcessingId(invite.id);
-    
-    const { error } = await supabase
+
+    const { error } = await (supabase as any)
       .from("project_invites")
-      .update({ 
-        status: "accepted", 
-        responded_at: new Date().toISOString() 
+      .update({
+        status: "accepted",
+        responded_at: new Date().toISOString(),
       })
       .eq("id", invite.id);
 
@@ -118,31 +108,29 @@ export default function FreelancerInvites() {
       console.error(error);
     } else {
       toast.success(t("invites.accepted"));
-      
-      // Create notification for company
+
       await supabase.from("notifications").insert({
         user_id: invite.company_user_id,
         type: "invite_accepted",
         message: t("invites.notifications.accepted", { project: invite.project.title }),
         link: `/projects/${invite.project_id}`,
       });
-      
+
       fetchInvites();
-      // Navigate to project to send proposal
       navigate(`/project/${invite.project_id}`);
     }
-    
+
     setProcessingId(null);
   };
 
   const handleDecline = async (invite: Invite) => {
     setProcessingId(invite.id);
-    
-    const { error } = await supabase
+
+    const { error } = await (supabase as any)
       .from("project_invites")
-      .update({ 
-        status: "declined", 
-        responded_at: new Date().toISOString() 
+      .update({
+        status: "declined",
+        responded_at: new Date().toISOString(),
       })
       .eq("id", invite.id);
 
@@ -153,16 +141,16 @@ export default function FreelancerInvites() {
       toast.success(t("invites.declined"));
       fetchInvites();
     }
-    
+
     setProcessingId(null);
   };
 
-  const pendingInvites = invites.filter(i => i.status === "pending");
-  const respondedInvites = invites.filter(i => i.status !== "pending");
+  const pendingInvites = invites.filter((i) => i.status === "pending");
+  const respondedInvites = invites.filter((i) => i.status !== "pending");
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex h-64 items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -205,14 +193,14 @@ export default function FreelancerInvites() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {invite.message && (
-                    <div className="bg-muted p-3 rounded-lg">
-                      <p className="text-sm flex items-start gap-2">
-                        <MessageSquare className="h-4 w-4 mt-0.5 shrink-0" />
+                    <div className="rounded-lg bg-muted p-3">
+                      <p className="flex items-start gap-2 text-sm">
+                        <MessageSquare className="mt-0.5 h-4 w-4 shrink-0" />
                         {invite.message}
                       </p>
                     </div>
                   )}
-                  
+
                   <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                     {(invite.project.budget_min || invite.project.budget_max) && (
                       <span className="flex items-center gap-1">
@@ -220,39 +208,23 @@ export default function FreelancerInvites() {
                         {invite.project.budget_min && invite.project.budget_max
                           ? `${formatMoney(invite.project.budget_min, invite.project.currency)} - ${formatMoney(invite.project.budget_max, invite.project.currency)}`
                           : invite.project.budget_min
-                          ? `${t("common.from")} ${formatMoney(invite.project.budget_min, invite.project.currency)}`
-                          : `${t("common.upTo")} ${formatMoney(invite.project.budget_max!, invite.project.currency)}`
-                        }
+                            ? `${t("common.from")} ${formatMoney(invite.project.budget_min, invite.project.currency)}`
+                            : `${t("common.upTo")} ${formatMoney(invite.project.budget_max!, invite.project.currency)}`}
                       </span>
                     )}
                     <span className="flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
                       {format(new Date(invite.created_at), "dd/MM/yyyy")}
                     </span>
-                    {invite.project.category && (
-                      <Badge variant="secondary">{invite.project.category}</Badge>
-                    )}
+                    {invite.project.category && <Badge variant="secondary">{invite.project.category}</Badge>}
                   </div>
 
                   <div className="flex gap-2">
-                    <Button
-                      onClick={() => handleAccept(invite)}
-                      disabled={processingId === invite.id}
-                      className="flex-1 gap-2"
-                    >
-                      {processingId === invite.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Check className="h-4 w-4" />
-                      )}
+                    <Button onClick={() => handleAccept(invite)} disabled={processingId === invite.id} className="flex-1 gap-2">
+                      {processingId === invite.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                       {t("invites.accept")}
                     </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => handleDecline(invite)}
-                      disabled={processingId === invite.id}
-                      className="flex-1 gap-2"
-                    >
+                    <Button variant="outline" onClick={() => handleDecline(invite)} disabled={processingId === invite.id} className="flex-1 gap-2">
                       <X className="h-4 w-4" />
                       {t("invites.decline")}
                     </Button>
@@ -281,9 +253,7 @@ export default function FreelancerInvites() {
                       </Avatar>
                       <div>
                         <p className="font-medium">{invite.project.title}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {invite.company?.company_name}
-                        </p>
+                        <p className="text-sm text-muted-foreground">{invite.company?.company_name}</p>
                       </div>
                     </div>
                     <Badge variant={invite.status === "accepted" ? "default" : "secondary"}>
@@ -300,12 +270,10 @@ export default function FreelancerInvites() {
       {invites.length === 0 && (
         <Card>
           <CardContent className="py-12 text-center">
-            <MessageSquare className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-            <h3 className="font-semibold mb-2">{t("invites.noInvites")}</h3>
-            <p className="text-muted-foreground mb-4">{t("invites.noInvitesDesc")}</p>
-            <Button onClick={() => navigate("/find-projects")}>
-              {t("invites.browseProjects")}
-            </Button>
+            <MessageSquare className="mx-auto mb-4 h-12 w-12 text-muted-foreground opacity-50" />
+            <h3 className="mb-2 font-semibold">{t("invites.noInvites")}</h3>
+            <p className="mb-4 text-muted-foreground">{t("invites.noInvitesDesc")}</p>
+            <Button onClick={() => navigate("/find-projects")}>{t("invites.browseProjects")}</Button>
           </CardContent>
         </Card>
       )}

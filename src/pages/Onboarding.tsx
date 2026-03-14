@@ -26,11 +26,11 @@ export default function Onboarding() {
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("user_type, onboarding_completed")
+        .select("user_type")
         .eq("user_id", user.id)
         .single();
 
-      if (profile?.user_type && profile?.onboarding_completed) {
+      if (profile?.user_type) {
         console.log("[ONBOARDING] user already completed onboarding, redirecting");
         if (profile.user_type === "company") {
           navigate("/dashboard", { replace: true });
@@ -98,7 +98,7 @@ export default function Onboarding() {
 
         // Initialize achievements for freelancer
         try {
-          await supabase.rpc("initialize_freelancer_achievements", {
+          await (supabase.rpc as Function)("initialize_freelancer_achievements", {
             p_freelancer_user_id: user.id
           });
         } catch (e) {

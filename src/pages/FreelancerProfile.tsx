@@ -114,7 +114,7 @@ export default function FreelancerProfile() {
     if (!userId) return;
 
     // Fetch freelancer profile
-    const { data: freelancerData, error } = await supabase
+    const { data: freelancerData, error } = await (supabase as any)
       .from("freelancer_profiles")
       .select("*")
       .eq("user_id", userId)
@@ -127,7 +127,7 @@ export default function FreelancerProfile() {
 
     setFreelancer({
       ...freelancerData,
-      tier: (freelancerData.tier as FreelancerTier) || "standard",
+      tier: ((freelancerData as any).tier as FreelancerTier) || "standard",
     });
 
     // Fetch reviews with project info
@@ -163,13 +163,13 @@ export default function FreelancerProfile() {
     }
 
     // Fetch portfolio items
-    const { data: portfolioData } = await supabase
+    const { data: portfolioData } = await (supabase as any)
       .from("portfolio_items")
       .select("*")
       .eq("freelancer_user_id", userId)
       .order("created_at", { ascending: false });
 
-    if (portfolioData) setPortfolio(portfolioData);
+    if (portfolioData) setPortfolio(portfolioData as PortfolioItem[]);
 
     // Fetch certifications
     const { data: certsData } = await supabase

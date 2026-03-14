@@ -68,7 +68,7 @@ export default function MyProposals() {
   const fetchProposals = async () => {
     if (!user) return;
     
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("proposals")
       .select("id, cover_letter, milestones, status, created_at, project_id, is_counterproposal, counterproposal_justification, company_response, company_feedback, current_offer_cents, current_offer_by")
       .eq("freelancer_user_id", user.id)
@@ -77,10 +77,10 @@ export default function MyProposals() {
     if (!error && data) {
       // Fetch project info and contract info for each proposal
       const proposalsWithProjects = await Promise.all(
-        data.map(async (proposal) => {
-          const { data: project } = await supabase
+        (data as any[]).map(async (proposal) => {
+          const { data: project } = await (supabase as any)
             .from("projects")
-            .select("title, category, budget_min, budget_max, status, currency, company_user_id")
+            .select("title, category, budget_min, budget_max, status, company_user_id")
             .eq("id", proposal.project_id)
             .maybeSingle();
           
@@ -88,7 +88,7 @@ export default function MyProposals() {
           let agreedAmountCents: number | null = null;
           let wasCounterproposal: boolean | null = null;
           if (proposal.status === "accepted") {
-            const { data: contract } = await supabase
+            const { data: contract } = await (supabase as any)
               .from("contracts")
               .select("agreed_amount_cents, amount_cents, was_counterproposal")
               .eq("proposal_id", proposal.id)
@@ -100,10 +100,10 @@ export default function MyProposals() {
             wasCounterproposal = contract?.was_counterproposal ?? null;
           }
           
-          return { ...proposal, project, agreed_amount_cents: agreedAmountCents, was_counterproposal: wasCounterproposal };
+          return { ...proposal, project: { ...project, currency: (project as any)?.currency || "USD" }, agreed_amount_cents: agreedAmountCents, was_counterproposal: wasCounterproposal };
         })
       );
-      setProposals(proposalsWithProjects);
+      setProposals(proposalsWithProjects as Proposal[]);
     }
     setLoading(false);
   };
