@@ -41,7 +41,7 @@ export function useTranslationUsage() {
       let tier = "standard";
 
       if (userType === "freelancer") {
-        const { data: freelancerProfile } = await supabase
+        const { data: freelancerProfile } = await (supabase as any)
           .from("freelancer_profiles")
           .select("tier")
           .eq("user_id", user.id)
