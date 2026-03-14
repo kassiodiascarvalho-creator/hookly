@@ -45,7 +45,7 @@ export default function VerifiedCompanies() {
   const fetchCompaniesWithHistory = async () => {
     try {
       // Get all companies with is_verified = true OR that have payment history
-      const { data: companiesData } = await supabase
+      const { data: companiesData } = await (supabase as any)
         .from("company_profiles")
         .select("id, user_id, company_name, logo_url, location, industry, is_verified");
 
