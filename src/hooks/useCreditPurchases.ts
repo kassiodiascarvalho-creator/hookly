@@ -160,7 +160,7 @@ export function useCreditPurchases(dateFilter: DateFilterOption = "all") {
           return;
         }
 
-        const unifiedPayments = (unifiedData || []) as UnifiedPaymentRecord[];
+        const unifiedPayments = (unifiedData || []) as unknown as UnifiedPaymentRecord[];
 
         // Calculate summary from unified_payments
         // Revenue = payment_amount_minor (if exists) or amount_cents
