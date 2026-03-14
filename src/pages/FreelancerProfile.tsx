@@ -114,7 +114,7 @@ export default function FreelancerProfile() {
     if (!userId) return;
 
     // Fetch freelancer profile
-    const { data: freelancerData, error } = await supabase
+    const { data: freelancerData, error } = await (supabase as any)
       .from("freelancer_profiles")
       .select("*")
       .eq("user_id", userId)

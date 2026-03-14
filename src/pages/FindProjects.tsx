@@ -37,10 +37,10 @@ interface Project {
   description: string | null;
   budget_min: number | null;
   budget_max: number | null;
-  currency: string | null;
+  currency?: string | null;
   created_at: string;
   company_user_id: string;
-  boosted_until: string | null;
+  boosted_until?: string | null;
   company?: {
     company_name: string | null;
     logo_url: string | null;
