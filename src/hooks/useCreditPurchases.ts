@@ -301,7 +301,7 @@ export async function fetchUserCreditStats(userId: string): Promise<UserCreditSt
 
   // Fetch current balance (INTEGER credits: 1 credit = $1 USD)
   // platform_credits is the SINGLE source of truth for platform credits
-  const { data: platformCredits } = await supabase
+  const { data: platformCredits } = await (supabase as any)
     .from("platform_credits")
     .select("balance")
     .eq("user_id", userId)
