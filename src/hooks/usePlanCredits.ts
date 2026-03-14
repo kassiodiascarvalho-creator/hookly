@@ -72,7 +72,7 @@ export function usePlanCredits(userType: 'freelancer' | 'company') {
         }
         
         // Also check freelancer_plans for grant date (optional, for subscription-based users)
-        const { data: plan } = await supabase
+        const { data: plan } = await (supabase as any)
           .from("freelancer_plans")
           .select("plan_type, status, last_credit_grant_at, stripe_subscription_id")
           .eq("freelancer_user_id", user.id)
