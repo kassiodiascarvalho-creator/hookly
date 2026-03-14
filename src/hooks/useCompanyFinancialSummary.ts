@@ -182,7 +182,7 @@ export function useCompanyFinancialSummary(): CompanyFinancialSummary {
       });
 
       // 4. Fetch open projects without active contracts
-      const { data: openProjects, error: projectsError } = await supabase
+      const { data: openProjects, error: projectsError } = await (supabase as any)
         .from("projects")
         .select("id, title, budget_max, currency")
         .eq("company_user_id", user.id)
