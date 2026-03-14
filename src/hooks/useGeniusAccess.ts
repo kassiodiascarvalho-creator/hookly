@@ -28,7 +28,7 @@ export function useGeniusAccess(featureType: "proposal_ai" | "ranking_ai") {
 
     try {
       // Check if user has active access via credits
-      const { data: accessData } = await supabase
+      const { data: accessData } = await (supabase as any)
         .from("genius_access")
         .select("*")
         .eq("user_id", user.id)
