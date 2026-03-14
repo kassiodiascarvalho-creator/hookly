@@ -228,7 +228,7 @@ export default function ProjectDetail() {
   const fetchContractAgreedAmount = async () => {
     if (!id) return;
     
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("contracts")
       .select("id, agreed_amount_cents, freelancer_user_id")
       .eq("project_id", id)

@@ -98,7 +98,7 @@ export default function Onboarding() {
 
         // Initialize achievements for freelancer
         try {
-          await supabase.rpc("initialize_freelancer_achievements", {
+          await (supabase.rpc as Function)("initialize_freelancer_achievements", {
             p_freelancer_user_id: user.id
           });
         } catch (e) {

@@ -169,8 +169,8 @@ export default function Messages() {
       );
 
       // Get last message per conversation (first occurrence since ordered desc)
-      const lastMessageMap = new Map<string, { content: string; created_at: string; type: string | null }>();
-      for (const msg of lastMessagesResult.data || []) {
+      const lastMessageMap = new Map<string, { content: string; created_at: string; type?: string | null }>();
+      for (const msg of ((lastMessagesResult.data || []) as any[])) {
         if (!lastMessageMap.has(msg.conversation_id)) {
           lastMessageMap.set(msg.conversation_id, msg);
         }
@@ -178,7 +178,7 @@ export default function Messages() {
 
       // Count unread messages per conversation
       const unreadCountMap = new Map<string, number>();
-      for (const msg of unreadCountsResult.data || []) {
+      for (const msg of ((unreadCountsResult.data || []) as any[])) {
         unreadCountMap.set(msg.conversation_id, (unreadCountMap.get(msg.conversation_id) || 0) + 1);
       }
 
