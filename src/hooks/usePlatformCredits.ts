@@ -36,7 +36,7 @@ export function usePlatformCredits(): PlatformCreditsData {
     setLoading(true);
 
     // platform_credits is the SINGLE source of truth for platform credits
-    const { data: platformCredits } = await supabase
+    const { data: platformCredits } = await (supabase as any)
       .from("platform_credits")
       .select("balance")
       .eq("user_id", user.id)
