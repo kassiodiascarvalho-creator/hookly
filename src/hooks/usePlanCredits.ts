@@ -89,7 +89,7 @@ export function usePlanCredits(userType: 'freelancer' | 'company') {
           isSubscribed = tier === 'pro' || tier === 'top_rated';
         }
       } else {
-        const { data: plan } = await supabase
+        const { data: plan } = await (supabase as any)
           .from("company_plans")
           .select("plan_type, status, last_credit_grant_at")
           .eq("company_user_id", user.id)
