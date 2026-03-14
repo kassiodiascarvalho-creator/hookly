@@ -41,7 +41,7 @@ export function useTranslationUsage() {
       let tier = "standard";
 
       if (userType === "freelancer") {
-        const { data: freelancerProfile } = await supabase
+        const { data: freelancerProfile } = await (supabase as any)
           .from("freelancer_profiles")
           .select("tier")
           .eq("user_id", user.id)
@@ -50,7 +50,7 @@ export function useTranslationUsage() {
         tier = freelancerProfile?.tier || "standard";
         isPremium = tier === "pro" || tier === "top_rated";
       } else if (userType === "company") {
-        const { data: plan } = await supabase
+        const { data: plan } = await (supabase as any)
           .from("company_plans")
           .select("plan_type, status")
           .eq("company_user_id", user.id)
@@ -79,7 +79,7 @@ export function useTranslationUsage() {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      const { count } = await supabase
+      const { count } = await (supabase as any)
         .from("genius_usage_log")
         .select("*", { count: "exact", head: true })
         .eq("user_id", user.id)

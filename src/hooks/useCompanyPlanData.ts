@@ -95,7 +95,7 @@ export async function fetchCompanyBadges(
     }
 
     // Final fallback: try direct query (works if user is company owner or admin)
-    const { data: plans } = await supabase
+    const { data: plans } = await (supabase as any)
       .from("company_plans")
       .select("company_user_id, plan_type, status, plan_source")
       .in("company_user_id", companyUserIds);

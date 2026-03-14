@@ -29,7 +29,7 @@ export function useProfileCelebration(): ProfileCelebrationData {
 
     try {
       // Check if bonus was already claimed
-      const { data: profile } = await supabase
+      const { data: profile } = await (supabase as any)
         .from("profiles")
         .select("profile_completion_bonus_claimed")
         .eq("user_id", user.id)
@@ -47,7 +47,7 @@ export function useProfileCelebration(): ProfileCelebrationData {
       }
 
       // Get bonus amount from config
-      const { data: bonusConfig } = await supabase
+      const { data: bonusConfig } = await (supabase as any)
         .from("platform_action_costs")
         .select("cost_credits, is_enabled")
         .eq("action_key", "profile_completion_bonus")
@@ -64,7 +64,7 @@ export function useProfileCelebration(): ProfileCelebrationData {
 
       // Try to claim the bonus
       console.log("[CELEBRATION] Attempting to claim bonus...");
-      const { data, error } = await supabase.rpc('grant_profile_completion_bonus', {
+      const { data, error } = await (supabase.rpc as Function)('grant_profile_completion_bonus', {
         p_user_id: user.id,
         p_user_type: type
       });

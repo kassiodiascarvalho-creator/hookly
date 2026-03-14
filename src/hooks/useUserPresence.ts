@@ -23,7 +23,7 @@ export function usePresenceHeartbeat() {
     if (!user) return;
 
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("user_presence")
         .upsert({
           user_id: user.id,
@@ -83,7 +83,7 @@ export function useUserPresence(userId: string | undefined) {
     }
 
     const fetchPresence = async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("user_presence")
         .select("*")
         .eq("user_id", userId)

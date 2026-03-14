@@ -65,7 +65,7 @@ export function usePaymentFees(): PaymentFeesData {
       setError(null);
 
       // Fetch base fees
-      const { data: feesData, error: feesError } = await supabase
+      const { data: feesData, error: feesError } = await (supabase as any)
         .from("payment_fee_configs")
         .select("*")
         .eq("is_enabled", true);
@@ -88,7 +88,7 @@ export function usePaymentFees(): PaymentFeesData {
 
       // Fetch user's tier if logged in
       if (user) {
-        const { data: profileData } = await supabase
+        const { data: profileData } = await (supabase as any)
           .from("freelancer_profiles")
           .select("tier")
           .eq("user_id", user.id)
@@ -99,7 +99,7 @@ export function usePaymentFees(): PaymentFeesData {
 
         // Fetch tier overrides if user has a special tier
         if (tier !== "standard") {
-          const { data: overridesData } = await supabase
+          const { data: overridesData } = await (supabase as any)
             .from("tier_fee_overrides")
             .select("fee_key, fee_percent_override")
             .eq("tier", tier);

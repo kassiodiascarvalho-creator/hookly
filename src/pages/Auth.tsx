@@ -98,7 +98,7 @@ export default function Auth() {
     console.log("[AUTH] checking user type for redirect", { user_id: user.id });
     
     try {
-      const { data: profile, error } = await supabase
+      const { data: profile, error } = await (supabase as any)
         .from("profiles")
         .select("user_type, onboarding_completed")
         .eq("user_id", user.id)

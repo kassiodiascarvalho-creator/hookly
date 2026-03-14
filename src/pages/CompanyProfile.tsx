@@ -67,7 +67,7 @@ export default function CompanyProfile() {
         .select("*")
         .eq("user_id", userId)
         .single(),
-      supabase
+      (supabase as any)
         .from("company_plans")
         .select("plan_type, status, plan_source")
         .eq("company_user_id", userId)
@@ -79,7 +79,7 @@ export default function CompanyProfile() {
       return;
     }
 
-    setCompany(companyData);
+    setCompany({ ...companyData, is_verified: (companyData as any).is_verified ?? false } as CompanyData);
     
     // Determine effective plan
     if (planData) {

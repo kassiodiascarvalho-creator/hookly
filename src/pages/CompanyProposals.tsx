@@ -84,12 +84,12 @@ export default function CompanyProposals() {
         // Fetch freelancer info for each proposal (including tier)
         const proposalsWithFreelancers = await Promise.all(
           proposals.map(async (proposal) => {
-            const { data: freelancer } = await supabase
+            const { data: freelancer } = await (supabase as any)
               .from("freelancer_profiles")
               .select("full_name, avatar_url, title, tier")
               .eq("user_id", proposal.freelancer_user_id)
               .maybeSingle();
-            return { ...proposal, freelancer };
+            return { ...proposal, freelancer } as any;
           })
         );
         

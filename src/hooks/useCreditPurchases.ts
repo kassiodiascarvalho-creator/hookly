@@ -119,7 +119,7 @@ export function useCreditPurchases(dateFilter: DateFilterOption = "all") {
       const dateStart = getDateStart(dateFilter);
 
       // PHASE 1: Try credit_purchases first (primary source)
-      let creditQuery = supabase
+      let creditQuery = (supabase as any)
         .from("credit_purchases")
         .select("*")
         .eq("status", "confirmed")
@@ -135,13 +135,13 @@ export function useCreditPurchases(dateFilter: DateFilterOption = "all") {
         console.error("[useCreditPurchases] credit_purchases error:", creditError);
       }
 
-      const confirmedPurchases = (creditData || []) as CreditPurchase[];
+      const confirmedPurchases = (creditData || []) as unknown as CreditPurchase[];
 
       // PHASE 2: If credit_purchases is empty, fallback to unified_payments
       if (confirmedPurchases.length === 0) {
         console.log("[useCreditPurchases] credit_purchases empty, using unified_payments fallback");
 
-        let unifiedQuery = supabase
+        let unifiedQuery = (supabase as any)
           .from("unified_payments")
           .select("*")
           .eq("status", "paid")
@@ -160,7 +160,7 @@ export function useCreditPurchases(dateFilter: DateFilterOption = "all") {
           return;
         }
 
-        const unifiedPayments = (unifiedData || []) as UnifiedPaymentRecord[];
+        const unifiedPayments = (unifiedData || []) as unknown as UnifiedPaymentRecord[];
 
         // Calculate summary from unified_payments
         // Revenue = payment_amount_minor (if exists) or amount_cents
@@ -301,7 +301,7 @@ export async function fetchUserCreditStats(userId: string): Promise<UserCreditSt
 
   // Fetch current balance (INTEGER credits: 1 credit = $1 USD)
   // platform_credits is the SINGLE source of truth for platform credits
-  const { data: platformCredits } = await supabase
+  const { data: platformCredits } = await (supabase as any)
     .from("platform_credits")
     .select("balance")
     .eq("user_id", userId)
@@ -310,7 +310,7 @@ export async function fetchUserCreditStats(userId: string): Promise<UserCreditSt
   const currentBalance = platformCredits?.balance || 0;
 
   // Try credit_purchases first
-  const { data: creditPurchases } = await supabase
+  const { data: creditPurchases } = await (supabase as any)
     .from("credit_purchases")
     .select("*")
     .eq("user_id", userId)
@@ -318,7 +318,7 @@ export async function fetchUserCreditStats(userId: string): Promise<UserCreditSt
     .order("created_at", { ascending: false })
     .limit(20);
 
-  const confirmedPurchases = (creditPurchases || []) as CreditPurchase[];
+  const confirmedPurchases = (creditPurchases || []) as unknown as CreditPurchase[];
 
   // If credit_purchases has data, use it
   if (confirmedPurchases.length > 0) {
@@ -351,7 +351,7 @@ export async function fetchUserCreditStats(userId: string): Promise<UserCreditSt
   }
 
   // Fallback: use unified_payments
-  const { data: unifiedPayments } = await supabase
+  const { data: unifiedPayments } = await (supabase as any)
     .from("unified_payments")
     .select("*")
     .eq("user_id", userId)
@@ -360,7 +360,7 @@ export async function fetchUserCreditStats(userId: string): Promise<UserCreditSt
     .order("created_at", { ascending: false })
     .limit(20);
 
-  const payments = (unifiedPayments || []) as UnifiedPaymentRecord[];
+  const payments = (unifiedPayments || []) as unknown as UnifiedPaymentRecord[];
 
   const totalPaidByCurrency: Record<string, number> = {};
   let totalCreditsGranted = 0;

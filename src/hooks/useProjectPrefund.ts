@@ -29,7 +29,7 @@ export function useProjectPrefund(projectId: string | null | undefined): UseProj
     try {
       // Query ledger_transactions using metadata filter
       // Using contract_funding as fallback since project_prefund might not exist yet in enum
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('ledger_transactions')
         .select('amount, metadata')
         .filter('metadata->>purpose', 'eq', 'project_prefund')

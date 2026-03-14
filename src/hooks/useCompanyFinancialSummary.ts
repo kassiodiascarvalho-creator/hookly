@@ -69,7 +69,7 @@ export function useCompanyFinancialSummary(): CompanyFinancialSummary {
 
     try {
       // 1. Fetch active contracts for the company
-      const { data: contracts, error: contractsError } = await supabase
+      const { data: contracts, error: contractsError } = await (supabase as any)
         .from("contracts")
         .select(`
           id,
@@ -87,7 +87,7 @@ export function useCompanyFinancialSummary(): CompanyFinancialSummary {
       }
 
       // 1b. Fetch freelancer profiles for contracts
-      const freelancerIds = [...new Set(contracts?.map((c) => c.freelancer_user_id).filter(Boolean) || [])];
+      const freelancerIds = [...new Set((contracts as any[])?.map((c: any) => c.freelancer_user_id).filter(Boolean) || [])] as string[];
       let freelancerNames: Record<string, string> = {};
 
       if (freelancerIds.length > 0) {
@@ -110,7 +110,7 @@ export function useCompanyFinancialSummary(): CompanyFinancialSummary {
       let releasedByContract: Record<string, number> = {};
 
       if (contractIds.length > 0) {
-        const { data: ledgerData, error: ledgerError } = await supabase
+        const { data: ledgerData, error: ledgerError } = await (supabase as any)
           .from("ledger_transactions")
           .select("tx_type, amount, related_contract_id")
           .in("related_contract_id", contractIds)
@@ -182,7 +182,7 @@ export function useCompanyFinancialSummary(): CompanyFinancialSummary {
       });
 
       // 4. Fetch open projects without active contracts
-      const { data: openProjects, error: projectsError } = await supabase
+      const { data: openProjects, error: projectsError } = await (supabase as any)
         .from("projects")
         .select("id, title, budget_max, currency")
         .eq("company_user_id", user.id)
@@ -197,7 +197,7 @@ export function useCompanyFinancialSummary(): CompanyFinancialSummary {
       let projectsWithContracts: Set<string> = new Set();
 
       if (projectIds.length > 0) {
-        const { data: projectContracts } = await supabase
+        const { data: projectContracts } = await (supabase as any)
           .from("contracts")
           .select("project_id")
           .in("project_id", projectIds)
@@ -212,7 +212,7 @@ export function useCompanyFinancialSummary(): CompanyFinancialSummary {
       let projectsWithPrefund: Set<string> = new Set();
 
       if (projectIds.length > 0) {
-        const { data: prefundPayments } = await supabase
+        const { data: prefundPayments } = await (supabase as any)
           .from("unified_payments")
           .select("metadata")
           .eq("payment_type", "project_prefund")

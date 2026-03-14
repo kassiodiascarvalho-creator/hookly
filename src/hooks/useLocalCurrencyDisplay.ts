@@ -38,7 +38,7 @@ export function useLocalCurrencyDisplay(): LocalCurrencyData {
 
       try {
         // Try to get country from freelancer profile
-        const { data: freelancerData } = await supabase
+        const { data: freelancerData } = await (supabase as any)
           .from("freelancer_profiles")
           .select("country_code")
           .eq("user_id", user.id)
@@ -51,7 +51,7 @@ export function useLocalCurrencyDisplay(): LocalCurrencyData {
         }
 
         // Try to get country from company profile
-        const { data: companyData } = await supabase
+        const { data: companyData } = await (supabase as any)
           .from("company_profiles")
           .select("country")
           .eq("user_id", user.id)
@@ -92,7 +92,7 @@ export function useLocalCurrencyDisplay(): LocalCurrencyData {
 
     try {
       // Try to get rate from fx_spread_configs (if it has cached rates)
-      const { data: fxConfig } = await supabase
+      const { data: fxConfig } = await (supabase as any)
         .from("fx_spread_configs")
         .select("currency_code, spread_percent")
         .eq("currency_code", localCurrency)

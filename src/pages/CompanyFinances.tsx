@@ -136,7 +136,7 @@ export default function CompanyFinances() {
     }
 
     // Fetch unified_payments for escrow calculations (project_prefund and contract_funding)
-    const { data: unifiedPayments } = await supabase
+    const { data: unifiedPayments } = await (supabase as any)
       .from("unified_payments")
       .select("id, payment_type, status, amount_cents, currency, paid_at, metadata")
       .eq("user_id", user.id)
@@ -144,7 +144,7 @@ export default function CompanyFinances() {
       .in("payment_type", ["project_prefund", "contract_funding"]);
 
     // Fetch contracts to link prefunds to contracts via project_id
-    const { data: contracts } = await supabase
+    const { data: contracts } = await (supabase as any)
       .from("contracts")
       .select("id, project_id, agreed_amount_cents, currency")
       .eq("company_user_id", user.id)
@@ -159,21 +159,21 @@ export default function CompanyFinances() {
      */
 
     // Fetch platform credits
-    const { data: creditsData } = await supabase
+    const { data: creditsData } = await (supabase as any)
       .from("platform_credits")
       .select("balance, currency")
       .eq("user_id", user.id)
       .maybeSingle();
 
     if (creditsData) {
-      setCredits(creditsData);
+      setCredits(creditsData as PlatformCredits);
     } else {
       setCredits({ balance: 0, currency: "USD" });
     }
 
     // Build a map of project_id -> contract_id for linking prefunds
     const projectToContract: Record<string, string> = {};
-    contracts?.forEach(c => {
+    (contracts as any[])?.forEach((c: any) => {
       if (c.project_id) {
         projectToContract[c.project_id] = c.id;
       }
@@ -191,7 +191,7 @@ export default function CompanyFinances() {
     const fundedByCurrency: Record<string, number> = {};
 
     if (unifiedPayments) {
-      unifiedPayments.forEach((p) => {
+      (unifiedPayments as any[]).forEach((p: any) => {
         const metadata = p.metadata as any;
         const currency = p.currency || "USD";
 
@@ -240,8 +240,11 @@ export default function CompanyFinances() {
     // netEscrowTotal already represents (funded - released) calculated above
 
     if (paymentsData) {
-      const mapped = paymentsData.map(p => ({
+      const mapped = (paymentsData as any[]).map((p: any) => ({
         ...p,
+        escrow_status: p.escrow_status || null,
+        paid_at: p.paid_at || null,
+        released_at: p.released_at || null,
         project: p.project as { title: string } | undefined,
         freelancer: p.freelancer_user_id
           ? ({ full_name: freelancerNames[p.freelancer_user_id] || null } as {
@@ -249,7 +252,7 @@ export default function CompanyFinances() {
             })
           : (null as { full_name: string } | null),
       }));
-      setPayments(mapped);
+      setPayments(mapped as Payment[]);
     }
 
     // Total funded = escrow still held + released

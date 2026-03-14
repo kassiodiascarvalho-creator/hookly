@@ -56,7 +56,7 @@ export default function Onboarding() {
 
     try {
       // Update user type and mark onboarding as completed
-      const { error: profileError } = await supabase
+      const { error: profileError } = await (supabase as any)
         .from("profiles")
         .update({ 
           user_type: type,

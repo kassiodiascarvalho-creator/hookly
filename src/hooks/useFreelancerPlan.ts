@@ -51,7 +51,7 @@ export function useFreelancerPlan() {
       setLoading(true);
 
       // Fetch freelancer profile to check tier (pro/top_rated have unlimited)
-      const { data: profileData } = await supabase
+      const { data: profileData } = await (supabase as any)
         .from("freelancer_profiles")
         .select("tier")
         .eq("user_id", user.id)
@@ -61,7 +61,7 @@ export function useFreelancerPlan() {
       const isUnlimitedTier = tier === "pro" || tier === "top_rated";
 
       // Fetch freelancer plan from database
-      const { data: planData, error: planError } = await supabase
+      const { data: planData, error: planError } = await (supabase as any)
         .from("freelancer_plans")
         .select("*")
         .eq("freelancer_user_id", user.id)
@@ -104,7 +104,7 @@ export function useFreelancerPlan() {
       let proposalsLimit: number | null = null;
       if (!usage && !isUnlimitedTier) {
         const planType = planData?.plan_type || "free";
-        const { data: defData } = await supabase
+        const { data: defData } = await (supabase as any)
           .from("freelancer_plan_definitions")
           .select("proposals_limit")
           .eq("plan_type", planType)

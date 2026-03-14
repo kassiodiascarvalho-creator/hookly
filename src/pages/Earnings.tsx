@@ -179,7 +179,7 @@ export default function Earnings() {
     if (methodsData) setPayoutMethods(methodsData);
 
     // Fetch user balance from new ledger system
-    const { data: balanceData } = await supabase
+    const { data: balanceData } = await (supabase as any)
       .from("user_balances")
       .select("earnings_available, credits_available, escrow_held, currency")
       .eq("user_id", user.id)
@@ -197,11 +197,11 @@ export default function Earnings() {
     }
 
     // Fetch active contracts (accepted but not yet funded/completed)
-    const { data: activeContracts } = await supabase
+    const { data: activeContracts } = await (supabase as any)
       .from("contracts")
       .select("amount_cents, currency")
       .eq("freelancer_user_id", user.id)
-      .eq("status", "active"); // active = aceito, funded = financiado
+      .eq("status", "active");
 
     const escrowFromContracts = activeContracts?.reduce(
       (sum, c) => sum + (c.amount_cents || 0), 0

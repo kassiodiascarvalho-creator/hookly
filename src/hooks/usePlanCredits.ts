@@ -34,7 +34,7 @@ export function usePlanCredits(userType: 'freelancer' | 'company') {
       setLoading(true);
 
       // Get current balances from platform_credits (dual-balance system)
-      const { data: credits } = await supabase
+      const { data: credits } = await (supabase as any)
         .from("platform_credits")
         .select("plan_balance, purchased_balance, balance")
         .eq("user_id", user.id)
@@ -53,7 +53,7 @@ export function usePlanCredits(userType: 'freelancer' | 'company') {
 
       if (userType === 'freelancer') {
         // CANONICAL SOURCE: freelancer_profiles.tier for plan status
-        const { data: profile } = await supabase
+        const { data: profile } = await (supabase as any)
           .from("freelancer_profiles")
           .select("tier")
           .eq("user_id", user.id)
@@ -72,7 +72,7 @@ export function usePlanCredits(userType: 'freelancer' | 'company') {
         }
         
         // Also check freelancer_plans for grant date (optional, for subscription-based users)
-        const { data: plan } = await supabase
+        const { data: plan } = await (supabase as any)
           .from("freelancer_plans")
           .select("plan_type, status, last_credit_grant_at, stripe_subscription_id")
           .eq("freelancer_user_id", user.id)
@@ -89,7 +89,7 @@ export function usePlanCredits(userType: 'freelancer' | 'company') {
           isSubscribed = tier === 'pro' || tier === 'top_rated';
         }
       } else {
-        const { data: plan } = await supabase
+        const { data: plan } = await (supabase as any)
           .from("company_plans")
           .select("plan_type, status, last_credit_grant_at")
           .eq("company_user_id", user.id)
@@ -109,7 +109,7 @@ export function usePlanCredits(userType: 'freelancer' | 'company') {
       let creditCap: number | null = null;
 
       if (userType === 'freelancer') {
-        const { data: def } = await supabase
+        const { data: def } = await (supabase as any)
           .from("freelancer_plan_definitions")
           .select("monthly_credits, credit_cap")
           .eq("plan_type", planType)
@@ -122,7 +122,7 @@ export function usePlanCredits(userType: 'freelancer' | 'company') {
           creditCap = defData.credit_cap ?? null;
         }
       } else {
-        const { data: def } = await supabase
+        const { data: def } = await (supabase as any)
           .from("company_plan_definitions")
           .select("monthly_credits, credit_cap")
           .eq("plan_type", planType)

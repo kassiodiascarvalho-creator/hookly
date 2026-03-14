@@ -46,7 +46,7 @@ export function useProposalRankings(projectId: string | undefined) {
     }
 
     try {
-      const { data: cache, error } = await supabase
+      const { data: cache, error } = await (supabase as any)
         .from("genius_ranking_cache")
         .select("analysis_result")
         .eq("project_id", projectId)

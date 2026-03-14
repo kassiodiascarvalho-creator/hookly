@@ -48,7 +48,7 @@ export function useSidebarCounts(): SidebarCounts {
         setUnreadConversationsCount(uniqueConversations.size);
 
         // Fetch pending invites count (for freelancers)
-        const { count: invitesCount } = await supabase
+        const { count: invitesCount } = await (supabase as any)
           .from("project_invites")
           .select("id", { count: "exact", head: true })
           .eq("freelancer_user_id", user.id)

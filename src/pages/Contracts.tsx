@@ -69,20 +69,18 @@ export default function Contracts() {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("contracts")
         .select("*")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
 
-      // Fetch related names
       const contractsWithNames = await Promise.all(
-        (data || []).map(async (contract) => {
+        (data || []).map(async (contract: any) => {
           let company_name = "";
           let freelancer_name = "";
 
-          // Fetch company name
           const { data: companyData } = await supabase
             .from("company_profiles")
             .select("company_name")
@@ -90,7 +88,6 @@ export default function Contracts() {
             .single();
           company_name = companyData?.company_name || "Empresa";
 
-          // Fetch freelancer name
           const { data: freelancerData } = await supabase
             .from("freelancer_profiles")
             .select("full_name")
@@ -107,7 +104,7 @@ export default function Contracts() {
         })
       );
 
-      setContracts(contractsWithNames);
+      setContracts(contractsWithNames as Contract[]);
     } catch (error) {
       console.error("Error fetching contracts:", error);
     } finally {

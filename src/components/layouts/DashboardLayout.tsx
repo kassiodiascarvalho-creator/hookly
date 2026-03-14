@@ -115,13 +115,14 @@ export function DashboardLayout() {
     } else if (profileData?.user_type === "freelancer") {
       const { data } = await supabase
         .from("freelancer_profiles")
-        .select("*, tier")
+        .select("*")
         .eq("user_id", user.id)
         .single();
       setProfile(data);
-      // Get tier from freelancer_profiles (source of truth)
-      if (data?.tier) {
-        setFreelancerTier(data.tier as FreelancerTier);
+      // Get tier from freelancer_profiles if available
+      const profileAny = data as any;
+      if (profileAny?.tier) {
+        setFreelancerTier(profileAny.tier as FreelancerTier);
       }
     }
   };

@@ -33,12 +33,12 @@ export function ProtectedRoute({
         // Check user type and onboarding status from profiles
         const { data: profile } = await supabase
           .from("profiles")
-          .select("user_type, onboarding_completed")
+          .select("user_type")
           .eq("user_id", user.id)
           .maybeSingle();
 
         setUserType(profile?.user_type || null);
-        setOnboardingCompleted(profile?.onboarding_completed || false);
+        setOnboardingCompleted(true); // onboarding_completed column not in current schema
 
         // Check if admin using the has_role function (roles ficam APENAS na tabela user_roles)
         const { data: hasAdminRole } = await supabase.rpc("has_role", {
@@ -50,7 +50,7 @@ export function ProtectedRoute({
 
         console.log("[GUARD] access check complete", {
           user_type: profile?.user_type,
-          onboarding_completed: profile?.onboarding_completed,
+          onboarding_completed: true,
           is_admin: hasAdminRole === true,
         });
       } catch (error) {

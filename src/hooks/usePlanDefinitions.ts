@@ -28,7 +28,7 @@ export function usePlanDefinitions() {
   const fetchPlans = useCallback(async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("company_plan_definitions")
         .select("*")
         .order("display_order", { ascending: true });

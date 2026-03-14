@@ -36,7 +36,7 @@ export function usePlatformCredits(): PlatformCreditsData {
     setLoading(true);
 
     // platform_credits is the SINGLE source of truth for platform credits
-    const { data: platformCredits } = await supabase
+    const { data: platformCredits } = await (supabase as any)
       .from("platform_credits")
       .select("balance")
       .eq("user_id", user.id)
@@ -45,7 +45,7 @@ export function usePlatformCredits(): PlatformCreditsData {
     setBalance(platformCredits?.balance || 0);
 
     // Fetch action costs
-    const { data: costs } = await supabase
+    const { data: costs } = await (supabase as any)
       .from("platform_action_costs")
       .select("*")
       .eq("is_enabled", true);
@@ -93,7 +93,7 @@ export function usePlatformCredits(): PlatformCreditsData {
     }
 
     // Call RPC to spend credits
-    const { data, error } = await supabase.rpc("spend_platform_credits", {
+    const { data, error } = await (supabase.rpc as Function)("spend_platform_credits", {
       p_user_id: user.id,
       p_action_key: actionKey,
       p_description: description,
