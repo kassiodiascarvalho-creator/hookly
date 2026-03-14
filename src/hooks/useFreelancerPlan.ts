@@ -51,7 +51,7 @@ export function useFreelancerPlan() {
       setLoading(true);
 
       // Fetch freelancer profile to check tier (pro/top_rated have unlimited)
-      const { data: profileData } = await supabase
+      const { data: profileData } = await (supabase as any)
         .from("freelancer_profiles")
         .select("tier")
         .eq("user_id", user.id)
