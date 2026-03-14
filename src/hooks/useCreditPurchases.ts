@@ -135,7 +135,7 @@ export function useCreditPurchases(dateFilter: DateFilterOption = "all") {
         console.error("[useCreditPurchases] credit_purchases error:", creditError);
       }
 
-      const confirmedPurchases = (creditData || []) as CreditPurchase[];
+      const confirmedPurchases = (creditData || []) as unknown as CreditPurchase[];
 
       // PHASE 2: If credit_purchases is empty, fallback to unified_payments
       if (confirmedPurchases.length === 0) {
