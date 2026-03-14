@@ -141,7 +141,7 @@ export function useCreditPurchases(dateFilter: DateFilterOption = "all") {
       if (confirmedPurchases.length === 0) {
         console.log("[useCreditPurchases] credit_purchases empty, using unified_payments fallback");
 
-        let unifiedQuery = supabase
+        let unifiedQuery = (supabase as any)
           .from("unified_payments")
           .select("*")
           .eq("status", "paid")
