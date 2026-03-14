@@ -247,7 +247,7 @@ export default function Settings() {
         if (error) throw error;
 
         // Check portfolio and payout methods for completion calculation
-        const [portfolioResult, payoutResult] = await Promise.all([supabase.from("portfolio_items").select("*", {
+        const [portfolioResult, payoutResult] = await Promise.all([(supabase as any).from("portfolio_items").select("*", {
           count: "exact",
           head: true
         }).eq("freelancer_user_id", user.id), supabase.from("payout_methods").select("*", {
