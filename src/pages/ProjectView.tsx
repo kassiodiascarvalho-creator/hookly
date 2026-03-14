@@ -151,7 +151,7 @@ export default function ProjectView() {
         .eq("user_id", data.company_user_id)
         .maybeSingle();
       
-      setProject({ ...data, company });
+      setProject({ ...data, company, budget_ideal: (data as any).budget_ideal ?? null, currency: (data as any).currency ?? "USD" } as any);
     }
     setLoading(false);
   };
