@@ -88,7 +88,7 @@ export function usePaymentFees(): PaymentFeesData {
 
       // Fetch user's tier if logged in
       if (user) {
-        const { data: profileData } = await supabase
+        const { data: profileData } = await (supabase as any)
           .from("freelancer_profiles")
           .select("tier")
           .eq("user_id", user.id)
