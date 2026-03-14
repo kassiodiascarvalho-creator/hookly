@@ -110,7 +110,7 @@ export function useCompanyFinancialSummary(): CompanyFinancialSummary {
       let releasedByContract: Record<string, number> = {};
 
       if (contractIds.length > 0) {
-        const { data: ledgerData, error: ledgerError } = await supabase
+        const { data: ledgerData, error: ledgerError } = await (supabase as any)
           .from("ledger_transactions")
           .select("tx_type, amount, related_contract_id")
           .in("related_contract_id", contractIds)
