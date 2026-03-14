@@ -159,14 +159,14 @@ export default function CompanyFinances() {
      */
 
     // Fetch platform credits
-    const { data: creditsData } = await supabase
+    const { data: creditsData } = await (supabase as any)
       .from("platform_credits")
       .select("balance, currency")
       .eq("user_id", user.id)
       .maybeSingle();
 
     if (creditsData) {
-      setCredits(creditsData);
+      setCredits(creditsData as PlatformCredits);
     } else {
       setCredits({ balance: 0, currency: "USD" });
     }
