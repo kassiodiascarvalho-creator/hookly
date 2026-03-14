@@ -163,13 +163,13 @@ export default function FreelancerProfile() {
     }
 
     // Fetch portfolio items
-    const { data: portfolioData } = await supabase
+    const { data: portfolioData } = await (supabase as any)
       .from("portfolio_items")
       .select("*")
       .eq("freelancer_user_id", userId)
       .order("created_at", { ascending: false });
 
-    if (portfolioData) setPortfolio(portfolioData);
+    if (portfolioData) setPortfolio(portfolioData as PortfolioItem[]);
 
     // Fetch certifications
     const { data: certsData } = await supabase

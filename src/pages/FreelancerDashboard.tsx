@@ -151,7 +151,7 @@ export default function FreelancerDashboard() {
       }
 
       // Get tier from freelancer profile
-      const tier = (freelancerProfileResult.data?.tier as FreelancerTier) || "standard";
+      const tier = ((freelancerProfileResult.data as any)?.tier as FreelancerTier) || "standard";
 
       setStats({
         activeProjects,
