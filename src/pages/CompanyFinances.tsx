@@ -191,7 +191,7 @@ export default function CompanyFinances() {
     const fundedByCurrency: Record<string, number> = {};
 
     if (unifiedPayments) {
-      unifiedPayments.forEach((p) => {
+      (unifiedPayments as any[]).forEach((p: any) => {
         const metadata = p.metadata as any;
         const currency = p.currency || "USD";
 
