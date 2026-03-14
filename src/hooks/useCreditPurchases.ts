@@ -119,7 +119,7 @@ export function useCreditPurchases(dateFilter: DateFilterOption = "all") {
       const dateStart = getDateStart(dateFilter);
 
       // PHASE 1: Try credit_purchases first (primary source)
-      let creditQuery = supabase
+      let creditQuery = (supabase as any)
         .from("credit_purchases")
         .select("*")
         .eq("status", "confirmed")
